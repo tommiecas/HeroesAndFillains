@@ -3,6 +3,7 @@
 
 #include "HAFComponents/CombatComponent.h"
 #include "Weapons/Weapon.h"
+#include "WeaponsFinal/WeaponFinal.h"
 #include "Characters/FillainCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
@@ -15,7 +16,7 @@
 #include "HUD/FillainHUD.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
-#include "Characters/FillainAnimINstance.h"
+#include "Characters/FillainAnimInstance.h"
 #include "Weapons/Projectile.h"
 #include "Weapons/Shotgun.h"
 
@@ -33,6 +34,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UCombatComponent, EquippedWeaponFinal);
 	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
@@ -284,6 +286,20 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
+}
+
+void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
+{ 
+	if (Character == nullptr || WeaponFinalToEquip == nullptr) return;
+
+	EquippedWeaponFinal = WeaponFinalToEquip;
+	EquippedWeaponFinal->SetWeaponFinalState(EWeaponFinalState::EWFS_Equipped);
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(EquippedWeaponFinal, Character->GetMesh());
+	}
+	EquippedWeaponFinal->SetOwner(Character);
 }
 
 void UCombatComponent::SwapWeapons()

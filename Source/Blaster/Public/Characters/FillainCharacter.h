@@ -308,8 +308,14 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* OverlappingWeapon;
 
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeaponFinal)
+	class AWeaponFinal* OverlappingWeaponFinal;
+
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
+
+	UFUNCTION()
+	void OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal);
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -481,7 +487,9 @@ private:
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
+	void SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal);
 	bool IsWeaponEquipped();
+	bool IsWeaponFinalEquipped();
 	bool IsAiming();
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

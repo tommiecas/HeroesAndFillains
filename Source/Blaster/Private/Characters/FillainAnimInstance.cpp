@@ -33,6 +33,7 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsInAir = FillainCharacter->GetCharacterMovement()->IsFalling();
 	bIsAccelerating = FillainCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
 	bWeaponEquipped = FillainCharacter->IsWeaponEquipped();
+	bWeaponFinalEquipped = FillainCharacter->IsWeaponFinalEquipped();
 	EquippedWeapon = FillainCharacter->GetEquippedWeapon();
 	bIsCrouched = FillainCharacter->bIsCrouched;
 	bAiming = FillainCharacter->IsAiming();

@@ -1,5 +1,40 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "Characters/FillainCharacter.h"  
+#include "GameFramework/SpringArmComponent.h"  
+#include "Camera/CameraComponent.h"  
+#include "GameFramework/CharacterMovementComponent.h"  
+#include "Components/InputComponent.h"  
+#include "EnhancedInputSubsystems.h"  
+#include "EnhancedInputComponent.h"  
+#include "Components/WidgetComponent.h"  
+#include "GameFramework/PlayerState.h"  
+#include "HUD/OverheadWidget.h"  
+#include "Net/UnrealNetwork.h"  
+#include "Weapons/Weapon.h"  
+#include "WeaponsFinal/WeaponFinal.h"
+#include "HAFComponents/CombatComponent.h"  
+#include "HAFComponents/BuffComponent.h"  
+#include "Components/CapsuleComponent.h"  
+#include <Kismet/KismetMathLibrary.h>  
+#include "Characters/FillainAnimInstance.h"  
+#include "Blaster/Blaster.h"  
+#include "PlayerController/FillainPlayerController.h"  
+#include "GameMode/HAFGameMode.h"  
+#include "TimerManager.h"  
+#include "Kismet/GameplayStatics.h"  
+#include "Sound/SoundCue.h"  
+#include "Particles/ParticleSystemComponent.h"  
+#include "PlayerState/HAFPlayerState.h"  
+#include "Weapons/WeaponTypes.h"  
+#include "GameMode/LobbyGameMode.h"  
+#include "Weapons/Projectile.h"  
+#include "Components/BoxComponent.h"  
+#include "HAFComponents/LagCompensationComponent.h"  
+#include "NiagaraComponent.h"  
+#include "NiagaraFunctionLibrary.h"  
+#include "GameStates/HAFGameState.h"  
+#include "PlayerStart/TeamPlayerStart.h"
 
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -177,6 +212,7 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeaponFinal, COND_OwnerOnly);
 	// DOREPLIFETIME(AFillainCharacter, HitReactMontage);
 	DOREPLIFETIME(AFillainCharacter, Health);
 	DOREPLIFETIME(AFillainCharacter, Shield);
@@ -411,6 +447,7 @@ void AFillainCharacter::BeginPlay()
 void AFillainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	RotateInPlace(DeltaTime);
 	HideCharacterIfCameraClose();
 	PollInit();
@@ -732,6 +769,15 @@ void AFillainCharacter::EquipButtonPressed()
 
 	if (Combat)
 	{
+		if (HasAuthority())
+		{
+			Combat->EquipWeaponFinal(OverlappingWeaponFinal);
+		}
+		else
+		{
+			ServerEquipButtonPressed();
+		}
+
 		if (Combat->bWieldingTheSword) return;
 		if (Combat->CombatState == ECombatState::ECS_Unoccupied) ServerEquipButtonPressed();
 		bool bSwap = Combat->ShouldSwapWeapons() &&
@@ -752,6 +798,8 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)
 	{
+		Combat->EquipWeaponFinal(OverlappingWeaponFinal);
+	
 		if (OverlappingWeapon)
 		{
 			Combat->EquipWeapon(OverlappingWeapon);
@@ -1098,6 +1146,23 @@ void AFillainCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 	}
 }
 
+void AFillainCharacter::SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal)
+{ 
+	if (OverlappingWeaponFinal)
+	{
+		OverlappingWeaponFinal->ShowPickupWidget(false);
+	}
+	OverlappingWeaponFinal = WeaponFinal;
+	
+	if (IsLocallyControlled())
+	{
+		if (OverlappingWeaponFinal)
+		{
+			OverlappingWeaponFinal->ShowPickupWidget(true);
+		}
+	}
+}
+
 void AFillainCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 {
 	if (OverlappingWeapon)
@@ -1110,9 +1175,26 @@ void AFillainCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
+void AFillainCharacter::OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal)
+{
+	if (OverlappingWeaponFinal)
+	{
+		OverlappingWeaponFinal->ShowPickupWidget(true);
+	}
+	if (LastWeaponFinal)
+	{
+		LastWeaponFinal->ShowPickupWidget(false);
+	}
+}
+
 bool AFillainCharacter::IsWeaponEquipped()
 {
 	return (Combat && Combat->EquippedWeapon);
+}
+
+bool AFillainCharacter::IsWeaponFinalEquipped()
+{
+	return (Combat && Combat->EquippedWeaponFinal);
 }
 
 bool AFillainCharacter::IsAiming()
