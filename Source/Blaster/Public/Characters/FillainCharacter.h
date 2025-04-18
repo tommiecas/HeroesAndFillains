@@ -19,6 +19,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+struct FInputActionInstance;
 class UWidgetComponent;
 class UCombatComponent;
 class UAnimMontage;

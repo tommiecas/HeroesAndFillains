@@ -502,6 +502,7 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFillainCharacter::FireButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
+
 	}
 }
 
@@ -729,8 +730,6 @@ void AFillainCharacter::SetTeamColor(ETeam Team)
 		GetMesh()->SetMaterial(0, RedMaterial);
 		DissolveMaterialInstance = RedDissolveMaterialInstance;
 		break;
-
-
 	}
 }
 

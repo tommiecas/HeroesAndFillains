@@ -300,6 +300,8 @@ void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 		HandSocket->AttachActor(EquippedWeaponFinal, Character->GetMesh());
 	}
 	EquippedWeaponFinal->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::SwapWeapons()
@@ -712,6 +714,15 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		{
 			Controller->SetHUDWeaponType(Character);
 		}
+	}
+}
+
+void UCombatComponent::OnRep_EquippedWeaponFinal()
+{
+	if (EquippedWeaponFinal && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
 	}
 }
 

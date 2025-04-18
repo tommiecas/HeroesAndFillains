@@ -44,8 +44,11 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeaponFinal)
 	AWeaponFinal* EquippedWeaponFinal;
+
+	UFUNCTION()
+	void OnRep_EquippedWeaponFinal();
 
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
 	AWeapon* SecondaryWeapon;
