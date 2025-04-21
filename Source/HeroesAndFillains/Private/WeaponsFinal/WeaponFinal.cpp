@@ -8,6 +8,8 @@
 #include "Components/WidgetComponent.h"
 #include "HUD/PickupWidget.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
 
 
 
@@ -109,6 +111,14 @@ void AWeaponFinal::ShowPickupWidget(bool bShowPickupWidget)
 	if (PickupWidget)
 	{
 		PickupWidget->SetVisibility(bShowPickupWidget);
+	}
+}
+
+void AWeaponFinal::Fire(const FVector& HitTarget)
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 }
 

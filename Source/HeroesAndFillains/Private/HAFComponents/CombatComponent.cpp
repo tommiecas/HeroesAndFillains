@@ -19,6 +19,7 @@
 #include "Characters/FillainAnimInstance.h"
 #include "Weapons/Projectile.h"
 #include "Weapons/Shotgun.h"
+#include "DrawDebugHelpers.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -91,26 +92,61 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (Character && Character->IsLocallyControlled())
-	{
+	/* if (Character && Character->IsLocallyControlled())
+	{*/
 		FHitResult HitResult;
 		TraceUnderCrosshairs(HitResult);
-		HitTarget = HitResult.ImpactPoint;
+		/* HitTarget = HitResult.ImpactPoint;
 
 		SetHUDCrosshairs(DeltaTime);
-		InterpFOV(DeltaTime);
-	}
+		InterpFOV(DeltaTime); */
+	/* } */
 }
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bIsFireButtonPressed = bPressed;
-
 	if (bIsFireButtonPressed)
 	{
-		Fire();
+		ServerFire();
 	}
 }
+
+void UCombatComponent::ServerFire_Implementation()
+{
+	MulticastFire();
+}
+
+void UCombatComponent::MulticastFire_Implementation()
+{
+	if (EquippedWeaponFinal == nullptr) return;
+	if (Character)
+	{
+		Character->PlayFireMontage(bAiming);
+		EquippedWeaponFinal->Fire(HitTarget);
+	}
+}
+
+/* void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
+{
+	MulticastFire(TraceHitTarget);
+}
+
+bool UCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+	return true;
+}
+
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+	LocalFire(TraceHitTarget);
+} */
 
 void UCombatComponent::Fire()
 {
@@ -145,7 +181,7 @@ void UCombatComponent::FireProjectileWeapon()
 	{
 		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
-		ServerFire(HitTarget, EquippedWeapon->FireDelay);
+		ServerFire(/* HitTarget, EquippedWeapon->FireDelay*/);
 	}
 }
 
@@ -155,7 +191,7 @@ void UCombatComponent::FireHitScanWeapon()
 	{
 		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
-		ServerFire(HitTarget, EquippedWeapon->FireDelay);
+		ServerFire(/*HitTarget, EquippedWeapon->FireDelay*/);
 	}
 }
 
@@ -193,26 +229,7 @@ void UCombatComponent::FireTimerFinished()
 	ReloadEmptyWeapon();
 }
 
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
-{
-	MulticastFire(TraceHitTarget);
-}
 
-bool UCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
-{
-	if (EquippedWeapon)
-	{
-		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
-		return bNearlyEqual;
-	}
-	return true;
-}
-
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
-	LocalFire(TraceHitTarget);
-}
 
 void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
 {
@@ -774,14 +791,30 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			End,
 			ECollisionChannel::ECC_Visibility
 		);
-		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		if (!TraceHitResult.bBlockingHit)
+		{
+			TraceHitResult.ImpactPoint = End;
+			HitTarget = End;
+		}
+		else
+		{
+			HitTarget = TraceHitResult.ImpactPoint;
+			DrawDebugSphere(
+				GetWorld(),
+				TraceHitResult.ImpactPoint,
+				12.f,
+				12,
+				FColor::Red
+			);
+		}
+		/* if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
 		{
 			HUDPackage.CrosshairsColor = FLinearColor::Red;
 		}
 		else
 		{
 			HUDPackage.CrosshairsColor = FLinearColor::White;
-		}
+		} */
 	}
 }
 

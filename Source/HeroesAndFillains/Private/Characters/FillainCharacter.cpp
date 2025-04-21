@@ -18,6 +18,7 @@
 #include "Components/CapsuleComponent.h"  
 #include <Kismet/KismetMathLibrary.h>  
 #include "Characters/FillainAnimInstance.h"  
+#include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 #include "PlayerController/FillainPlayerController.h"  
 #include "GameMode/HAFGameMode.h"  
@@ -532,14 +533,14 @@ void AFillainCharacter::PostInitializeComponents()
 
 void AFillainCharacter::PlayFireMontage(bool bAiming)
 {
-	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+	if (Combat == nullptr || Combat->EquippedWeaponFinal == nullptr) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireWeaponMontage)
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName;
-		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		SectionName = bAiming ? FName("RifleAiming") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -978,11 +979,11 @@ void AFillainCharacter::Jump()
 
 void AFillainCharacter::FireButtonPressed()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
+	/* if (Combat && Combat->bWieldingTheSword) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
-	}
+	} */
 
 	if (Combat)
 	{
@@ -992,11 +993,11 @@ void AFillainCharacter::FireButtonPressed()
 
 void AFillainCharacter::FireButtonReleased()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
+	/*if (Combat && Combat->bWieldingTheSword) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
-	}
+	} */
 
 
 	if (Combat)
