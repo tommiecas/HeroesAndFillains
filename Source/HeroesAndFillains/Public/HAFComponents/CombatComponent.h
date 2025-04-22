@@ -74,6 +74,8 @@ public:
 
 	bool bLocallyReloading = false;
 
+	FVector HitTarget;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -93,10 +95,10 @@ protected:
 	void LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 	UFUNCTION(Server, Reliable /*, WithValidation */ )
-	void ServerFire(/* const FVector_NetQuantize& TraceHitTarget, float FireDelay */);
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget /*, float FireDelay*/ );
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(/* const FVector_NetQuantize& TraceHitTarget*/);
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay);
@@ -150,7 +152,7 @@ private:
 	class AFillainPlayerController* Controller;
 	
 	UPROPERTY()
-	class AFillainHUD* PlayerHUD;
+	class AFillainHUD* HUD;
 
 	
 
@@ -170,22 +172,23 @@ private:
 
 	bool bIsFireButtonPressed;
 
-	/*
-	** HUD and Crosshairs
-	*/
+	/*****************************
+	***                        ***
+	***   HUD AND CROSSHAIRS   ***
+	***                        ***
+	*****************************/
+
 	float CrosshairVelocityFactor;
 	float CrosshairInAirFactor;
 	float CrosshairAimFactor;
 	float CrosshairShootingFactor;
 
-	UPROPERTY()
-	FHUDPackage HUDPackage;
+	/*************************
+	***                    ***
+	***   AIMING AND FOV   ***
+	***                    ***
+	* ***********************/
 
-	FVector HitTarget;
-
-	/*
-	** Aiming and FOV
-	*/
 	float DefaultFOV;
 	//field of view when not aiming; set to the camera's base FOV in BeginPlay
 
