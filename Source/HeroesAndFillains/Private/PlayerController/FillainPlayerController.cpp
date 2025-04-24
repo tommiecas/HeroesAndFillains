@@ -10,6 +10,8 @@
 #include "Weapons/Weapon.h"
 #include "PlayerState/HAFPlayerState.h"
 #include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "UObject/EnumProperty.h"
 #include "TimerManager.h"
 #include "Net/UnrealNetwork.h"
@@ -24,6 +26,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Characters/FillainAnimInstance.h"
+#include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "GameMode/HAFGameMode.h"
 #include "Kismet/GameplayStatics.h"
@@ -445,19 +448,19 @@ void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 	}
 }
 
-void AFillainPlayerController::SetHUDWeaponAmmo(int32 WeaponAmmo)
+void AFillainPlayerController::SetHUDWeaponFinalAmmo(int32 WeaponFinalAmmo)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponAmmoAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponFinalAmmoAmount;
 	if (bIsHUDValid)
 	{
-		FString WeaponAmmoText = FString::Printf(TEXT("%d"), WeaponAmmo);
-		FillainHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(WeaponAmmoText));
+		FString WeaponFinalAmmoText = FString::Printf(TEXT("%d"), WeaponFinalAmmo);
+		FillainHUD->CharacterOverlay->WeaponFinalAmmoAmount->SetText(FText::FromString(WeaponFinalAmmoText));
 	}
 	else
 	{
-		bInitializeWeaponAmmo = true;
-		HUDWeaponAmmo = WeaponAmmo;
+		bInitializeWeaponFinalAmmo = true;
+		HUDWeaponFinalAmmo = WeaponFinalAmmo;
 	}
 }
 
@@ -629,7 +632,7 @@ void AFillainPlayerController::PollInit()
 				if (bInitializeGrenades) SetHUDGrenades(HUDGrenades);
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
-				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
+				if (bInitializeWeaponFinalAmmo) SetHUDWeaponFinalAmmo(HUDWeaponFinalAmmo);
 
 				AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(GetPawn());
 				if (FillainCharacter && FillainCharacter->GetCombatComponent())
@@ -923,24 +926,24 @@ void AFillainPlayerController::ToggleMatchCountdownVisibility()
 
 
 
-FString AFillainPlayerController::GetWeaponTypeDisplayName(EWeaponType WeaponType)
+FString AFillainPlayerController::GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType)
 {
-	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("WeaponType"), true);
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("WeaponFinalType"), true);
 	if (!EnumPtr) return FString("");
 
-	return EnumPtr->GetDisplayNameTextByValue((int64)WeaponType).ToString();
+	return EnumPtr->GetDisplayNameTextByValue((int64)WeaponFinalType).ToString();
 }
 
-void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
+void AFillainPlayerController::SetHUDWeaponFinalType(APawn* InPawn)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 	AFillainCharacter* FCharacter = Cast<AFillainCharacter>(InPawn);
-	EquippedWeapon = EquippedWeapon == nullptr ? Cast<AWeapon>(FCharacter->GetEquippedWeapon()) : EquippedWeapon;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponTypeText;
-	if (bIsHUDValid && FCharacter && EquippedWeapon)
+	EquippedWeaponFinal = EquippedWeaponFinal == nullptr ? Cast<AWeaponFinal>(FCharacter->GetEquippedWeaponFinal()) : EquippedWeaponFinal;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponFinalTypeText;
+	if (bIsHUDValid && FCharacter && EquippedWeaponFinal)
 	{
-		FString WeaponTypeName = GetWeaponTypeDisplayName(EquippedWeapon->GetWeaponType());
-		FillainHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeName));
+		FString WeaponFinalTypeName = GetWeaponFinalTypeDisplayName(EquippedWeaponFinal->GetWeaponFinalType());
+		FillainHUD->CharacterOverlay->WeaponFinalTypeText->SetText(FText::FromString(WeaponFinalTypeName));
 	}
 }
 

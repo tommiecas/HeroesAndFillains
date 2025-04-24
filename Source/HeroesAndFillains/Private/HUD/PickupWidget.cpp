@@ -4,6 +4,8 @@
 #include "Components/TextBlock.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h"
 
 
 
@@ -31,23 +33,24 @@ FString UPickupWidget::GetWeaponTypeDisplayName(EWeaponType WeaponType)
 	}
 }
 
-void UPickupWidget::SetWeaponNameText(FString WeaponNameTextToDisplay)
+void UPickupWidget::SetWeaponNameText(FString WeaponNameTextToDisplay, AWeaponFinal* InWeaponFinal)
 {
 	if (WeaponNameText)
 	{
 		WeaponNameText->SetText(FText::FromString(WeaponNameTextToDisplay));
+		ShowWeaponFinalName(InWeaponFinal);
 	}
 }
 
-void UPickupWidget::ShowWeaponName(class AWeapon* InWeapon)
+void UPickupWidget::ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal)
 {
-	if (InWeapon == nullptr || InWeapon->GetWeaponType() == EWeaponType::EWT_None)
-	{
-		// Handle the null case, maybe log an error or set a default player name
-		SetWeaponNameText(FString("Unknown Weapon"));
-		return;
-	}
+   if (InWeaponFinal == nullptr || InWeaponFinal->WeaponFinalTypeDisplayed == EWeaponFinalTypeDisplayed::EWFTD_None)
+   {
+       // Handle the null case, maybe log an error or set a default player name
+       SetWeaponNameText(FString("Unknown Weapon"), InWeaponFinal);
+       return;
+   }
 
-	FString WeaponName = GetWeaponTypeDisplayName(InWeapon->GetWeaponType());
-	SetWeaponNameText(WeaponName);
+   FString WeaponName = InWeaponFinal->GetWeaponDisplayName(InWeaponFinal->WeaponFinalTypeDisplayed);
+   SetWeaponNameText(WeaponName, InWeaponFinal);
 }

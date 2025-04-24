@@ -21,10 +21,10 @@ public:
 
 	class FString GetWeaponTypeDisplayName(EWeaponType WeaponType);
 
-	void SetWeaponNameText(FString WeaponNameTextToDisplay);
+	void SetWeaponNameText(FString WeaponNameTextToDisplay, AWeaponFinal* InWeaponFinal);
 
 	UFUNCTION(BlueprintCallable)
-	void ShowWeaponName(class AWeapon* InWeapon);
+	void ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal);
 
 
 	

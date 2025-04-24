@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapons/Weapon.h"
+#include "WeaponsFinal/WeaponFinal.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 
 
@@ -32,9 +33,8 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 	bIsInAir = FillainCharacter->GetCharacterMovement()->IsFalling();
 	bIsAccelerating = FillainCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
-	bWeaponEquipped = FillainCharacter->IsWeaponEquipped();
 	bWeaponFinalEquipped = FillainCharacter->IsWeaponFinalEquipped();
-	EquippedWeapon = FillainCharacter->GetEquippedWeapon();
+	EquippedWeaponFinal = FillainCharacter->GetEquippedWeaponFinal();
 	bIsCrouched = FillainCharacter->bIsCrouched;
 	bAiming = FillainCharacter->IsAiming();
 	TurningInPlace = FillainCharacter->GetTurningInPlace();
@@ -59,9 +59,9 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	AO_Yaw = FillainCharacter->GetAO_Yaw();
 	AO_Pitch = FillainCharacter->GetAO_Pitch();
 
-	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && FillainCharacter->GetMesh())
+	if (bWeaponFinalEquipped && EquippedWeaponFinal && EquippedWeaponFinal->GetWeaponMesh() && FillainCharacter->GetMesh())
 	{
-		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+		LeftHandTransform = EquippedWeaponFinal->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
 		FVector OutPosition;
 		FRotator OutRotation;
 		FillainCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
@@ -71,7 +71,7 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		if (FillainCharacter->IsLocallyControlled())
 		{
 			bLocallyControlled = true;
-			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
+			FTransform RightHandTransform = EquippedWeaponFinal->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
 			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - FillainCharacter->GetHitTarget()));
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}

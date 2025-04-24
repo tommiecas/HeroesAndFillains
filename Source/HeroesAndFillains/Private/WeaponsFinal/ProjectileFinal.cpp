@@ -11,6 +11,8 @@
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Characters/FillainCharacter.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 AProjectileFinal::AProjectileFinal()
 {
@@ -24,6 +26,7 @@ AProjectileFinal::AProjectileFinal()
 	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
@@ -72,6 +75,13 @@ void AProjectileFinal::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 {
 	HitResult = Hit.ImpactPoint;
 	HitRotation = Hit.ImpactNormal.Rotation();
+
+	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
+	if (FillainCharacter)
+	{
+		FillainCharacter->MulticastHit();
+	}
+
 	Destroy();
 }
 

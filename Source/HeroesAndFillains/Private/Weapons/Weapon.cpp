@@ -96,7 +96,7 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedCOmponent, AActor* 
 	{
 		if (WeaponType == EWeaponType::EWT_Sword && FillainCharacter->GetTeam() == Team) return;
 		if (FillainCharacter->IsWieldingTheSword()) return;
-		FillainCharacter->SetOverlappingWeapon(this);
+		// FillainCharacter->SetOverlappingWeaponFinal(this);
 	}
 }
 
@@ -107,7 +107,7 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappingCOmponent, AAct
 	{
 		if (WeaponType == EWeaponType::EWT_Sword && FillainCharacter->GetTeam() != Team) return;
 		if (FillainCharacter->IsWieldingTheSword()) return;
-		FillainCharacter->SetOverlappingWeapon(nullptr);
+		FillainCharacter->SetOverlappingWeaponFinal(nullptr);
 	}
 }
 
@@ -119,7 +119,7 @@ void AWeapon::SetHUDAmmo()
 		FillainOwnerPlayerController = FillainOwnerPlayerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerPlayerController;
 		if (FillainOwnerPlayerController)
 		{
-			FillainOwnerPlayerController->SetHUDWeaponAmmo(Ammo);
+			FillainOwnerPlayerController->SetHUDWeaponFinalAmmo(Ammo);
 		}
 	}
 }
@@ -177,10 +177,10 @@ void AWeapon::OnRep_Owner()
 	else
 	{
 		FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(Owner) : FillainOwnerCharacter;
-		if (FillainOwnerCharacter && FillainOwnerCharacter->GetEquippedWeapon() && FillainOwnerCharacter->GetEquippedWeapon() == this)
-		{
-			SetHUDAmmo();
-		}
+		//if (FillainOwnerCharacter && FillainOwnerCharacter->GetEquippedWeaponFinal() && FillainOwnerCharacter->GetEquippedWeaponFinal() == this)
+		//{
+		//	SetHUDAmmo();
+		//}
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "FillainPlayerController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
@@ -30,9 +31,9 @@ public:
 	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
-	void SetHUDWeaponAmmo(int32 WeaponAmmo);
+	void SetHUDWeaponFinalAmmo(int32 WeaponFinalAmmo);
 	void SetHUDCarriedAmmo(int32 CarriedAmmo);
-	void SetHUDWeaponType(APawn* InPawn);
+	void SetHUDWeaponFinalType(APawn* InPawn);
 	void SetHUDEliminationMessage(AFillainPlayerController* ConstKillerController, AFillainPlayerController* ConstVictimController);
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
@@ -69,6 +70,8 @@ public:
 
 	UPROPERTY()
 	class AWeapon* EquippedWeapon;
+
+	class AWeaponFinal* EquippedWeaponFinal;
 
 	FHighPingDelegate HighPingDelegate;
 
@@ -112,7 +115,7 @@ protected:
 	class UInputAction* ChatAction;
 
 	/**************************************
-	* Sync Time Between Clinet And Server *
+	* Sync Time Between Client And Server *
 	***************************************/
 
 	//Requests the current server time, passing in the client's time when the request was sent
@@ -161,7 +164,7 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
-	FString GetWeaponTypeDisplayName(EWeaponType WeaponType);
+	FString GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType);
 
 	UPROPERTY()
 	class AFillainHUD* FillainHUD;
@@ -189,6 +192,7 @@ private:
 
 
 
+
 	float MatchTime = 0.f;
 	float WarmupTime = 0.f;
 	float LevelStartingTime = 0.f;
@@ -208,7 +212,7 @@ private:
 	bool bInitializeDefeats = false;
 	bool bInitializeGrenades = false;
 	bool bInitializeShield = false;
-	bool bInitializeWeaponAmmo = false;
+	bool bInitializeWeaponFinalAmmo = false;
 	bool bInitializeCarriedAmmo = false;
 
 	float HUDHealth;
@@ -219,7 +223,7 @@ private:
 	float HUDShield;
 	float HUDMaxShield;
 	float HUDCarriedAmmo;
-	float HUDWeaponAmmo;
+	float HUDWeaponFinalAmmo;
 
 	int32 ThirtySecondsOnTheClock = 30;
 

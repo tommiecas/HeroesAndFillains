@@ -41,6 +41,7 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsCrouched = FillainCharacter->bIsCrouched;
 	bAiming = FillainCharacter->IsAiming();
 	TurningInPlace = FillainCharacter->GetTurningInPlace();
+	bRotateRootBone = FillainCharacter->ShouldRotateRootBone();
 
 	FRotator AimRotation = FillainCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(FillainCharacter->GetVelocity());
@@ -71,7 +72,8 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		{
 			bLocallyControlled = true;
 			FTransform RightHandTransform = FillainCharacter->GetMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - FillainCharacter->GetHitTarget()));
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - FillainCharacter->GetHitTarget()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
 }

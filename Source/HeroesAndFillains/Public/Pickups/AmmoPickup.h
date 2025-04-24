@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Pickups/Pickup.h"
 #include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "AmmoPickup.generated.h"
 
 /**
@@ -29,7 +30,7 @@ public:
 	int32 AmmoAmount = 30;
 
 	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType;
+	EWeaponFinalType WeaponFinalType;
 
 private:
 

@@ -15,7 +15,7 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		UCombatComponent* Combat = FillainCharacter->GetCombatComponent();
 		if (Combat)
 		{
-			Combat->PickupAmmo(WeaponType, AmmoAmount);
+			Combat->PickupAmmo(WeaponFinalType, AmmoAmount);
 		}
 	}
 	Destroy();

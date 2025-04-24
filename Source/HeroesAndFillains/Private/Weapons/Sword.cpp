@@ -45,7 +45,7 @@ void ASword::ResetSword()
 	if (SwordWielder)
 	{
 		SwordWielder->SetWieldingTheSword(false);
-		SwordWielder->SetOverlappingWeapon(nullptr);
+		SwordWielder->SetOverlappingWeaponFinal(nullptr);
 		SwordWielder->UnCrouch();
 	}
 

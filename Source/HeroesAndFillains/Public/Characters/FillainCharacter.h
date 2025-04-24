@@ -60,7 +60,7 @@ public:
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
-	void SwitchWeapon(AWeapon* NewWeapon);
+	void SwitchWeaponFinal(AWeaponFinal* NewWeaponFinal);
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
@@ -104,6 +104,9 @@ public:
 
 	virtual void Jump() override;
 
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
+
 
 	/******************
 	** PLAY MONTAGES **
@@ -124,7 +127,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
-	void SpawnDefaultWeapon();
+	void SpawnDefaultWeaponFinal();
 
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> HitCollisionBoxes;
@@ -288,7 +291,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* foot_r;
 
-	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapon(AWeaponFinal* WeaponFinal);
 	void DropOrDestroyBothWeapons();
 
 	void SetSpawnPoint();
@@ -480,23 +483,20 @@ private:
 	***   Default Weapon   ***
 	*************************/
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AWeapon> DefaultWeaponClass;
+	TSubclassOf<AWeaponFinal> DefaultWeaponFinalClass;
 
 	UPROPERTY()
 	class AHAFGameMode* HAFGameMode;
 
 public:
-	void SetOverlappingWeapon(AWeapon* Weapon);
 	void SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal);
-	bool IsWeaponEquipped();
 	bool IsWeaponFinalEquipped();
 	bool IsAiming();
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AWeapon* GetOverlappingWeapon();
-	AWeapon* GetEquippedWeapon();
+	AWeaponFinal* GetOverlappingWeaponFinal();
 	AWeaponFinal* GetEquippedWeaponFinal();
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
