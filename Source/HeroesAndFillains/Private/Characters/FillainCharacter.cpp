@@ -37,6 +37,7 @@
 #include "NiagaraFunctionLibrary.h"  
 #include "GameStates/HAFGameState.h"  
 #include "PlayerStart/TeamPlayerStart.h"
+#include "GameFramework/Actor.h"
 
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -72,6 +73,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "GameStates/HAFGameState.h"
 #include "PlayerStart/TeamPlayerStart.h"
+
 
 
 AFillainCharacter::AFillainCharacter()
@@ -112,8 +114,8 @@ AFillainCharacter::AFillainCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-	NetUpdateFrequency = 66.f;
-	MinNetUpdateFrequency = 33.f;
+	SetNetUpdateFrequency(66.f);
+	SetMinNetUpdateFrequency(33.f);
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
@@ -233,6 +235,12 @@ void AFillainCharacter::Eliminate(bool bPlayerLeftGame)
 {
 	DropOrDestroyBothWeapons();
 	MulticastEliminate(bPlayerLeftGame);
+	GetWorldTimerManager().SetTimer(
+		EliminationTimer,
+		this,
+		&AFillainCharacter::EliminationTimerFinished,
+		EliminationDelay
+	);
 	
 }
 
@@ -258,12 +266,10 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 
 	// Disable Character Movement
 	bDisableGameplay = true;
-	GetCharacterMovement()->DisableMovement();
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
 	}
-	// Disable Collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -505,6 +511,7 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Look);

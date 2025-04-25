@@ -4,28 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "Components/WidgetComponent.h"
-#include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h" // Ensure this header is included for EWeaponFinalType
 #include "PickupWidgetComponent.generated.h"
 
 /**
- * 
- */
+* 
+*/
 UCLASS()
 class HEROESANDFILLAINS_API UPickupWidgetComponent : public UWidgetComponent
 {
-	GENERATED_BODY()
+GENERATED_BODY()
 
 public:
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* WeaponNameText;
+UPickupWidgetComponent();
+UPROPERTY(meta = (BindWidget))
+class UTextBlock* WeaponNameText;
 
-	class FString GetWeaponTypeDisplayName(EWeaponType WeaponType);
+FString GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType);
 
-	void SetWeaponNameText(FString WeaponNameTextToDisplay, class AWeaponFinal* InWeaponFinal);
+void SetWeaponNameText(FString WeaponNameTextToDisplay, class AWeaponFinal* InWeaponFinal);
 
-	UFUNCTION(BlueprintCallable)
-	void ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal);
-
-
-
+UFUNCTION(BlueprintCallable)
+void ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal);
 };

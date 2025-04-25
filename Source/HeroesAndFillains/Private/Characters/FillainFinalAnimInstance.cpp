@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "WeaponsFinal/WeaponFinal.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 
 
 void UFillainFinalAnimInstance::NativeInitializeAnimation()
@@ -76,4 +77,7 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
+	bUseFABRIK = FillainCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bUseAimOffsets = FillainCharacter->GetCombatState() != ECombatState::ECS_Reloading && !FillainCharacter->GetDisableGameplay();;
+	bTransformRightHand = FillainCharacter->GetCombatState() != ECombatState::ECS_Reloading && !FillainCharacter->GetDisableGameplay();;
 }

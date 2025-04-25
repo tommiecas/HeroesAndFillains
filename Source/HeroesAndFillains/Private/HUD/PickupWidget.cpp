@@ -44,13 +44,13 @@ void UPickupWidget::SetWeaponNameText(FString WeaponNameTextToDisplay, AWeaponFi
 
 void UPickupWidget::ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal)
 {
-   if (InWeaponFinal == nullptr || InWeaponFinal->WeaponFinalTypeDisplayed == EWeaponFinalTypeDisplayed::EWFTD_None)
+   if (InWeaponFinal == nullptr || InWeaponFinal->WeaponFinalType == EWeaponFinalType::EWFT_None)
    {
        // Handle the null case, maybe log an error or set a default player name
        SetWeaponNameText(FString("Unknown Weapon"), InWeaponFinal);
        return;
    }
 
-   FString WeaponName = InWeaponFinal->GetWeaponDisplayName(InWeaponFinal->WeaponFinalTypeDisplayed);
+   FString WeaponName = InWeaponFinal->GetWeaponFinalTypeDisplayed(InWeaponFinal->WeaponFinalType);
    SetWeaponNameText(WeaponName, InWeaponFinal);
 }

@@ -207,7 +207,7 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeaponFinal == nullptr) return;
-	if (Character/* && Character->IsLocallyControlled() && !Character->HasAuthority()*/)/* return;
+	if (Character && CombatState == ECombatState::ECS_Unoccupied/* && Character->IsLocallyControlled() && !Character->HasAuthority()*/)/* return;
 	LocalFire(TraceHitTarget);*/
 	{
 		Character->PlayFireMontage(bAiming);
@@ -293,6 +293,10 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	if (EquippedWeaponFinal->IsWeaponFinalEmpty())
+	{
+		Reload();
+	}
 	/* ReloadEmptyWeapon(); */
 }
 
@@ -371,6 +375,20 @@ void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+
+	if (EquippedWeaponFinal->EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquippedWeaponFinal->EquipSound,
+			Character->GetActorLocation()
+		);
+	}
+	if (EquippedWeaponFinal->IsWeaponFinalEmpty())
+	{
+		Reload();
+	}
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
@@ -773,6 +791,15 @@ void UCombatComponent::OnRep_EquippedWeaponFinal()
 	{
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+
+		if (EquippedWeaponFinal->EquipSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				EquippedWeaponFinal->EquipSound,
+				Character->GetActorLocation()
+			);
+		}
 	}
 }
 
@@ -884,7 +911,7 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeaponFinal == nullptr) return false;
-	return !EquippedWeaponFinal->IsWeaponFinalEmpty() && bCanGunFire;
+	return !EquippedWeaponFinal->IsWeaponFinalEmpty() && bCanGunFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

@@ -6,7 +6,6 @@
 #include "Components/WidgetComponent.h"
 #include "Characters/FillainCharacter.h"
 #include "PlayerController/FillainPlayerController.h"
-#include "Components/WidgetComponent.h"
 #include "HUD/PickupWidget.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimationAsset.h"
@@ -14,8 +13,6 @@
 #include "WeaponsFinal/CasingFinal.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
-#include "Components/WidgetComponent.h"
-#include "WeaponsFinal/WeaponFinal.h"
 #include "HUD/PickupWidgetComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 
@@ -50,12 +47,7 @@ AWeaponFinal::AWeaponFinal()
 	NameWidget2->SetupAttachment(RootComponent);
 }
 
-void AWeaponFinal::AddAmmo(int32 AmmoToAdd)
-{
-	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
 
-}
 
 void AWeaponFinal::EnableCustomDepth(bool bEnable)
 {
@@ -217,8 +209,6 @@ void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
-
-		break;
 	}
 }
 	
@@ -238,63 +228,6 @@ void AWeaponFinal::OnRep_WeaponFinalState()
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
-}
-
-void AWeaponFinal::OnRep_WeaponFinalTypeDisplayed()  
-{  
-   switch (WeaponFinalTypeDisplayed)  
-   {  
-   case EWeaponFinalTypeDisplayed::EWFTD_AssaultRifle:  
-       NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Assault Rifle")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Assault Rifle")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-       break;  
-   case EWeaponFinalTypeDisplayed::EWFTD_RocketLauncher:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_Pistol:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_SubmachineGun:  
-       NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_Shotgun:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_SniperRifle:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_GrenadeLauncher:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   case EWeaponFinalTypeDisplayed::EWFTD_Sword:  
-	   NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
-	   NameWidget1->ShowWeaponFinalName(this);
-	   NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
-	   NameWidget2->ShowWeaponFinalName(this);
-	   break;
-   default:  
-       break;  
-   }  
 }
 
 void AWeaponFinal::ShowPickupAndNameWidgets(bool bShowPickupAndNameWidgets)
@@ -330,7 +263,6 @@ void AWeaponFinal::Fire(const FVector& HitTarget)
 		{
 			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
 
-			FActorSpawnParameters SpawnParams;
 			UWorld* World = GetWorld();
 			if (World)
 			{
@@ -355,6 +287,13 @@ void AWeaponFinal::WeaponFinalDropped()
 	FillainOwnerController = nullptr;
 }
 
+void AWeaponFinal::AddAmmo(int32 AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+
+}
+
 bool AWeaponFinal::IsWeaponFinalEmpty()
 {
 	return (Ammo <= 0);
@@ -365,10 +304,71 @@ bool AWeaponFinal::IsWeaponFinalFull()
 	return Ammo == MagCapacity;
 }
 
-FString AWeaponFinal::GetWeaponDisplayName(EWeaponFinalTypeDisplayed DisplayNameType)
+FString AWeaponFinal::GetWeaponFinalTypeDisplayed(EWeaponFinalType TypeOfWeaponFinal)
 {
-	const UEnum* EnumPtr = StaticEnum<EWeaponFinalTypeDisplayed>();
+	const UEnum* EnumPtr = StaticEnum<EWeaponFinalType>();
 	if (!EnumPtr) return FString("Invalid");
 
-	return EnumPtr->GetDisplayNameTextByValue((int64)DisplayNameType).ToString();
+	if (TypeOfWeaponFinal == EWeaponFinalType::EWFT_None || TypeOfWeaponFinal == EWeaponFinalType::EWFT_MAX) return FString("None");
+	
+	FString DisplayName = EnumPtr->GetDisplayNameTextByValue((int64)TypeOfWeaponFinal).ToString();
+	DisplayWeaponFinalName(DisplayName);
+	return DisplayName;
+}
+
+void AWeaponFinal::DisplayWeaponFinalName(FString Name)
+{
+	switch (WeaponFinalType)
+	{//FText::FromString(TEXT("Assault Rifle")).ToString()
+	case EWeaponFinalType::EWFT_AssaultRifle:
+		NameWidget1->SetWeaponNameText(Name, this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(Name, this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_RocketLauncher:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_Pistol:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_SubmachineGun:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_Shotgun:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_SniperRifle:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_GrenadeLauncher:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	case EWeaponFinalType::EWFT_Sword:
+		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
+		NameWidget1->ShowWeaponFinalName(this);
+		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
+		NameWidget2->ShowWeaponFinalName(this);
+		break;
+	default:
+		break;
+	}
 }

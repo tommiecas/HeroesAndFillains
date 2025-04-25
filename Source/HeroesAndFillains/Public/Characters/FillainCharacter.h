@@ -520,7 +520,7 @@ public:
 	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
-	FORCEINLINE bool IsWieldingTheSword() const;
+	bool IsWieldingTheSword() const;
 	ETeam GetTeam();
 	void SetWieldingTheSword(bool bWielding);
 

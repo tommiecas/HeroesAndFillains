@@ -51,7 +51,7 @@ public:
 
 	void ShowPickupAndNameWidgets(bool bShowPickupAndNameWidgets);
 	virtual void Fire(const FVector& HitTarget);
-	FString GetWeaponDisplayName(EWeaponFinalTypeDisplayed DisplayNameType);
+	FString GetWeaponFinalTypeDisplayed(EWeaponFinalType TypeOfWeaponFinal);
 	void WeaponFinalDropped();
 
 	/*********************************************
@@ -99,8 +99,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bIsWeaponAutomatic = true;
 
-	UPROPERTY(ReplicatedUsing = OnRep_WeaponFinalTypeDisplayed, VisibleAnywhere, Category = "Weapon Properties")
-	EWeaponFinalTypeDisplayed WeaponFinalTypeDisplayed;
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	EWeaponFinalType WeaponFinalType;
+
+	UFUNCTION()
+	void DisplayWeaponFinalName(FString Name);
 
 	void AddAmmo(int32 AmmoToAdd);
 
@@ -158,13 +161,10 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponFinalState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponFinalState WeaponFinalState;
 
-	
-
 	UFUNCTION()
 	void OnRep_WeaponFinalState();
 
-	UFUNCTION()
-	void OnRep_WeaponFinalTypeDisplayed();
+	
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidgetA;
@@ -201,9 +201,6 @@ private:
 	UPROPERTY()
 	class AFillainPlayerController* FillainOwnerController;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	EWeaponFinalType WeaponFinalType;
-
 public:
 	void SetWeaponFinalState(EWeaponFinalState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
@@ -213,7 +210,6 @@ public:
 	bool IsWeaponFinalEmpty();
 	bool IsWeaponFinalFull();
 	FORCEINLINE EWeaponFinalType GetWeaponFinalType() const { return WeaponFinalType; }
-	FORCEINLINE EWeaponFinalTypeDisplayed GetWeaponFinalTypeDisplayed() const { return WeaponFinalTypeDisplayed; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
