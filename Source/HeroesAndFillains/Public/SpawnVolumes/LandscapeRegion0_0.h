@@ -24,14 +24,26 @@ protected:
     TSubclassOf<AActor> AssaultRifleToSpawn;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
-    int32 SpawnCount = 100;
+    TSubclassOf<AActor> RocketLauncherToSpawn;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    int32 SpawnCount = 50;
 
     UFUNCTION(BlueprintCallable)
     void SpawnAssaultRifles();
 
+    UFUNCTION(BlueprintCallable)
+    void SpawnRocketLaunchers();
+
+
     FVector RandomBoxPoints() const;
 
 private:
-   
+    UPROPERTY(EditAnywhere, Category = "Spawning")
+	TSubclassOf<class UPickupWidget> PickupWidgetClass;
+	
+    UFUNCTION()
+    void AttachFloatingIcon(AActor* TargetWeapon);
+	
 
 };

@@ -117,6 +117,27 @@ public:
 
 	FVector TraceEndWithScatter(const FVector& HitTarget);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
+	class USphereComponent* AreaSphere;
+
+	// Floating hover parameters
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	bool bShouldHover = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	float HoverAmplitude = 20.f; // How far it moves up/down (units)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	float HoverSpeed = 2.f; // How fast it oscillates
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UPointLightComponent* HoverLight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UDecalComponent* HoverDecal;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	bool bShouldFloatSpin = true;
 
 protected:
 	virtual void BeginPlay() override;
@@ -155,8 +176,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class USphereComponent* AreaSphere;
+
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponFinalState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponFinalState WeaponFinalState;

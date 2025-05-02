@@ -15,10 +15,12 @@
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "HUD/PickupWidgetComponent.h"
 #include <Kismet/KismetMathLibrary.h>
+#include "Components/PointLightComponent.h"
+#include "Components/DecalComponent.h"
 
 AWeaponFinal::AWeaponFinal()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh")); 
@@ -43,6 +45,32 @@ AWeaponFinal::AWeaponFinal()
 
 	NameWidget2 = CreateDefaultSubobject<UPickupWidgetComponent>(TEXT("NameWidget2"));
 	NameWidget2->SetupAttachment(RootComponent);
+
+	HoverLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoverLight"));
+	HoverLight->SetupAttachment(RootComponent);
+
+	// Settings
+	HoverLight->SetIntensity(2000.f);  // How bright
+	HoverLight->SetAttenuationRadius(300.f); // How far it shines
+	HoverLight->SetLightColor(FLinearColor(0.f, 0.5f, 1.f)); // Slight blue glow
+	HoverLight->SetRelativeLocation(FVector(0.f, 0.f, -50.f)); // Glow slightly under rifle
+	HoverLight->bUseInverseSquaredFalloff = false; // Makes intensity easier to control
+	HoverLight->SetVisibility(true);
+
+	HoverDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("HoverDecal"));
+	HoverDecal->SetupAttachment(RootComponent);
+
+	// Settings
+	HoverDecal->DecalSize = FVector(64.f, 128.f, 128.f); // Flat and wide
+	HoverDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f)); // Face it downward
+	HoverDecal->SetRelativeLocation(FVector(0.f, 0.f, -55.f)); // Slightly under rifle
+
+	// Assign a material (you need a simple glowing decal material)
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> DecalMat(TEXT("Material'/Game/Materials/M_GlowDecal.M_GlowDecal'"));
+	if (DecalMat.Succeeded())
+	{
+		HoverDecal->SetDecalMaterial(DecalMat.Object);
+	}
 }
 
 
@@ -112,6 +140,22 @@ void AWeaponFinal::BeginPlay()
 void AWeaponFinal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+
+	if (bShouldHover)
+	{
+		float RunningTime = GetGameTimeSinceCreation(); // How long this actor has existed
+		float DeltaHeight = FMath::Sin(RunningTime * HoverSpeed) * HoverAmplitude * DeltaTime;
+
+		FVector NewLocation = GetActorLocation();
+		NewLocation.Z += DeltaHeight;
+		SetActorLocation(NewLocation);
+	}
+
+	if (bShouldFloatSpin) // You can make a bool for it
+	{
+		AddActorLocalRotation(FRotator(0.f, 30.f * DeltaTime, 0.f)); // 30 degrees per second
+	}
 
 }
 
