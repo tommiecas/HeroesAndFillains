@@ -32,35 +32,31 @@ void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
 				Start,
 				End,
 				ECollisionChannel::ECC_Visibility
-				);
+			);
 			FVector BeamEnd = End;
 			if (FireHit.bBlockingHit)
 			{
 				BeamEnd = FireHit.ImpactPoint;
 				AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(FireHit.GetActor());
-				if (FillainCharacter)
+				if (FillainCharacter && HasAuthority() && InstigatorController)
 				{
-					if (HasAuthority())
-					{
-						UGameplayStatics::ApplyDamage(
-							FillainCharacter,
-							Damage,
-							InstigatorController,
-							this,
-							UDamageType::StaticClass()
-						);
-
-					}
+					UGameplayStatics::ApplyDamage(
+						FillainCharacter,
+						Damage,
+						InstigatorController,
+						this,
+						UDamageType::StaticClass()
+					);
 				}
-				if (ImpactParticles)
-				{
-					UGameplayStatics::SpawnEmitterAtLocation(
-						World,
-						ImpactParticles,
-						End,
-						FireHit.ImpactNormal.Rotation()
-					);		
-				}
+			}
+			if (ImpactParticles)
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(
+					World,
+					ImpactParticles,
+					End,
+					FireHit.ImpactNormal.Rotation()
+				);
 			}
 			if (BeamParticles)
 			{

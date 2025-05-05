@@ -40,6 +40,7 @@ void ALandscapeRegion0_0::BeginPlay()
     SpawnAssaultRifles();
     SpawnRocketLaunchers();
     SpawnPistols();
+    SpawnSMGs();
 }
 
 FVector ALandscapeRegion0_0::RandomBoxPoints() const
@@ -188,7 +189,7 @@ void ALandscapeRegion0_0::SpawnAssaultRifles()
                 AttachFloatingIcon(SpawnedAssaultRifle);
 
                 ++Spawned;
-                DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Green, true, 10.f);
+                DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Blue, true, 10.f);
                 
             }
         }
@@ -449,6 +450,134 @@ void ALandscapeRegion0_0::SpawnPistols()
         }
 
     }
-};
+}
+void ALandscapeRegion0_0::SpawnSMGs()
+{
+    int32 Spawned = 0;
+
+    while (Spawned < SpawnCount)
+    {
+        FVector RandomXY = RandomBoxPoints();
+        FVector Start = FVector(RandomXY.X, RandomXY.Y, SpawnBox->Bounds.Origin.Z + SpawnBox->Bounds.BoxExtent.Z + 1000.f);
+        FVector End = FVector(RandomXY.X, RandomXY.Y, Start.Z - 5000.f); // Look far below
+
+        FHitResult GroundHit;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+
+        bool bHit = GetWorld()->LineTraceSingleByChannel(
+            GroundHit,
+            Start,
+            End,
+            ECC_WorldStatic,
+            Params
+        );
+
+        if (bHit)
+        {
+            // --- COMPONENT NAME FILTERING ---
+            if (GroundHit.Component.IsValid())
+            {
+
+                FString CompName = GroundHit.Component->GetName();
+
+                if (CompName.Contains("Tree") || CompName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("RocketLauncher") || CompName.Contains("AssaultRifle") || CompName.Contains("Pistol"))
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Skipped due to component name: %s"), *CompName);
+                    continue; // Skip this spawn point
+                }
+
+                // Optional: Check Material too
+                UPrimitiveComponent* HitComp = GroundHit.Component.Get();
+                UMaterialInterface* HitMat = HitComp->GetMaterial(0);
+                if (HitMat)
+                {
+                    FString MatName = HitMat->GetName();
+                    if (MatName.Contains("Tree") || MatName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("RocketLauncher") || CompName.Contains("AssaultRifle") || CompName.Contains("Pistol"))
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Skipped due to material name: %s"), *MatName);
+                        continue;
+                    }
+                }
+            }
+
+            // Now offset spawn above ground
+            FVector SpawnLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, 100.f);
+
+            // Optional overlap test
+            FHitResult OverlapCheck;
+            bool bBlocked = GetWorld()->SweepSingleByChannel(
+                OverlapCheck,
+                SpawnLocation,
+                SpawnLocation,
+                FQuat::Identity,
+                ECC_WorldStatic,
+                FCollisionShape::MakeSphere(25.f)
+            );
+
+            if (!bBlocked && SMGToSpawn)
+            {
+                // --- Use proper spawn parameters ---
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+                AActor* SpawnedSMG = GetWorld()->SpawnActor<AActor>(SMGToSpawn, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+
+                if (SpawnedSMG)
+                {
+                    // --- After spawn, force collision settings ---
+                    // Cast to your weapon class if needed
+                    AWeaponFinal* SMGFinal = Cast<AWeaponFinal>(SpawnedSMG); // Use your correct weapon base class
+
+                    if (SMGFinal && SMGFinal->AreaSphere)
+                    {
+
+                        SMGFinal->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+                        SMGFinal->AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+                        SMGFinal->AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+                        SMGFinal->AreaSphere->SetGenerateOverlapEvents(true);
+                    }
+                    else
+                    {
+                    }
+
+                    if (SMGFinal->HoverLight)
+                    {
+                    }
+                    else
+                    {
+                    }
+                    UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(SMGFinal->GetRootComponent());
+                    if (RootPrimitive)
+                    {
+                        RootPrimitive->SetSimulatePhysics(false);
+                        RootPrimitive->SetEnableGravity(false);
+                    }
+                    // Ensure float behavior is active
+                    SMGFinal->bShouldHover = true;
+                    SMGFinal->bShouldFloatSpin = true;
+
+                    // Optional: check light/visuals
+                    if (SMGFinal->HoverLight)
+                    {
+                        SMGFinal->HoverLight->SetVisibility(true);
+                    }
+
+                    if (SMGFinal->HoverDecal)
+                    {
+                        SMGFinal->HoverDecal->SetVisibility(true);
+                    }
+                }
+                // (Optional) Auto-attach a floating widget above rifle
+                AttachFloatingIcon(SpawnedSMG);
+
+                ++Spawned;
+                DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Green, true, 10.f);
+
+            }
+        }
+    }
+}
+;
 
 
