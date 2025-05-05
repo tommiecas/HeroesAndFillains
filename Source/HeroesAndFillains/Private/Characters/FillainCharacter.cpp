@@ -1326,14 +1326,7 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 		{
 			Subsystem->AddMappingContext(HAFMappingContext, 0);
 		}
-		if (NewFillainController)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Successfully initialized FillainPlayerController"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to initialize FillainPlayerController"));
-		}
+		
 		ShowPlayerName();
 	}
 }

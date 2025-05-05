@@ -14,6 +14,8 @@ class HEROESANDFILLAINS_API AProjectileBulletFinal : public AProjectileFinal
 {
 	GENERATED_BODY()
 
+public:
+	AProjectileBulletFinal();
 
 protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;

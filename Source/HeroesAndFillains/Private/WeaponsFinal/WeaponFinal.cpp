@@ -22,6 +22,9 @@ AWeaponFinal::AWeaponFinal()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	SetReplicateMovement(true);
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh")); 
 	WeaponMesh->SetupAttachment(RootComponent);
@@ -33,6 +36,10 @@ AWeaponFinal::AWeaponFinal()
 	AreaSphere->SetupAttachment(RootComponent);
 	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	AreaSphere->SetGenerateOverlapEvents(true);
 	
 	PickupWidgetA = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidgetA"));
 	PickupWidgetA->SetupAttachment(RootComponent);
@@ -156,7 +163,6 @@ void AWeaponFinal::Tick(float DeltaTime)
 	{
 		AddActorLocalRotation(FRotator(0.f, 30.f * DeltaTime, 0.f)); // 30 degrees per second
 	}
-
 }
 
 void AWeaponFinal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -169,11 +175,16 @@ void AWeaponFinal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AWeaponFinal::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+
 	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
 	if (FillainCharacter)
 	{
 		FillainCharacter->SetOverlappingWeaponFinal(this);
+		bShouldFloatSpin = false;
+		AddActorLocalRotation(FRotator(0.f, 0.f, 0.f)); 
+		bShouldHover = false;
 	}
+
 }
 
 void AWeaponFinal::OnSphereEndOverlap(UPrimitiveComponent* OverlappingCOmponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -232,25 +243,31 @@ void AWeaponFinal::OnRep_Owner()
 
 void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 {
-	WeaponFinalState = State;
-	switch (WeaponFinalState)
-	{
-	case EWeaponFinalState::EWFS_Equipped:
-		ShowPickupAndNameWidgets(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		break;
-	case EWeaponFinalState::EWFS_Dropped:
-		if (HasAuthority())
+		WeaponFinalState = State;
+
+		switch (WeaponFinalState)
 		{
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		break;
+		case EWeaponFinalState::EWFS_Equipped:
+			bShouldHover = false;
+			bShouldFloatSpin = false;
+			ShowPickupAndNameWidgets(false);
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			WeaponMesh->SetSimulatePhysics(false);
+			WeaponMesh->SetEnableGravity(false);
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			break;
+
+		case EWeaponFinalState::EWFS_Dropped:
+			bShouldHover = true;
+			bShouldFloatSpin = true;
+			if (HasAuthority())
+			{
+				AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			}
+			WeaponMesh->SetSimulatePhysics(true);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			break;
 	}
 }
 	
@@ -259,12 +276,18 @@ void AWeaponFinal::OnRep_WeaponFinalState()
 	switch (WeaponFinalState)
 	{
 	case EWeaponFinalState::EWFS_Equipped:
+		bShouldHover = false;
+		bShouldFloatSpin = false;
 		ShowPickupAndNameWidgets(false);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
+
 	case EWeaponFinalState::EWFS_Dropped:
+		bShouldHover = true;
+		bShouldFloatSpin = true;
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

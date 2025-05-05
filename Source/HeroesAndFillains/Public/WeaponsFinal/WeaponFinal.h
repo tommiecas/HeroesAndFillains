@@ -99,7 +99,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bIsWeaponAutomatic = true;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EWeaponFinalType WeaponFinalType;
 
 	UFUNCTION()
@@ -158,14 +158,14 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	float Damage = 20.f;
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	float DistanceToSphere = 800.f;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	float SphereRadius = 75.f;
-
-	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
 
 	UPROPERTY(EditAnywhere)
 	float HeadShotDamage = 40.f;
@@ -176,7 +176,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
-
+	
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponFinalState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponFinalState WeaponFinalState;

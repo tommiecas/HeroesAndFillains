@@ -14,6 +14,9 @@ class HEROESANDFILLAINS_API ALandscapeRegion0_0 : public AActor
 public:
     ALandscapeRegion0_0();
 
+    UPROPERTY(EditAnywhere, Category = "Spawning")
+    bool bShouldSpawnWeapons = false;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -27,6 +30,9 @@ protected:
     TSubclassOf<AActor> RocketLauncherToSpawn;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    TSubclassOf<AActor> PistolToSpawn;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
     int32 SpawnCount = 50;
 
     UFUNCTION(BlueprintCallable)
@@ -34,6 +40,9 @@ protected:
 
     UFUNCTION(BlueprintCallable)
     void SpawnRocketLaunchers();
+
+    UFUNCTION(BlueprintCallable)
+    void SpawnPistols();
 
 
     FVector RandomBoxPoints() const;

@@ -21,6 +21,8 @@
 #include "Weapons/Shotgun.h"
 #include "DrawDebugHelpers.h"
 #include "WeaponsFinal/WeaponFinal.h"
+#include "Components/PointLightComponent.h"
+#include "Components/DecalComponent.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -389,6 +391,16 @@ void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 		Reload();
 	}
 
+	if (EquippedWeaponFinal->HoverLight)
+	{
+		EquippedWeaponFinal->HoverLight->SetVisibility(false);
+	}
+
+	if (EquippedWeaponFinal->HoverDecal)
+	{
+		EquippedWeaponFinal->HoverDecal->SetVisibility(false);
+	}
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
@@ -413,6 +425,10 @@ void UCombatComponent::EquipPrimaryWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 	AttachActorToRightHand(EquippedWeaponFinal);
 	EquippedWeaponFinal->SetOwner(Character);
 	EquippedWeaponFinal->SetHUDAmmo();
+	EquippedWeaponFinal->bShouldHover = false;
+	EquippedWeaponFinal->bShouldFloatSpin = false;
+	EquippedWeaponFinal->HoverLight->SetVisibility(false);
+	EquippedWeaponFinal->HoverDecal->SetVisibility(false);
 	UpdateCarriedAmmo();
 	PlayWeaponFinalEquipSound(WeaponFinalToEquip);
 	ReloadEmptyWeaponFinal();
@@ -427,6 +443,10 @@ void UCombatComponent::EquipSecondaryWeaponFinal(AWeaponFinal* WeaponFinalToEqui
 	AttachActorToBackpack(WeaponFinalToEquip);
 	PlayWeaponFinalEquipSound(WeaponFinalToEquip);
 	SecondaryWeaponFinal->SetOwner(Character);
+	SecondaryWeaponFinal->bShouldHover = false;
+	SecondaryWeaponFinal->bShouldFloatSpin = false;
+	SecondaryWeaponFinal->HoverLight->SetVisibility(false);
+	SecondaryWeaponFinal->HoverDecal->SetVisibility(false);
 
 }
 

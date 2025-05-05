@@ -14,6 +14,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "WeaponsFinal/HitScanWeaponFinal.h"
 
 ALandscapeRegion0_0::ALandscapeRegion0_0()
 {
@@ -26,9 +27,19 @@ ALandscapeRegion0_0::ALandscapeRegion0_0()
 void ALandscapeRegion0_0::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (!bShouldSpawnWeapons) return;
+
+#if WITH_EDITOR
+    if (!GetWorld()->IsPlayInEditor())
+    {
+        return;
+    }
+#endif
+
     SpawnAssaultRifles();
     SpawnRocketLaunchers();
-
+    SpawnPistols();
 }
 
 FVector ALandscapeRegion0_0::RandomBoxPoints() const
@@ -85,7 +96,6 @@ void ALandscapeRegion0_0::SpawnAssaultRifles()
             {
                 
                 FString CompName = GroundHit.Component->GetName();
-                UE_LOG(LogTemp, Warning, TEXT("Hit Component: %s"), *CompName);
 
                 if (CompName.Contains("Tree") || CompName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("RocketLauncher"))
                 {
@@ -137,7 +147,6 @@ void ALandscapeRegion0_0::SpawnAssaultRifles()
 
                     if (AssaultRifleFinal && AssaultRifleFinal->AreaSphere)
                     {
-                        UE_LOG(LogTemp, Warning, TEXT("CollisionSphere found and setup"));
 
                         AssaultRifleFinal->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
                         AssaultRifleFinal->AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -146,16 +155,13 @@ void ALandscapeRegion0_0::SpawnAssaultRifles()
                     }
                     else
                     {
-                        UE_LOG(LogTemp, Error, TEXT("CollisionSphere is MISSING!"));
                     }
 
                     if (AssaultRifleFinal->HoverLight)
                     {
-						UE_LOG(LogTemp, Warning, TEXT("Rifle has HoverLight: %s"), *AssaultRifleFinal->HoverLight->GetName());
                     }
                     else
                     {
-						UE_LOG(LogTemp, Error, TEXT("Rifle is MISSING HoverLight!"));
                     }
                     UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(AssaultRifleFinal->GetRootComponent());
                     if (RootPrimitive)
@@ -218,7 +224,6 @@ void ALandscapeRegion0_0::SpawnRocketLaunchers()
             {
 
                 FString CompName = GroundHit.Component->GetName();
-                UE_LOG(LogTemp, Warning, TEXT("Hit Component: %s"), *CompName);
 
                 if (CompName.Contains("Tree") || CompName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("AssaultRifle"))
                 {
@@ -270,27 +275,180 @@ void ALandscapeRegion0_0::SpawnRocketLaunchers()
 
                     if (RocketLauncherFinal && RocketLauncherFinal->AreaSphere)
                     {
-                        RocketLauncherFinal->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-                        RocketLauncherFinal->AreaSphere->SetGenerateOverlapEvents(true);
 
-                        // (Optional) Reset collision profile
-                        RocketLauncherFinal->AreaSphere->SetCollisionProfileName(FName("OverlapAllDynamic"));
+                        RocketLauncherFinal->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+                        RocketLauncherFinal->AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+                        RocketLauncherFinal->AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+                        RocketLauncherFinal->AreaSphere->SetGenerateOverlapEvents(true);
+                    }
+                    else
+                    {
                     }
 
+                    if (RocketLauncherFinal->HoverLight)
+                    {
+                    }
+                    else
+                    {
+                    }
                     UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(RocketLauncherFinal->GetRootComponent());
                     if (RootPrimitive)
                     {
                         RootPrimitive->SetSimulatePhysics(false);
                         RootPrimitive->SetEnableGravity(false);
                     }
-                    // (Optional) Auto-attach a floating widget above rifle
-                    AttachFloatingIcon(SpawnedRocketLauncher);
+                    // Ensure float behavior is active
+                    RocketLauncherFinal->bShouldHover = true;
+                    RocketLauncherFinal->bShouldFloatSpin = true;
 
-                    ++Spawned;
-                    DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Green, true, 10.f);
+                    // Optional: check light/visuals
+                    if (RocketLauncherFinal->HoverLight)
+                    {
+                        RocketLauncherFinal->HoverLight->SetVisibility(true);
+                    }
+
+                    if (RocketLauncherFinal->HoverDecal)
+                    {
+                        RocketLauncherFinal->HoverDecal->SetVisibility(true);
+                    }
                 }
+                // (Optional) Auto-attach a floating widget above rifle
+                AttachFloatingIcon(SpawnedRocketLauncher);
+
+                ++Spawned;
+                DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Red, true, 10.f);
+
             }
         }
     }
 }
+void ALandscapeRegion0_0::SpawnPistols()
+{
+    int32 Spawned = 0;
+
+    while (Spawned < SpawnCount)
+    {
+        FVector RandomXY = RandomBoxPoints();
+        FVector Start = FVector(RandomXY.X, RandomXY.Y, SpawnBox->Bounds.Origin.Z + SpawnBox->Bounds.BoxExtent.Z + 1000.f);
+        FVector End = FVector(RandomXY.X, RandomXY.Y, Start.Z - 5000.f); // Look far below
+
+        FHitResult GroundHit;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+
+        bool bHit = GetWorld()->LineTraceSingleByChannel(
+            GroundHit,
+            Start,
+            End,
+            ECC_WorldStatic,
+            Params
+        );
+
+        if (bHit)
+        {
+            // --- COMPONENT NAME FILTERING ---
+            if (GroundHit.Component.IsValid())
+            {
+
+                FString CompName = GroundHit.Component->GetName();
+
+                if (CompName.Contains("Tree") || CompName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("AssaultRifle") || CompName.Contains("RocketLauncher"))
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Skipped due to component name: %s"), *CompName);
+                    continue; // Skip this spawn point
+                }
+
+                // Optional: Check Material too
+                UPrimitiveComponent* HitComp = GroundHit.Component.Get();
+                UMaterialInterface* HitMat = HitComp->GetMaterial(0);
+                if (HitMat)
+                {
+                    FString MatName = HitMat->GetName();
+                    if (MatName.Contains("Tree") || MatName.Contains("Rock") || CompName.Contains("Boulder") || CompName.Contains("Bush") || CompName.Contains("AssaultRifle") || CompName.Contains("RocketLauncher"))
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Skipped due to material name: %s"), *MatName);
+                        continue;
+                    }
+                }
+            }
+
+            // Now offset spawn above ground
+            FVector SpawnLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, 100.f);
+
+            // Optional overlap test
+            FHitResult OverlapCheck;
+            bool bBlocked = GetWorld()->SweepSingleByChannel(
+                OverlapCheck,
+                SpawnLocation,
+                SpawnLocation,
+                FQuat::Identity,
+                ECC_WorldStatic,
+                FCollisionShape::MakeSphere(25.f)
+            );
+
+            if (!bBlocked && PistolToSpawn)
+            {
+                // --- Use proper spawn parameters ---
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+                AActor* SpawnedPistol = GetWorld()->SpawnActor<AActor>(PistolToSpawn, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+
+                if (SpawnedPistol)
+                {
+                    // --- After spawn, force collision settings ---
+                    // Cast to your weapon class if needed
+                    AHitScanWeaponFinal* PistolFinal = Cast<AHitScanWeaponFinal>(SpawnedPistol); // Use your correct weapon base class
+
+                    if (PistolFinal && PistolFinal->AreaSphere)
+                    {
+
+                        PistolFinal->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+                        PistolFinal->AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+                        PistolFinal->AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+                        PistolFinal->AreaSphere->SetGenerateOverlapEvents(true);
+                    }
+                    else
+                    {
+                    }
+
+                    if (PistolFinal->HoverLight)
+                    {
+                    }
+                    else
+                    {
+                    }
+                    UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(PistolFinal->GetRootComponent());
+                    if (RootPrimitive)
+                    {
+                        RootPrimitive->SetSimulatePhysics(false);
+                        RootPrimitive->SetEnableGravity(false);
+                    }
+                    // Ensure float behavior is active
+                    PistolFinal->bShouldHover = true;
+                    PistolFinal->bShouldFloatSpin = true;
+
+                    // Optional: check light/visuals
+                    if (PistolFinal->HoverLight)
+                    {
+                        PistolFinal->HoverLight->SetVisibility(true);
+                    }
+
+                    if (PistolFinal->HoverDecal)
+                    {
+                        PistolFinal->HoverDecal->SetVisibility(true);
+                    }
+                }
+                // (Optional) Auto-attach a floating widget above rifle
+                AttachFloatingIcon(SpawnedPistol);
+
+                ++Spawned;
+                DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, FColor::Yellow, true, 10.f);
+
+            }
+        }
+
+    }
+};
+
 

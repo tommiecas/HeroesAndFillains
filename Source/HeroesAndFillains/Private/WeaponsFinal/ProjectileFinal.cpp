@@ -2,7 +2,6 @@
 
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
@@ -28,9 +27,6 @@ AProjectileFinal::AProjectileFinal()
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-
 	BulletMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BulletMesh"));
 	BulletMesh->SetupAttachment(RootComponent);
 	BulletMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
@@ -46,14 +42,7 @@ void AProjectileFinal::Destroyed()
 {
 	Super::Destroyed();
 
-	if (ImpactParticles)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactParticles, HitResult, HitRotation);
-	}
-	if (ImpactSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-	}
+	
 }
 
 void AProjectileFinal::BeginPlay()
@@ -68,6 +57,7 @@ void AProjectileFinal::BeginPlay()
 	if (HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileFinal::OnHit);
+		CollisionBox->IgnoreActorWhenMoving(Owner, true);
 	}
 }
 

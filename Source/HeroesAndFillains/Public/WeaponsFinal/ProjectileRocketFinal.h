@@ -14,12 +14,40 @@ class HEROESANDFILLAINS_API AProjectileRocketFinal : public AProjectileFinal
 {
 	GENERATED_BODY()
 
-protected:
+public:
 	AProjectileRocketFinal();
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+	
+protected:
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* TrailSystem;
+
+	void DestroyTimerFinished();
+
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* ProjectileLoop;
+
+	UPROPERTY()
+	UAudioComponent* ProjectileLoopComponent;
+
+	UPROPERTY(EditAnywhere)
+	USoundAttenuation* LoopingSoundAttenuation;
+
+	UPROPERTY(VisibleAnywhere)
+	class URocketMovementComponentFinal* RocketMovementComponent;
 
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* RocketMesh;
+
+	FTimerHandle DestroyTimer;
+
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
 	
 };
