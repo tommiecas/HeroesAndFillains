@@ -21,9 +21,4 @@ UPROPERTY(meta = (BindWidget))
 class UTextBlock* WeaponNameText;
 
 FString GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType);
-
-void SetWeaponNameText(FString WeaponNameTextToDisplay, class AWeaponFinal* InWeaponFinal);
-
-UFUNCTION(BlueprintCallable)
-void ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal);
 };

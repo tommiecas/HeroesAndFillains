@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "PickupWidget.generated.h"
 
 /**
@@ -19,13 +19,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* WeaponNameText;
 
-	class FString GetWeaponTypeDisplayName(EWeaponType WeaponType);
-
-	void SetWeaponNameText(FString WeaponNameTextToDisplay, AWeaponFinal* InWeaponFinal);
-
-	UFUNCTION(BlueprintCallable)
-	void ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal);
-
+	FString GetWeaponTypeDisplayName(EWeaponFinalType WeaponFinalType);
 
 	
 };

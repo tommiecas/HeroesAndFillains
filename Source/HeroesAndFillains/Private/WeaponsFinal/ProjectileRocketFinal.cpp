@@ -17,9 +17,9 @@
 
 AProjectileRocketFinal::AProjectileRocketFinal()
 {
-	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
-	RocketMesh->SetupAttachment(RootComponent);
-	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
+	ProjectileMesh->SetupAttachment(RootComponent);
+	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponentFinal>(TEXT("RocketMovementComponent"));
 	RocketMovementComponent->bRotationFollowsVelocity = true;
@@ -32,30 +32,9 @@ void AProjectileRocketFinal::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	{
 		return;
 	}
-	APawn* FiringPawn = GetInstigator();
-	if (FiringPawn && HasAuthority())
-	{
-		AController* FiringController = FiringPawn->GetController();
-		if (FiringController)
-		{
-			// Apply damage to the hit actor
-			UGameplayStatics::ApplyRadialDamageWithFalloff(
-				this,
-				Damage,
-				10.f,
-				GetActorLocation(),
-				200.f,
-				500.f,
-				1.f,
-				UDamageType::StaticClass(),
-				TArray<AActor*>(),
-				this,
-				FiringController
-			);
-		}
-	}
-	GetWorldTimerManager().SetTimer(DestroyTimer, this, &AProjectileRocketFinal::DestroyTimerFinished, DestroyTime, false);
-	
+	ExplodeDamage();
+	StartDestroyTimer();
+
 	if (ImpactParticles)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactParticles, HitResult, HitRotation);
@@ -64,9 +43,9 @@ void AProjectileRocketFinal::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 	}
-	if (RocketMesh)
+	if (ProjectileMesh)
 	{
-		RocketMesh->SetVisibility(false);
+		ProjectileMesh->SetVisibility(false);
 	}
 	if (CollisionBox)
 	{
@@ -91,18 +70,8 @@ void AProjectileRocketFinal::BeginPlay()
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileRocketFinal::OnHit);
 	}
 
-	if (TrailSystem)
-	{
-		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			TrailSystem,
-			GetRootComponent(),
-			FName(),
-			GetActorLocation(), 
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false
-		);
-	}
+	SpawnTrailSystem();
+	
 	if (ProjectileLoop && LoopingSoundAttenuation)
 	{
 		ProjectileLoopComponent = UGameplayStatics::SpawnSoundAttached(
@@ -125,9 +94,4 @@ void AProjectileRocketFinal::BeginPlay()
 void AProjectileRocketFinal::Destroyed()
 {
 
-}
-
-void AProjectileRocketFinal::DestroyTimerFinished()
-{
-	Destroy();
 }

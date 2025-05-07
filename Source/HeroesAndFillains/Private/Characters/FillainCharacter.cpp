@@ -215,7 +215,6 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeaponFinal, COND_OwnerOnly);
 	DOREPLIFETIME(AFillainCharacter, HitReactMontage);
 	DOREPLIFETIME(AFillainCharacter, Health);
@@ -804,7 +803,7 @@ void AFillainCharacter::EquipButtonPressed()
 		bool bSwap = Combat->ShouldSwapWeapons() &&
 			!HasAuthority() &&
 			Combat->CombatState == ECombatState::ECS_Unoccupied &&
-			OverlappingWeapon == nullptr;
+			OverlappingWeaponFinal == nullptr;
 
 		if (bSwap)
 		{
@@ -1160,7 +1159,7 @@ void AFillainCharacter::SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal)
 { 
 	if (OverlappingWeaponFinal)
 	{
-		OverlappingWeaponFinal->ShowPickupAndNameWidgets(false);
+		OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
 	}
 	OverlappingWeaponFinal = WeaponFinal;
 	
@@ -1168,20 +1167,8 @@ void AFillainCharacter::SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal)
 	{
 		if (OverlappingWeaponFinal)
 		{
-			OverlappingWeaponFinal->ShowPickupAndNameWidgets(true);
+			OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(true);
 		}
-	}
-}
-
-void AFillainCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
-{
-	if (OverlappingWeapon)
-	{
-		OverlappingWeapon->ShowPickupWidgets();
-	}
-	if (LastWeapon)
-	{
-		LastWeapon->ShowPickupWidgets();
 	}
 }
 
@@ -1189,11 +1176,11 @@ void AFillainCharacter::OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFin
 {
 	if (OverlappingWeaponFinal)
 	{
-		OverlappingWeaponFinal->ShowPickupAndNameWidgets(true);
+		OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(true);
 	}
 	if (LastWeaponFinal)
 	{
-		LastWeaponFinal->ShowPickupAndNameWidgets(false);
+		LastWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
 	}
 }
 

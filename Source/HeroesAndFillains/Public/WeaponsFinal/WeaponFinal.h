@@ -48,10 +48,8 @@ public:
 	void SetHUDAmmo();
 	void EnableCustomDepth(bool bEnable);
 
-
-	void ShowPickupAndNameWidgets(bool bShowPickupAndNameWidgets);
+	void ShowPickupAndWeaponInfoWidgets(bool bShowPickupAndWeaponInfoWidgets);
 	virtual void Fire(const FVector& HitTarget);
-	FString GetWeaponFinalTypeDisplayed(EWeaponFinalType TypeOfWeaponFinal);
 	void WeaponFinalDropped();
 
 	/*********************************************
@@ -102,18 +100,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EWeaponFinalType WeaponFinalType;
 
-	UFUNCTION()
-	void DisplayWeaponFinalName(FString Name);
-
 	void AddAmmo(int32 AmmoToAdd);
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class USoundCue* EquipSound;
 
 	bool bDestroyWeaponFinal = false;
-
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
-	bool bUseScatter = false;
 
 	FVector TraceEndWithScatter(const FVector& HitTarget);
 
@@ -138,6 +130,55 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
 	bool bShouldFloatSpin = true;
+	
+	/*****************************
+	***                        ***
+	***   WEAPON INFORMATION   ***
+	***                        ***
+	*****************************/
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	class UWidgetComponent* WeaponInfoWidget1;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	class UWidgetComponent* WeaponInfoWidget2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	FText WeaponName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	FText WeaponDescription;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	FText WeaponType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	FText WeaponRarity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	float WeaponDamage;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	class UWidgetComponent* PickupWidgetA;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	class UWidgetComponent* PickupWidgetB;
+
+	/*************************************
+	****                              ****
+	****    TRACE END WITH SCATTER    ****
+	****                              ****
+	*************************************/
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DistanceToSphere = 800.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float SphereRadius = 75.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -161,42 +202,25 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	float Damage = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
-	float DistanceToSphere = 800.f;
-
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
-	float SphereRadius = 75.f;
+	
 
 	UPROPERTY(EditAnywhere)
 	float HeadShotDamage = 40.f;
 
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
-	
+	FText GetWeaponTypeText() const;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponFinalState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponFinalState WeaponFinalState;
 
 	UFUNCTION()
 	void OnRep_WeaponFinalState();
-
-	
-
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UWidgetComponent* PickupWidgetA;
-
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UWidgetComponent* PickupWidgetB;
-
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UPickupWidgetComponent* NameWidget1;
-
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UPickupWidgetComponent* NameWidget2;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class UAnimationAsset* FireAnimation;

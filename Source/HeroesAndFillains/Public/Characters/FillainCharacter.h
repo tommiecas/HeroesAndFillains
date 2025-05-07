@@ -308,14 +308,8 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
-	class AWeapon* OverlappingWeapon;
-
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeaponFinal)
 	class AWeaponFinal* OverlappingWeaponFinal;
-
-	UFUNCTION()
-	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
 	UFUNCTION()
 	void OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal);

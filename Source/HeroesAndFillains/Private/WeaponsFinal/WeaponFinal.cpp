@@ -17,6 +17,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "HUD/WeaponInfoWidget.h"
 
 AWeaponFinal::AWeaponFinal()
 {
@@ -47,11 +48,17 @@ AWeaponFinal::AWeaponFinal()
 	PickupWidgetB = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidgetB"));
 	PickupWidgetB->SetupAttachment(RootComponent);
 
-	NameWidget1 = CreateDefaultSubobject<UPickupWidgetComponent>(TEXT("NameWidget1"));
-	NameWidget1->SetupAttachment(RootComponent);
+	WeaponInfoWidget1 = CreateDefaultSubobject<UWidgetComponent>(TEXT("WeaponInfoWidget1"));
+	WeaponInfoWidget1->SetupAttachment(RootComponent);
+	WeaponInfoWidget1->SetWidgetSpace(EWidgetSpace::Screen);       // Widget rendered in screen space (or use World if 3D)
+	WeaponInfoWidget1->SetDrawSize(FVector2D(300.f, 100.f));
+	WeaponInfoWidget1->SetWidgetClass(UWeaponInfoWidget::StaticClass()); // Set the widget class to your custom widget class
 
-	NameWidget2 = CreateDefaultSubobject<UPickupWidgetComponent>(TEXT("NameWidget2"));
-	NameWidget2->SetupAttachment(RootComponent);
+	WeaponInfoWidget2 = CreateDefaultSubobject<UWidgetComponent>(TEXT("WeaponInfoWidget2"));
+	WeaponInfoWidget2->SetupAttachment(RootComponent);
+	WeaponInfoWidget2->SetWidgetSpace(EWidgetSpace::Screen);       // Widget rendered in screen space (or use World if 3D)
+	WeaponInfoWidget2->SetDrawSize(FVector2D(300.f, 100.f));
+	WeaponInfoWidget2->SetWidgetClass(UWeaponInfoWidget::StaticClass()); // Set the widget class to your custom widget classWidget2 = CreateDefaultSubobject<UWidgetComponent>(TEXT("NameWidget2"));
 
 	HoverLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoverLight"));
 	HoverLight->SetupAttachment(RootComponent);
@@ -126,22 +133,34 @@ void AWeaponFinal::BeginPlay()
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeaponFinal::OnSphereOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeaponFinal::OnSphereEndOverlap);
 	}
-	if (PickupWidgetA)
+
+	
+	if (WeaponInfoWidget1)
 	{
-		PickupWidgetA->SetVisibility(false);
+		UUserWidget* UserWidget = WeaponInfoWidget1->GetUserWidgetObject();
+		UWeaponInfoWidget* WeaponInfoWidget = Cast<UWeaponInfoWidget>(UserWidget);
+		if (WeaponInfoWidget)
+		{
+			FText TypeText = GetWeaponTypeText();
+			// Pass the values to the widget
+			WeaponInfoWidget->SetWeaponInfo(WeaponName, WeaponDescription, TypeText, WeaponRarity, WeaponDamage);
+		}
+		WeaponInfoWidget1->SetVisibility(false);
 	}
-	if (PickupWidgetB)
+	if (WeaponInfoWidget2)
 	{
-		PickupWidgetB->SetVisibility(false);
+		UUserWidget* UserWidget = WeaponInfoWidget2->GetUserWidgetObject();
+		UWeaponInfoWidget* WeaponInfoWidget = Cast<UWeaponInfoWidget>(UserWidget);
+		if (WeaponInfoWidget)
+		{
+			FText TypeText = GetWeaponTypeText();
+			// Pass the values to the widget
+			WeaponInfoWidget->SetWeaponInfo(WeaponName, WeaponDescription, TypeText, WeaponRarity, WeaponDamage);
+		}
+		WeaponInfoWidget2->SetVisibility(false);
 	}
-	if (NameWidget1)
-	{
-		NameWidget1->SetVisibility(false);
-	}
-	if (NameWidget2)
-	{
-		NameWidget2->SetVisibility(false);
-	}
+	if (PickupWidgetA) PickupWidgetA->SetVisibility(false);
+	if (PickupWidgetB) PickupWidgetB->SetVisibility(false);
 }
 
 void AWeaponFinal::Tick(float DeltaTime)
@@ -243,34 +262,47 @@ void AWeaponFinal::OnRep_Owner()
 
 void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 {
-		WeaponFinalState = State;
+	WeaponFinalState = State;
 
-		switch (WeaponFinalState)
+	switch (WeaponFinalState)
+	{
+	case EWeaponFinalState::EWFS_Equipped:
+		bShouldHover = false;
+		bShouldFloatSpin = false;
+		ShowPickupAndWeaponInfoWidgets(false);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+
+	case EWeaponFinalState::EWFS_Dropped:
+		bShouldHover = true;
+		bShouldFloatSpin = true;
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		if (HasAuthority())
 		{
-		case EWeaponFinalState::EWFS_Equipped:
-			bShouldHover = false;
-			bShouldFloatSpin = false;
-			ShowPickupAndNameWidgets(false);
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			WeaponMesh->SetSimulatePhysics(false);
-			WeaponMesh->SetEnableGravity(false);
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			break;
-
-		case EWeaponFinalState::EWFS_Dropped:
-			bShouldHover = true;
-			bShouldFloatSpin = true;
-			if (HasAuthority())
-			{
-				AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			}
-			WeaponMesh->SetSimulatePhysics(true);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			break;
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		break;
 	}
 }
 	
+FText AWeaponFinal::GetWeaponTypeText() const
+{
+	// Convert the EWeaponFinalType enum value to a localized FText using the display name
+	const UEnum* EnumPtr = StaticEnum<EWeaponFinalType>();
+	if (EnumPtr) 
+	{
+		// Get display name from enum (uses UMETA(DisplayName) if provided)
+		return EnumPtr->GetDisplayNameTextByValue((int64)WeaponFinalType);
+	}
+	// Fallback text if enum is invalid
+	return FText::FromString("Unknown");;
+}
+
 void AWeaponFinal::OnRep_WeaponFinalState()
 {
 	switch (WeaponFinalState)
@@ -278,7 +310,7 @@ void AWeaponFinal::OnRep_WeaponFinalState()
 	case EWeaponFinalState::EWFS_Equipped:
 		bShouldHover = false;
 		bShouldFloatSpin = false;
-		ShowPickupAndNameWidgets(false);
+		ShowPickupAndWeaponInfoWidgets(false);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
@@ -295,23 +327,23 @@ void AWeaponFinal::OnRep_WeaponFinalState()
 	}
 }
 
-void AWeaponFinal::ShowPickupAndNameWidgets(bool bShowPickupAndNameWidgets)
+void AWeaponFinal::ShowPickupAndWeaponInfoWidgets(bool bShowPickupAndWeaponInfoWidgets)
 {
 	if (PickupWidgetA)
 	{
-		PickupWidgetA->SetVisibility(bShowPickupAndNameWidgets);
+		PickupWidgetA->SetVisibility(bShowPickupAndWeaponInfoWidgets);
 	}
 	if (PickupWidgetB)
 	{
-		PickupWidgetB->SetVisibility(bShowPickupAndNameWidgets);
+		PickupWidgetB->SetVisibility(bShowPickupAndWeaponInfoWidgets);
 	}
-	if (NameWidget1)
+	if (WeaponInfoWidget1)
 	{
-		NameWidget1->SetVisibility(bShowPickupAndNameWidgets);
+		WeaponInfoWidget1->SetVisibility(bShowPickupAndWeaponInfoWidgets);
 	}
-	if (NameWidget2)
+	if (WeaponInfoWidget2)
 	{
-		NameWidget2->SetVisibility(bShowPickupAndNameWidgets);
+		WeaponInfoWidget2->SetVisibility(bShowPickupAndWeaponInfoWidgets);
 	}
 }
 
@@ -369,71 +401,3 @@ bool AWeaponFinal::IsWeaponFinalFull()
 	return Ammo == MagCapacity;
 }
 
-FString AWeaponFinal::GetWeaponFinalTypeDisplayed(EWeaponFinalType TypeOfWeaponFinal)
-{
-	const UEnum* EnumPtr = StaticEnum<EWeaponFinalType>();
-	if (!EnumPtr) return FString("Invalid");
-
-	if (TypeOfWeaponFinal == EWeaponFinalType::EWFT_None || TypeOfWeaponFinal == EWeaponFinalType::EWFT_MAX) return FString("None");
-	
-	FString DisplayName = EnumPtr->GetDisplayNameTextByValue((int64)TypeOfWeaponFinal).ToString();
-	DisplayWeaponFinalName(DisplayName);
-	return DisplayName;
-}
-
-void AWeaponFinal::DisplayWeaponFinalName(FString Name)
-{
-	switch (WeaponFinalType)
-	{//FText::FromString(TEXT("Assault Rifle")).ToString()
-	case EWeaponFinalType::EWFT_AssaultRifle:
-		NameWidget1->SetWeaponNameText(Name, this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(Name, this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_RocketLauncher:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Rocket Launcher")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_Pistol:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Pistol")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_SubmachineGun:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sub-Machine Gun")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_Shotgun:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Shotgun")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_SniperRifle:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sniper Rifle")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_GrenadeLauncher:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Grenade Launcher")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	case EWeaponFinalType::EWFT_Sword:
-		NameWidget1->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
-		NameWidget1->ShowWeaponFinalName(this);
-		NameWidget2->SetWeaponNameText(FText::FromString(TEXT("Sword")).ToString(), this);
-		NameWidget2->ShowWeaponFinalName(this);
-		break;
-	default:
-		break;
-	}
-}

@@ -429,6 +429,7 @@ void UCombatComponent::EquipPrimaryWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 	EquippedWeaponFinal->bShouldFloatSpin = false;
 	EquippedWeaponFinal->HoverLight->SetVisibility(false);
 	EquippedWeaponFinal->HoverDecal->SetVisibility(false);
+	EquippedWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
 	UpdateCarriedAmmo();
 	PlayWeaponFinalEquipSound(WeaponFinalToEquip);
 	ReloadEmptyWeaponFinal();
@@ -447,7 +448,7 @@ void UCombatComponent::EquipSecondaryWeaponFinal(AWeaponFinal* WeaponFinalToEqui
 	SecondaryWeaponFinal->bShouldFloatSpin = false;
 	SecondaryWeaponFinal->HoverLight->SetVisibility(false);
 	SecondaryWeaponFinal->HoverDecal->SetVisibility(false);
-
+	SecondaryWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
 }
 
 void UCombatComponent::OnRep_Aiming()
@@ -905,18 +906,18 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
-	// if (Character == nullptr || EquippedWeapon == nullptr) return;
+	if (Character == nullptr || EquippedWeaponFinal == nullptr) return;
 	bAiming = bIsAiming;
 	ServerSetAiming(bIsAiming);
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
-	/* if (Character->IsLocallyControlled() && EquippedWeaponFinal->GetWeaponFinalType() == EWeaponFinalType::EWFT_SniperRifle)
+	if (Character->IsLocallyControlled() && EquippedWeaponFinal->GetWeaponFinalType() == EWeaponFinalType::EWFT_SniperRifle)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
 	} 
-	if (Character->IsLocallyControlled()) bAimButtonPressed = bIsAiming; */
+	if (Character->IsLocallyControlled()) bAimButtonPressed = bIsAiming; 
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)

@@ -17,12 +17,29 @@ class HEROESANDFILLAINS_API AHitScanWeaponFinal : public AWeaponFinal
 public:
 	virtual void Fire(const FVector& HitTarget) override;
 
-private:
+protected:
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
+
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* ImpactParticles;
 
 	UPROPERTY(EditAnywhere)
+	USoundCue* HitSound;
+
+private:
+	UPROPERTY(EditAnywhere)
 	UParticleSystem* BeamParticles;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* FireSound;
+
+	
+
+	
 
 	
 };

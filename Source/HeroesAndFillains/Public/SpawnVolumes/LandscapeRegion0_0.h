@@ -36,6 +36,15 @@ protected:
     TSubclassOf<AActor> SMGToSpawn;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    TSubclassOf<AActor> ShotgunToSpawn;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    TSubclassOf<AActor> SniperRifleToSpawn;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    TSubclassOf<AActor> GrenadeLauncherToSpawn;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
     int32 SpawnCount = 50;
 
     UFUNCTION(BlueprintCallable)
@@ -49,6 +58,15 @@ protected:
 
     UFUNCTION(BlueprintCallable)
     void SpawnSMGs();
+
+    UFUNCTION(BlueprintCallable)
+    void SpawnShotguns();
+
+    UFUNCTION(BlueprintCallable)
+    void SpawnSniperRifles();
+
+    UFUNCTION(BlueprintCallable)
+    void SpawnGrenadeLaunchers();
 
 
     FVector RandomBoxPoints() const;

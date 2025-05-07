@@ -9,23 +9,23 @@
 
 
 
-FString UPickupWidget::GetWeaponTypeDisplayName(EWeaponType WeaponType)
+FString UPickupWidget::GetWeaponTypeDisplayName(EWeaponFinalType WeaponFinalType)
 {
-	switch (WeaponType)
+	switch (WeaponFinalType)
 	{
-	case EWeaponType::EWT_AssaultRifle:
+	case EWeaponFinalType::EWFT_AssaultRifle:
 		return FString("Assault Rifle");
-	case EWeaponType::EWT_RocketLauncher:
+	case EWeaponFinalType::EWFT_RocketLauncher:
 		return FString("Rocket Launcher");
-	case EWeaponType::EWT_Pistol:
+	case EWeaponFinalType::EWFT_Pistol:
 		return FString("Pistol");
-	case EWeaponType::EWT_SubmachineGun:
+	case EWeaponFinalType::EWFT_SubmachineGun:
 		return FString("Submachine Gun");
-	case EWeaponType::EWT_Shotgun:
+	case EWeaponFinalType::EWFT_Shotgun:
 		return FString("Shotgun");
-	case EWeaponType::EWT_SniperRifle:
+	case EWeaponFinalType::EWFT_SniperRifle:
 		return FString("Sniper Rifle");
-	case EWeaponType::EWT_GrenadeLauncher:
+	case EWeaponFinalType::EWFT_GrenadeLauncher:
 		return FString("Grenade Launcher");
 		// Add other weapon types here
 	default:
@@ -33,24 +33,3 @@ FString UPickupWidget::GetWeaponTypeDisplayName(EWeaponType WeaponType)
 	}
 }
 
-void UPickupWidget::SetWeaponNameText(FString WeaponNameTextToDisplay, AWeaponFinal* InWeaponFinal)
-{
-	if (WeaponNameText)
-	{
-		WeaponNameText->SetText(FText::FromString(WeaponNameTextToDisplay));
-		ShowWeaponFinalName(InWeaponFinal);
-	}
-}
-
-void UPickupWidget::ShowWeaponFinalName(class AWeaponFinal* InWeaponFinal)
-{
-   if (InWeaponFinal == nullptr || InWeaponFinal->WeaponFinalType == EWeaponFinalType::EWFT_None)
-   {
-       // Handle the null case, maybe log an error or set a default player name
-       SetWeaponNameText(FString("Unknown Weapon"), InWeaponFinal);
-       return;
-   }
-
-   FString WeaponName = InWeaponFinal->GetWeaponFinalTypeDisplayed(InWeaponFinal->WeaponFinalType);
-   SetWeaponNameText(WeaponName, InWeaponFinal);
-}

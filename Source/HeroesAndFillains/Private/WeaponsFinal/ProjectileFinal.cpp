@@ -75,5 +75,61 @@ void AProjectileFinal::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 	Destroy();
 }
 
+void AProjectileFinal::SpawnTrailSystem()
+{
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+}
+
+void AProjectileFinal::ExplodeDamage()
+{
+	APawn* FiringPawn = GetInstigator();
+	if (FiringPawn && HasAuthority())
+	{
+		AController* FiringController = FiringPawn->GetController();
+		if (FiringController)
+		{
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this, // World context object
+				Damage, // BaseDamage
+				10.f, // MinimumDamage
+				GetActorLocation(), // Origin
+				DamageInnerRadius, // DamageInnerRadius
+				DamageOuterRadius, // DamageOuterRadius
+				1.f, // DamageFalloff
+				UDamageType::StaticClass(), // DamageTypeClass
+				TArray<AActor*>(), // IgnoreActors
+				this, // DamageCauser
+				FiringController // InstigatorController
+			);
+		}
+	}
+}
+
+void AProjectileFinal::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&AProjectileFinal::DestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+void AProjectileFinal::DestroyTimerFinished()
+{
+	Destroy();
+}
+
 
 
