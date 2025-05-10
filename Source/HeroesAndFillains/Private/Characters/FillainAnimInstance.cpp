@@ -78,6 +78,10 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 
 	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+
+/* 	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 	bool bFABRIKOverride = FillainCharacter->IsLocallyControlled() &&
 		FillainCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade &&
 		FillainCharacter->bFinishedSwapping;
@@ -86,6 +90,6 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		bUseFABRIK = !FillainCharacter->IsLocallyReloading();
 	}
 	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();;
+	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();*/
 
 }

@@ -120,7 +120,7 @@ protected:
 	void ServerThrowGrenade();
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AProjectile> GrenadeClass;
+	TSubclassOf<class AProjectileFinal> GrenadeFinalClass;
 
 	void DropEquippedWeaponFinal();
 

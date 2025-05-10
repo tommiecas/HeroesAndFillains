@@ -32,6 +32,9 @@ AWeaponFinal::AWeaponFinal()
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
+	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
+	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
 
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -202,6 +205,22 @@ void AWeaponFinal::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		bShouldFloatSpin = false;
 		AddActorLocalRotation(FRotator(0.f, 0.f, 0.f)); 
 		bShouldHover = false;
+		if (WeaponInfoWidget1)
+		{
+			WeaponInfoWidget1->SetVisibility(true);
+		}
+		if (WeaponInfoWidget2)
+		{
+			WeaponInfoWidget2->SetVisibility(true);
+		}
+		if (PickupWidgetA)
+		{
+			PickupWidgetA->SetVisibility(true);
+		}
+		if (PickupWidgetB)
+		{
+			PickupWidgetB->SetVisibility(true);
+		}
 	}
 
 }
@@ -212,6 +231,22 @@ void AWeaponFinal::OnSphereEndOverlap(UPrimitiveComponent* OverlappingCOmponent,
 	if (FillainCharacter)
 	{
 		FillainCharacter->SetOverlappingWeaponFinal(nullptr);
+	}
+	if (WeaponInfoWidget1)
+	{
+		WeaponInfoWidget1->SetVisibility(false);
+	}
+	if (WeaponInfoWidget2)
+	{
+		WeaponInfoWidget1->SetVisibility(false);
+	}
+	if (PickupWidgetA)
+	{
+		PickupWidgetA->SetVisibility(false);
+	}
+	if (PickupWidgetB)
+	{
+		PickupWidgetB->SetVisibility(false);
 	}
 }
 
@@ -274,11 +309,40 @@ void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
+		{
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
+		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
+		HoverDecal->SetVisibility(false);
+		HoverLight->SetVisibility(false);
+		break;
+
+	case EWeaponFinalState::EWFS_EquippedSecondary:
+		bShouldHover = false;
+		bShouldFloatSpin = false;
+		ShowPickupAndWeaponInfoWidgets(false);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
+		{
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
+		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
+		HoverDecal->SetVisibility(false);
+		HoverLight->SetVisibility(false);
 		break;
 
 	case EWeaponFinalState::EWFS_Dropped:
 		bShouldHover = true;
 		bShouldFloatSpin = true;
+		ShowPickupAndWeaponInfoWidgets(true);
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -286,7 +350,19 @@ void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
+		WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
+		EnableCustomDepth(true); // Enable custom depth rendering for the mesh
+		HoverDecal->SetVisibility(true);
+		HoverLight->SetVisibility(true);
 		break;
+	}
+	if (FloatingWidgetComponent)
+	{
+		FloatingWidgetComponent->SetVisibility(false);
 	}
 }
 	
@@ -315,14 +391,32 @@ void AWeaponFinal::OnRep_WeaponFinalState()
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
+		{
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
+		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
+		HoverDecal->SetVisibility(false);
+		HoverLight->SetVisibility(false);
 		break;
 
 	case EWeaponFinalState::EWFS_Dropped:
 		bShouldHover = true;
 		bShouldFloatSpin = true;
+		ShowPickupAndWeaponInfoWidgets(true);
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
+		WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
+		EnableCustomDepth(true); // Enable custom depth rendering for the mesh
+		HoverDecal->SetVisibility(true);
+		HoverLight->SetVisibility(true);
 		break;
 	}
 }

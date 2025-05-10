@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Weapons/Projectile.h"
+#include "WeaponsFinal/ProjectileFinal.h"
 #include "HitScanWeaponAmmo.generated.h"
 
 /**
@@ -28,6 +29,9 @@ protected:
 private:
 	UPROPERTY()
 	class AProjectile* Projectile;
+
+	UPROPERTY()
+	class AProjectileFinal* ProjectileFinal;
 
 
 

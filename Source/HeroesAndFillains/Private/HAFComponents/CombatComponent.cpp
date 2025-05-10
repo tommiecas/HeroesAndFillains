@@ -18,9 +18,8 @@
 #include "Sound/SoundCue.h"
 #include "Characters/FillainAnimInstance.h"
 #include "Weapons/Projectile.h"
+#include "WeaponsFinal/ProjectileFinal.h"
 #include "Weapons/Shotgun.h"
-#include "DrawDebugHelpers.h"
-#include "WeaponsFinal/WeaponFinal.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
 
@@ -51,8 +50,6 @@ void UCombatComponent::ShotgunShellReload()
 	if (Character && Character->HasAuthority())
 	{
 		UpdateShotgunAmmoValues();
-
-		CombatState = ECombatState::ECS_Unoccupied;
 	}
 }
 
@@ -209,12 +206,18 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeaponFinal == nullptr) return;
-	if (Character && CombatState == ECombatState::ECS_Unoccupied/* && Character->IsLocallyControlled() && !Character->HasAuthority()*/)/* return;
-	LocalFire(TraceHitTarget);*/
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeaponFinal->GetWeaponFinalType() == EWeaponFinalType::EWFT_Shotgun)
 	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeaponFinal->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+		return;
 	}
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
+	{
+		Character->PlayFireMontage(bAiming);
+		EquippedWeaponFinal->Fire(TraceHitTarget);
+	}	
 }
 
 void UCombatComponent::Fire()
@@ -295,11 +298,7 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
-	if (EquippedWeaponFinal->IsWeaponFinalEmpty())
-	{
-		Reload();
-	}
-	/* ReloadEmptyWeapon(); */
+	ReloadEmptyWeaponFinal();
 }
 
 
@@ -349,24 +348,37 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 }
 
 void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
-{ 
+{
 	if (Character == nullptr || WeaponFinalToEquip == nullptr) return;
-
-	if (EquippedWeaponFinal)
-	{
-		EquippedWeaponFinal->WeaponFinalDropped();
-	}
-
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	DropEquippedWeaponFinal();
 	EquippedWeaponFinal = WeaponFinalToEquip;
 	EquippedWeaponFinal->SetWeaponFinalState(EWeaponFinalState::EWFS_Equipped);
+	AttachActorToRightHand(EquippedWeaponFinal);
+	EquippedWeaponFinal->SetOwner(Character);
+	EquippedWeaponFinal->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	PlayWeaponFinalEquipSound(WeaponFinalToEquip);
+	ReloadEmptyWeaponFinal();
+
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr) return;
+
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
 	if (HandSocket)
 	{
-		HandSocket->AttachActor(EquippedWeaponFinal, Character->GetMesh());
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
 	}
-	EquippedWeaponFinal->SetOwner(Character);
-	EquippedWeaponFinal->SetHUDAmmo();
+}
 
+void UCombatComponent::UpdateCarriedAmmo()
+{
+	if (EquippedWeaponFinal == nullptr) return;
 	if (CarriedAmmoMap.Contains(EquippedWeaponFinal->GetWeaponFinalType()))
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeaponFinal->GetWeaponFinalType()];
@@ -377,8 +389,11 @@ void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+}
 
-	if (EquippedWeaponFinal->EquipSound)
+void UCombatComponent::PlayWeaponFinalEquipSound(AWeaponFinal* WeaponFinalToEquip)
+{
+	if (Character && EquippedWeaponFinal && EquippedWeaponFinal->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
@@ -386,23 +401,14 @@ void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
 			Character->GetActorLocation()
 		);
 	}
-	if (EquippedWeaponFinal->IsWeaponFinalEmpty())
+}
+
+void UCombatComponent::ReloadEmptyWeaponFinal()
+{
+	if (EquippedWeaponFinal && EquippedWeaponFinal->IsWeaponFinalEmpty())
 	{
 		Reload();
 	}
-
-	if (EquippedWeaponFinal->HoverLight)
-	{
-		EquippedWeaponFinal->HoverLight->SetVisibility(false);
-	}
-
-	if (EquippedWeaponFinal->HoverDecal)
-	{
-		EquippedWeaponFinal->HoverDecal->SetVisibility(false);
-	}
-
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::SwapWeapons()
@@ -476,16 +482,6 @@ void UCombatComponent::DropEquippedWeaponFinal()
 	}
 }
 
-void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
-{
-	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr) return;
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
-	}
-}
-
 void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
 {
 	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr || EquippedWeaponFinal == nullptr) return;
@@ -495,51 +491,6 @@ void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
 	if (HandSocket)
 	{
 		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
-	}
-}
-
-void UCombatComponent::AttachSwordToLeftHand(AWeaponFinal* Sword)
-{
-	if (Character == nullptr || Character->GetMesh() == nullptr || Sword == nullptr) return;
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("SwordSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(Sword, Character->GetMesh());
-	}
-}
-
-void UCombatComponent::UpdateCarriedAmmo()
-{
-	if (EquippedWeaponFinal == nullptr) return;
-	if (CarriedAmmoMap.Contains(EquippedWeaponFinal->GetWeaponFinalType()))
-	{
-		CarriedAmmo = CarriedAmmoMap[EquippedWeaponFinal->GetWeaponFinalType()];
-	}
-
-	Controller = Controller == nullptr ? Cast<AFillainPlayerController>(Character->Controller) : Controller;
-	if (Controller)
-	{
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
-		Controller->SetHUDWeaponFinalType(Character);
-	}
-}
-
-void UCombatComponent::PlayWeaponFinalEquipSound(AWeaponFinal* WeaponFinalToEquip)
-{
-	if (Character && WeaponFinalToEquip && WeaponFinalToEquip->EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			WeaponFinalToEquip->EquipSound,
-			Character->GetActorLocation());
-	}
-}
-
-void UCombatComponent::ReloadEmptyWeaponFinal()
-{
-	if (EquippedWeaponFinal && EquippedWeaponFinal->IsWeaponFinalEmpty())
-	{
-		Reload();
 	}
 }
 
@@ -675,7 +626,7 @@ void UCombatComponent::LaunchGrenade()
 
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {
-	if (Character && GrenadeClass && Character->GetAttachedGrenade())
+	if (Character && GrenadeFinalClass && Character->GetAttachedGrenade())
 	{
 		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
 		FVector ToTarget = Target - StartingLocation;
@@ -685,8 +636,8 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			World->SpawnActor<AProjectile>(
-				GrenadeClass,
+			World->SpawnActor<AProjectileFinal>(
+				GrenadeFinalClass,
 				StartingLocation,
 				ToTarget.Rotation(),
 				SpawnParams
@@ -810,17 +761,11 @@ void UCombatComponent::OnRep_EquippedWeaponFinal()
 {
 	if (EquippedWeaponFinal && Character)
 	{
+		EquippedWeaponFinal->SetWeaponFinalState(EWeaponFinalState::EWFS_Equipped);
+		AttachActorToRightHand(EquippedWeaponFinal);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
-
-		if (EquippedWeaponFinal->EquipSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(
-				this,
-				EquippedWeaponFinal->EquipSound,
-				Character->GetActorLocation()
-			);
-		}
+		PlayWeaponFinalEquipSound(EquippedWeaponFinal);
 	}
 }
 
@@ -883,8 +828,6 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		} 
 	}
 }
-
-
 
 void UCombatComponent::InterpFOV(float DeltaTime)
 {

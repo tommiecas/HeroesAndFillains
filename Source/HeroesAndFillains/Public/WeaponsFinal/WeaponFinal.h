@@ -46,7 +46,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
 	void SetHUDAmmo();
-	void EnableCustomDepth(bool bEnable);
 
 	void ShowPickupAndWeaponInfoWidgets(bool bShowPickupAndWeaponInfoWidgets);
 	virtual void Fire(const FVector& HitTarget);
@@ -163,6 +162,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidgetB;
+	
+	UPROPERTY()
+    class UPickupWidgetComponent* FloatingWidgetComponent = nullptr;
 
 	/*************************************
 	****                              ****
@@ -179,6 +181,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	bool bUseScatter = false;
 
+	/*********************************************
+	****                                      ****
+	****    ENABLE OR DISABLE CUSTOM DEPTH    ****
+	****                                      ****
+	*********************************************/
+
+	void EnableCustomDepth(bool bEnable);
 
 protected:
 	virtual void BeginPlay() override;

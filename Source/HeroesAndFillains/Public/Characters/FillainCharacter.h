@@ -32,7 +32,7 @@ class UDamageType;
 class AFillainPlayerController;
 class AHAFPlayerState;
 class ALobbyGameMode;
-class AProjectile;
+class AProjectileFinal;
 class UBoxComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
@@ -119,7 +119,7 @@ public:
 	void PlaySwapMontage();
 
 	UPROPERTY()
-	AProjectile* Projectile;
+	AProjectileFinal* ProjectileFinal;
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -505,7 +505,7 @@ public:
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	AHAFPlayerState* GetHAFPlayerState() const { return HAFPlayerState; }
 	AFillainPlayerController* GetFillainPlayerController();
-	FORCEINLINE AProjectile* GetProjectile() const { return Projectile; }
+	FORCEINLINE class AProjectileFinal* GetProjectileFinal() const { return ProjectileFinal; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadingMontage() const { return ReloadingMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
