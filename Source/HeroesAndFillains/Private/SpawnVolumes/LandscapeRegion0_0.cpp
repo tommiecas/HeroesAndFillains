@@ -102,16 +102,16 @@ void ALandscapeRegion0_0::SpawnActorInBox(
 
             if (!bBlocked && ActorToSpawn)
             {
-                FActorSpawnParameters Params;
-                Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+                FActorSpawnParameters Prams;
+                Prams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-                AActor* Spawned = GetWorld()->SpawnActor<AActor>(ActorToSpawn, SpawnLocation, FRotator::ZeroRotator, Params);
-                if (Spawned)
+                AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ActorToSpawn, SpawnLocation, FRotator::ZeroRotator, Prams);
+                if (SpawnedActor)
                 {
-                    OnSpawnedSetup(Spawned);
-                    AttachFloatingIcon(Spawned);
+                    OnSpawnedSetup(SpawnedActor);
+                    AttachFloatingIcon(SpawnedActor);
                     DrawDebugSphere(GetWorld(), SpawnLocation, 25.f, 12, DebugColor, true, 10.f);
-                    ++Spawned;
+                    ++SpawnedActor;
                 }
             }
         }

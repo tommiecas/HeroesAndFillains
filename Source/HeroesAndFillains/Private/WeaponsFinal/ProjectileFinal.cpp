@@ -99,6 +99,9 @@ void AProjectileFinal::ExplodeDamage()
 		AController* FiringController = FiringPawn->GetController();
 		if (FiringController)
 		{
+			TArray<AActor*> IgnoreActors;
+			IgnoreActors.Add(GetOwner());
+			
 			UGameplayStatics::ApplyRadialDamageWithFalloff(
 				this, // World context object
 				Damage, // BaseDamage

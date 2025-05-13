@@ -2,7 +2,6 @@
 
 
 #include "HAFComponents/CombatComponent.h"
-#include "Weapons/Weapon.h"
 #include "WeaponsFinal/WeaponFinal.h"
 #include "Characters/FillainCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -17,9 +16,8 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "Characters/FillainAnimInstance.h"
-#include "Weapons/Projectile.h"
 #include "WeaponsFinal/ProjectileFinal.h"
-#include "Weapons/Shotgun.h"
+#include "WeaponsFinal/ShotgunFinal.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
@@ -270,11 +268,11 @@ void UCombatComponent::FireHitScanWeapon()
 
 void UCombatComponent::FireShotgun()
 {
-	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeaponFinal);
-	if (Shotgun && Character)
+	AShotgunFinal* ShotgunFinal = Cast<AShotgunFinal>(EquippedWeaponFinal);
+	if (ShotgunFinal && Character)
 	{
 		TArray<FVector_NetQuantize> HitTargets;
-		Shotgun->ShotgunTraceEndWithScatter(HitTarget, HitTargets);
+		ShotgunFinal->ShotgunFinalTraceEndWithScatter(HitTarget, HitTargets);
 		if (!Character->HasAuthority()) LocalShotgunFire(HitTargets);
 		ServerShotgunFire(HitTargets, EquippedWeaponFinal->FireDelay);
 	}
@@ -337,7 +335,7 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 
 void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets)
 {
-	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeaponFinal);
+	AShotgunFinal* Shotgun = Cast<AShotgunFinal>(EquippedWeaponFinal);
 	if (Shotgun == nullptr || Character == nullptr) return;
 	if (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Unoccupied)
 	{

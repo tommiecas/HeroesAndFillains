@@ -11,7 +11,6 @@
 #include "GameFramework/PlayerState.h"  
 #include "HUD/OverheadWidget.h"  
 #include "Net/UnrealNetwork.h"  
-#include "Weapons/Weapon.h"  
 #include "WeaponsFinal/WeaponFinal.h"
 #include "HAFComponents/CombatComponent.h"  
 #include "HAFComponents/BuffComponent.h"  
@@ -30,7 +29,6 @@
 #include "Weapons/WeaponTypes.h"  
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "GameMode/LobbyGameMode.h"  
-#include "Weapons/Projectile.h" 
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "Components/BoxComponent.h"  
 #include "HAFComponents/LagCompensationComponent.h"  
@@ -52,7 +50,6 @@
 #include "GameFramework/PlayerState.h"
 #include "HUD/OverheadWidget.h"
 #include "Net/UnrealNetwork.h"
-#include "Weapons/Weapon.h"
 #include "HAFComponents/CombatComponent.h"
 #include "HAFComponents/BuffComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -68,7 +65,6 @@
 #include "PlayerState/HAFPlayerState.h"
 #include "Weapons/WeaponTypes.h"
 #include "GameMode/LobbyGameMode.h"
-#include "Weapons/Projectile.h"
 #include "Components/BoxComponent.h"
 #include "HAFComponents/LagCompensationComponent.h"
 #include "NiagaraComponent.h"
@@ -218,6 +214,7 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeaponFinal, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingMeleeWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AFillainCharacter, HitReactMontage);
 	DOREPLIFETIME(AFillainCharacter, Health);
 	DOREPLIFETIME(AFillainCharacter, Shield);

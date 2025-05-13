@@ -15,11 +15,10 @@ class HEROESANDFILLAINS_API AShotgunFinal : public AHitScanWeaponFinal
 	GENERATED_BODY()
 
 public:
-	virtual void Fire(const FVector& HitTarget) override;
-
-protected:
+	void ShotgunFinalTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
+	virtual void FireShotgun(const TArray<FVector_NetQuantize>& HitTargets);
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	uint32 Buckshot = 10;
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	uint32 BuckshotCount = 10;
 };

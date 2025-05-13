@@ -17,6 +17,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "HAFComponents/CombatComponent.h"
 #include "HUD/WeaponInfoWidget.h"
 
 AWeaponFinal::AWeaponFinal()
@@ -100,31 +101,6 @@ void AWeaponFinal::EnableCustomDepth(bool bEnable)
 	}
 }
 
-FVector AWeaponFinal::TraceEndWithScatter(const FVector& HitTarget)
-{
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
-	if (MuzzleFlashSocket == nullptr) return FVector();
-	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-	const FVector TraceStart = SocketTransform.GetLocation();
-
-	const FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	const FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-	const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	const FVector EndLoc = SphereCenter + RandVec;
-	const FVector ToEndLoc = EndLoc - TraceStart;
-
-	/* DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	DrawDebugLine(
-		GetWorld(),
-		TraceStart,
-		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-		FColor::Cyan,
-		true);*/
-
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-}
-
 void AWeaponFinal::BeginPlay()
 {
 	Super::BeginPlay();
@@ -192,7 +168,8 @@ void AWeaponFinal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(AWeaponFinal, WeaponFinalState);
-	DOREPLIFETIME(AWeaponFinal, Ammo);
+	DOREPLIFETIME_CONDITION(AWeaponFinal, bUseServerSideRewind, COND_OwnerOnly);
+
 }
 
 void AWeaponFinal::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -271,13 +248,41 @@ void AWeaponFinal::SpendRoundOfAmmo()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
-
-
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	}
+	else
+	{
+		++Sequence;
+	}
 }
 
-void AWeaponFinal::OnRep_Ammo()
+void AWeaponFinal::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
+	if (HasAuthority()) return;
+	Ammo = ServerAmmo;
+	--Sequence;
+	Ammo -= Sequence;
+	SetHUDAmmo();
+}
+
+void AWeaponFinal::AddAmmo(int32 AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(AmmoToAdd);
+}
+
+void AWeaponFinal::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority()) return;
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter && FillainOwnerCharacter->GetCombatComponent() && IsWeaponFinalFull())
+	{
+		FillainOwnerCharacter->GetCombatComponent()->JumpToShotgunEnd();
+	}
 	SetHUDAmmo();
 }
 
@@ -291,66 +296,134 @@ void AWeaponFinal::OnRep_Owner()
 	}
 	else
 	{
-		SetHUDAmmo();
+		FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(Owner) : FillainOwnerCharacter;
+		if (FillainOwnerCharacter && FillainOwnerCharacter->GetEquippedWeaponFinal() && FillainOwnerCharacter->GetEquippedWeaponFinal() == this)
+		{
+			SetHUDAmmo();
+		}
 	}
 }
 
-void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
+void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState FinalState)
 {
-}	
-	
-FText AWeaponFinal::GetWeaponTypeText() const
-{
-	// Convert the EWeaponFinalType enum value to a localized FText using the display name
-	const UEnum* EnumPtr = StaticEnum<EWeaponFinalType>();
-	if (EnumPtr) 
-	{
-		// Get display name from enum (uses UMETA(DisplayName) if provided)
-		return EnumPtr->GetDisplayNameTextByValue((int64)WeaponFinalType);
-	}
-	// Fallback text if enum is invalid
-	return FText::FromString("Unknown");;
+		WeaponFinalState = FinalState;
 }
 
-void AWeaponFinal::OnRep_WeaponFinalState()
+void AWeaponFinal::OnWeaponFinalStateSet()
 {
 	switch (WeaponFinalState)
 	{
 	case EWeaponFinalState::EWFS_Equipped:
-		bShouldHover = false;
-		bShouldFloatSpin = false;
-		ShowPickupAndWeaponInfoWidgets(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
-		HoverDecal->SetVisibility(false);
-		HoverLight->SetVisibility(false);
+		OnEquipped();
 		break;
-
+	case EWeaponFinalState::EWFS_EquippedSecondary:
+		OnEquippedSecondary();
+		break;
 	case EWeaponFinalState::EWFS_Dropped:
-		bShouldHover = true;
-		bShouldFloatSpin = true;
-		ShowPickupAndWeaponInfoWidgets(true);
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
-		WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
-		EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-		HoverDecal->SetVisibility(true);
-		HoverLight->SetVisibility(true);
+		OnDropped();
 		break;
+	}
+}
+
+void AWeaponFinal::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}
+
+void AWeaponFinal::OnRep_WeaponFinalState()
+{
+	OnWeaponFinalStateSet();
+}
+
+void AWeaponFinal::OnEquipped()
+{
+	bShouldHover = false;
+	bShouldFloatSpin = false;
+	ShowPickupAndWeaponInfoWidgets(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+	EnableCustomDepth(false); // Enable custom depth rendering for the mesh
+	HoverDecal->SetVisibility(false);
+	HoverLight->SetVisibility(false);
+
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter && bUseServerSideRewind)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && !FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.AddDynamic(this, &AWeaponFinal::OnPingTooHigh);
+		}
+	}
+}
+
+void AWeaponFinal::OnDropped()
+{
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	bShouldHover = true;
+	bShouldFloatSpin = true;
+	ShowPickupAndWeaponInfoWidgets(true);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
+	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
+	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
+	HoverDecal->SetVisibility(true);
+	HoverLight->SetVisibility(true);
+	
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeaponFinal::OnPingTooHigh);
+		}
+	}
+}
+
+void AWeaponFinal::OnEquippedSecondary()
+{
+	ShowPickupAndWeaponInfoWidgets(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+		WeaponMesh->MarkRenderStateDirty();
+	}
+
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeaponFinal::OnPingTooHigh);
+		}
 	}
 }
 
@@ -411,13 +484,6 @@ void AWeaponFinal::WeaponFinalDropped()
 	FillainOwnerController = nullptr;
 }
 
-void AWeaponFinal::AddAmmo(int32 AmmoToAdd)
-{
-	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
-
-}
-
 bool AWeaponFinal::IsWeaponFinalEmpty()
 {
 	return (Ammo <= 0);
@@ -427,4 +493,50 @@ bool AWeaponFinal::IsWeaponFinalFull()
 {
 	return Ammo == MagCapacity;
 }
+
+
+FVector AWeaponFinal::TraceEndWithScatter(const FVector& HitTarget)
+{
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
+	if (MuzzleFlashSocket == nullptr) return FVector();
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FVector TraceStart = SocketTransform.GetLocation();
+
+	const FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	const FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+	const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	const FVector EndLoc = SphereCenter + RandVec;
+	const FVector ToEndLoc = EndLoc - TraceStart;
+
+	/* DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
+		FColor::Cyan,
+		true);*/
+
+	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+}
+
+FText AWeaponFinal::GetWeaponTypeText() const
+{
+	// Convert the EWeaponFinalType enum value to a localized FText using the display name
+	const UEnum* EnumPtr = StaticEnum<EWeaponFinalType>();
+	if (EnumPtr) 
+	{
+		// Get display name from enum (uses UMETA(DisplayName) if provided)
+		return EnumPtr->GetDisplayNameTextByValue((int64)WeaponFinalType);
+	}
+	// Fallback text if enum is invalid
+	return FText::FromString("Unknown");;
+}
+
+
+
+
+
+
+
 

@@ -21,19 +21,19 @@ public:
 protected:
 	// Stored info to be used by the widget (e.g., for binding or in the Blueprint event)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText MeleeWeaponName;
+	FText MeleeNameText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText MeleeWeaponHistory;
+	FText MeleeHistoryText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText MeleeWeaponResistances;
+	FText MeleeResistancesText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText MeleeWeaponWeaknesses;
+	FText MeleeWeaknessesText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	float MeleeWeaponDamage;
+	float MeleeDamageText;
 };
 
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WeaponsFinalTypes.h"
 #include "GameFramework/Actor.h"
 #include "ProjectileFinal.generated.h"
 
@@ -15,7 +16,19 @@ public:
 	AProjectileFinal();
 	virtual void Tick(float DeltaTime) override;
 	virtual void Destroyed() override;
+	/*******************************************
+	****    Used with Server Side Rewind    ****
+	*******************************************/
 
+	bool bUseServerSideRewind = false;
+	FVector_NetQuantize TraceStart;
+	FVector_NetQuantize100 InitialVelocity;
+
+	UPROPERTY(EditAnywhere)
+	float InitialSpeed = 15000;
+
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	
 	FVector HitResult;
@@ -29,11 +42,12 @@ protected:
 	void SpawnTrailSystem();
 	void ExplodeDamage();
 
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
+	
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 40.f;
 
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* ImpactParticles;
@@ -57,10 +71,10 @@ protected:
 	UStaticMeshComponent* ProjectileMesh;
 
 	UPROPERTY(EditAnywhere)
-	float DamageInnerRadius = 200.f;
+	float DamageInnerRadius = 300.f;
 
 	UPROPERTY(EditAnywhere)
-	float DamageOuterRadius = 500.f;
+	float DamageOuterRadius = 600.f;
 
 
 private:	
@@ -74,10 +88,14 @@ private:
 
 	FTimerHandle DestroyTimer;
 
+	UPROPERTY()
+	EWeaponFinalType WeaponFinalType;;
+
 	UPROPERTY(EditAnywhere)
 	float DestroyTime = 3.f;
 
 public:
-
+	FORCEINLINE EWeaponFinalType GetWeaponFinalType() const{ return WeaponFinalType; }
+	FORCEINLINE float GetDamage() const { return Damage; }
 	
 };

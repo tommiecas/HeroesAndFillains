@@ -19,9 +19,6 @@ public:
     void SetWeaponInfo(const FText& Name, const FText& Description, const FText& Type, const FText& Rarity, float Damage);
 
 protected:
-    UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
-    void OnWeaponInfoUpdated();
-
     // Stored info to be used by the widget (e.g., for binding or in the Blueprint event)
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     FText WeaponNameText;

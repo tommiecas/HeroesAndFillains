@@ -7,7 +7,6 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Characters/FillainCharacter.h"
-#include "Weapons/Weapon.h"
 #include "PlayerState/HAFPlayerState.h"
 #include "Weapons/WeaponTypes.h"
 #include "WeaponsFinal/WeaponFinal.h"

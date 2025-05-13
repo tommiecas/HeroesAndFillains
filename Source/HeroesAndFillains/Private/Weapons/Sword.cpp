@@ -29,14 +29,14 @@ ASword::ASword()
    SwordMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);  
 }
 
-void ASword::DropWeapon()
+void ASword::WeaponFinalDropped()
 {
-	SetWeaponState(EWeaponState::EWS_Dropped);
+	SetWeaponFinalState(EWeaponFinalState::EWFS_Dropped);
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	SwordMesh->DetachFromComponent(DetachRules);
 	SetOwner(nullptr);
 	FillainOwnerCharacter = nullptr;
-	FillainOwnerPlayerController = nullptr;
+	FillainOwnerController = nullptr;
 }
 
 void ASword::ResetSword()
@@ -52,12 +52,12 @@ void ASword::ResetSword()
 	if (!HasAuthority()) return;
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	SwordMesh->DetachFromComponent(DetachRules);
-	SetWeaponState(EWeaponState::EWS_Initial);
+	SetWeaponFinalState(EWeaponFinalState::EWFS_Initial);
 	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetAreaSphere()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	SetOwner(nullptr);
 	FillainOwnerCharacter = nullptr;
-	FillainOwnerPlayerController = nullptr;
+	FillainOwnerController = nullptr;
 
 	SetActorTransform(InitialTransform);
 }
@@ -66,7 +66,7 @@ void ASword::ResetSword()
 
 void ASword::OnEquipped()
 {
-	ShowPickupWidgets();
+	ShowPickupAndWeaponInfoWidgets(false);
 	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SwordMesh->SetSimulatePhysics(false);
 	SwordMesh->SetEnableGravity(false);

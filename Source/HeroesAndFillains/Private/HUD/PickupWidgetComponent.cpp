@@ -3,7 +3,6 @@
 
 #include "HUD/PickupWidgetComponent.h"
 #include "Components/TextBlock.h"
-#include "Weapons/Weapon.h"
 #include "Weapons/WeaponTypes.h"
 #include "WeaponsFinal/WeaponFinal.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"

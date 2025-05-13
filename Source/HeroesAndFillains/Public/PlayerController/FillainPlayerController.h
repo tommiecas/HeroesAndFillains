@@ -69,8 +69,6 @@ public:
 	float SingleTripTime = 0.f;
 
 	UPROPERTY()
-	class AWeapon* EquippedWeapon;
-
 	class AWeaponFinal* EquippedWeaponFinal;
 
 	FHighPingDelegate HighPingDelegate;

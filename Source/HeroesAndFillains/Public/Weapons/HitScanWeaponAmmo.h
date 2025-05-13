@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapons/Projectile.h"
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "HitScanWeaponAmmo.generated.h"
 
@@ -11,7 +10,7 @@
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API AHitScanWeaponAmmo : public AProjectile
+class HEROESANDFILLAINS_API AHitScanWeaponAmmo : public AProjectileFinal
 {
 	GENERATED_BODY()
 public:
@@ -27,8 +26,7 @@ protected:
 
 
 private:
-	UPROPERTY()
-	class AProjectile* Projectile;
+
 
 	UPROPERTY()
 	class AProjectileFinal* ProjectileFinal;

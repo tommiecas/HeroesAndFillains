@@ -3,7 +3,6 @@
 
 #include "HAFComponents/LagCompensationComponent.h"
 #include "Characters/FillainCharacter.h"
-#include "Weapons/Weapon.h"
 #include "WeaponsFinal/WeaponFinal.h"
 #include "Components/BoxComponent.h"
 

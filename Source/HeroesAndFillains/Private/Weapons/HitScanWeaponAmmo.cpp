@@ -2,16 +2,13 @@
 
 
 #include "Weapons/HitScanWeaponAmmo.h"
-#include "Weapons/ProjectileRocket.h"
+#include "WeaponsFinal/ProjectileRocketFinal.h"
 #include "Kismet/GameplayStatics.h"
-#include "Weapons/Projectile.h"
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "Sound/SoundCue.h"
 
 #include "GameFramework/Character.h"
-#include "Weapons/Weapon.h"
 #include "WeaponsFinal/WeaponFinal.h"
-#include "Weapons/Projectile.h"
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/BoxComponent.h"
@@ -36,7 +33,7 @@ void AHitScanWeaponAmmo::BeginPlay()
 
 	if (!HasAuthority())
 	{
-		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileFinal::OnHit);
 	}
 }
 
@@ -93,7 +90,7 @@ void AHitScanWeaponAmmo::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 	}
 	ExplodeDamage();
 	StartDestroyTimer();
-	if (ImpactParticles)
+	/*if (ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
 	}
@@ -117,6 +114,7 @@ void AHitScanWeaponAmmo::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactPlayerCharacterSound, GetActorLocation());
 	}
+	*/
 }
 
 void AHitScanWeaponAmmo::Destroyed()

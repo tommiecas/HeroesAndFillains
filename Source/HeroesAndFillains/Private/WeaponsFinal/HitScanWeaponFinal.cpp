@@ -11,35 +11,58 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
+#include "GameFramework/Pawn.h"
+#include "HAFComponents/LagCompensationComponent.h"
+#include "PlayerController/FillainPlayerController.h"
 
 
 void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
 {
 	Super::Fire(HitTarget);
 
-	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr) return;
-	AController* InstigatorController = OwnerPawn->GetController();
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (OwningPawn == nullptr) return;
+	AController* InstigatingController = OwningPawn->GetController();
 
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	if (MuzzleFlashSocket && InstigatorController)
+	const USkeletalMeshSocket* MuzzleSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	if (MuzzleSocket && InstigatingController)
 	{
-		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+		FTransform SocketTransform = MuzzleSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
 
 		FHitResult FireHit;
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
 		AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(FireHit.GetActor());
-		if (FillainCharacter && HasAuthority() && InstigatorController)
+		if (FillainCharacter && HasAuthority() && InstigatingController)
 		{
+			bool bCauseAuthDamage = !bUseServerSideRewind || OwningPawn->IsLocallyControlled();
+			if (HasAuthority() && bCauseAuthDamage)
+			{
+				const float DamageToCause = FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+
 			UGameplayStatics::ApplyDamage(
 				FillainCharacter,
 				Damage,
-				InstigatorController,
+				InstigatingController,
 				this,
 				UDamageType::StaticClass()
 			);
+		}
+			if (!HasAuthority() && bUseServerSideRewind)
+			{
+				FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(Owner) : FillainOwnerCharacter;
+				FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(InstigatingController) : FillainOwnerController;
+				if (FillainOwnerController && FillainOwnerCharacter && FillainOwnerCharacter->GetLagCompensation() && FillainOwnerCharacter->IsLocallyControlled())
+				{
+					FillainOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						FillainCharacter,
+						Start,
+						HitTarget,
+						FillainOwnerController->GetServerTime() - FillainOwnerController->SingleTripTime
+					);
+				}
+			}
 		}
 		if (ImpactParticles)
 		{
@@ -58,7 +81,7 @@ void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
 				FireHit.ImpactPoint
 				);
 		}
-		if (MuzzleFlash)
+		if (MuzzleSocket)
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(
 				GetWorld(),
@@ -68,29 +91,14 @@ void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
 		}
 	}
 }
-	
 
-
-FVector AHitScanWeaponFinal::TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget)
-{
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::RandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-	FVector ToEndLoc = (EndLoc - TraceStart);
-
-	/* DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Green, true);
-	DrawDebugLine(GetWorld(), TraceStart, FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()), FColor::Cyan, true); */
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-}
 
 void AHitScanWeaponFinal::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
 {
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		FVector TraceEnd = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		FVector TraceEnd = bUseScatter ? TraceEndWithScatter(HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
 		World->LineTraceSingleByChannel(
 			OutHit,
 			TraceStart,
@@ -101,6 +109,10 @@ void AHitScanWeaponFinal::WeaponTraceHit(const FVector& TraceStart, const FVecto
 		if (OutHit.bBlockingHit)
 		{
 			BeamEnd = OutHit.ImpactPoint;
+		}
+		else
+		{
+			OutHit.ImpactPoint = TraceEnd;
 		}
 		if (BeamParticles)
 		{
