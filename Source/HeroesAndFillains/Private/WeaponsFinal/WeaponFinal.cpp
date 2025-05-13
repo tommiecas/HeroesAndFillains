@@ -297,74 +297,7 @@ void AWeaponFinal::OnRep_Owner()
 
 void AWeaponFinal::SetWeaponFinalState(EWeaponFinalState State)
 {
-	WeaponFinalState = State;
-
-	switch (WeaponFinalState)
-	{
-	case EWeaponFinalState::EWFS_Equipped:
-		bShouldHover = false;
-		bShouldFloatSpin = false;
-		ShowPickupAndWeaponInfoWidgets(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
-		HoverDecal->SetVisibility(false);
-		HoverLight->SetVisibility(false);
-		break;
-
-	case EWeaponFinalState::EWFS_EquippedSecondary:
-		bShouldHover = false;
-		bShouldFloatSpin = false;
-		ShowPickupAndWeaponInfoWidgets(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponFinalType == EWeaponFinalType::EWFT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		EnableCustomDepth(false); // Enable custom depth rendering for the mesh
-		HoverDecal->SetVisibility(false);
-		HoverLight->SetVisibility(false);
-		break;
-
-	case EWeaponFinalState::EWFS_Dropped:
-		bShouldHover = true;
-		bShouldFloatSpin = true;
-		ShowPickupAndWeaponInfoWidgets(true);
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		if (HasAuthority())
-		{
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
-		WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
-		EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-		HoverDecal->SetVisibility(true);
-		HoverLight->SetVisibility(true);
-		break;
-	}
-	if (FloatingWidgetComponent)
-	{
-		FloatingWidgetComponent->SetVisibility(false);
-	}
-}
+}	
 	
 FText AWeaponFinal::GetWeaponTypeText() const
 {

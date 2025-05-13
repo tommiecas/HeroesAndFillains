@@ -22,6 +22,7 @@
 #include "Weapons/Shotgun.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -347,20 +348,30 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 	}
 }
 
-void UCombatComponent::EquipWeaponFinal(AWeaponFinal* WeaponFinalToEquip)
+void UCombatComponent::EquipWeaponFinal(AActor* WeaponToEquip)
 {
-	if (Character == nullptr || WeaponFinalToEquip == nullptr) return;
+	if (Character == nullptr || WeaponToEquip == nullptr) return;
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	DropEquippedWeaponFinal();
-	EquippedWeaponFinal = WeaponFinalToEquip;
-	EquippedWeaponFinal->SetWeaponFinalState(EWeaponFinalState::EWFS_Equipped);
-	AttachActorToRightHand(EquippedWeaponFinal);
-	EquippedWeaponFinal->SetOwner(Character);
-	EquippedWeaponFinal->SetHUDAmmo();
-	UpdateCarriedAmmo();
-	PlayWeaponFinalEquipSound(WeaponFinalToEquip);
-	ReloadEmptyWeaponFinal();
-
+	if (AWeaponFinal* WeaponFinal = Cast<AWeaponFinal>(WeaponToEquip))
+	{
+		DropEquippedWeaponFinal();
+		WeaponFinal->SetWeaponFinalState(EWeaponFinalState::EWFS_Equipped);
+		AttachActorToRightHand(WeaponFinal);
+		WeaponFinal->SetOwner(Character);
+		WeaponFinal->SetHUDAmmo();
+		UpdateCarriedAmmo();
+		PlayWeaponFinalEquipSound(WeaponFinal);
+		ReloadEmptyWeaponFinal();
+	}
+	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToEquip))
+	{
+		MeleeWeapon->SetMeleeState(EMeleeState::EMS_Equipped);
+		AttachActorToRightHand(MeleeWeapon);
+		MeleeWeapon->SetOwner(Character);
+		UpdateCarriedAmmo();
+		PlayMeleeEquipSound(MeleeWeapon);
+		ReloadEmptyWeaponFinal();
+	}
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
@@ -394,6 +405,18 @@ void UCombatComponent::UpdateCarriedAmmo()
 void UCombatComponent::PlayWeaponFinalEquipSound(AWeaponFinal* WeaponFinalToEquip)
 {
 	if (Character && EquippedWeaponFinal && EquippedWeaponFinal->EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquippedWeaponFinal->EquipSound,
+			Character->GetActorLocation()
+		);
+	}
+}
+
+void UCombatComponent::PlayMeleeEquipSound(AMeleeWeapon* MeleeWeaponToEquip)
+{
+	if (Character && EquippedMeleeWeapon && EquippedMeleeWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
@@ -766,6 +789,18 @@ void UCombatComponent::OnRep_EquippedWeaponFinal()
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponFinalEquipSound(EquippedWeaponFinal);
+	}
+}
+
+void UCombatComponent::OnRep_EquippedMeleeWeapon()
+{
+	if (EquippedMeleeWeapon && Character)
+	{
+		EquippedMeleeWeapon->SetMeleeState(EMeleeState::EMS_Equipped);
+		AttachActorToRightHand(EquippedMeleeWeapon);
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+		PlayMeleeEquipSound(EquippedMeleeWeapon);
 	}
 }
 

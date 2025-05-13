@@ -39,6 +39,7 @@
 #include "GameStates/HAFGameState.h"  
 #include "PlayerStart/TeamPlayerStart.h"
 #include "GameFramework/Actor.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -790,9 +791,13 @@ void AFillainCharacter::EquipButtonPressed()
 
 	if (Combat)
 	{
-		if (HasAuthority())
+		if (HasAuthority() && OverlappingWeaponFinal)
 		{
 			Combat->EquipWeaponFinal(OverlappingWeaponFinal);
+		}
+		else if (HasAuthority() && OverlappingMeleeWeapon)
+		{
+			Combat->EquipWeaponFinal(OverlappingMeleeWeapon);
 		}
 		else
 		{
@@ -1173,6 +1178,23 @@ void AFillainCharacter::SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal)
 	}
 }
 
+void AFillainCharacter::SetOverlappingMeleeWeapon(AMeleeWeapon* MeleeWeapon)
+{
+	if (OverlappingMeleeWeapon)
+	{
+		OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(false);
+	}
+	OverlappingMeleeWeapon = MeleeWeapon;
+	
+	if (IsLocallyControlled())
+	{
+		if (OverlappingMeleeWeapon)
+		{
+			OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(true);
+		}
+	}
+}
+
 void AFillainCharacter::OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal)
 {
 	if (OverlappingWeaponFinal)
@@ -1182,6 +1204,18 @@ void AFillainCharacter::OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFin
 	if (LastWeaponFinal)
 	{
 		LastWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
+	}
+}
+
+void AFillainCharacter::OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon)
+{
+	if (OverlappingMeleeWeapon)
+	{
+		OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(true);
+	}
+	if (LastMeleeWeapon)
+	{
+		LastMeleeWeapon->ShowPickupAndMeleeInfoWidgets(false);
 	}
 }
 

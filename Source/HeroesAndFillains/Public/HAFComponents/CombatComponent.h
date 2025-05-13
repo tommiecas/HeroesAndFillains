@@ -25,7 +25,7 @@ public:
 	friend class AFillainCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void EquipWeaponFinal(class AWeaponFinal* WeaponFinalToEquip);
+	void EquipWeaponFinal(class AActor* WeaponToEquip);
 	void SwapWeapons();
 	void Reload();
 	void SetAiming(bool bIsAiming);
@@ -47,8 +47,15 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeaponFinal)
 	AWeaponFinal* EquippedWeaponFinal;
 
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedMeleeWeapon)
+	class AMeleeWeapon* EquippedMeleeWeapon;
+	
+
 	UFUNCTION()
 	void OnRep_EquippedWeaponFinal();
+
+	UFUNCTION()
+	void OnRep_EquippedMeleeWeapon();
 
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeaponFinal)
 	AWeaponFinal* SecondaryWeaponFinal;
@@ -131,6 +138,7 @@ protected:
 	void UpdateCarriedAmmo();
 
 	void PlayWeaponFinalEquipSound(AWeaponFinal* WeaponFinalToEquip);
+	void PlayMeleeEquipSound(AMeleeWeapon* MeleeWeaponToEquip);
 
 	void ReloadEmptyWeaponFinal();
 

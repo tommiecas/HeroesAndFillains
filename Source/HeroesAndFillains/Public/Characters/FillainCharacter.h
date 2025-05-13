@@ -311,8 +311,17 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeaponFinal)
 	class AWeaponFinal* OverlappingWeaponFinal;
 
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingMeleeWEapon)
+	class AMeleeWeapon* OverlappingMeleeWeapon;
+
 	UFUNCTION()
 	void OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal);
+
+	UFUNCTION()
+	void OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon);
+
+	UPROPERTY(VisibleInstanceOnly)
+	AMeleeWeapon* MeleeWeaponOverlapped;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -484,6 +493,7 @@ private:
 
 public:
 	void SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal);
+	void SetOverlappingMeleeWeapon(AMeleeWeapon* MeleeWeapon);
 	bool IsWeaponFinalEquipped();
 	bool IsAiming();
 
