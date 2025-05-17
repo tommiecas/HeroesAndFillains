@@ -9,7 +9,7 @@
 #include "Characters/FillainCharacter.h"
 #include "PlayerState/HAFPlayerState.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "UObject/EnumProperty.h"
 #include "TimerManager.h"
@@ -44,6 +44,8 @@
 #include "Components/EditableText.h"
 #include "Components/ScrollBox.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
+#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 
 AFillainPlayerController::AFillainPlayerController()
@@ -447,19 +449,19 @@ void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 	}
 }
 
-void AFillainPlayerController::SetHUDWeaponFinalAmmo(int32 WeaponFinalAmmo)
+void AFillainPlayerController::SetHUDWeaponAmmo(int32 WeaponAmmo)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponFinalAmmoAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponAmmoAmount;
 	if (bIsHUDValid)
 	{
-		FString WeaponFinalAmmoText = FString::Printf(TEXT("%d"), WeaponFinalAmmo);
-		FillainHUD->CharacterOverlay->WeaponFinalAmmoAmount->SetText(FText::FromString(WeaponFinalAmmoText));
+		FString WeaponAmmoText = FString::Printf(TEXT("%d"), WeaponAmmo);
+		FillainHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(WeaponAmmoText));
 	}
 	else
 	{
-		bInitializeWeaponFinalAmmo = true;
-		HUDWeaponFinalAmmo = WeaponFinalAmmo;
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = WeaponAmmo;
 	}
 }
 
@@ -631,7 +633,7 @@ void AFillainPlayerController::PollInit()
 				if (bInitializeGrenades) SetHUDGrenades(HUDGrenades);
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
-				if (bInitializeWeaponFinalAmmo) SetHUDWeaponFinalAmmo(HUDWeaponFinalAmmo);
+				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
 
 				AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(GetPawn());
 				if (FillainCharacter && FillainCharacter->GetCombatComponent())
@@ -925,26 +927,69 @@ void AFillainPlayerController::ToggleMatchCountdownVisibility()
 
 
 
-FString AFillainPlayerController::GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType)
+FString AFillainPlayerController::GetWeaponTypeDisplayName(ERangedType RangedType, EMeleeType MeleeType)
 {
-	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("WeaponFinalType"), true);
-	if (!EnumPtr) return FString("");
+	if (EquippedRangedWeapon)
+	{
+		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("RangedType"), true);
+		if (!EnumPtr) return FString("");
 
-	return EnumPtr->GetDisplayNameTextByValue((int64)WeaponFinalType).ToString();
+		return EnumPtr->GetDisplayNameTextByValue((int64)RangedType).ToString();
+	}
+	if (EquippedMeleeWeapon)
+	{
+		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("MeleeType"), true);
+		if (!EnumPtr) return FString("");
+
+		return EnumPtr->GetDisplayNameTextByValue((int64)MeleeType).ToString();
+	}
+	else return FString("Unknown");
+
 }
 
-void AFillainPlayerController::SetHUDWeaponFinalType(APawn* InPawn)
+void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
 {
-	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	AFillainCharacter* FCharacter = Cast<AFillainCharacter>(InPawn);
-	EquippedWeaponFinal = EquippedWeaponFinal == nullptr ? Cast<AWeaponFinal>(FCharacter->GetEquippedWeaponFinal()) : EquippedWeaponFinal;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponFinalTypeText;
-	if (bIsHUDValid && FCharacter && EquippedWeaponFinal)
+	if (!InPawn) return;
+
+	if (!FillainHUD)
 	{
-		FString WeaponFinalTypeName = GetWeaponFinalTypeDisplayName(EquippedWeaponFinal->GetWeaponFinalType());
-		FillainHUD->CharacterOverlay->WeaponFinalTypeText->SetText(FText::FromString(WeaponFinalTypeName));
+		FillainHUD = Cast<AFillainHUD>(GetHUD());
+	}
+
+	AFillainCharacter* FCharacter = Cast<AFillainCharacter>(InPawn);
+	if (!FCharacter) return;
+
+	if (!EquippedWeapon)
+	{
+		EquippedWeapon = Cast<AWeaponBase>(FCharacter->GetEquippedWeapon());
+	}
+
+	// Now assign specific subclass pointers
+	EquippedRangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
+	EquippedMeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon);
+
+	const bool bIsHUDValid =
+		FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WeaponTypeText;
+
+	if (bIsHUDValid)
+	{
+		FString WeaponTypeName;
+
+		if (EquippedRangedWeapon)
+		{
+			EMeleeType NoMeleeType = EMeleeType::EMT_None;
+			WeaponTypeName = GetWeaponTypeDisplayName(EquippedRangedWeapon->GetRangedWeaponType(), NoMeleeType);
+		}
+		else if (EquippedMeleeWeapon)
+		{
+			ERangedType NoRangedType = ERangedType::ERT_None;
+			WeaponTypeName = GetWeaponTypeDisplayName(NoRangedType, EquippedMeleeWeapon->GetMeleeWeaponType());
+		}
+
+		FillainHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeName));
 	}
 }
+
 
 void AFillainPlayerController::SetHUDEliminationMessage(AFillainPlayerController* KillerController, AFillainPlayerController* VictimController)
 {

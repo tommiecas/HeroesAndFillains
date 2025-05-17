@@ -16,13 +16,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
-	class USphereComponent* PickupSphere;
+	class USphereComponent* AmmoPickupSphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UPointLightComponent* PickupHoverLight;
+	class UPointLightComponent* AmmoPickupHoverLight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UDecalComponent* PickupHoverDecal;
+	class UDecalComponent* AmmoPickupHoverDecal;
 
 	// Floating hover parameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
@@ -46,25 +46,25 @@ public:
 	*****************************/
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UWidgetComponent* AmmoInfoWidget1;
+	class UWidgetComponent* AmmoIntelWidget1;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UWidgetComponent* AmmoInfoWidget2;
+	class UWidgetComponent* AmmoIntelWidget2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
 	FText AmmoName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText AmmoDescription;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
 	FText AmmoWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
-	FText AmmoRarity;
+	FText AmmoDeliverable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
 	float AmmoAmount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	float AmmoDamage;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidgetA;

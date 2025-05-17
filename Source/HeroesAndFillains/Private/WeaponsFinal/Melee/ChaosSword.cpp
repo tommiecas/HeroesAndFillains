@@ -7,7 +7,7 @@
 void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
-	MeleeMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+	WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
 

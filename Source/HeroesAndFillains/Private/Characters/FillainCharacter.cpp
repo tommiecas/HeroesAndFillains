@@ -11,7 +11,7 @@
 #include "GameFramework/PlayerState.h"  
 #include "HUD/OverheadWidget.h"  
 #include "Net/UnrealNetwork.h"  
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "HAFComponents/CombatComponent.h"  
 #include "HAFComponents/BuffComponent.h"  
 #include "Components/CapsuleComponent.h"  
@@ -71,7 +71,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "GameStates/HAFGameState.h"
 #include "PlayerStart/TeamPlayerStart.h"
-
+#include "WeaponsFinal/RangedWeapon.h"
 
 
 AFillainCharacter::AFillainCharacter()
@@ -213,8 +213,7 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeaponFinal, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingMeleeWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AFillainCharacter, HitReactMontage);
 	DOREPLIFETIME(AFillainCharacter, Health);
 	DOREPLIFETIME(AFillainCharacter, Shield);
@@ -247,7 +246,7 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 	bLeftGame = bPlayerLeftGame;
 	if (VictimController)
 	{
-		VictimController->SetHUDWeaponFinalAmmo(0);
+		VictimController->SetHUDWeaponAmmo(0);
 	}
 	bIsEliminated = true;
 	PlayEliminatedMontage();
@@ -291,7 +290,8 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 			GetActorLocation()
 		);
 	}
-	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeaponFinal && Combat->EquippedWeaponFinal->GetWeaponFinalType() == EWeaponFinalType::EWFT_SniperRifle;
+	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedWeapon);
+	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon && Gun && Gun->GetRangedWeaponType() == ERangedType::ERT_SniperRifle;
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
@@ -333,16 +333,16 @@ void AFillainCharacter::ServerLeaveGame_Implementation()
 	}
 }
 
-void AFillainCharacter::DropOrDestroyWeapon(AWeaponFinal* WeaponFinal)
+void AFillainCharacter::DropOrDestroyWeapon(AWeaponBase* WeaponBase)
 {
-	if (WeaponFinal == nullptr) return;
-	if (WeaponFinal->bDestroyWeaponFinal)
+	if (WeaponBase == nullptr) return;
+	if (WeaponBase->bDestroyWeapon)
 	{
-		WeaponFinal->Destroy();
+		WeaponBase->Destroy();
 	}
 	else
 	{
-		WeaponFinal->WeaponFinalDropped();
+		WeaponBase->WeaponDropped();
 	}
 }
 
@@ -350,13 +350,13 @@ void AFillainCharacter::DropOrDestroyBothWeapons()
 {
 	if (Combat)
 	{
-		if (Combat->EquippedWeaponFinal)
+		if (Combat->EquippedWeapon)
 		{
-			DropOrDestroyWeapon(Combat->EquippedWeaponFinal);
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
 		}
-		if (Combat->SecondaryWeaponFinal)
+		if (Combat->SecondaryWeapon)
 		{
-			DropOrDestroyWeapon(Combat->SecondaryWeaponFinal);
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
 		}
 	}
 }
@@ -405,9 +405,9 @@ void AFillainCharacter::Destroyed()
 
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	bool bIsMatchNotInProgress = HAFGameMode && HAFGameMode->GetMatchState() != MatchState::InProgress;
-	if (Combat && Combat->EquippedWeaponFinal && bIsMatchNotInProgress)
+	if (Combat && Combat->EquippedWeapon && bIsMatchNotInProgress)
 	{
-		Combat->EquippedWeaponFinal->Destroy();
+		Combat->EquippedWeapon->Destroy();
 	}
 }
 
@@ -436,7 +436,7 @@ void AFillainCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("FillainPlayerController initialized: %s"), *FillainPlayerController->GetName());
 	}*/
 
-	SpawnDefaultWeaponFinal();
+	SpawnDefaultWeapon();
 	UpdateHUDAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
@@ -481,8 +481,8 @@ void AFillainCharacter::RotateInPlace(float DeltaTime)
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 		return;
 	}
-	if (Combat && Combat->EquippedWeaponFinal) GetCharacterMovement()->bOrientRotationToMovement = false;
-	if (Combat && Combat->EquippedWeaponFinal) bUseControllerRotationYaw = true;
+	if (Combat && Combat->EquippedWeapon) GetCharacterMovement()->bOrientRotationToMovement = false;
+	if (Combat && Combat->EquippedWeapon) bUseControllerRotationYaw = true;
 	if (bDisableGameplay)
 	{
 		bUseControllerRotationYaw = false;
@@ -551,7 +551,7 @@ void AFillainCharacter::PostInitializeComponents()
 
 void AFillainCharacter::PlayFireMontage(bool bAiming)
 {
-	if (Combat == nullptr || Combat->EquippedWeaponFinal == nullptr) return;
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireWeaponMontage)
@@ -565,91 +565,104 @@ void AFillainCharacter::PlayFireMontage(bool bAiming)
 
 void AFillainCharacter::PlayReloadingMontage()
 {
-	if (Combat == nullptr || Combat->EquippedWeaponFinal == nullptr) return;
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ReloadingMontage)
 	{
 		AnimInstance->Montage_Play(ReloadingMontage);
-		FName SectionName;
-		switch (Combat->EquippedWeaponFinal->GetWeaponFinalType())
+
+		// Default value in case none matches
+		FName SectionName = NAME_None;
+
+		if (Combat->EquippedRangedWeapon)
 		{
-		case EWeaponFinalType::EWFT_AssaultRifle:
-			SectionName = FName("AssaultRifle");
-			break;
-		case EWeaponFinalType::EWFT_RocketLauncher:
-			SectionName = FName("RocketLauncher");
-			break;
-		case EWeaponFinalType::EWFT_Pistol:
-			SectionName = FName("Pistol");
-			break;
-		case EWeaponFinalType::EWFT_SubmachineGun:
-			SectionName = FName("Pistol");
-			break;
-		case EWeaponFinalType::EWFT_Shotgun:
-			SectionName = FName("Shotgun");
-			break;
-		case EWeaponFinalType::EWFT_SniperRifle:
-			SectionName = FName("SniperRifle");
-			break;
-		case EWeaponFinalType::EWFT_GrenadeLauncher:
-			SectionName = FName("GrenadeLauncher");
-			break;
+			switch (Combat->EquippedRangedWeapon->GetRangedWeaponType())
+			{
+			case ERangedType::ERT_AssaultRifle:
+				SectionName = FName("AssaultRifle");
+				break;
+			case ERangedType::ERT_RocketLauncher:
+				SectionName = FName("RocketLauncher");
+				break;
+			case ERangedType::ERT_Pistol:
+			case ERangedType::ERT_SubmachineGun: // share section
+				SectionName = FName("Pistol");
+				break;
+			case ERangedType::ERT_Shotgun:
+				SectionName = FName("Shotgun");
+				break;
+			case ERangedType::ERT_SniperRifle:
+				SectionName = FName("SniperRifle");
+				break;
+			case ERangedType::ERT_GrenadeLauncher:
+				SectionName = FName("GrenadeLauncher");
+				break;
+			default:
+				break;
+			}
 
+			if (SectionName != NAME_None)
+			{
+				AnimInstance->Montage_JumpToSection(SectionName, ReloadingMontage);
+			}
 		}
-		AnimInstance->Montage_JumpToSection(SectionName);
+		else if (Combat->EquippedMeleeWeapon)
+		{
+			return;
+		}
 	}
 }
 
-void AFillainCharacter::PlayEliminatedMontage()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && EliminatedMontage)
+	void AFillainCharacter::PlayEliminatedMontage()
 	{
-		AnimInstance->Montage_Play(EliminatedMontage);
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && EliminatedMontage)
+		{
+			AnimInstance->Montage_Play(EliminatedMontage);
+		}
 	}
-}
 
-void AFillainCharacter::PlayThrowGrenadeMontage()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && ThrowGrenadeMontage)
+	void AFillainCharacter::PlayThrowGrenadeMontage()
 	{
-		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && ThrowGrenadeMontage)
+		{
+			AnimInstance->Montage_Play(ThrowGrenadeMontage);
+		}
 	}
-}
 
-void AFillainCharacter::PlaySwapMontage()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && SwapMontage)
+	void AFillainCharacter::PlaySwapMontage()
 	{
-		AnimInstance->Montage_Play(SwapMontage);
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && SwapMontage)
+		{
+			AnimInstance->Montage_Play(SwapMontage);
+		}
 	}
-}
 
-void AFillainCharacter::PlayHitReactMontage()
-{
-	if (Combat == nullptr || Combat->EquippedWeaponFinal == nullptr) return;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && HitReactMontage)
+	void AFillainCharacter::PlayHitReactMontage()
 	{
-		AnimInstance->Montage_Play(HitReactMontage);
-		FName SectionName("FromFront");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
-	// ReceiveDamage(CachedDamagedPawn, CachedDamage, CachedDamageType, CachedInstigatorController, CachedDamageCauser);
-}
+		if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
 
-void AFillainCharacter::GrenadeButtonPressed()
-{
-	if (Combat)
-	{
-		if (Combat && Combat->bWieldingTheSword) return;
-		Combat->ThrowGrenade();
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && HitReactMontage)
+		{
+			AnimInstance->Montage_Play(HitReactMontage);
+			FName SectionName("FromFront");
+			AnimInstance->Montage_JumpToSection(SectionName);
+		}
+		// ReceiveDamage(CachedDamagedPawn, CachedDamage, CachedDamageType, CachedInstigatorController, CachedDamageCauser);
 	}
-}
+
+	void AFillainCharacter::GrenadeButtonPressed()
+	{
+		if (Combat)
+		{
+			if (Combat && Combat->bWieldingTheSword) return;
+			Combat->ThrowGrenade();
+		}
+	}
 
 void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
@@ -697,17 +710,17 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
 	ResetCachedDamageParameters();
 }
 
-void AFillainCharacter::SpawnDefaultWeaponFinal()
+void AFillainCharacter::SpawnDefaultWeapon()
 {
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	UWorld* World = GetWorld();
-	if (HAFGameMode && World && !bIsEliminated && DefaultWeaponFinalClass)
+	if (HAFGameMode && World && !bIsEliminated && DefaultWeaponClass)
 	{
-		AWeaponFinal* StartingWeaponFinal = World->SpawnActor<AWeaponFinal>(DefaultWeaponFinalClass);
-		StartingWeaponFinal->bDestroyWeaponFinal = true;
+		AWeaponBase* StartingWeapon = World->SpawnActor<AWeaponBase>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
 		if (Combat)
 		{
-			Combat->EquipWeaponFinal(StartingWeaponFinal);
+			Combat->EquipWeapon(StartingWeapon);
 		}
 	}
 }
@@ -759,23 +772,45 @@ void AFillainCharacter::Move(const FInputActionValue& Value)
 	{
 		bDisableGameplay = false;
 	}
+
 	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	// Deadzone filtering
+	if (MovementVector.IsNearlyZero(0.3f)) return;
 
 	const FRotator Rotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	AddMovementInput(ForwardDirection, MovementVector.Y);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	AddMovementInput(RightDirection, MovementVector.X);
+	
+	if (!MovementVector.IsNearlyZero(0.01f))
+	{
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
+	}
+
+	
+	UE_LOG(LogTemp, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
 }
 
 void AFillainCharacter::Look(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
+	// Deadzone threshold (adjust as needed)
+	const float DeadzoneThreshold = 0.3f;
+
+	// Check magnitude of the stick input
+	if (LookAxisVector.Size() < DeadzoneThreshold)
+	{
+		return; // Ignore small drift input
+	}
+
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
+
+	UE_LOG(LogTemp, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
 
 }
 
@@ -788,13 +823,9 @@ void AFillainCharacter::EquipButtonPressed()
 
 	if (Combat)
 	{
-		if (HasAuthority() && OverlappingWeaponFinal)
+		if (HasAuthority() && OverlappingWeapon)
 		{
-			Combat->EquipWeaponFinal(OverlappingWeaponFinal);
-		}
-		else if (HasAuthority() && OverlappingMeleeWeapon)
-		{
-			Combat->EquipWeaponFinal(OverlappingMeleeWeapon);
+			Combat->EquipWeapon(OverlappingWeapon);
 		}
 		else
 		{
@@ -806,7 +837,7 @@ void AFillainCharacter::EquipButtonPressed()
 		bool bSwap = Combat->ShouldSwapWeapons() &&
 			!HasAuthority() &&
 			Combat->CombatState == ECombatState::ECS_Unoccupied &&
-			OverlappingWeaponFinal == nullptr;
+			OverlappingWeapon == nullptr;
 
 		if (bSwap)
 		{
@@ -821,11 +852,11 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)
 	{
-		Combat->EquipWeaponFinal(OverlappingWeaponFinal);
+		Combat->EquipWeapon(OverlappingWeapon);
 	
-		if (OverlappingWeaponFinal)
+		if (OverlappingWeapon)
 		{
-			Combat->EquipWeaponFinal(OverlappingWeaponFinal);
+			Combat->EquipWeapon(OverlappingWeapon);
 		}
 		else if (Combat->ShouldSwapWeapons())
 		{
@@ -902,7 +933,7 @@ float AFillainCharacter::CalculateSpeed()
 
 void AFillainCharacter::AimOffset(float DeltaTime)
 {
-	if (Combat && Combat->EquippedWeaponFinal == nullptr) return;
+	if (Combat && Combat->EquippedRangedWeapon == nullptr) return;
 	//FVector Velocity = GetVelocity();
 	//Velocity.Z = 0.f;
 	float Speed = CalculateSpeed();
@@ -946,7 +977,7 @@ void AFillainCharacter::CalculateAO_Pitch()
 
 void AFillainCharacter::SimProxiesTurn()
 {
-	if (Combat == nullptr || Combat->EquippedWeaponFinal == nullptr) return;
+	if (Combat == nullptr || Combat->EquippedRangedWeapon == nullptr) return;
 	bRotateRootBone = false;
 	float Speed = CalculateSpeed();
 	if (Speed > 0.f)
@@ -1058,17 +1089,17 @@ void AFillainCharacter::HideCharacterIfCameraClose()
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
 	{
 		GetMesh()->SetVisibility(false);
-		if (Combat && Combat->EquippedWeaponFinal && Combat->EquippedWeaponFinal->GetWeaponMesh())
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeaponFinal->GetWeaponMesh()->bOwnerNoSee = true;
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
 	}
 	else
 	{
 		GetMesh()->SetVisibility(true);
-		if (Combat && Combat->EquippedWeaponFinal && Combat->EquippedWeaponFinal->GetWeaponMesh())
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeaponFinal->GetWeaponMesh()->bOwnerNoSee = false;
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
 }
@@ -1115,10 +1146,10 @@ void AFillainCharacter::UpdateHUDAmmo()
 {
 	FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
 
-	if (FillainPlayerController && Combat && Combat->EquippedWeaponFinal)
+	if (FillainPlayerController && Combat && Combat->EquippedRangedWeapon)
 	{
 		FillainPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
-		FillainPlayerController->SetHUDWeaponFinalAmmo(Combat->EquippedWeaponFinal->GetAmmo());
+		FillainPlayerController->SetHUDWeaponAmmo(Combat->EquippedRangedWeapon->GetAmmo());
 	}
 }
 void AFillainCharacter::PollInit()
@@ -1158,68 +1189,38 @@ void AFillainCharacter::StartDissolve()
 	}
 }
 
-void AFillainCharacter::SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal)
+void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
 { 
-	if (OverlappingWeaponFinal)
+	if (OverlappingWeapon)
 	{
-		OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
+		OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 	}
-	OverlappingWeaponFinal = WeaponFinal;
+	OverlappingWeapon = Weapon;
 	
 	if (IsLocallyControlled())
 	{
-		if (OverlappingWeaponFinal)
+		if (OverlappingWeapon)
 		{
-			OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(true);
+			OverlappingWeapon->ShowPickupAndInfoWidgets(true);
 		}
 	}
 }
 
-void AFillainCharacter::SetOverlappingMeleeWeapon(AMeleeWeapon* MeleeWeapon)
+void AFillainCharacter::OnRep_OverlappingWeapon(AWeaponBase* LastWeapon)
 {
-	if (OverlappingMeleeWeapon)
+	if (OverlappingWeapon)
 	{
-		OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(false);
+		OverlappingWeapon->ShowPickupAndInfoWidgets(true);
 	}
-	OverlappingMeleeWeapon = MeleeWeapon;
-	
-	if (IsLocallyControlled())
+	if (LastWeapon)
 	{
-		if (OverlappingMeleeWeapon)
-		{
-			OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(true);
-		}
+		LastWeapon->ShowPickupAndInfoWidgets(false);
 	}
 }
 
-void AFillainCharacter::OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal)
+bool AFillainCharacter::IsWeaponEquipped()
 {
-	if (OverlappingWeaponFinal)
-	{
-		OverlappingWeaponFinal->ShowPickupAndWeaponInfoWidgets(true);
-	}
-	if (LastWeaponFinal)
-	{
-		LastWeaponFinal->ShowPickupAndWeaponInfoWidgets(false);
-	}
-}
-
-void AFillainCharacter::OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon)
-{
-	if (OverlappingMeleeWeapon)
-	{
-		OverlappingMeleeWeapon->ShowPickupAndMeleeInfoWidgets(true);
-	}
-	if (LastMeleeWeapon)
-	{
-		LastMeleeWeapon->ShowPickupAndMeleeInfoWidgets(false);
-	}
-}
-
-
-bool AFillainCharacter::IsWeaponFinalEquipped()
-{
-	return (Combat && Combat->EquippedWeaponFinal);
+	return (Combat && Combat->EquippedWeapon);
 }
 
 bool AFillainCharacter::IsAiming()
@@ -1227,10 +1228,10 @@ bool AFillainCharacter::IsAiming()
 	return (Combat && Combat->bAiming);
 }
 
-AWeaponFinal* AFillainCharacter::GetEquippedWeaponFinal()
+AWeaponBase* AFillainCharacter::GetEquippedWeapon()
 {
 	if (Combat == nullptr) return nullptr;
-	return Combat->EquippedWeaponFinal;
+	return Combat->EquippedWeapon;
 }
 
 FVector AFillainCharacter::GetHitTarget() const
@@ -1280,23 +1281,23 @@ void AFillainCharacter::SetWieldingTheSword(bool bWielding)
 **   in the course, and they're proven to work correctly.			   **
 ************************************************************************/
 
-void AFillainCharacter::SwitchWeaponFinal(AWeaponFinal* NewWeaponFinal)
+void AFillainCharacter::SwitchWeapon(AWeaponBase* NewWeapon)
 {
-	if (NewWeaponFinal && Combat && Combat->EquippedWeaponFinal)
+	if (NewWeapon && Combat && Combat->EquippedWeapon)
 	{
-		Combat->EquippedWeaponFinal = NewWeaponFinal;
+		Combat->EquippedWeapon = NewWeapon;
 		// Update the HUD with the new weapon type
 		AFillainPlayerController* PC = Cast<AFillainPlayerController>(GetFillainPlayerController());
 		if (PC)
 		{
-			PC->SetHUDWeaponFinalType(this);
+			PC->SetHUDWeaponType(this);
 		}
 	}
 }
 
-AWeaponFinal* AFillainCharacter::GetOverlappingWeaponFinal()
+AWeaponBase* AFillainCharacter::GetOverlappingWeapon()
 {
-	return OverlappingWeaponFinal;
+	return OverlappingWeapon;
 }
 
 

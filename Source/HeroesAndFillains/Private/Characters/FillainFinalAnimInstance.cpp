@@ -5,7 +5,7 @@
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 
 
@@ -37,8 +37,8 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsInAir = FillainCharacter->GetCharacterMovement()->IsFalling();
 
 	bIsAccelerating = FillainCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
-	bWeaponFinalEquipped = FillainCharacter->IsWeaponFinalEquipped();
-	EquippedWeaponFinal = FillainCharacter->GetEquippedWeaponFinal();
+	bWeaponEquipped = FillainCharacter->IsWeaponEquipped();
+	EquippedWeapon = FillainCharacter->GetEquippedWeapon();
 	bIsCrouched = FillainCharacter->bIsCrouched;
 	bAiming = FillainCharacter->IsAiming();
 	TurningInPlace = FillainCharacter->GetTurningInPlace();
@@ -60,9 +60,9 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	AO_Yaw = FillainCharacter->GetAO_Yaw();
 	AO_Pitch = FillainCharacter->GetAO_Pitch();
 
-	if (bWeaponFinalEquipped && EquippedWeaponFinal && EquippedWeaponFinal->GetWeaponMesh() && FillainCharacter->GetMesh())
+	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && FillainCharacter->GetMesh())
 	{
-		LeftHandTransform = EquippedWeaponFinal->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
 		FVector OutPosition;
 		FRotator OutRotation;
 		FillainCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);

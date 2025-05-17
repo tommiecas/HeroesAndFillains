@@ -7,8 +7,10 @@
 #include "HUD/FillainHUD.h"
 #include "Weapons/WeaponTypes.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
+#include "WeaponsFinal/RangedWeapon.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 #include "CombatComponent.generated.h"
 
@@ -25,7 +27,7 @@ public:
 	friend class AFillainCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void EquipWeaponFinal(class AActor* WeaponToEquip);
+	void EquipWeapon(class AWeaponBase* WeaponToEquip);
 	void SwapWeapons();
 	void Reload();
 	void SetAiming(bool bIsAiming);
@@ -44,25 +46,37 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FinishSwapAttachWeapons();
 
-	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeaponFinal)
-	AWeaponFinal* EquippedWeaponFinal;
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
+	class AWeaponBase* EquippedWeapon;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedMeleeWeapon)
 	class AMeleeWeapon* EquippedMeleeWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedRangedWeapon)
+	class ARangedWeapon* EquippedRangedWeapon;
 	
 
 	UFUNCTION()
-	void OnRep_EquippedWeaponFinal();
+	void OnRep_EquippedWeapon();
 
 	UFUNCTION()
 	void OnRep_EquippedMeleeWeapon();
 
-	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeaponFinal)
-	AWeaponFinal* SecondaryWeaponFinal;
+	UFUNCTION()
+	void OnRep_EquippedRangedWeapon();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	AWeaponBase* SecondaryWeapon;
 
     UPROPERTY()
-    EWeaponFinalType WeaponFinalType;
+    EWeaponType WeaponType;
 
+	UPROPERTY()
+	EMeleeType MeleeType;
+
+	UPROPERTY()
+	ERangedType RangedType;
+	
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
 
@@ -77,7 +91,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
-	void PickupAmmo(EWeaponFinalType WeaponFinalType, int32 AmmoAmount);
+	void PickupAmmo(ERangedType RangedType, int32 AmmoAmount);
 
 	bool bLocallyReloading = false;
 
@@ -87,7 +101,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnRep_SecondaryWeaponFinal();
+	void OnRep_SecondaryWeapon();
 
 	
 	void Fire();
@@ -129,25 +143,24 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProjectileFinal> GrenadeFinalClass;
 
-	void DropEquippedWeaponFinal();
+	void DropEquippedWeapon();
 
-	void AttachActorToRightHand(class AActor* ActorToAttach);
-	void AttachActorToLeftHand(class AActor* ActorToAttach);
-	void AttachSwordToLeftHand(AWeaponFinal* Sword);
-	void AttachActorToBackpack(class AActor* ActorToAttach);	
+	void AttachWeaponToRightHand(class AWeaponBase* WeaponToAttach);
+	void AttachWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
+	void AttachSwordToLeftHand(AMeleeWeapon* Sword);
+	void AttachActorToBackpack(class AWeaponBase* WeaponToAttach);	
 	void UpdateCarriedAmmo();
 
-	void PlayWeaponFinalEquipSound(AWeaponFinal* WeaponFinalToEquip);
-	void PlayMeleeEquipSound(AMeleeWeapon* MeleeWeaponToEquip);
-
-	void ReloadEmptyWeaponFinal();
+	void PlayWeaponEquipSound(AWeaponBase* WeaponToEquip);
+	
+	void ReloadEmptyRangedWeapon();
 
 	void ShowAttachedGrenade(bool bShowGrenade); 
 
 	void UpdateHUDGrenades();
 
-	void EquipPrimaryWeaponFinal(AWeaponFinal* WeaponFinalToEquip);
-	void EquipSecondaryWeaponFinal(AWeaponFinal* WeaponFinalToEquip);
+	void EquipPrimaryWeapon(AWeaponBase* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeaponBase* WeaponToEquip);
 
 private:
 	UPROPERTY()
@@ -234,7 +247,7 @@ private:
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
-	TMap<EWeaponFinalType, int32> CarriedAmmoMap;
+	TMap<ERangedType, int32> CarriedAmmoMap;
 
 	UPROPERTY(EditAnywhere)
 	int32 MaxCarriedAmmo = 500;
@@ -285,11 +298,11 @@ private:
 	void OnRep_WieldingTheSword();
 
 	UPROPERTY()
-	AWeaponFinal* TheSword;
+	AMeleeWeapon* TheSword;
 
 public:	
 	FORCEINLINE bool IsAiming() const { return bAiming; }
-	FORCEINLINE EWeaponFinalType GetWeaponFinalType() const { return WeaponFinalType; }
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }	
 	bool ShouldSwapWeapons();
 	

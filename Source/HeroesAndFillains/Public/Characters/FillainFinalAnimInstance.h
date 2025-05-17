@@ -33,9 +33,9 @@ private:
 	bool bIsAccelerating;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	bool bWeaponFinalEquipped;
+	bool bWeaponEquipped;
 
-	class AWeaponFinal* EquippedWeaponFinal;
+	class AWeaponBase* EquippedWeapon;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsCrouched;

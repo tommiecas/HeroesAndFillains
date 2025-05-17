@@ -5,33 +5,24 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Characters/FillainCharacter.h"
-#include "HUD/PickupWidget.h"
+#include "HUD/PickupWidgetComponent.h"
 
 
 #include "Components/WidgetComponent.h"  
 
 ASword::ASword()  
 {  
-   SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));  
-   SetRootComponent(SwordMesh);  
+	SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
+	SetRootComponent(SwordMesh);
+	SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);  
+	SwordMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);  
 
-   GetAreaSphere()->SetupAttachment(SwordMesh);  
-   // Assuming GetPickupWidgetA() returns a UUserWidget or a subclass of it  
-   if (UWidgetComponent* WidgetComponent = GetPickupWidgetA())  
-   {  
-       if (UPickupWidget* PickupWidget = Cast<UPickupWidget>(WidgetComponent->GetUserWidgetObject()))  
-       {  
-           PickupWidget->AddToViewport();  
-       }  
-   }  
-
-   SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);  
-   SwordMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);  
+	GetAreaSphere()->SetupAttachment(SwordMesh);
 }
 
-void ASword::WeaponFinalDropped()
+void ASword::WeaponDropped()
 {
-	SetWeaponFinalState(EWeaponFinalState::EWFS_Dropped);
+	SetWeaponState(EWeaponState::EWS_Dropped);
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	SwordMesh->DetachFromComponent(DetachRules);
 	SetOwner(nullptr);
@@ -45,14 +36,14 @@ void ASword::ResetSword()
 	if (SwordWielder)
 	{
 		SwordWielder->SetWieldingTheSword(false);
-		SwordWielder->SetOverlappingWeaponFinal(nullptr);
+		SwordWielder->SetOverlappingWeapon(nullptr);
 		SwordWielder->UnCrouch();
 	}
 
 	if (!HasAuthority()) return;
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	SwordMesh->DetachFromComponent(DetachRules);
-	SetWeaponFinalState(EWeaponFinalState::EWFS_Initial);
+	SetWeaponState(EWeaponState::EWS_Initial);
 	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetAreaSphere()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	SetOwner(nullptr);
@@ -66,7 +57,7 @@ void ASword::ResetSword()
 
 void ASword::OnEquipped()
 {
-	ShowPickupAndWeaponInfoWidgets(false);
+	ShowPickupAndInfoWidgets(false);
 	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SwordMesh->SetSimulatePhysics(false);
 	SwordMesh->SetEnableGravity(false);
@@ -97,4 +88,17 @@ void ASword::BeginPlay()
 {
 	Super::BeginPlay();
 	InitialTransform = GetActorTransform();
+
+	Super::BeginPlay();
+
+	if (UWidgetComponent* WidgetComponent = GetPickupWidgetA())
+	{
+		if (UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject())
+		{
+			if (UPickupWidgetComponent* PickupWidget = Cast<UPickupWidgetComponent>(UserWidget))
+			{
+				PickupWidget->SetVisibility(true);
+			}
+		}
+	}
 }

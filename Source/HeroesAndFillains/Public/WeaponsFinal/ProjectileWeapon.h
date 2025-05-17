@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponsFinal/WeaponFinal.h"
-#include "ProjectileWeaponFinal.generated.h"
+#include "RangedWeapon.h"
+#include "WeaponsFinal/WeaponBase.h"
+#include "ProjectileWeapon.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API AProjectileWeaponFinal : public AWeaponFinal
+class HEROESANDFILLAINS_API AProjectileWeapon : public ARangedWeapon
 {
 	GENERATED_BODY()
 

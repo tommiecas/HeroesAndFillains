@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponsFinal/HitScanWeaponFinal.h"
-#include "ShotgunFinal.generated.h"
+#include "WeaponsFinal/HitScanWeapon.h"
+#include "Shotgun.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API AShotgunFinal : public AHitScanWeaponFinal
+class HEROESANDFILLAINS_API AShotgun : public AHitScanWeapon
 {
 	GENERATED_BODY()
 
 public:
-	void ShotgunFinalTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
+	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
 	virtual void FireShotgun(const TArray<FVector_NetQuantize>& HitTargets);
 
 private:

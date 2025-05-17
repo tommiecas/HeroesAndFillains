@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "WeaponsFinal/ProjectileWeapon.h"
 #include "WeaponSpawnLibrary.generated.h"
 
 /**
@@ -16,6 +17,6 @@ class HEROESANDFILLAINS_API UWeaponSpawnLibrary : public UBlueprintFunctionLibra
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon Spawning")
-	static AProjectileWeaponFinal* SpawnFloatingWeapon(UObject* WorldContextObject, TSubclassOf<AProjectileWeaponFinal> WeaponClass, FVector SpawnLocation, FRotator SpawnRotation);
+	static AProjectileWeapon* SpawnFloatingWeapon(UObject* WorldContextObject, TSubclassOf<AProjectileWeapon> WeaponClass, FVector SpawnLocation, FRotator SpawnRotation);
 	
 };

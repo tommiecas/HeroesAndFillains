@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HUD/WeaponInfoWidget.h"
+#include "HUD/AmmoIntelWidgetComponent.h"
+
 

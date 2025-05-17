@@ -14,6 +14,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "FillainCharacter.generated.h"
 
+class AWeaponBase;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -60,7 +61,7 @@ public:
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
-	void SwitchWeaponFinal(AWeaponFinal* NewWeaponFinal);
+	void SwitchWeapon(AWeaponBase* NewWeapon);
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
@@ -127,7 +128,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
-	void SpawnDefaultWeaponFinal();
+	void SpawnDefaultWeapon();
 
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> HitCollisionBoxes;
@@ -291,7 +292,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* foot_r;
 
-	void DropOrDestroyWeapon(AWeaponFinal* WeaponFinal);
+	void DropOrDestroyWeapon(AWeaponBase* Weapon);
 	void DropOrDestroyBothWeapons();
 
 	void SetSpawnPoint();
@@ -308,20 +309,20 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeaponFinal)
-	class AWeaponFinal* OverlappingWeaponFinal;
-
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingMeleeWEapon)
-	class AMeleeWeapon* OverlappingMeleeWeapon;
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
+	class AWeaponBase* OverlappingWeapon;
 
 	UFUNCTION()
-	void OnRep_OverlappingWeaponFinal(AWeaponFinal* LastWeaponFinal);
-
-	UFUNCTION()
-	void OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon);
+	void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
 
 	UPROPERTY(VisibleInstanceOnly)
-	AMeleeWeapon* MeleeWeaponOverlapped;
+	class AMeleeWeapon* MeleeWeaponOverlapped;
+
+	UPROPERTY(VisibleInstanceOnly)
+	class ARangedWeapon* RangedWeaponOverlapped;
+
+	UPROPERTY(VisibleInstanceOnly)
+	AWeaponBase* WeaponOverlapped;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -486,22 +487,21 @@ private:
 	***   Default Weapon   ***
 	*************************/
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AWeaponFinal> DefaultWeaponFinalClass;
+	TSubclassOf<AWeaponBase> DefaultWeaponClass;
 
 	UPROPERTY()
 	class AHAFGameMode* HAFGameMode;
 
 public:
-	void SetOverlappingWeaponFinal(AWeaponFinal* WeaponFinal);
-	void SetOverlappingMeleeWeapon(AMeleeWeapon* MeleeWeapon);
-	bool IsWeaponFinalEquipped();
+	void SetOverlappingWeapon(AWeaponBase* Weapon);
+	bool IsWeaponEquipped();
 	bool IsAiming();
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AWeaponFinal* GetOverlappingWeaponFinal();
-	AWeaponFinal* GetEquippedWeaponFinal();
+	AWeaponBase* GetOverlappingWeapon();
+	AWeaponBase* GetEquippedWeapon();
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }

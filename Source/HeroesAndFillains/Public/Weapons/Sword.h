@@ -3,20 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 #include "Sword.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API ASword : public AWeaponFinal
+class HEROESANDFILLAINS_API ASword : public AMeleeWeapon
 {
 	GENERATED_BODY()
 
 public:
 	ASword();
-	virtual void WeaponFinalDropped() override;
+	virtual void WeaponDropped() override;
 	void ResetSword();
 
 protected:

@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "WeaponsFinal/HitScanWeaponFinal.h"
+#include "WeaponsFinal/HitScanWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "Characters/FillainCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -16,7 +16,7 @@
 #include "PlayerController/FillainPlayerController.h"
 
 
-void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
+void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
 	Super::Fire(HitTarget);
 
@@ -93,7 +93,7 @@ void AHitScanWeaponFinal::Fire(const FVector& HitTarget)
 }
 
 
-void AHitScanWeaponFinal::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
+void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
 {
 	UWorld* World = GetWorld();
 	if (World)

@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Weapons/WeaponTypes.h"
+#include "WeaponsFinal/RangedWeapon.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
+#include "WeaponsFinal/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
@@ -31,9 +33,9 @@ public:
 	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
-	void SetHUDWeaponFinalAmmo(int32 WeaponFinalAmmo);
+	void SetHUDWeaponAmmo(int32 WeaponAmmo);
 	void SetHUDCarriedAmmo(int32 CarriedAmmo);
-	void SetHUDWeaponFinalType(APawn* InPawn);
+	void SetHUDWeaponType(APawn* InPawn);
 	void SetHUDEliminationMessage(AFillainPlayerController* ConstKillerController, AFillainPlayerController* ConstVictimController);
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
@@ -69,7 +71,13 @@ public:
 	float SingleTripTime = 0.f;
 
 	UPROPERTY()
-	class AWeaponFinal* EquippedWeaponFinal;
+	class AWeaponBase* EquippedWeapon;
+
+	UPROPERTY()
+	class ARangedWeapon* EquippedRangedWeapon;
+
+	UPROPERTY()
+	class AMeleeWeapon* EquippedMeleeWeapon;
 
 	FHighPingDelegate HighPingDelegate;
 
@@ -162,7 +170,7 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
-	FString GetWeaponFinalTypeDisplayName(EWeaponFinalType WeaponFinalType);
+	FString GetWeaponTypeDisplayName(ERangedType RangedType, EMeleeType MeleeType);
 
 	UPROPERTY()
 	class AFillainHUD* FillainHUD;
@@ -210,7 +218,7 @@ private:
 	bool bInitializeDefeats = false;
 	bool bInitializeGrenades = false;
 	bool bInitializeShield = false;
-	bool bInitializeWeaponFinalAmmo = false;
+	bool bInitializeWeaponAmmo = false;
 	bool bInitializeCarriedAmmo = false;
 
 	float HUDHealth;
@@ -221,7 +229,7 @@ private:
 	float HUDShield;
 	float HUDMaxShield;
 	float HUDCarriedAmmo;
-	float HUDWeaponFinalAmmo;
+	float HUDWeaponAmmo;
 
 	int32 ThirtySecondsOnTheClock = 30;
 

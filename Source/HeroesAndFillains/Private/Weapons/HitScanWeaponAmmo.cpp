@@ -8,7 +8,7 @@
 #include "Sound/SoundCue.h"
 
 #include "GameFramework/Character.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "WeaponsFinal/ProjectileFinal.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/BoxComponent.h"

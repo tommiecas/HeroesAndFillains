@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RangedWeapon.h"
 #include "WeaponsFinalTypes.h"
 #include "GameFramework/Actor.h"
 #include "ProjectileFinal.generated.h"
@@ -89,13 +90,13 @@ private:
 	FTimerHandle DestroyTimer;
 
 	UPROPERTY()
-	EWeaponFinalType WeaponFinalType;;
+	ERangedType RangedType;;
 
 	UPROPERTY(EditAnywhere)
 	float DestroyTime = 3.f;
 
 public:
-	FORCEINLINE EWeaponFinalType GetWeaponFinalType() const{ return WeaponFinalType; }
+	FORCEINLINE ERangedType GetRangedType() const{ return RangedType; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	
 };

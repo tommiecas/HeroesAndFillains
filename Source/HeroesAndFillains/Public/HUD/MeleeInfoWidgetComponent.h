@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponInfoWidget.h"
-#include "MeleeInfoWidget.generated.h"
+#include "Components/WidgetComponent.h"
+#include "MeleeInfoWidgetComponent.generated.h"
+
 
 /**
  * 
  */
-UCLASS()
-class HEROESANDFILLAINS_API UMeleeInfoWidget : public UUserWidget
+UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class HEROESANDFILLAINS_API UMeleeInfoWidgetComponent : public UWidgetComponent
 {
 	GENERATED_BODY()
 
@@ -20,19 +21,19 @@ public:
 
 protected:
 	// Stored info to be used by the widget (e.g., for binding or in the Blueprint event)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
 	FText MeleeNameText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
 	FText MeleeHistoryText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
 	FText MeleeResistancesText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
 	FText MeleeWeaknessesText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
 	float MeleeDamageText;
 };
 

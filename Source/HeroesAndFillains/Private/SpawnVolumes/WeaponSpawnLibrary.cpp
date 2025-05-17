@@ -2,11 +2,11 @@
 
 
 #include "SpawnVolumes/WeaponSpawnLibrary.h"
-#include "WeaponsFinal/ProjectileWeaponFinal.h"
+#include "WeaponsFinal/ProjectileWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
 
-AProjectileWeaponFinal* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldContextObject, TSubclassOf<AProjectileWeaponFinal> WeaponClass, FVector SpawnLocation, FRotator SpawnRotation)
+AProjectileWeapon* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldContextObject, TSubclassOf<AProjectileWeapon> WeaponClass, FVector SpawnLocation, FRotator SpawnRotation)
 {
     if (!WeaponClass || !WorldContextObject) return nullptr;
 
@@ -16,7 +16,7 @@ AProjectileWeaponFinal* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldC
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    AProjectileWeaponFinal* SpawnedWeapon = World->SpawnActor<AProjectileWeaponFinal>(WeaponClass, SpawnLocation, SpawnRotation, SpawnParams);
+    AProjectileWeapon* SpawnedWeapon = World->SpawnActor<AProjectileWeapon>(WeaponClass, SpawnLocation, SpawnRotation, SpawnParams);
 
     if (SpawnedWeapon)
     {

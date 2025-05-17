@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "WeaponsFinal/ShotgunFinal.h"
+#include "WeaponsFinal/Shotgun.h"
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 #include "Engine/SkeletalMeshSocket.h"
-#include "WeaponsFinal/WeaponFinal.h"
+#include "WeaponsFinal/WeaponBase.h"
 #include "Characters/FillainCharacter.h"
 #include "HAFComponents/LagCompensationComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -15,10 +15,11 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "Sound/SoundCue.h"
+#include "WeaponsFinal/RangedWeapon.h"
 
-void AShotgunFinal::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
+void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 {
-	AWeaponFinal::Fire(FVector());
+	ARangedWeapon::Fire(FVector());
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
@@ -133,7 +134,7 @@ void AShotgunFinal::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	}
 }
 
-void AShotgunFinal::ShotgunFinalTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets)
+void AShotgun::ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets)
 {
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
 	if (MuzzleFlashSocket == nullptr) return;
