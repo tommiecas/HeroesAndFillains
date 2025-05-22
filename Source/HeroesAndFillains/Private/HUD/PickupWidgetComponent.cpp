@@ -4,7 +4,7 @@
 #include "HUD/PickupWidgetComponent.h"
 #include "Components/TextBlock.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 #include "WeaponsFinal/WeaponBase.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"

@@ -29,9 +29,12 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* SwordMesh;
 
+	
+
 	FTransform InitialTransform;
 
 public:
 	FORCEINLINE FTransform GetInitialTransform() const { return InitialTransform; }
-	
+	FORCEINLINE UWidgetComponent* GetPickupGearWidgetComponentA() const { return PickupGearWidgetComponentA; }
+	FORCEINLINE UWidgetComponent* GetPickupGearWidgetComponentB() const { return PickupGearWidgetComponentB; }
 };

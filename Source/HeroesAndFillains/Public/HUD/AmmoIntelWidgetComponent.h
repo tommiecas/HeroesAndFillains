@@ -18,7 +18,7 @@ class HEROESANDFILLAINS_API UAmmoIntelWidgetComponent : public UWidgetComponent
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Weapon UI")
 	void SetWeaponAmmoIntel(const FText& Name, const FText& Weapon, const FText& Deliverable, float Amount, float Damage);
-
+	
 protected:
 	// Stored info to be used by the widget (e.g., for binding or in the Blueprint event)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")

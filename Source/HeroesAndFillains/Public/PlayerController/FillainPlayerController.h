@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"

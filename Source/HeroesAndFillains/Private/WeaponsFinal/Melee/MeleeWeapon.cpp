@@ -3,25 +3,24 @@
 
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
 #include "Components/WidgetComponent.h"
+#include "HUD/ItemInfoWidgetBase.h"
 #include "HUD/MeleeInfoWidgetComponent.h"
 #include "HUD/PickupWidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "WeaponsFinal/WeaponBase.h"
+#include "HUD/ItemInfoWidgetBase.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
 {
-	MeleeInfoWidget1 = CreateDefaultSubobject<UMeleeInfoWidgetComponent>(TEXT("MeleeInfoWidget1"));
-	MeleeInfoWidget1->SetupAttachment(RootComponent);
-	MeleeInfoWidget1->SetWidgetSpace(EWidgetSpace::Screen);       // Widget rendered in screen space (or use World if 3D)
-	MeleeInfoWidget1->SetDrawSize(FVector2D(300.f, 100.f));
-	MeleeInfoWidget1->SetWidgetClass(UMeleeInfoWidgetComponent::StaticClass()); // Set the widget class to your custom widget class
-
-	MeleeInfoWidget2 = CreateDefaultSubobject<UMeleeInfoWidgetComponent>(TEXT("MeleeInfoWidget2"));
-	MeleeInfoWidget2->SetupAttachment(RootComponent);
-	MeleeInfoWidget2->SetWidgetSpace(EWidgetSpace::Screen);       // Widget rendered in screen space (or use World if 3D)
-	MeleeInfoWidget2->SetDrawSize(FVector2D(300.f, 100.f));
-	MeleeInfoWidget2->SetWidgetClass(UMeleeInfoWidgetComponent::StaticClass()); // Set the widget class to your custom widget classWidget2 = CreateDefaultSubobject<UWidgetComponent>(TEXT("NameWidget2"));
+	if (ItemInfoWidgetComponentA)
+	{
+		ItemInfoWidgetComponentA->SetVisibility(false, true);
+	}
+	if (ItemInfoWidgetComponentB)
+	{
+		ItemInfoWidgetComponentB->SetVisibility(false, true);
+	}
 }
 
 void AMeleeWeapon::EnableCustomDepth(bool bEnable)
@@ -33,65 +32,186 @@ void AMeleeWeapon::EnableCustomDepth(bool bEnable)
 void AMeleeWeapon::ShowPickupAndInfoWidgets(bool bShowPickupAndInfoWidgets)
 {
 	Super::ShowPickupAndInfoWidgets(bShowPickupAndInfoWidgets);
-
-	if (MeleeInfoWidget1)
-	{
-		MeleeInfoWidget1->SetVisibility(bShowPickupAndInfoWidgets);
-	}
-	if (MeleeInfoWidget2)
-	{
-		MeleeInfoWidget2->SetVisibility(bShowPickupAndInfoWidgets);
-	}
 }
 
 void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (MeleeInfoWidget1)
+	if (ItemInfoWidgetComponentA && !ItemInfoWidgetComponentA->GetWidgetClass())
 	{
-		FText NameText = GetMeleeWeaponNameText();
-		MeleeInfoWidget1->SetMeleeWeaponInfo(NameText, MeleeWeaponHistory, MeleeWeaponResistances, MeleeWeaponWeaknesses, MeleeWeaponDamage);
-		MeleeInfoWidget1->SetVisibility(false);
+		ItemInfoWidgetComponentA->SetWidgetClass(ItemInfoWidgetClass);
+		ItemInfoWidgetComponentA->InitWidget();
+		ItemInfoWidgetComponentA->SetVisibility(false, true);
+		UUserWidget* Widget = ItemInfoWidgetComponentA->GetUserWidgetObject();
+		if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(Widget))
+		{
+			InfoWidget->SetItemInformation(
+				GetMeleeWeaponNameText(),
+				GetMeleeWeaponHistoryText(),
+				GetMeleeWeaponResistancesText(),
+				GetMeleeWeaponWeaknessesText(),
+				GetMeleeWeaponDamageText()
+			);
+		}
 	}
-
-	if (MeleeInfoWidget2)
+	if (ItemInfoWidgetComponentB && !ItemInfoWidgetComponentB->GetWidgetClass())
 	{
-		FText NameText = GetMeleeWeaponNameText();
-		MeleeInfoWidget2->SetMeleeWeaponInfo(NameText, MeleeWeaponHistory, MeleeWeaponResistances, MeleeWeaponWeaknesses, MeleeWeaponDamage);
-		MeleeInfoWidget2->SetVisibility(false);
+		ItemInfoWidgetComponentB->SetWidgetClass(ItemInfoWidgetClass);
+		ItemInfoWidgetComponentB->InitWidget();
+		ItemInfoWidgetComponentB->SetVisibility(false, true);
+		UUserWidget* Widget = ItemInfoWidgetComponentB->GetUserWidgetObject();
+		if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(Widget))
+		{
+			InfoWidget->SetItemInformation(
+				GetMeleeWeaponNameText(),
+				GetMeleeWeaponHistoryText(),
+				GetMeleeWeaponResistancesText(),
+				GetMeleeWeaponWeaknessesText(),
+				GetMeleeWeaponDamageText()
+			);
+		}
 	}
+	ShowPickupAndInfoWidgets(false);
+	const bool bIsVisibleA = ItemInfoWidgetComponentA->IsVisible();
+	const bool bIsVisibleB = ItemInfoWidgetComponentB->IsVisible();
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentA visibility: %s in MeleeWeaponBeginPlay"), bIsVisibleA ? TEXT("Visible") : TEXT("Hidden"));
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentB visibility: %s in MeleeWeaponBeginPlay"), bIsVisibleB ? TEXT("Visible") : TEXT("Hidden"));
 }
 
 void AMeleeWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	if (MeleeInfoWidget1)
+	if (ItemInfoWidgetComponentA)
 	{
-		MeleeInfoWidget1->SetVisibility(true);
+		ItemInfoWidgetComponentA->SetVisibility(true);
+		UUserWidget* RawWidget = ItemInfoWidgetComponentA->GetUserWidgetObject();
+		if (RawWidget)
+		{
+			if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
+			{
+				InfoWidget->ShowMeleeInfoFadeInAnimation(); 
+			}
+		}
 	}
-	if (MeleeInfoWidget2)
+	if (ItemInfoWidgetComponentB)
 	{
-		MeleeInfoWidget2->SetVisibility(true);
+		ItemInfoWidgetComponentB->SetVisibility(true);
+		UUserWidget* RawWidget = ItemInfoWidgetComponentB->GetUserWidgetObject();
+		if (RawWidget)
+		{
+			if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
+			{
+				InfoWidget->ShowMeleeInfoFadeInAnimation(); 
+			}
+		}
 	}
+	ShowPickupAndInfoWidgets(true);
+	const bool bIsVisibleA = ItemInfoWidgetComponentA->IsVisible();
+	const bool bIsVisibleB = ItemInfoWidgetComponentB->IsVisible();
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentA visibility: %s in MeleeWeaponOnOverlap"), bIsVisibleA ? TEXT("Visible") : TEXT("Hidden"));
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentB visibility: %s in MeleeWeaponOverlap"), bIsVisibleB ? TEXT("Visible") : TEXT("Hidden"));
 }
 
 void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 
-	if (MeleeInfoWidget1)
+	if (ItemInfoWidgetComponentA)
 	{
-		MeleeInfoWidget1->SetVisibility(false);
+		ItemInfoWidgetComponentA->SetVisibility(false, true);
+		UUserWidget* RawWidget = ItemInfoWidgetComponentA->GetUserWidgetObject();
+		if (RawWidget)
+		{
+			if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
+			{
+				InfoWidget->ShowMeleeInfoFadeOutAnimation(); 
+			}
+		}
 	}
-	if (MeleeInfoWidget2)
+	if (ItemInfoWidgetComponentB)
 	{
-		MeleeInfoWidget1->SetVisibility(false);
+		ItemInfoWidgetComponentB->SetVisibility(false, true);
+		UUserWidget* RawWidget = ItemInfoWidgetComponentB->GetUserWidgetObject();
+		if (RawWidget)
+		{
+			if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
+			{
+				InfoWidget->ShowMeleeInfoFadeOutAnimation(); 
+			}
+		}
 	}
+	ShowPickupAndInfoWidgets(false);
+	const bool bIsVisibleA = ItemInfoWidgetComponentA->IsVisible();
+	const bool bIsVisibleB = ItemInfoWidgetComponentB->IsVisible();
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentA visibility: %s in MeleeWeaponEndOverlap"), bIsVisibleA ? TEXT("Visible") : TEXT("Hidden"));
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentB visibility: %s in MeleeWeaponEndOverlap"), bIsVisibleB ? TEXT("Visible") : TEXT("Hidden"));
 }
 
-FText AMeleeWeapon::GetMeleeWeaponNameText() const
+void AMeleeWeapon::OnEquipped()
+{
+	Super::OnEquipped();
+}
+
+void AMeleeWeapon::OnDropped()
+{
+	Super::OnDropped();
+
+	if (!ItemInfoWidgetComponentA)
+	{
+		ItemInfoWidgetComponentA = NewObject<UWidgetComponent>(this, TEXT("ItemInfoWidgetA"));
+		ItemInfoWidgetComponentA->RegisterComponent();
+		ItemInfoWidgetComponentA->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ItemInfoWidgetComponentA->SetWidgetClass(ItemInfoWidgetClass);
+		ItemInfoWidgetComponentA->InitWidget();
+
+		if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject()))
+		{
+			InfoWidget->SetItemInformation(
+				GetMeleeWeaponNameText(),
+				GetMeleeWeaponHistoryText(),
+				GetMeleeWeaponResistancesText(),
+				GetMeleeWeaponWeaknessesText(),
+				GetMeleeWeaponDamageText()
+			);
+		}
+	}
+	if (!ItemInfoWidgetComponentB)
+	{
+		ItemInfoWidgetComponentB = NewObject<UWidgetComponent>(this, TEXT("ItemInfoWidgetB"));
+		ItemInfoWidgetComponentB->RegisterComponent();
+		ItemInfoWidgetComponentB->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ItemInfoWidgetComponentB->SetWidgetClass(ItemInfoWidgetClass);
+		ItemInfoWidgetComponentB->InitWidget();
+
+		if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentB->GetUserWidgetObject()))
+		{
+			InfoWidget->SetItemInformation(
+				GetMeleeWeaponNameText(),
+				GetMeleeWeaponHistoryText(),
+				GetMeleeWeaponResistancesText(),
+				GetMeleeWeaponWeaknessesText(),
+				GetMeleeWeaponDamageText()
+			);
+		}
+	}
+	if (FloatingWidgetComponent)
+	{
+		FloatingWidgetComponent->SetVisibility(false, true);
+	}
+	const bool bIsVisibleA = ItemInfoWidgetComponentA->IsVisible();
+	const bool bIsVisibleB = ItemInfoWidgetComponentB->IsVisible();
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentA visibility: %s in MeleeWeaponDropped"), bIsVisibleA ? TEXT("Visible") : TEXT("Hidden"));
+	UE_LOG(LogTemp, Warning, TEXT("ItemInfoWidgetComponentB visibility: %s in MeleeWeaponDropped"), bIsVisibleB ? TEXT("Visible") : TEXT("Hidden"));
+}
+
+void AMeleeWeapon::OnEquippedSecondary()
+{
+	Super::OnEquippedSecondary();
+}
+
+FText AMeleeWeapon::GetMeleeWeaponNameText()
 {
 	// Convert the EMeleeType enum value to a localized FText using the display name
 	const UEnum* EnumPtr = StaticEnum<EMeleeType>();
@@ -104,62 +224,6 @@ FText AMeleeWeapon::GetMeleeWeaponNameText() const
 	return FText::FromString("Unknown");;
 }
 
-void AMeleeWeapon::OnEquipped()
-{
-	Super::OnEquipped();
-
-	if (MeleeInfoWidget1) { MeleeInfoWidget1->DestroyComponent(); MeleeInfoWidget1 = nullptr; }
-	if (MeleeInfoWidget2) { MeleeInfoWidget2->DestroyComponent(); MeleeInfoWidget2 = nullptr; }
-}
-
-void AMeleeWeapon::OnDropped()
-{
-	Super::OnDropped();
-
-	// Create MeleeInfoWidget1
-	if (!MeleeInfoWidget1)
-	{
-		MeleeInfoWidget1 = NewObject<UMeleeInfoWidgetComponent>(this, TEXT("MeleeInfoWidget1"));
-		if (MeleeInfoWidget1)
-		{
-			MeleeInfoWidget1->RegisterComponent();
-			MeleeInfoWidget1->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			MeleeInfoWidget1->SetWidgetSpace(EWidgetSpace::Screen);
-			MeleeInfoWidget1->SetDrawSize(FVector2D(300.f, 100.f));
-			MeleeInfoWidget1->SetWidgetClass(UMeleeInfoWidgetComponent::StaticClass());
-                
-			MeleeInfoWidget1->SetMeleeWeaponInfo(MeleeWeaponName, MeleeWeaponHistory, MeleeWeaponResistances, MeleeWeaponWeaknesses, MeleeWeaponDamage);
-		}
-	}
-	// Create MeleeInfoWidget2
-	if (!MeleeInfoWidget2)
-	{
-		MeleeInfoWidget2 = NewObject<UMeleeInfoWidgetComponent>(this, TEXT("MeleeInfoWidget2"));
-		if (MeleeInfoWidget2)
-		{
-			MeleeInfoWidget2->RegisterComponent();
-			MeleeInfoWidget2->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			MeleeInfoWidget2->SetWidgetSpace(EWidgetSpace::Screen);
-			MeleeInfoWidget2->SetDrawSize(FVector2D(300.f, 100.f));
-			MeleeInfoWidget2->SetWidgetClass(UMeleeInfoWidgetComponent::StaticClass());
-			
-			MeleeInfoWidget2->SetMeleeWeaponInfo(MeleeWeaponName, MeleeWeaponHistory, MeleeWeaponResistances, MeleeWeaponWeaknesses, MeleeWeaponDamage);
-		}
-	}
-	if (FloatingWidgetComponent)
-	{
-		FloatingWidgetComponent->SetVisibility(false);
-	}
-}
-
-void AMeleeWeapon::OnEquippedSecondary()
-{
-	Super::OnEquippedSecondary();
-
-	if (MeleeInfoWidget1) { MeleeInfoWidget1->DestroyComponent(); MeleeInfoWidget1 = nullptr; }
-	if (MeleeInfoWidget2) { MeleeInfoWidget2->DestroyComponent(); MeleeInfoWidget2 = nullptr; }
-}
-
 void AMeleeWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -169,7 +233,5 @@ void AMeleeWeapon::Tick(float DeltaTime)
 void AMeleeWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(AMeleeWeapon, MeleeType);
 }
 

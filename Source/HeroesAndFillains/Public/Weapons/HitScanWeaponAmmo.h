@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponsFinal/ProjectileFinal.h"
+#include "WeaponsFinal/Ranged/ProjectileFinal.h"
 #include "HitScanWeaponAmmo.generated.h"
 
 /**

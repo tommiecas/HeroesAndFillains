@@ -15,6 +15,9 @@
 #include "CollisionQueryParams.h"
 #include "LandscapeComponent.h"
 #include "Engine/OverlapResult.h"             // 🔥 For FOverlapResult
+#include "HUD/ItemInfoWidgetBase.h"
+#include "Pickups/AmmoPickup.h"
+#include "Pickups/PickupSpawnPoint.h"
 #include "Templates/Function.h"               // 🔥 For TFunction
 #include "WeaponsFinal/WeaponBase.h"
 
@@ -24,6 +27,14 @@ ALandscapeRegion0_0::ALandscapeRegion0_0()
     PrimaryActorTick.bCanEverTick = false;
     SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
     RootComponent = SpawnBox;
+}
+
+void ALandscapeRegion0_0::ShowPickupsAndInfoWidgets(bool bShowWidgets)
+{
+    if (PickupGearWidgetComponentA) PickupGearWidgetComponentA->SetVisibility(bShowWidgets);
+    if (PickupGearWidgetComponentB) PickupGearWidgetComponentB->SetVisibility(bShowWidgets);
+    if (ItemInfoWidgetComponentA) ItemInfoWidgetComponentA->SetVisibility(bShowWidgets);
+    if (ItemInfoWidgetComponentB) ItemInfoWidgetComponentB->SetVisibility(bShowWidgets);
 }
 
 void ALandscapeRegion0_0::BeginPlay()
@@ -79,27 +90,63 @@ FVector ALandscapeRegion0_0::RandomBoxPoints() const
     return UKismetMathLibrary::RandomPointInBoundingBox(SpawnBox->Bounds.Origin, SpawnBox->Bounds.BoxExtent);
 }
 
-void ALandscapeRegion0_0::AttachFloatingIcon(AWeaponBase* TargetWeapon, TSubclassOf<UUserWidget> WidgetClass)
+void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UUserWidget> WidgetClass)
 {
-    if (!TargetWeapon || !TargetWeapon->GetRootComponent() || !WidgetClass) return;
+    if (!TargetActor || !TargetActor->GetRootComponent() || !WidgetClass) return;
 
-    GetWorld()->GetTimerManager().SetTimerForNextTick([this, TargetWeapon, WidgetClass]()
+    GetWorld()->GetTimerManager().SetTimerForNextTick([this, TargetActor, WidgetClass]()
     {
-        if (!IsValid(TargetWeapon)) return;
+        if (!IsValid(TargetActor)) return;
 
-        UPickupWidgetComponent* Widget = NewObject<UPickupWidgetComponent>(TargetWeapon);
+        UPickupWidgetComponent* Widget = NewObject<UPickupWidgetComponent>(TargetActor);
         if (Widget)
         {
             Widget->RegisterComponent();
-            Widget->AttachToComponent(TargetWeapon->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-            Widget->SetWidgetSpace(EWidgetSpace::World);
+            Widget->AttachToComponent(TargetActor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+            Widget->SetWidgetSpace(EWidgetSpace::Screen);
             Widget->SetDrawSize(FVector2D(100.f, 50.f));
             Widget->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
             Widget->SetWidgetClass(WidgetClass);
 
-            TargetWeapon->FloatingWidgetComponent = Widget;
+            if (UUserWidget* RawWidget = Widget->GetUserWidgetObject())
+            {
+                if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
+                {
+                    if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(TargetActor))
+                    {
+                        InfoWidget->SetItemInformation(
+                            RangedWeapon->GetRangedWeaponNameText(),
+                            RangedWeapon->GetRangedWeaponDescriptionText(),
+                            RangedWeapon->GetRangedWeaponTypeText(),
+                            RangedWeapon->GetRangedWeaponRarityText(),
+                            RangedWeapon->GetRangedWeaponDamageText()
+                        );
+                    }
+                    else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(TargetActor))
+                    {
+                        InfoWidget->SetItemInformation(
+                            MeleeWeapon->GetMeleeWeaponNameText(),
+                            MeleeWeapon->GetMeleeWeaponHistoryText(),
+                            MeleeWeapon->GetMeleeWeaponResistancesText(),
+                            MeleeWeapon->GetMeleeWeaponWeaknessesText(),
+                            MeleeWeapon->GetMeleeWeaponDamageText()
+                        );
+                    }
+                    else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(TargetActor))
+                    {
+                        InfoWidget->SetItemInformation(
+                            AmmoPickup->GetAmmoNameText(),
+                            AmmoPickup->GetAmmoWeaponText(),
+                            AmmoPickup->GetAmmoDeliverableText(),
+                            AmmoPickup->GetAmmoAmountText(),
+                            AmmoPickup->GetAmmoDamageText()
+                        );
+                    }
+                }        
+            }
         }
     });
+    ShowPickupsAndInfoWidgets(false);
 }
 
 bool ALandscapeRegion0_0::IsValidSpawnPoint(const FVector& Location, FHitResult& GroundHit)
@@ -184,16 +231,31 @@ void ALandscapeRegion0_0::SpawnActorInBox(
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-                if (AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(
-                    ActorToSpawn, FinalLocation, FRotator::ZeroRotator, SpawnParams))
+                if (AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ActorToSpawn, FinalLocation, FRotator::ZeroRotator, SpawnParams))
                 {
                     ++SpawnedCount;
 
+                    if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(SpawnedActor))
+                    {
+                        MeleeWeapon->ItemInfoWidgetClass = WidgetClass; // 🔥 assign the class
+                    }
+                    else if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(SpawnedActor))
+                    {
+                        RangedWeapon->ItemInfoWidgetClass = WidgetClass;
+                    }
+                    else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(SpawnedActor))
+                    {
+                        AmmoPickup->ItemInfoWidgetClass = WidgetClass;
+                    }
+                    
                     if (OnSpawnedSetup)
                     {
-                        OnSpawnedSetup(SpawnedWeapon);
+                        OnSpawnedSetup(SpawnedActor);
                     }
-                    AttachFloatingIcon(SpawnedWeapon, WidgetClass);
+                    if (AWeaponBase* SpawnedWeapon = Cast<AWeaponBase>(SpawnedActor))
+                    {
+                        AttachFloatingIcon(SpawnedWeapon, WidgetClass);
+                    }
                     DrawDebugSphere(GetWorld(), FinalLocation, 25.f, 12, DebugColor, false, 30.f);
                     UE_LOG(LogTemp, Log, TEXT("Spawned: %s at %s"), *ActorToSpawn->GetName(), *FinalLocation.ToString());
                 }

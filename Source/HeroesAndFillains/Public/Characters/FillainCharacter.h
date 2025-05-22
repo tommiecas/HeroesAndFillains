@@ -207,7 +207,7 @@ protected:
 
 
 	void FireButtonPressed();
-	void FireButtonReleased();
+	// void FireButtonReleased();
 
 	/*************************
 	** Reloading the Weapon **

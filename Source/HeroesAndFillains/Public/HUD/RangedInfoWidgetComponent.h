@@ -18,6 +18,9 @@ public:
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Weapon UI")
     void SetRangedWeaponInfo(const FText& Name, const FText& Description, const FText& Type, const FText& Rarity, float Damage);
 
+
+	
+
 protected:
     // Stored info to be used by the widget (e.g., for binding or in the Blueprint event)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")

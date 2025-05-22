@@ -2,14 +2,14 @@
 
 
 #include "Weapons/HitScanWeaponAmmo.h"
-#include "WeaponsFinal/ProjectileRocketFinal.h"
+#include "WeaponsFinal/Ranged/ProjectileRocketFinal.h"
 #include "Kismet/GameplayStatics.h"
-#include "WeaponsFinal/ProjectileFinal.h"
+#include "WeaponsFinal/Ranged/ProjectileFinal.h"
 #include "Sound/SoundCue.h"
 
 #include "GameFramework/Character.h"
 #include "WeaponsFinal/WeaponBase.h"
-#include "WeaponsFinal/ProjectileFinal.h"
+#include "WeaponsFinal/Ranged/ProjectileFinal.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Components/AudioComponent.h"

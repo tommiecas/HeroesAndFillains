@@ -2,7 +2,7 @@
 
 
 #include "SpawnVolumes/WeaponSpawnLibrary.h"
-#include "WeaponsFinal/ProjectileWeapon.h"
+#include "WeaponsFinal/Ranged/ProjectileWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
 

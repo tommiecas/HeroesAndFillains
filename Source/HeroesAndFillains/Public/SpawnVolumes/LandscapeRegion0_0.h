@@ -11,6 +11,8 @@
 
 #include "LandscapeRegion0_0.generated.h"
 
+class UWidgetComponent;
+
 USTRUCT(BlueprintType)
 struct FSpawnVolumes
 {
@@ -36,6 +38,20 @@ class HEROESANDFILLAINS_API ALandscapeRegion0_0 : public AActor
     
 public:
 	ALandscapeRegion0_0();
+
+	void ShowPickupsAndInfoWidgets(bool bShowWidgets);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* PickupGearWidgetComponentA;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* PickupGearWidgetComponentB;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* ItemInfoWidgetComponentA;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* ItemInfoWidgetComponentB;
 
 protected:
 	virtual void BeginPlay() override;
@@ -63,7 +79,7 @@ protected:
 
 	FVector RandomBoxPoints() const;
 	bool IsValidSpawnPoint(const FVector& Location, FHitResult& GroundHit);
-	void AttachFloatingIcon(class AWeaponBase* TargetWeapon, TSubclassOf<UUserWidget> WidgetClass);
+	void AttachFloatingIcon(class AActor* TargetActor, TSubclassOf<UUserWidget> WidgetClass);
 
 	void SpawnActorInBox(TSubclassOf<AActor> ActorToSpawn, const TArray<FString>& FilterStrings, FColor DebugColor, TSubclassOf<UUserWidget> WidgetClass, TFunction<void(AActor*)> OnSpawnedSetup = nullptr);
 };

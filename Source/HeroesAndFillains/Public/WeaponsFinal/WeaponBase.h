@@ -7,6 +7,8 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "WeaponBase.generated.h"
 
+class UItemInfoWidgetBase;
+class UPickupGearWidget;
 class UWidgetComponent;
 class USphereComponent;
 
@@ -21,7 +23,7 @@ enum class EWeaponState : uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
-UCLASS()
+UCLASS(Blueprintable)
 class HEROESANDFILLAINS_API AWeaponBase : public AActor
 {
 	GENERATED_BODY()
@@ -73,11 +75,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
 	bool bShouldFloatSpin = true;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UPickupWidgetComponent* PickupWidgetA;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* PickupGearWidgetComponentA;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UPickupWidgetComponent* PickupWidgetB;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* PickupGearWidgetComponentB;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* ItemInfoWidgetComponentA;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	UWidgetComponent* ItemInfoWidgetComponentB;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	TSubclassOf<UPickupGearWidget> PickupGearWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> ItemInfoWidgetClass;
 	
 	UPROPERTY()
 	class UPickupWidgetComponent* FloatingWidgetComponent = nullptr;
@@ -98,7 +112,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
     	virtual void OnSphereOverlap(
     		UPrimitiveComponent* OverlappedComponent, 
     		AActor* OtherActor,
@@ -107,7 +121,7 @@ protected:
     		bool bFromSweep, 
     		const FHitResult& SweepResult);
     
-    	UFUNCTION()
+    	UFUNCTION(BlueprintCallable)
     	virtual void OnSphereEndOverlap(
     		UPrimitiveComponent* OverlappedComponent,
     		AActor* OtherActor,
@@ -161,11 +175,13 @@ public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-	FORCEINLINE UPickupWidgetComponent* GetPickupWidgetA() const { return PickupWidgetA; }
-	FORCEINLINE UPickupWidgetComponent* GetPickupWidgetB() const { return PickupWidgetB; }
+	FORCEINLINE UWidgetComponent* GetPickupWidgetComponentA() const { return PickupGearWidgetComponentA; }
+	FORCEINLINE UWidgetComponent* GetPickupWidgetComponentB() const { return PickupGearWidgetComponentB; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
+	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentA() const { return ItemInfoWidgetComponentA; }
+	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentB() const { return ItemInfoWidgetComponentB; }
 };
 
 template<typename T>

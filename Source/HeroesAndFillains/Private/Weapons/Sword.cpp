@@ -9,6 +9,7 @@
 
 
 #include "Components/WidgetComponent.h"  
+#include "HUD/PickupGearWidget.h"
 
 ASword::ASword()  
 {  
@@ -91,13 +92,13 @@ void ASword::BeginPlay()
 
 	Super::BeginPlay();
 
-	if (UWidgetComponent* WidgetComponent = GetPickupWidgetA())
+	if (UWidgetComponent* WidgetComponent = GetPickupGearWidgetComponentA())
 	{
 		if (UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject())
 		{
-			if (UPickupWidgetComponent* PickupWidget = Cast<UPickupWidgetComponent>(UserWidget))
+			if (UPickupGearWidget* PickupWidget = Cast<UPickupGearWidget>(UserWidget))
 			{
-				PickupWidget->SetVisibility(true);
+				PickupWidget->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
 	}

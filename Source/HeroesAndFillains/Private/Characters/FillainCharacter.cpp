@@ -29,7 +29,7 @@
 #include "Weapons/WeaponTypes.h"  
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "GameMode/LobbyGameMode.h"  
-#include "WeaponsFinal/ProjectileFinal.h"
+#include "WeaponsFinal/Ranged/ProjectileFinal.h"
 #include "Components/BoxComponent.h"  
 #include "HAFComponents/LagCompensationComponent.h"  
 #include "NiagaraComponent.h"  
@@ -71,7 +71,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "GameStates/HAFGameState.h"
 #include "PlayerStart/TeamPlayerStart.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 
 
 AFillainCharacter::AFillainCharacter()
@@ -290,8 +290,8 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 			GetActorLocation()
 		);
 	}
-	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedWeapon);
-	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon && Gun && Gun->GetRangedWeaponType() == ERangedType::ERT_SniperRifle;
+	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedRangedWeapon);
+	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedRangedWeapon && Gun && Gun->GetRangedWeaponType() == ERangedType::ERT_SniperRifle;
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
@@ -519,7 +519,7 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AFillainCharacter::AimButtonPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AFillainCharacter::AimButtonReleased);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AFillainCharacter::FireButtonPressed);
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFillainCharacter::FireButtonReleased);
+		// EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFillainCharacter::FireButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
 
@@ -791,7 +791,7 @@ void AFillainCharacter::Move(const FInputActionValue& Value)
 	}
 
 	
-	UE_LOG(LogTemp, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
 }
 
 void AFillainCharacter::Look(const FInputActionValue& Value)
@@ -810,7 +810,7 @@ void AFillainCharacter::Look(const FInputActionValue& Value)
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
 
-	UE_LOG(LogTemp, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
 
 }
 
@@ -1029,32 +1029,34 @@ void AFillainCharacter::Jump()
 
 void AFillainCharacter::FireButtonPressed()
 {
-	/* if (Combat && Combat->bWieldingTheSword) return;
+	if (Combat && Combat->bWieldingTheSword) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
-	} */
+	} 
 
+	UE_LOG(LogTemp, Warning, TEXT("AFillainCharacter::FireButtonPressed() called"));
+	
 	if (Combat)
 	{
-		Combat->FireButtonPressed(true);
+		Combat->Fire();
 	}
 }
 
-void AFillainCharacter::FireButtonReleased()
+/* void AFillainCharacter::FireButtonReleased()
 {
 	/*if (Combat && Combat->bWieldingTheSword) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
-	} */
+	} 
 
 
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
 	}
-}
+} */
 
 void AFillainCharacter::TurnInPlace(float DeltaTime)
 {
@@ -1201,7 +1203,7 @@ void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
 	{
 		if (OverlappingWeapon)
 		{
-			OverlappingWeapon->ShowPickupAndInfoWidgets(true);
+			OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 		}
 	}
 }
@@ -1210,7 +1212,7 @@ void AFillainCharacter::OnRep_OverlappingWeapon(AWeaponBase* LastWeapon)
 {
 	if (OverlappingWeapon)
 	{
-		OverlappingWeapon->ShowPickupAndInfoWidgets(true);
+		OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 	}
 	if (LastWeapon)
 	{

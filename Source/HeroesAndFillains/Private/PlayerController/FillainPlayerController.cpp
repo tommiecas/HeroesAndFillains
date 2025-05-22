@@ -44,7 +44,7 @@
 #include "Components/EditableText.h"
 #include "Components/ScrollBox.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 

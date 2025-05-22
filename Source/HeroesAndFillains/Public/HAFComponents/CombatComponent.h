@@ -7,7 +7,7 @@
 #include "HUD/FillainHUD.h"
 #include "Weapons/WeaponTypes.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 #include "WeaponsFinal/WeaponsFinalTypes.h"
 #include "WeaponsFinal/WeaponBase.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
@@ -113,7 +113,7 @@ protected:
 	void LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 	UFUNCTION(Server, Reliable /*, WithValidation */ )
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget /*, float FireDelay*/ );
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget, float FireDelay);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);

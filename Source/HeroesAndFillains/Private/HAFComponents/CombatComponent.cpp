@@ -16,11 +16,11 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "Characters/FillainAnimInstance.h"
-#include "WeaponsFinal/ProjectileFinal.h"
-#include "WeaponsFinal/Shotgun.h"
+#include "WeaponsFinal/Ranged/ProjectileFinal.h"
+#include "WeaponsFinal/Ranged/Shotgun.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
-#include "WeaponsFinal/RangedWeapon.h"
+#include "WeaponsFinal/Ranged/RangedWeapon.h"
 #include "WeaponsFinal/Melee/MeleeWeapon.h"
 
 
@@ -185,13 +185,16 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bIsFireButtonPressed = bPressed;
+
+	UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
+
 	if (bIsFireButtonPressed)
 	{
 		Fire(); 
 	}
 }
 
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget/*, float FireDelay*/)
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
 {
 	MulticastFire(TraceHitTarget);
 }
@@ -225,48 +228,61 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
+	UE_LOG(LogTemp, Warning, TEXT("CombatComponent::Fire() called"));
+
 	if (CanFire())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("CanFire() == true"));
 		bCanGunFire = false;
-		ServerFire(HitTarget);
-		if (EquippedWeapon)
+		if (EquippedRangedWeapon)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
+				*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
+
 			CrosshairShootingFactor = 0.75f;
 
-			/*switch (EquippedWeapon->FireType)
+			switch (EquippedRangedWeapon->FireType)
 			{
 			case EFireType::EFT_Projectile:
+				UE_LOG(LogTemp, Warning, TEXT("Calling FireProjectileWeapon()"));
 				FireProjectileWeapon();
 				break;
 			case EFireType::EFT_HitScan:
+				UE_LOG(LogTemp, Warning, TEXT("Calling FireHitScanWeapon()"));
 				FireHitScanWeapon();
 				break;
 			case EFireType::EFT_Shotgun:
+				UE_LOG(LogTemp, Warning, TEXT("Calling FireShotgun()"));
 				FireShotgun();
 				break;
-			}*/
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CanFire() == false"));
 		}
 		StartFireTimer();
+
 	}
 }
 
 void UCombatComponent::FireProjectileWeapon()
 {
-	if (EquippedWeapon && Character)
+	if (EquippedRangedWeapon && Character)
 	{
 		HitTarget = EquippedRangedWeapon->bUseScatter ? EquippedRangedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
-		ServerFire(HitTarget/*, EquippedWeapon->FireDelay*/);
+		ServerFire(HitTarget, EquippedRangedWeapon->FireDelay);
 	}
 }
 
 void UCombatComponent::FireHitScanWeapon()
 {
-	if (EquippedWeapon && Character)
+	if (EquippedRangedWeapon && Character)
 	{
 		HitTarget = EquippedRangedWeapon->bUseScatter ? EquippedRangedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
-		ServerFire(HitTarget/*, EquippedWeapon->FireDelay*/);
+		ServerFire(HitTarget, EquippedRangedWeapon->FireDelay);
 	}
 }
 
@@ -352,11 +368,13 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
-	if (Character == nullptr || WeaponToEquip == nullptr) return;
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToEquip))
 	{
 		DropEquippedWeapon();
+
+		EquippedWeapon = WeaponToEquip;
+		EquippedRangedWeapon = RangedWeapon;
+
 		RangedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 		AttachWeaponToRightHand(WeaponToEquip);
 		RangedWeapon->SetOwner(Character);
@@ -364,10 +382,16 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		RangedWeapon->SetHUDAmmo();
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
+
+		UE_LOG(LogTemp, Warning, TEXT("Equipping Weapon: %s"), *RangedWeapon->GetName());
 	}
 	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToEquip))
 	{
 		DropEquippedWeapon();
+
+		EquippedWeapon = WeaponToEquip;
+		EquippedMeleeWeapon = MeleeWeapon;
+
 		MeleeWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 		AttachWeaponToRightHand(WeaponToEquip);
 		MeleeWeapon->SetOwner(Character);
@@ -493,11 +517,26 @@ void UCombatComponent::AttachWeaponToRightHand(class AWeaponBase* WeaponToAttach
 {
 	if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr) return;
 
+	// Attach the MESH directly, not the root
+	if (WeaponToAttach->WeaponMesh)
+	{
+		WeaponToAttach->WeaponMesh->AttachToComponent(
+			Character->GetMesh(),
+			FAttachmentTransformRules::SnapToTargetIncludingScale,
+			FName("RightHandSocket")
+		);
+
+		WeaponToAttach->WeaponMesh->SetVisibility(true, true);
+		WeaponToAttach->WeaponMesh->SetHiddenInGame(false, true);
+		WeaponToAttach->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	/* if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr) return;
+
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
 	if (HandSocket)
 	{
 		HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
-	}
+	} */
 }
 
 void UCombatComponent::AttachWeaponToLeftHand(AWeaponBase* WeaponToAttach)
@@ -927,8 +966,32 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 
 bool UCombatComponent::CanFire()
 {
-	if (EquippedRangedWeapon == nullptr) return false;
-	return !EquippedRangedWeapon->IsRangedWeaponEmpty() && bCanGunFire && CombatState == ECombatState::ECS_Unoccupied;
+	if (EquippedRangedWeapon == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CanFire: ❌ EquippedRangedWeapon == nullptr"));
+		return false;
+	}
+	if (EquippedRangedWeapon->IsRangedWeaponEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CanFire: ❌ Weapon is empty"));
+		return false;
+	}
+
+	if (!bCanGunFire)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CanFire: ❌ bCanGunFire == false"));
+		return false;
+	}
+
+	if (CombatState != ECombatState::ECS_Unoccupied)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CanFire: ❌ CombatState is not ECS_Unoccupied"));
+		return false;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("CanFire ✅ All checks passed"));
+	return true;
+	// return !EquippedRangedWeapon->IsRangedWeaponEmpty() && bCanGunFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

@@ -9,7 +9,7 @@
 
 class USphereComponent;
 
-UENUM(BlueprintType)
+UENUM(Blueprintable, BlueprintType)
 enum class EMeleeType : uint8
 {
 	EMT_None UMETA(DisplayName = "None"),
@@ -34,7 +34,7 @@ public:
 	virtual void EnableCustomDepth(bool bEnable) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EMeleeType MeleeType = EMeleeType::EMT_None;
 	
@@ -44,26 +44,20 @@ public:
 	***                        ***
 	*****************************/
 
-	UPROPERTY(VisibleAnywhere, Category = "Melee Properties")
-	class UMeleeInfoWidgetComponent* MeleeInfoWidget1;
-
-	UPROPERTY(VisibleAnywhere, Category = "Melee Properties")
-	class UMeleeInfoWidgetComponent* MeleeInfoWidget2;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
+	FText MeleeWeaponNameText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
-	FText MeleeWeaponName;
+	FText MeleeWeaponHistoryText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
-	FText MeleeWeaponHistory;
+	FText MeleeWeaponResistancesText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
-	FText MeleeWeaponResistances;
+	FText MeleeWeaponWeaknessesText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
-	FText MeleeWeaponWeaknesses;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon UI")
-	float MeleeWeaponDamage;
+	float MeleeWeaponDamageText;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EMeleeType MeleeWeaponType = EMeleeType::EMT_None;
@@ -76,8 +70,6 @@ protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-	
-	FText GetMeleeWeaponNameText() const;
 
 	virtual void OnEquipped() override;
 	virtual void OnDropped() override;
@@ -89,6 +81,11 @@ private:
 
 public:
 	FORCEINLINE EMeleeType GetMeleeWeaponType() const { return MeleeWeaponType; }
+	FText GetMeleeWeaponNameText();
+	FORCEINLINE FText GetMeleeWeaponHistoryText() const { return MeleeWeaponHistoryText; }
+	FORCEINLINE FText GetMeleeWeaponResistancesText() const { return MeleeWeaponResistancesText; }
+	FORCEINLINE FText GetMeleeWeaponWeaknessesText() const { return MeleeWeaponWeaknessesText; }
+	FORCEINLINE float GetMeleeWeaponDamageText() const { return MeleeWeaponDamageText; }
 
 	
 
