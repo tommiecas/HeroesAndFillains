@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "Pickups/Pickup.h"
 #include "Weapons/WeaponTypes.h"
-#include "Weapons/Ranged/RangedWeapon.h"
-#include "Weapons/WeaponTypes.h"
 #include "AmmoPickup.generated.h"
 
 UENUM(BlueprintType)
@@ -24,6 +22,9 @@ enum class EAmmoType : uint8
 	
 	EAT_MAX UMETA(DisplayName = "DefaultMAX")
 };
+
+class UPickupGearWidget;
+
 /**
  * 
  */
@@ -97,23 +98,23 @@ public:
 	***                        ***
 	*****************************/
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
-	FText AmmoNameText;
+	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
+	FString AmmoNameString;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
-	FText AmmoWeaponText;
+	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
+	FString AmmoWeaponString;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
-	FText AmmoDeliverableText;
+	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
+	FString AmmoDeliverableString;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
-	FText AmmoAmountText;
+	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
+	FString AmmoAmountString;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
-	float AmmoDamageText;
+	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
+	float AmmoDamage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* PickupGearWidgetComponentA;
+	class UWidgetComponent* PickupGearWidgetComponentA;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
 	UWidgetComponent* PickupGearWidgetComponentB;
@@ -135,6 +136,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Pickup Properties")
 	EAmmoType AmmoSpawnPointType;
+
+	UPROPERTY(EditAnywhere, Category = "UI Properties")
+	UAmmoPickupIntelWidget* AmmoPickupIntelWidget;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -155,15 +159,17 @@ private:
 	UFUNCTION(BlueprintPure)
 	float TransformedCos() const;
 
+	
+
 public:
-	FORCEINLINE FText GetAmmoNameText() const { return AmmoNameText; }
-	FORCEINLINE FText GetAmmoWeaponText() const { return AmmoWeaponText; }
-	FORCEINLINE FText GetAmmoDeliverableText() const { return AmmoDeliverableText; }
-	FORCEINLINE FText GetAmmoAmountText() const { return AmmoAmountText; }
-	FORCEINLINE float GetAmmoDamageText() const { return AmmoDamageText; }
+	FORCEINLINE FString GetAmmoNameText() const { return AmmoNameString; }
+	FORCEINLINE FString GetAmmoWeaponText() const { return AmmoWeaponString; }
+	FORCEINLINE FString GetAmmoDeliverableText() const { return AmmoDeliverableString; }
+	FORCEINLINE FString GetAmmoAmountText() const { return AmmoAmountString; }
+	FORCEINLINE float GetAmmoDamageText() const { return AmmoDamage; }
 	FORCEINLINE EAmmoType GetAmmoPickupType() const { return AmmoSpawnPointType; }
 	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentA() const { return ItemInfoWidgetComponentA; }
 	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentB() const { return ItemInfoWidgetComponentB; }
-
+	FORCEINLINE UAmmoPickupIntelWidget* GetAmmoPickupIntelWidget() const { return AmmoPickupIntelWidget; }
 	
 };

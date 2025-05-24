@@ -108,7 +108,29 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	AddActorLocalRotation(FRotator(0.f, 0.f, 0.f)); 
 	bShouldPickupHover = false;
 
-	ShowPickupAndInfoWidgets(true);
+	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentA))
+	{
+		if (AmmoComponent)
+		{
+			UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject());
+			if (AmmoIntelWidget)
+			{
+				AmmoIntelWidget->UpdateAmmoPickupInformation(AmmoNameString, AmmoWeaponString, AmmoDeliverableString, AmmoAmountString, AmmoDamage);
+				ShowPickupAndInfoWidgets(true);
+			}
+		}
+	}
+	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentB))
+	{
+		if (AmmoComponent)
+		{
+			if (UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject()))
+			{
+				AmmoIntelWidget->UpdateAmmoPickupInformation(AmmoNameString, AmmoWeaponString, AmmoDeliverableString, AmmoAmountString, AmmoDamage);
+				ShowPickupAndInfoWidgets(true);
+			}
+		}
+	}
 
 	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
 	if (FillainCharacter)
@@ -125,8 +147,17 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 void AAmmoPickup::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	ShowPickupAndInfoWidgets(false);
-
+	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentA))
+	{
+		if (AmmoComponent)
+		{
+			UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject());
+			if (AmmoIntelWidget)
+			{
+				ShowPickupAndInfoWidgets(false);
+			}
+		}
+	}
 }
 
 void AAmmoPickup::Tick(float DeltaTime)
@@ -192,32 +223,12 @@ void AAmmoPickup::BeginPlay()
 		ItemInfoWidgetComponentA->SetWidgetClass(WeaponAmmoIntelWidgetClass); // ← assign it here!
 		ItemInfoWidgetComponentA->InitWidget();
 		ItemInfoWidgetComponentA->SetVisibility(false);
-		if (UAmmoPickupIntelWidget* WeaponAmmoIntelWidget_A = Cast<UAmmoPickupIntelWidget>(ItemInfoWidgetComponentA->GetUserWidgetObject()))
-		{
-			WeaponAmmoIntelWidget_A->SetItemInformation(
-				GetAmmoNameText(),
-				GetAmmoWeaponText(),
-				GetAmmoDeliverableText(),
-				GetAmmoAmountText(),
-				GetAmmoDamageText()
-			);
-		}
 	}	
 	if (ItemInfoWidgetComponentB && !ItemInfoWidgetComponentB->GetWidgetClass())
 	{
 		ItemInfoWidgetComponentB->SetWidgetClass(WeaponAmmoIntelWidgetClass);
 		ItemInfoWidgetComponentB->InitWidget();
 		ItemInfoWidgetComponentB->SetVisibility(false);
-		if (UAmmoPickupIntelWidget* WeaponAmmoIntelWidget_B = Cast<UAmmoPickupIntelWidget>(ItemInfoWidgetComponentB->GetUserWidgetObject()))
-		{
-			WeaponAmmoIntelWidget_B->SetItemInformation(
-				GetAmmoNameText(),
-				GetAmmoWeaponText(),
-				GetAmmoDeliverableText(),
-				GetAmmoAmountText(),
-				GetAmmoDamageText()
-			);
-		}
 	}
 	ShowPickupAndInfoWidgets(false);
 }

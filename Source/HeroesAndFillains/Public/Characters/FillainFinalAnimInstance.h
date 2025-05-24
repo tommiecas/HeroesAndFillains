@@ -88,12 +88,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bUseAimOffsets;
 
-	UPROPERTY(BlueprintReadOnly, Category
-		= Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bTransformRightHand;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Movement | CharacterState", meta = (AllowPrivateAccess = "true"))
-	EWeaponState State;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool IsFalling;
@@ -115,5 +111,13 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bWeaponIsTwoHanded;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	EWeaponState CharacterState;
+	
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	AWeaponBase* CachedEquippedWeapon = nullptr;
+
+	
 	
 };

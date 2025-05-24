@@ -10,6 +10,7 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/WeaponTypes.h"
+#include "HAFComponents/CombatComponent.h"
 
 
 void UFillainFinalAnimInstance::NativeInitializeAnimation()
@@ -83,32 +84,67 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
 	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	State = EquippedWeapon->WeaponState;
-	if (EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	if (FillainCharacter && FillainCharacter->Combat)
 	{
-		bWeaponIsOneHanded = false;
-		bWeaponIsTwoHanded = true;
+		AWeaponBase* NewWeapon = FillainCharacter->Combat->EquippedWeapon;
+
+		if (NewWeapon != CachedEquippedWeapon)
+		{
+			CachedEquippedWeapon = NewWeapon;
+
+			if (NewWeapon)
+			{
+				// Only now is it safe to access NewWeapon->WeaponState
+				CharacterState = NewWeapon->WeaponState;
+
+				// Handedness
+				if (NewWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+				{
+					bWeaponIsOneHanded = false;
+					bWeaponIsTwoHanded = true;
+				}
+				else if (NewWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+				{
+					bWeaponIsOneHanded = true;
+					bWeaponIsTwoHanded = false;
+				}
+				else
+				{
+					bWeaponIsOneHanded = false;
+					bWeaponIsTwoHanded = false;
+				}
+
+				// Type check (cast to subclass)
+				if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(NewWeapon))
+				{
+					bWeaponIsRanged = true;
+					bWeaponIsMelee = false;
+				}
+				else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(NewWeapon))
+				{
+					bWeaponIsRanged = false;
+					bWeaponIsMelee = true;
+				}
+				else
+				{
+					bWeaponIsRanged = false;
+					bWeaponIsMelee = false;
+				}
+			}
+			else
+			{
+				// NewWeapon is nullptr — clear all flags
+				CharacterState = EWeaponState::EWS_Unclaimed;
+				bWeaponIsOneHanded = false;
+				bWeaponIsTwoHanded = false;
+				bWeaponIsRanged = false;
+				bWeaponIsMelee = false;
+			}
+		}
 	}
-	if (EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
-	{
-		bWeaponIsOneHanded = true;
-		bWeaponIsTwoHanded = false;
-	}
-	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
-	{
-		bWeaponIsRanged = true;
-		bWeaponIsMelee = false;
-	}
-	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
-	{
-		bWeaponIsRanged = false;
-		bWeaponIsMelee = true;
-	}
-	
 	if (FillainCharacterMovement)
 	{
 		GroundSpeed = UKismetMathLibrary::VSizeXY(FillainCharacterMovement->Velocity);
 		IsFalling = FillainCharacterMovement->IsFalling();
 	}
-
 }

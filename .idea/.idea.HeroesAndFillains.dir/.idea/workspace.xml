@@ -10,224 +10,18 @@
     <list default="true" id="17f4fd26-433a-424d-bf11-a5c700b257e7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/Fire_Rifle_Hip.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/Fire_Rifle_Hip.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/BP_FillainCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/BP_FillainCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/SKEL_FillainOptimized.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/SKEL_FillainOptimized.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/SKM_FillainOptimized.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/SKM_FillainOptimized.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_0-0.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_0-0.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/BP_HitScanWeaponAmmo.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/BP_ServerSideRewindProjectile.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_AssaultRifleFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_GrenadeLauncherFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_GunFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_PistolFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_Rocket_Launcher_Final.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_ShotgunFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_SniperRifleFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/BP_SubMachineGunFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/BP_CasingFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/BP_PistolCasingFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/BP_ShotgunCasing.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/MI_Modern_Weapons_Ammo_Launchers_03DUPE.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/MI_Modern_Weapons_Ammo_Launchers_03_ShellCasing1DUPE.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/M_PistolAmmo.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/M_Soul_Rock01_M1_ShellCasing1DUPE.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/SM_PistolCasing.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/SM_SHellCasing.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/SM_ShotgunShellCasing.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/Shells_Cue.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_03_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_04_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_10_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_12_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_13_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_14_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_16_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_17_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_21_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_22_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_25_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_26_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_32_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_42_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_44_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_45_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_47_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_55_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_59_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_60_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/ShellSounds/shell_61_wav.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/Shells_att.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/T_LV_Canyon_Rock_D1DUPE.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/CasingsFinal/T_LV_Canyon_Rock_N1DUPE.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_ProjectileBulletFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_ProjectileFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_ProjectileGrenadeFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_ProjectileRocketFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_RocketFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/ProjectilesFinal/BP_ThrowGrenadeFinal.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/AM_PistolFire.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/ANIM_PistollFire.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/ANIM_RocketLauncherFire.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_AutoFireRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_AutoFireRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_FireRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_FireRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadEmptyRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadEmptyRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadEmpty_TPSRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadEmpty_TPSRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_ReloadRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_Reload_TPSRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_Reload_TPSRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_UpRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/GunsAndLaunchers/WeaponAnimations/A_SMG05_UpRTGRTG.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/MI_Ammo.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/Melee/BP_ChaosSword.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/Melee/BP_MeleeWeapon.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/SMG_PHYS_Strap.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/SM_SwordBlue.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/WeaponsFinal/SM_SwordRed.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/SMG_05/Materials/MI_SMG_05/MI_9x19.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SMG_05/Materials/MI_SMG_05/MI_9x19.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/SMG_05/Materials/MI_SMG_05/MI_SMG_05.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SMG_05/Materials/MI_SMG_05/MI_SMG_05.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/SMG_05/Materials/Master/M_MasterMaterial.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SMG_05/Materials/Master/M_MasterMaterial.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/SMG_05/Mesh/SeparateMesh/SM_SMG_05_Base.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SMG_05/Mesh/SeparateMesh/SM_SMG_05_Base.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Map/Overview.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Map/Overview.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_ChaosSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_ChaosSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_CrystalMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_CrystalMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_DanSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_DanSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_DemonMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_DemonMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_EyeSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_EyeSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_FlameSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_FlameSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_OrnamentMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_OrnamentMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_SkullSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_SkullSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_VandMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_VandMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_WingMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/PBR/Mat_PBR_WingMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_ChaosSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_ChaosSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_CrystalMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_CrystalMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_DanSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_DanSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_DemonMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_DemonMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_EyeSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_EyeSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_FlameSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_FlameSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_OrnamentMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_OrnamentMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_SkullSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_SkullSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_VandMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_VandMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_WingMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Instance/Unlit/Mat_Unlit_WingMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Master/Master_PBR.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Master/Master_PBR.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Master/Master_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Material/Master/Master_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_ChaosSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_ChaosSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_CrystalMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_CrystalMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_DanSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_DanSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_DemonMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_DemonMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_EyeSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_EyeSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_FlameSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_FlameSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_OrnamentMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_OrnamentMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_SkullSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_SkullSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_VandMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_VandMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_WingMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/Mesh_WingMace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_ChaosSword_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_CrystalMace_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DanSword_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_DemonMace_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_EyeSword_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_FlameSword_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_OrnamentMace_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Emissive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Emissive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_SkullSword_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_VandMace_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Albedo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Albedo.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Normal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_RMA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_RMA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Unlit.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Texture/Texture_WingMace_Unlit.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/HS/80TZTKQIIEEWWZC6AI41KB.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/HS/80TZTKQIIEEWWZC6AI41KB.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/rpg7/source/RPG7/RPG7/rocket.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/rpg7/source/RPG7/RPG7/rocket.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainAnimInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainAnimInstance.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordBlue.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordBlue.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordRed.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordRed.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainFinalAnimInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainFinalAnimInstance.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/SeizeTheSwordGameMode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/SeizeTheSwordGameMode.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/LagCompensationComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/LagCompensationComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/PickupWidgetComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/PickupWidgetComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/AmmoPickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/AmmoPickup.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerController/FillainPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerController/FillainPlayerController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SeizeTheSword/SwordZone.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SeizeTheSword/SwordZone.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/LandscapeRegion0_0.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/LandscapeRegion0_0.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/WeaponSpawnLibrary.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/WeaponSpawnLibrary.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/BulletMovementComponent.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/HitScanWeaponAmmo.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/RocketMovementComponent.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Sword.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Melee/ChaosSword.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Melee/MeleeWeapon.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/CasingFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/HitScanWeapon.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/ProjectileBulletFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/ProjectileFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/ProjectileGrenadeFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/ProjectileRocketFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/ProjectileWeapon.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/RangedWeapon.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/RocketMovementComponentFinal.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/Ranged/Shotgun.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/WeaponsFinal/WeaponBase.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/PickupWidgetComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/PickupWidgetComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainFinalAnimInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainFinalAnimInstance.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/AmmoIntelWidgetComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/AmmoIntelWidgetComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/MeleeInfoWidgetComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/MeleeInfoWidgetComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/RangedInfoWidgetComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/RangedInfoWidgetComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/AmmoPickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/AmmoPickup.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerController/FillainPlayerController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerController/FillainPlayerController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/SpawnVolumes/WeaponSpawnLibrary.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/SpawnVolumes/WeaponSpawnLibrary.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/BulletMovementComponent.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/HitScanWeaponAmmo.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/RocketMovementComponent.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Sword.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponTypes.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Melee/ChaosSword.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Melee/MeleeWeapon.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/CasingFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/HitScanWeapon.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/ProjectileBulletFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/ProjectileFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/ProjectileGrenadeFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/ProjectileRocketFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/ProjectileWeapon.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/RangedWeapon.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/RocketMovementComponentFinal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/Ranged/Shotgun.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/WeaponBase.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/WeaponsFinal/WeaponsFinalTypes.h" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -256,6 +50,52 @@
     <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://13" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Platforms/VisionOS/Plugins/Runtime/OpenXRVisionOS/Source/OXRVisionOS/OXRVisionOS.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Platforms/VisionOS/Source/Developer/VisionOSTargetPlatformSettings/VisionOSTargetPlatformSettings.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/AI/MLAdapter/Source/MLAdapter/MLAdapter.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Importers/USDImporter/Source/USDSchemas/USDSchemas.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Media/ElectraUtil/Source/ElectraHTTPStream/ElectraHTTPStream.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Online/OnlineSubsystemNull/Source/Private/OnlineSubsystemNull.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Classes/BehaviorTree/TestBTTask_SetFlag.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Private/BehaviorTree/TestBTTask_SetValue.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Private/Tests/ResourceIdTest.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -265,18 +105,33 @@
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/Android/AndroidDeviceDetection/Private/AndroidDeviceDetectionModule.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AnimationDataController/Public/AnimDataController.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AnimationWidgets/Public/SAdvancedRotationInputBox.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetFixUpRedirectors.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetToolsModule.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTypeActions/AssetTypeActions_DataAsset.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTypeActions/AssetTypeActions_ParticleSystem.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetViewUtils.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SAdvancedCopyReportDialog.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SAdvancedCopyReportDialog.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SPackageReportDialog.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Public/AssetViewUtils.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Public/IAssetTypeActions.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AutomationController/Private/AutomationCommandline.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AutomationDriver/Private/SlateWidgetElement.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/DerivedDataBackendInterface.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/Tests/HttpCacheStoreTest.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/PhysicsUtilities/Private/SkinnedLevelSetBuilder.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/ProjectLauncher/Private/Widgets/Build/SProjectLauncherBuildPage.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/AnimGraph/Private/AnimBlueprintNodeOptionalPinManager.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/DetailCustomizations/Private/BodyInstanceCustomization.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/MovieSceneTools/Private/TrackEditors/AttachTrackEditor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/VREditor/Public/UI/VREditorFloatingUI.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Actor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartitionLevelHelper.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Renderer/Private/DistanceFieldObjectManagement.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/Components/Widget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/Components/WidgetComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Public/Components/WidgetComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/ItemInfoWidgetBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/ItemInfoWidgetBase.h" root0="FORCE_HIGHLIGHTING" />
@@ -295,7 +150,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "Uproject.HeroesAndFillains.executor": "Run",
+    "Uproject.HeroesAndFillains.executor": "Debug",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
     "node.js.detected.package.eslint": "true",
@@ -399,6 +254,7 @@
       <workItem from="1747947836925" duration="59000" />
       <workItem from="1747949875921" duration="18000" />
       <workItem from="1747951401001" duration="3519000" />
+      <workItem from="1748068378443" duration="18077000" />
     </task>
     <servers />
   </component>
