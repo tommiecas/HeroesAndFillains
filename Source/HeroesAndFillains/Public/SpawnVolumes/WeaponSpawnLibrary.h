@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "WeaponsFinal/Ranged/ProjectileWeapon.h"
+#include "Weapons/Ranged/ProjectileWeapon.h"
 #include "WeaponSpawnLibrary.generated.h"
 
 /**

@@ -11,7 +11,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Blueprint/UserWidget.h"
 #include "HUD/PickupWidgetComponent.h"
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
 #include "CollisionQueryParams.h"
 #include "LandscapeComponent.h"
 #include "Engine/OverlapResult.h"             // 🔥 For FOverlapResult
@@ -19,7 +19,9 @@
 #include "Pickups/AmmoPickup.h"
 #include "Pickups/PickupSpawnPoint.h"
 #include "Templates/Function.h"               // 🔥 For TFunction
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 
 
 ALandscapeRegion0_0::ALandscapeRegion0_0()
@@ -103,51 +105,15 @@ void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UU
         {
             Widget->RegisterComponent();
             Widget->AttachToComponent(TargetActor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-            Widget->SetWidgetSpace(EWidgetSpace::Screen);
+            Widget->SetWidgetSpace(EWidgetSpace::World);
             Widget->SetDrawSize(FVector2D(100.f, 50.f));
             Widget->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
             Widget->SetWidgetClass(WidgetClass);
-
-            if (UUserWidget* RawWidget = Widget->GetUserWidgetObject())
-            {
-                if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(RawWidget))
-                {
-                    if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(TargetActor))
-                    {
-                        InfoWidget->SetItemInformation(
-                            RangedWeapon->GetRangedWeaponNameText(),
-                            RangedWeapon->GetRangedWeaponDescriptionText(),
-                            RangedWeapon->GetRangedWeaponTypeText(),
-                            RangedWeapon->GetRangedWeaponRarityText(),
-                            RangedWeapon->GetRangedWeaponDamageText()
-                        );
-                    }
-                    else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(TargetActor))
-                    {
-                        InfoWidget->SetItemInformation(
-                            MeleeWeapon->GetMeleeWeaponNameText(),
-                            MeleeWeapon->GetMeleeWeaponHistoryText(),
-                            MeleeWeapon->GetMeleeWeaponResistancesText(),
-                            MeleeWeapon->GetMeleeWeaponWeaknessesText(),
-                            MeleeWeapon->GetMeleeWeaponDamageText()
-                        );
-                    }
-                    else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(TargetActor))
-                    {
-                        InfoWidget->SetItemInformation(
-                            AmmoPickup->GetAmmoNameText(),
-                            AmmoPickup->GetAmmoWeaponText(),
-                            AmmoPickup->GetAmmoDeliverableText(),
-                            AmmoPickup->GetAmmoAmountText(),
-                            AmmoPickup->GetAmmoDamageText()
-                        );
-                    }
-                }        
-            }
         }
     });
-    ShowPickupsAndInfoWidgets(false);
 }
+
+
 
 bool ALandscapeRegion0_0::IsValidSpawnPoint(const FVector& Location, FHitResult& GroundHit)
 {
@@ -262,6 +228,4 @@ void ALandscapeRegion0_0::SpawnActorInBox(
             }
         }
     }
-    UE_LOG(LogTemp, Warning, TEXT("Spawn completed: %d/%d actors after %d attempts"),
-        SpawnedCount, SpawnCount, Attempts);
 }

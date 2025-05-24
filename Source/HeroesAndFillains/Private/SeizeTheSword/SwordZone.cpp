@@ -3,7 +3,7 @@
 
 #include "SeizeTheSword/SwordZone.h"
 #include "Components/SphereComponent.h"
-#include "Weapons/Sword.h"
+#include "Weapons/Melee/Sword.h"
 #include "GameMode/SeizeTheSwordGameMode.h"
 
 ASwordZone::ASwordZone()

@@ -5,7 +5,7 @@
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 
 

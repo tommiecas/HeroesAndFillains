@@ -2,7 +2,7 @@
 
 
 #include "HAFComponents/CombatComponent.h"
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
 #include "Characters/FillainCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
@@ -16,12 +16,14 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "Characters/FillainAnimInstance.h"
-#include "WeaponsFinal/Ranged/ProjectileFinal.h"
-#include "WeaponsFinal/Ranged/Shotgun.h"
+#include "Weapons/Ranged/Projectile.h"
+#include "Weapons/Ranged/Shotgun.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/WeaponTypes.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -113,6 +115,9 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
+	if (EquippedMeleeWeapon) return;
+
+	
 	// Character->GetFillainHUD()->SetCrosshairsSpread(CrosshairVelocityFactor, CrosshairInAirFactor, CrosshairAimFactor, CrosshairShootingFactor);
 	if (Character == nullptr || Character->Controller == nullptr) return;
 
@@ -122,7 +127,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		HUD = HUD == nullptr ? Cast<AFillainHUD>(Controller->GetHUD()) : HUD;
 		if (HUD)
 		{
-			if (EquippedWeapon)
+			if (EquippedRangedWeapon)
 			{
 				HUDPackage.CrosshairsCenter = EquippedRangedWeapon->CrosshairsCenter;
 				HUDPackage.CrosshairsLeft = EquippedRangedWeapon->CrosshairsLeft;
@@ -182,7 +187,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 } 
 
 
-void UCombatComponent::FireButtonPressed(bool bPressed)
+void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
 	bIsFireButtonPressed = bPressed;
 
@@ -212,7 +217,7 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr) return;
-	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedRangedWeapon->GetRangedWeaponType() == ERangedType::ERT_Shotgun)
+	if (Character && CombatState == ECombatState::ECS_Reloading && RangedType == ERangedType::ERT_Shotgun)
 	{
 		Character->PlayFireMontage(bAiming);
 		EquippedRangedWeapon->Fire(TraceHitTarget);
@@ -375,7 +380,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		EquippedWeapon = WeaponToEquip;
 		EquippedRangedWeapon = RangedWeapon;
 
-		RangedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedRangedWeapon->SetEquippedRangedWeaponState();
 		AttachWeaponToRightHand(WeaponToEquip);
 		RangedWeapon->SetOwner(Character);
 		PlayWeaponEquipSound(WeaponToEquip);
@@ -392,7 +397,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		EquippedWeapon = WeaponToEquip;
 		EquippedMeleeWeapon = MeleeWeapon;
 
-		MeleeWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedMeleeWeapon->SetEquippedWeaponState();
 		AttachWeaponToRightHand(WeaponToEquip);
 		MeleeWeapon->SetOwner(Character);
 		PlayWeaponEquipSound(WeaponToEquip);
@@ -452,7 +457,7 @@ void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 	if (WeaponToEquip == nullptr) return;
 	DropEquippedWeapon();
 	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	EquippedWeapon->SetEquippedWeaponState();
 	EquippedWeapon->SetOwner(Character);
 	EquippedWeapon->bShouldHover = false;
 	EquippedWeapon->bShouldFloatSpin = false;
@@ -612,8 +617,8 @@ void UCombatComponent::FinishSwapAttachWeapons()
 	AWeaponBase* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
-
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	
+	EquippedWeapon->SetEquippedWeaponState();
 	AttachWeaponToRightHand(EquippedWeapon);
 	PlayWeaponEquipSound(EquippedWeapon);
 	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
@@ -696,7 +701,7 @@ void UCombatComponent::LaunchGrenade()
 
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {
-	if (Character && GrenadeFinalClass && Character->GetAttachedGrenade())
+	if (Character && GrenadeClass && Character->GetAttachedGrenade())
 	{
 		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
 		FVector ToTarget = Target - StartingLocation;
@@ -706,8 +711,8 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			World->SpawnActor<AProjectileFinal>(
-				GrenadeFinalClass,
+			World->SpawnActor<AProjectile>(
+				GrenadeClass,
 				StartingLocation,
 				ToTarget.Rotation(),
 				SpawnParams
@@ -831,7 +836,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon && Character)
 	{
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedWeapon->SetEquippedWeaponState();
 		AttachWeaponToRightHand(EquippedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
@@ -843,7 +848,7 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 {
 	if (EquippedMeleeWeapon && Character)
 	{
-		EquippedMeleeWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedMeleeWeapon->SetEquippedWeaponState();
 		AttachWeaponToRightHand(EquippedMeleeWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
@@ -855,7 +860,7 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 {
 	if (EquippedRangedWeapon && Character)
 	{
-		EquippedRangedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedRangedWeapon->SetEquippedRangedWeaponState();
 		AttachWeaponToRightHand(EquippedRangedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;

@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/WeaponTypes.h"
+#include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
@@ -170,7 +170,7 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
-	FString GetWeaponTypeDisplayName(ERangedType RangedType, EMeleeType MeleeType);
+	FString GetWeaponTypeDisplayName(EWeaponType TypeOfWeapon);
 
 	UPROPERTY()
 	class AFillainHUD* FillainHUD;

@@ -11,7 +11,7 @@
 #include "GameFramework/PlayerState.h"  
 #include "HUD/OverheadWidget.h"  
 #include "Net/UnrealNetwork.h"  
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
 #include "HAFComponents/CombatComponent.h"  
 #include "HAFComponents/BuffComponent.h"  
 #include "Components/CapsuleComponent.h"  
@@ -27,9 +27,9 @@
 #include "Particles/ParticleSystemComponent.h"  
 #include "PlayerState/HAFPlayerState.h"  
 #include "Weapons/WeaponTypes.h"  
-#include "WeaponsFinal/WeaponsFinalTypes.h"
+#include "Weapons/WeaponTypes.h"
 #include "GameMode/LobbyGameMode.h"  
-#include "WeaponsFinal/Ranged/ProjectileFinal.h"
+#include "Weapons/Ranged/Projectile.h"
 #include "Components/BoxComponent.h"  
 #include "HAFComponents/LagCompensationComponent.h"  
 #include "NiagaraComponent.h"  
@@ -37,7 +37,8 @@
 #include "GameStates/HAFGameState.h"  
 #include "PlayerStart/TeamPlayerStart.h"
 #include "GameFramework/Actor.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -71,7 +72,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "GameStates/HAFGameState.h"
 #include "PlayerStart/TeamPlayerStart.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 
 
 AFillainCharacter::AFillainCharacter()
@@ -820,33 +821,49 @@ void AFillainCharacter::EquipButtonPressed()
 	{
 		bDisableGameplay = false;
 	}
-
 	if (Combat)
 	{
-		if (HasAuthority() && OverlappingWeapon)
+		if (AWeaponBase* OverlappingGenericWeapon = Cast<AWeaponBase>(OverlappingActor))
 		{
-			Combat->EquipWeapon(OverlappingWeapon);
-		}
-		else
-		{
-			ServerEquipButtonPressed();
-		}
-
-		if (Combat->bWieldingTheSword) return;
-		if (Combat->CombatState == ECombatState::ECS_Unoccupied) ServerEquipButtonPressed();
-		bool bSwap = Combat->ShouldSwapWeapons() &&
-			!HasAuthority() &&
-			Combat->CombatState == ECombatState::ECS_Unoccupied &&
-			OverlappingWeapon == nullptr;
-
-		if (bSwap)
-		{
-			PlaySwapMontage();
-			Combat->CombatState = ECombatState::ECS_SwappingWeapons;
-			bFinishedSwapping = false;
+			if (ARangedWeapon* OverlappingRangedWeapon = Cast<ARangedWeapon>(OverlappingGenericWeapon))
+			{
+				if (OverlappingRangedWeapon && HasAuthority())
+				{
+					Combat->EquipWeapon(OverlappingRangedWeapon);
+					OverlappingRangedWeapon = Combat->EquippedRangedWeapon;
+					Combat->EquippedRangedWeapon->SetEquippedRangedWeaponState();
+				}
+			}
+			else if (AMeleeWeapon* OverlappingMeleeWeapon = Cast<AMeleeWeapon>(OverlappingWeapon))
+			{
+				if (OverlappingMeleeWeapon && HasAuthority())
+				{
+					Combat->EquipWeapon(OverlappingMeleeWeapon);
+					OverlappingMeleeWeapon = Combat->EquippedMeleeWeapon;
+					Combat->EquippedMeleeWeapon->SetEquippedMeleeWeaponState();
+				}
+			}
+			else 
+			{
+				ServerEquipButtonPressed();
+			}
 		}
 	}
+	if (Combat->bWieldingTheSword) return;
+	if (Combat->CombatState == ECombatState::ECS_Unoccupied) ServerEquipButtonPressed();
+	bool bSwap = Combat->ShouldSwapWeapons() &&
+		!HasAuthority() &&
+		Combat->CombatState == ECombatState::ECS_Unoccupied &&
+		OverlappingWeapon == nullptr;
+
+	if (bSwap)
+	{
+		PlaySwapMontage();
+		Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+		bFinishedSwapping = false;
+	}
 }
+
 
 void AFillainCharacter::ServerEquipButtonPressed_Implementation()
 {
@@ -1246,6 +1263,12 @@ ECombatState AFillainCharacter::GetCombatState() const
 {
 	if (Combat == nullptr) return ECombatState::ECS_MAX;
 	return Combat->CombatState;
+}
+
+EWeaponState AFillainCharacter::GetWeaponState() const
+{
+	if (Combat->EquippedWeapon == nullptr) return EWeaponState::EWS_MAX;
+	return Combat->EquippedWeapon->WeaponState;
 }
 
 bool AFillainCharacter::IsLocallyReloading()

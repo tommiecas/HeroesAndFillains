@@ -9,8 +9,7 @@
 #include "Characters/FillainCharacter.h"
 #include "PlayerState/HAFPlayerState.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/WeaponBase.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h"
+#include "Weapons/WeaponBase.h"
 #include "UObject/EnumProperty.h"
 #include "TimerManager.h"
 #include "Net/UnrealNetwork.h"
@@ -44,8 +43,8 @@
 #include "Components/EditableText.h"
 #include "Components/ScrollBox.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/Melee/MeleeWeapon.h"
 
 
 AFillainPlayerController::AFillainPlayerController()
@@ -927,21 +926,14 @@ void AFillainPlayerController::ToggleMatchCountdownVisibility()
 
 
 
-FString AFillainPlayerController::GetWeaponTypeDisplayName(ERangedType RangedType, EMeleeType MeleeType)
+FString AFillainPlayerController::GetWeaponTypeDisplayName(EWeaponType TypeOfWeapon)
 {
-	if (EquippedRangedWeapon)
+	if (EquippedWeapon)
 	{
-		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("RangedType"), true);
+		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("WeaponType"), true);
 		if (!EnumPtr) return FString("");
 
-		return EnumPtr->GetDisplayNameTextByValue((int64)RangedType).ToString();
-	}
-	if (EquippedMeleeWeapon)
-	{
-		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("MeleeType"), true);
-		if (!EnumPtr) return FString("");
-
-		return EnumPtr->GetDisplayNameTextByValue((int64)MeleeType).ToString();
+		return EnumPtr->GetDisplayNameTextByValue((int64)TypeOfWeapon).ToString();
 	}
 	else return FString("Unknown");
 
@@ -975,17 +967,11 @@ void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
 	{
 		FString WeaponTypeName;
 
-		if (EquippedRangedWeapon)
+		if (EquippedWeapon)
 		{
-			EMeleeType NoMeleeType = EMeleeType::EMT_None;
-			WeaponTypeName = GetWeaponTypeDisplayName(EquippedRangedWeapon->GetRangedWeaponType(), NoMeleeType);
+			EWeaponType NoMeleeType = EWeaponType::EWT_None;
+			WeaponTypeName = GetWeaponTypeDisplayName(EquippedWeapon->GetWeaponType());
 		}
-		else if (EquippedMeleeWeapon)
-		{
-			ERangedType NoRangedType = ERangedType::ERT_None;
-			WeaponTypeName = GetWeaponTypeDisplayName(NoRangedType, EquippedMeleeWeapon->GetMeleeWeaponType());
-		}
-
 		FillainHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeName));
 	}
 }

@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FillainCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/WeaponTypes.h"
 #include "FillainFinalAnimInstance.generated.h"
 
 /**
@@ -35,6 +38,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bWeaponEquipped;
 
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	class AWeaponBase* EquippedWeapon;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -84,6 +88,32 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bUseAimOffsets;
 
-	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category
+		= Movement, meta = (AllowPrivateAccess = "true"))
 	bool bTransformRightHand;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement | CharacterState", meta = (AllowPrivateAccess = "true"))
+	EWeaponState State;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool IsFalling;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	class UCharacterMovementComponent* FillainCharacterMovement;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float GroundSpeed;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponIsRanged;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponIsMelee;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponIsOneHanded;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponIsTwoHanded;
+	
 };

@@ -7,10 +7,10 @@
 #include "HUD/FillainHUD.h"
 #include "Weapons/WeaponTypes.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h"
-#include "WeaponsFinal/WeaponBase.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/WeaponTypes.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/Melee/MeleeWeapon.h"
 
 #include "CombatComponent.generated.h"
 
@@ -141,7 +141,7 @@ protected:
 	void ServerThrowGrenade();
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AProjectileFinal> GrenadeFinalClass;
+	TSubclassOf<class AProjectile> GrenadeClass;
 
 	void DropEquippedWeapon();
 

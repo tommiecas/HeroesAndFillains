@@ -12,6 +12,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 #include "GameMode/LobbyGameMode.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
+#include "Weapons/WeaponBase.h"
 #include "FillainCharacter.generated.h"
 
 class AWeaponBase;
@@ -120,7 +121,7 @@ public:
 	void PlaySwapMontage();
 
 	UPROPERTY()
-	AProjectileFinal* ProjectileFinal;
+	class AProjectile* Projectile;
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -150,7 +151,9 @@ public:
 
 	void SetTeamColor(ETeam Team);
 
-
+	UPROPERTY()
+	AActor* OverlappingActor;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* HAFMappingContext;
@@ -335,6 +338,7 @@ private:
 	ETurningInPlace TurningInPlace;
 	void TurnInPlace(float DeltaTime);
 
+		
 	/***********************
 	** Animation Montages **
 	***********************/
@@ -512,10 +516,11 @@ public:
 	FORCEINLINE float GetShield() const { return Shield; }
 	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	ECombatState GetCombatState() const;
+	EWeaponState GetWeaponState() const;
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	AHAFPlayerState* GetHAFPlayerState() const { return HAFPlayerState; }
 	AFillainPlayerController* GetFillainPlayerController();
-	FORCEINLINE class AProjectileFinal* GetProjectileFinal() const { return ProjectileFinal; }
+	FORCEINLINE class AProjectile* GetProjectile() const { return Projectile; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadingMontage() const { return ReloadingMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }

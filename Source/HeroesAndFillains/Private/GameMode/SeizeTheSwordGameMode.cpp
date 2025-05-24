@@ -2,7 +2,7 @@
 
 
 #include "GameMode/SeizeTheSwordGameMode.h"
-#include "Weapons/Sword.h"
+#include "Weapons/Melee/Sword.h"
 #include "SeizeTheSword/SwordZone.h"
 #include "GameStates/HAFGameState.h"
 #include "Kismet/GameplayStatics.h"

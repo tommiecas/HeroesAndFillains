@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "Pickups/Pickup.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/WeaponTypes.h"
 #include "AmmoPickup.generated.h"
 
 UENUM(BlueprintType)
@@ -38,21 +38,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Properties")
 	class USphereComponent* AreaSphere;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Properties")
+	TSubclassOf<class UAmmoPickupIntelWidget> WeaponAmmoIntelWidgetClass;
 	
 	void ShowPickupAndInfoWidgets(bool bShow);
 	
-	virtual void OnSphereOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-	) override;
+	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
 	UFUNCTION()
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-							   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(EditAnywhere)
 	int32 AmmoAmount = 30;

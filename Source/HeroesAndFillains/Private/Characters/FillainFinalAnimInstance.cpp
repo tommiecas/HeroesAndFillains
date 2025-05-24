@@ -5,8 +5,11 @@
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "WeaponsFinal/WeaponBase.h"
+#include "Weapons/WeaponBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/WeaponTypes.h"
 
 
 void UFillainFinalAnimInstance::NativeInitializeAnimation()
@@ -80,4 +83,32 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
 	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	State = EquippedWeapon->WeaponState;
+	if (EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	{
+		bWeaponIsOneHanded = false;
+		bWeaponIsTwoHanded = true;
+	}
+	if (EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+	{
+		bWeaponIsOneHanded = true;
+		bWeaponIsTwoHanded = false;
+	}
+	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
+	{
+		bWeaponIsRanged = true;
+		bWeaponIsMelee = false;
+	}
+	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
+	{
+		bWeaponIsRanged = false;
+		bWeaponIsMelee = true;
+	}
+	
+	if (FillainCharacterMovement)
+	{
+		GroundSpeed = UKismetMathLibrary::VSizeXY(FillainCharacterMovement->Velocity);
+		IsFalling = FillainCharacterMovement->IsFalling();
+	}
+
 }

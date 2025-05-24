@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/WidgetComponent.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h" // Ensure this header is included for Weapon Types
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/WeaponTypes.h" // Ensure this header is included for Weapon Types
 #include "PickupWidgetComponent.generated.h"
 
 /**

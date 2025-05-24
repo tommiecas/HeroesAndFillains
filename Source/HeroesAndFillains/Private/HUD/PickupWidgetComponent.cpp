@@ -4,10 +4,9 @@
 #include "HUD/PickupWidgetComponent.h"
 #include "Components/TextBlock.h"
 #include "Weapons/WeaponTypes.h"
-#include "WeaponsFinal/Ranged/RangedWeapon.h"
-#include "WeaponsFinal/WeaponBase.h"
-#include "WeaponsFinal/WeaponsFinalTypes.h"
-#include "WeaponsFinal/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/Melee/MeleeWeapon.h"
 
 UPickupWidgetComponent::UPickupWidgetComponent()
 {
