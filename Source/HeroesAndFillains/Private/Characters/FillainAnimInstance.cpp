@@ -6,7 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapons/WeaponBase.h"
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
+#include "HAFComponents/CombatComponent.h"
 
 
 void UFillainAnimInstance::NativeInitializeAnimation()
@@ -76,19 +76,19 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		}
 	}
 
-	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
-	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bUseFABRIK = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied;
+	bUseAimOffsets = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bTransformRightHand = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
 
-/* 	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+/* 	bUseFABRIK = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied;
 	bool bFABRIKOverride = FillainCharacter->IsLocallyControlled() &&
-		FillainCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade &&
+		FillainCharacter->GetActionState() != EActionState::EAS_ThrowingGrenade &&
 		FillainCharacter->bFinishedSwapping;
 	if (bFABRIKOverride)
 	{
 		bUseFABRIK = !FillainCharacter->IsLocallyReloading();
 	}
-	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();*/
+	bUseAimOffsets = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bTransformRightHand = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();*/
 
 }

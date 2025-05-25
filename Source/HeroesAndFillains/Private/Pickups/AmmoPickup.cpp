@@ -8,7 +8,6 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "HAFComponents/CombatComponent.h"
-#include "HUD/AmmoIntelWidgetComponent.h"
 #include "HUD/AmmoPickupIntelWidget.h"
 #include "HUD/ItemInfoWidgetBase.h"
 #include "HUD/PickupGearWidget.h"
@@ -16,8 +15,8 @@
 AAmmoPickup::AAmmoPickup()
 {
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
-	AreaSphere->SetupAttachment(GetRootComponent());
-	AreaSphere->SetupAttachment(RootComponent);
+	AreaSphere->SetupAttachment(Root);
+	AreaSphere->SetSphereRadius(200.f);
 	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -25,45 +24,42 @@ AAmmoPickup::AAmmoPickup()
 	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	AreaSphere->SetGenerateOverlapEvents(true);
 	
-	PickupGearWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetA"));
-	PickupGearWidgetComponentA->SetupAttachment(RootComponent);
-	PickupGearWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
-	PickupGearWidgetComponentA->SetDrawSize(FVector2D(200.f, 50.f));
+	PickupGearWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponentA"));
+	PickupGearWidgetComponentA->SetupAttachment(Root);
 	PickupGearWidgetComponentA->SetVisibility(false);
-	if (UPickupGearWidget* PickupGearWidget = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject()))
-	{
-		PickupGearWidget->OwningActor = this; // assuming this is AWeaponBase or derived
-	}
+	PickupGearWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
+	PickupGearWidgetComponentA->SetDrawSize(FVector2D(300.f, 50.f));
+	PickupGearWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, -10.f)); // below the we
+	PickupGearWidgetComponentA->SetPivot(FVector2D(0.5f, 0.5f));
+	PickupGearWidgetComponentA->SetDrawAtDesiredSize(true);
 	
-	PickupGearWidgetComponentB = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetB"));
-	PickupGearWidgetComponentB->SetupAttachment(RootComponent);
-	PickupGearWidgetComponentB->SetWidgetSpace(EWidgetSpace::World);
-	PickupGearWidgetComponentB->SetDrawSize(FVector2D(200.f, 50.f));
+	PickupGearWidgetComponentB = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponentB"));
+	PickupGearWidgetComponentB->SetupAttachment(Root);
 	PickupGearWidgetComponentB->SetVisibility(false);
-	if (UPickupGearWidget* PickupGearWidget = Cast<UPickupGearWidget>(PickupGearWidgetComponentB->GetUserWidgetObject()))
-	{
-		PickupGearWidget->OwningActor = this; // assuming this is AWeaponBase or derived
-	}
-	
-	ItemInfoWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetA"));
-	ItemInfoWidgetComponentA->SetupAttachment(RootComponent);
-	ItemInfoWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
-	ItemInfoWidgetComponentA->SetDrawSize(FVector2D(300.f, 100.f));
-	ItemInfoWidgetComponentA->SetVisibility(false);
-	if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject()))
-		{
-			InfoWidget->OwningActor = this; // Set a pointer back to this actor
-		}
+	PickupGearWidgetComponentB->SetWidgetSpace(EWidgetSpace::World);
+	PickupGearWidgetComponentB->SetDrawSize(FVector2D(300.f, 50.f));
+	PickupGearWidgetComponentB->SetRelativeLocation(FVector(0.f, 0.f, -10.f)); // below the we
+	PickupGearWidgetComponentB->SetPivot(FVector2D(0.5f, 0.5f));
+	PickupGearWidgetComponentB->SetDrawAtDesiredSize(true);
 
-	ItemInfoWidgetComponentB = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetB"));
-	ItemInfoWidgetComponentB->SetupAttachment(RootComponent);
+	
+	ItemInfoWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponentA"));
+	ItemInfoWidgetComponentA->SetupAttachment(Root);
+	ItemInfoWidgetComponentA->SetVisibility(false);
+	ItemInfoWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
+	ItemInfoWidgetComponentA->SetDrawSize(FVector2D(300.f, 200.f));
+	ItemInfoWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+	ItemInfoWidgetComponentA->SetPivot(FVector2D(0.5f, 0.5f));
+	ItemInfoWidgetComponentA->SetDrawAtDesiredSize(true);
+	
+	ItemInfoWidgetComponentB = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponentB"));
+	ItemInfoWidgetComponentB->SetupAttachment(Root);
+	ItemInfoWidgetComponentB->SetVisibility(false);
 	ItemInfoWidgetComponentB->SetWidgetSpace(EWidgetSpace::World);
-	ItemInfoWidgetComponentB->SetDrawSize(FVector2D(300.f, 100.f));
-	ItemInfoWidgetComponentB->SetVisibility(false); // ← true = Propagate to editor
-	if (UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentB->GetUserWidgetObject()))
-	{
-		InfoWidget->OwningActor = this; // Set a pointer back to this actor
-	}
+	ItemInfoWidgetComponentB->SetDrawSize(FVector2D(300.f, 200.f));
+	ItemInfoWidgetComponentB->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+	ItemInfoWidgetComponentB->SetPivot(FVector2D(0.5f, 0.5f));
+	ItemInfoWidgetComponentB->SetDrawAtDesiredSize(true);
 	
 	HoverLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoverLight"));
 	HoverLight->SetupAttachment(RootComponent);
@@ -108,27 +104,48 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	AddActorLocalRotation(FRotator(0.f, 0.f, 0.f)); 
 	bShouldPickupHover = false;
 
-	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentA))
+	if (!OtherActor || OtherActor == this) return;
+
+	// Optional: Cast to your player character class for strict type check
+	auto* Player = Cast<AFillainCharacter>(OtherActor);
+	if (Player)
+		ShowPickupAndInfoWidgets(true);
+
+	UE_LOG(LogTemp, Warning, TEXT("Entered proximity of weapon: %s"), *GetName());
+
+	// Fade in Info Widget
+	if (ItemInfoWidgetComponentA)
 	{
-		if (AmmoComponent)
+		UItemInfoWidgetBase* InfoInstanceA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
+		if (InfoInstanceA && InfoInstanceA->FadeInAnimation)
 		{
-			UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject());
-			if (AmmoIntelWidget)
-			{
-				AmmoIntelWidget->UpdateAmmoPickupInformation(AmmoNameString, AmmoWeaponString, AmmoDeliverableString, AmmoAmountString, AmmoDamage);
-				ShowPickupAndInfoWidgets(true);
-			}
+			InfoInstanceA->PlayAnimation(InfoInstanceA->FadeInAnimation);
 		}
 	}
-	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentB))
+	if (ItemInfoWidgetComponentB)
 	{
-		if (AmmoComponent)
+		UItemInfoWidgetBase* InfoInstanceB = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentB->GetUserWidgetObject());
+		if (InfoInstanceB && InfoInstanceB->FadeInAnimation)
 		{
-			if (UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject()))
-			{
-				AmmoIntelWidget->UpdateAmmoPickupInformation(AmmoNameString, AmmoWeaponString, AmmoDeliverableString, AmmoAmountString, AmmoDamage);
-				ShowPickupAndInfoWidgets(true);
-			}
+			InfoInstanceB->PlayAnimation(InfoInstanceB->FadeInAnimation);
+		}
+	}
+
+	// Fade in Equip Widget (if you have a subclass for it)
+	if (PickupGearWidgetComponentA)
+	{
+		UPickupGearWidget* PickupGearWidgetInstanceA = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject());
+		if (PickupGearWidgetInstanceA && PickupGearWidgetInstanceA->FadeInAnimation)
+		{
+			PickupGearWidgetInstanceA->PlayAnimation(PickupGearWidgetInstanceA->FadeInAnimation);
+		}
+	}
+	if (PickupGearWidgetComponentB)
+	{
+		UPickupGearWidget* PickupGearWidgetInstanceB = Cast<UPickupGearWidget>(PickupGearWidgetComponentB->GetUserWidgetObject());
+		if (PickupGearWidgetInstanceB && PickupGearWidgetInstanceB->FadeInAnimation)
+		{
+			PickupGearWidgetInstanceB->PlayAnimation(PickupGearWidgetInstanceB->FadeInAnimation);
 		}
 	}
 
@@ -147,17 +164,47 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 void AAmmoPickup::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (UAmmoIntelWidgetComponent* AmmoComponent = Cast<UAmmoIntelWidgetComponent>(ItemInfoWidgetComponentA))
+	if (!OtherActor || OtherActor == this) return;
+
+	// Fade in Info Widget
+	if (ItemInfoWidgetComponentA)
 	{
-		if (AmmoComponent)
+		UItemInfoWidgetBase* InfoInstancedWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
+		if (InfoInstancedWidgetA && InfoInstancedWidgetA->FadeOutAnimation)
 		{
-			UAmmoPickupIntelWidget* AmmoIntelWidget = Cast<UAmmoPickupIntelWidget>(AmmoComponent->GetUserWidgetObject());
-			if (AmmoIntelWidget)
-			{
-				ShowPickupAndInfoWidgets(false);
-			}
+			InfoInstancedWidgetA->PlayAnimation(InfoInstancedWidgetA->FadeOutAnimation);
 		}
 	}
+	if (ItemInfoWidgetComponentB)
+	{
+		UItemInfoWidgetBase* InfoInstancedWidgetB = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentB->GetUserWidgetObject());
+		if (InfoInstancedWidgetB && InfoInstancedWidgetB->FadeOutAnimation)
+		{
+			InfoInstancedWidgetB->PlayAnimation(InfoInstancedWidgetB->FadeOutAnimation);
+		}
+	}
+
+	// Fade in Equip Widget (if you have a subclass for it)
+	if (PickupGearWidgetComponentA)
+	{
+		UPickupGearWidget* PickupGearInstancedWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject());
+		if (PickupGearInstancedWidgetA && PickupGearInstancedWidgetA->FadeOutAnimation)
+		{
+			PickupGearInstancedWidgetA->PlayAnimation(PickupGearInstancedWidgetA->FadeOutAnimation);
+		}
+	}
+	// Fade in Equip Widget (if you have a subclass for it)
+	if (PickupGearWidgetComponentB)
+	{
+		UPickupGearWidget* PickupGearInstancedWidgetB = Cast<UPickupGearWidget>(PickupGearWidgetComponentB->GetUserWidgetObject());
+		if (PickupGearInstancedWidgetB && PickupGearInstancedWidgetB->FadeOutAnimation)
+		{
+			PickupGearInstancedWidgetB->PlayAnimation(PickupGearInstancedWidgetB->FadeOutAnimation);
+		}
+	}
+	ShowPickupAndInfoWidgets(false);
+
+	UE_LOG(LogTemp, Warning, TEXT("Exited proximity of weapon: %s"), *GetName());
 }
 
 void AAmmoPickup::Tick(float DeltaTime)
@@ -179,56 +226,32 @@ void AAmmoPickup::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Use AddUniqueDynamic to safely bind
-	AreaSphere->OnComponentBeginOverlap.AddUniqueDynamic(this, &AAmmoPickup::OnSphereOverlap);
-	AreaSphere->OnComponentEndOverlap.AddUniqueDynamic(this, &AAmmoPickup::OnSphereEndOverlap);
-
 	if (HasAuthority())
 	{
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	}
-
-	if (PickupGearWidgetComponentA && !PickupGearWidgetComponentA->GetWidgetClass())
-	{
-		PickupGearWidgetComponentA->SetWidgetClass(PickupGearWidgetClass);
-		PickupGearWidgetComponentA->InitWidget();
-		PickupGearWidgetComponentA->SetVisibility(false, true);
-
-		if (UUserWidget* RawWidget = PickupGearWidgetComponentA->GetUserWidgetObject())
-		{
-			if (UPickupGearWidget* PickupGearWidget = Cast<UPickupGearWidget>(RawWidget))
-			{
-				PickupGearWidget->OwningActor = this; // Or OwningAmmoPickup if you made it type-specific
-			}
-		}
-	}
-	if (PickupGearWidgetComponentB && !PickupGearWidgetComponentB->GetWidgetClass())
-	{
-		PickupGearWidgetComponentB->SetWidgetClass(PickupGearWidgetClass);
-		PickupGearWidgetComponentB->InitWidget();
-		PickupGearWidgetComponentB->SetVisibility(false, true);
-
-		if (UUserWidget* RawWidget = PickupGearWidgetComponentB->GetUserWidgetObject())
-		{
-			if (UPickupGearWidget* PickupGearWidget = Cast<UPickupGearWidget>(RawWidget))
-			{
-				PickupGearWidget->OwningActor = this; // Or OwningAmmoPickup if you made it type-specific
-			}
-		}
-	}
-
-	if (ItemInfoWidgetComponentA && !ItemInfoWidgetComponentA->GetWidgetClass())
-	{
-		ItemInfoWidgetComponentA->SetWidgetClass(WeaponAmmoIntelWidgetClass); // ← assign it here!
-		ItemInfoWidgetComponentA->InitWidget();
-		ItemInfoWidgetComponentA->SetVisibility(false);
-	}	
-	if (ItemInfoWidgetComponentB && !ItemInfoWidgetComponentB->GetWidgetClass())
-	{
-		ItemInfoWidgetComponentB->SetWidgetClass(WeaponAmmoIntelWidgetClass);
-		ItemInfoWidgetComponentB->InitWidget();
-		ItemInfoWidgetComponentB->SetVisibility(false);
-	}
+	
+	// Use AddUniqueDynamic to safely bind
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AAmmoPickup::OnSphereOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AAmmoPickup::OnSphereEndOverlap);
+	
 	ShowPickupAndInfoWidgets(false);
+
+	if (ItemInfoWidgetComponentA)
+	{
+		ItemInfoWidgetInstanceA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
+		if (ItemInfoWidgetInstanceA)
+		{
+			ItemInfoWidgetInstanceA->SetRangedInfo(Line1, Line2, Line3, Line4, Line5);
+		}
+	}
+	if (ItemInfoWidgetComponentB)
+	{
+		ItemInfoWidgetInstanceB = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentB->GetUserWidgetObject());
+		if (ItemInfoWidgetInstanceB)
+		{
+			ItemInfoWidgetInstanceB->SetRangedInfo(Line1, Line2, Line3, Line4, Line5);
+		}
+	}
 }

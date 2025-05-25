@@ -6,16 +6,33 @@
 #include "Components/ActorComponent.h"
 #include "HUD/FillainHUD.h"
 #include "Weapons/WeaponTypes.h"
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
-#include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/WeaponTypes.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 
 #include "CombatComponent.generated.h"
 
+UENUM(BlueprintType)
+enum class EFightingStyle : uint8
+{
+	EFS_Unequipped UMETA(DisplayName = "No Style"),
+	EFS_Melee UMETA(DisplayName = "Fights with Melee Weapon"),
+	EFS_Ranged UMETA(DisplayName = "Fights with Firearm"),
 
+	EFS_MAX UMETA(DisplayName = "DefaultMAX")
+};
 
+UENUM(BlueprintType)
+enum class EActionState : uint8
+{
+	EAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
+	EAS_Reloading UMETA(DisplayName = "Reloading"),
+	EAS_ThrowingGrenade UMETA(DisplayName = "Throwing Grenade"),
+	EAS_SwappingWeapons UMETA(DisplayName = "Swapping Weapons"),
+	EAS_MeleeAttacking UMETA(DisplayName = "Melee Attacking"),
+
+	EAS_MAX UMETA(DisplayName = "DefaultMAX")
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HEROESANDFILLAINS_API UCombatComponent : public UActorComponent
@@ -54,7 +71,9 @@ public:
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedRangedWeapon)
 	class ARangedWeapon* EquippedRangedWeapon;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	EFightingStyle FightingStyle = EFightingStyle::EFS_Unequipped;
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
@@ -274,11 +293,11 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 0;
 
-	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
-	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_ActionState, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UFUNCTION()
-	void OnRep_CombatState();
+	void OnRep_ActionState();
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
 
@@ -305,6 +324,8 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }	
 	bool ShouldSwapWeapons();
+	FORCEINLINE EFightingStyle GetFightingStyle() const { return FightingStyle; }
+	EFightingStyle SetFightingStyle();
 	
 		
 };

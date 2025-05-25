@@ -35,7 +35,16 @@ class HEROESANDFILLAINS_API AAmmoPickup : public APickup
 
 public:
 	AAmmoPickup();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* Root;
 
+	UPROPERTY()
+	class UItemInfoWidgetBase* ItemInfoWidgetInstanceA;
+
+	UPROPERTY()
+	class UItemInfoWidgetBase* ItemInfoWidgetInstanceB;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Properties")
 	class USphereComponent* AreaSphere;
 
@@ -98,20 +107,20 @@ public:
 	***                        ***
 	*****************************/
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
-	FString AmmoNameString;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Info")
+	FString Line1;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
-	FString AmmoWeaponString;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Info")
+	FString Line2;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
-	FString AmmoDeliverableString;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Info")
+	FString Line3;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
-	FString AmmoAmountString;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Info")
+	FString Line4;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pickup Info")
-	float AmmoDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Info")
+	FString Line5;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
 	class UWidgetComponent* PickupGearWidgetComponentA;
@@ -162,11 +171,6 @@ private:
 	
 
 public:
-	FORCEINLINE FString GetAmmoNameText() const { return AmmoNameString; }
-	FORCEINLINE FString GetAmmoWeaponText() const { return AmmoWeaponString; }
-	FORCEINLINE FString GetAmmoDeliverableText() const { return AmmoDeliverableString; }
-	FORCEINLINE FString GetAmmoAmountText() const { return AmmoAmountString; }
-	FORCEINLINE float GetAmmoDamageText() const { return AmmoDamage; }
 	FORCEINLINE EAmmoType GetAmmoPickupType() const { return AmmoSpawnPointType; }
 	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentA() const { return ItemInfoWidgetComponentA; }
 	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentB() const { return ItemInfoWidgetComponentB; }

@@ -9,8 +9,8 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
 #include "GameMode/LobbyGameMode.h"
+#include "HAFComponents/CombatComponent.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "Weapons/WeaponBase.h"
 #include "FillainCharacter.generated.h"
@@ -63,6 +63,7 @@ public:
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
 	void SwitchWeapon(AWeaponBase* NewWeapon);
+	
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
@@ -119,6 +120,12 @@ public:
 	void PlayReloadingMontage();
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
+	void PlayMeleeAttackMontage();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+
+	bool CanAttack();
 
 	UPROPERTY()
 	class AProjectile* Projectile;
@@ -153,10 +160,6 @@ public:
 
 	UPROPERTY()
 	AActor* OverlappingActor;
-	
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* HAFMappingContext;
 
 	/****************** 
 	** Moving Around **
@@ -228,6 +231,19 @@ protected:
 
 	void GrenadeButtonPressed();
 
+	/*************************
+	**  Swinging the Stick  **
+	*************************/
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* AttackAction;
+
+	void MeleeAttack();
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputMappingContext* HAFMappingContext;
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowPlayerName();
 	
@@ -360,6 +376,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* SwapMontage;
+
+	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
+	UAnimMontage* AttackMontage;
 
 	void HideCharacterIfCameraClose();
 
@@ -515,7 +534,7 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }	
 	FORCEINLINE float GetShield() const { return Shield; }
 	FORCEINLINE float GetMaxShield() const { return MaxShield; }
-	ECombatState GetCombatState() const;
+	EActionState GetActionState() const;
 	EWeaponState GetWeaponState() const;
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	AHAFPlayerState* GetHAFPlayerState() const { return HAFPlayerState; }

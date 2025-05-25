@@ -6,7 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapons/WeaponBase.h"
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CombatState.h"
+#include "HAFComponents/CombatComponent.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/WeaponTypes.h"
@@ -81,9 +81,9 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
-	bUseFABRIK = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
-	bUseAimOffsets = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	bTransformRightHand = FillainCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bUseFABRIK = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied;
+	bUseAimOffsets = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
+	bTransformRightHand = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
 	if (FillainCharacter && FillainCharacter->Combat)
 	{
 		AWeaponBase* NewWeapon = FillainCharacter->Combat->EquippedWeapon;

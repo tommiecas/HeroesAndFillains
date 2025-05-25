@@ -523,6 +523,7 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFillainCharacter::FireButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AFillainCharacter::MeleeAttack);
 
 	}
 }
@@ -642,7 +643,46 @@ void AFillainCharacter::PlayReloadingMontage()
 		}
 	}
 
-	void AFillainCharacter::PlayHitReactMontage()
+void AFillainCharacter::PlayMeleeAttackMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); 
+	if (AnimInstance && AttackMontage && Combat && Combat->bWieldingTheSword)
+	{                                                           
+		AnimInstance->Montage_Play(AttackMontage);              
+		int32 Selection = FMath::RandRange(0, 3);               
+		FName SectionName = FName();                            
+		switch (Selection)                                      
+		{                                                       
+		case 0:                                                 
+			SectionName = FName("Attack1");                     
+			break;                                              
+		case 1:                                                 
+			SectionName = FName("Attack2");                     
+			break;                                              
+		case 2:                                                 
+			SectionName = FName("Attack3");                     
+			break;                                              
+		case 3:                                                 
+			SectionName = FName("Attack4");                     
+			break;                                              
+		default:                                                
+			break;                                              
+		}                                                       
+		AnimInstance->Montage_JumpToSection(SectionName);       
+	}                                                           		
+}
+
+void AFillainCharacter::AttackEnd()
+{
+	Combat->ActionState = EActionState::EAS_Unoccupied;
+}
+
+bool AFillainCharacter::CanAttack()
+{
+	return Combat->ActionState == EActionState::EAS_Unoccupied && Combat->FightingStyle != EFightingStyle::EFS_Unequipped;
+}
+
+void AFillainCharacter::PlayHitReactMontage()
 	{
 		if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
 
@@ -850,16 +890,16 @@ void AFillainCharacter::EquipButtonPressed()
 		}
 	}
 	if (Combat->bWieldingTheSword) return;
-	if (Combat->CombatState == ECombatState::ECS_Unoccupied) ServerEquipButtonPressed();
+	if (Combat->ActionState == EActionState::EAS_Unoccupied) ServerEquipButtonPressed();
 	bool bSwap = Combat->ShouldSwapWeapons() &&
 		!HasAuthority() &&
-		Combat->CombatState == ECombatState::ECS_Unoccupied &&
+		Combat->ActionState == EActionState::EAS_Unoccupied &&
 		OverlappingWeapon == nullptr;
 
 	if (bSwap)
 	{
 		PlaySwapMontage();
-		Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+		Combat->ActionState = EActionState::EAS_SwappingWeapons;
 		bFinishedSwapping = false;
 	}
 }
@@ -1042,6 +1082,47 @@ void AFillainCharacter::Jump()
 	{
 		Super::Jump();
 	}
+}
+
+void AFillainCharacter::MeleeAttack()
+{
+	if (CanAttack())
+	{
+		PlayMeleeAttackMontage();
+		Combat->ActionState = EActionState::EAS_MeleeAttacking;
+	}
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
 
 void AFillainCharacter::FireButtonPressed()
@@ -1259,10 +1340,10 @@ FVector AFillainCharacter::GetHitTarget() const
 	return Combat->HitTarget;
 }
 
-ECombatState AFillainCharacter::GetCombatState() const
+EActionState AFillainCharacter::GetActionState() const
 {
-	if (Combat == nullptr) return ECombatState::ECS_MAX;
-	return Combat->CombatState;
+	if (Combat == nullptr) return EActionState::EAS_MAX;
+	return Combat->ActionState;
 }
 
 EWeaponState AFillainCharacter::GetWeaponState() const
