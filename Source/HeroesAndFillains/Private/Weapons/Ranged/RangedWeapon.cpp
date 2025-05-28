@@ -1,0 +1,277 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Weapons/Ranged/RangedWeapon.h"
+
+#include "Weapons/WeaponBase.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Characters/FillainCharacter.h"
+#include "PlayerController/FillainPlayerController.h"
+#include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Weapons/Ranged/Casing.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Weapons/WeaponTypes.h"
+#include "HUD/PickupWidgetComponent.h"
+#include <Kismet/KismetMathLibrary.h>
+#include "Components/PointLightComponent.h"
+#include "Components/DecalComponent.h"
+#include "HAFComponents/CombatComponent.h"
+#include "HUD/ItemInfoWidgetBase.h"
+#include "Weapons/WeaponTypes.h"
+
+ARangedWeapon::ARangedWeapon()
+	: Super()
+{
+	
+}
+
+void ARangedWeapon::SetEquippedRangedWeaponState()
+{
+	if (RangedType == ERangedType::ERT_RocketLauncher || RangedType == ERangedType::ERT_GrenadeLauncher || RangedType == ERangedType::ERT_SniperRifle || RangedType == ERangedType::ERT_Shotgun)
+	{
+		WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+	}
+	if (RangedType == ERangedType::ERT_AssaultRifle || RangedType == ERangedType::ERT_SubmachineGun || RangedType == ERangedType::ERT_Pistol)
+	{
+		WeaponState = EWeaponState::EWS_EquippedOneHanded;
+	}
+}
+
+void ARangedWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void ARangedWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void ARangedWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME_CONDITION(ARangedWeapon, bUseServerSideRewind, COND_OwnerOnly);
+}
+
+void ARangedWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	
+}
+
+
+void ARangedWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappingComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	Super::OnSphereEndOverlap(OverlappingComponent, OtherActor, OtherComp, OtherBodyIndex);
+	
+}
+
+void ARangedWeapon::OnEquipped()
+{
+	Super::OnEquipped();
+	
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter && bUseServerSideRewind)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && !FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.AddDynamic(this, &ARangedWeapon::OnPingTooHigh);
+		}
+	}
+}
+
+void ARangedWeapon::OnDropped()
+{
+	Super::OnDropped();
+
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.RemoveDynamic(this, &ARangedWeapon::OnPingTooHigh);
+		}
+	}
+
+}
+
+void ARangedWeapon::OnEquippedSecondary()
+{
+	Super::OnEquippedSecondary();
+
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.RemoveDynamic(this, &ARangedWeapon::OnPingTooHigh);
+		}
+	}
+	
+}
+
+
+
+void ARangedWeapon::SetHUDAmmo()
+{
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+
+
+	if (FillainOwnerCharacter)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		
+		if (FillainOwnerController)
+		{
+			FillainOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void ARangedWeapon::SpendRoundOfAmmo()
+{
+	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
+	SetHUDAmmo();
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	}
+	else
+	{
+		++Sequence;
+	}
+}
+
+void ARangedWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
+{
+	if (HasAuthority()) return;
+	Ammo = ServerAmmo;
+	--Sequence;
+	Ammo -= Sequence;
+	SetHUDAmmo();
+}
+
+void ARangedWeapon::AddAmmo(int32 AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(AmmoToAdd);
+}
+
+void ARangedWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority()) return;
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter && FillainOwnerCharacter->GetCombatComponent() && IsRangedWeaponFull())
+	{
+		FillainOwnerCharacter->GetCombatComponent()->JumpToShotgunEnd();
+	}
+	SetHUDAmmo();
+}
+
+void ARangedWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	if (Owner != nullptr)
+	{
+		FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(Owner) : FillainOwnerCharacter;
+		if (FillainOwnerCharacter && FillainOwnerCharacter->GetEquippedWeapon() && FillainOwnerCharacter->GetEquippedWeapon() == Cast<AWeaponBase>(this))
+		{
+			SetHUDAmmo();
+		}
+	}
+}
+
+void ARangedWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}
+
+
+void ARangedWeapon::Fire(const FVector& HitTarget)
+{
+	if (!IsValid(WeaponMesh)) return; // More robust check
+
+	if (!IsValid(GetWorld())) return; // Add world validity check
+    
+	UE_LOG(LogTemp, Warning, TEXT("ARangedWeapon::Fire called on %s"), *GetName());
+
+	if (FireAnimation && IsValid(WeaponMesh))
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
+
+	if (CasingClass && IsValid(WeaponMesh))
+	{
+		const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject"));
+		if (AmmoEjectSocket)
+		{
+			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				World->SpawnActor<ACasing>(
+					CasingClass,
+					SocketTransform.GetLocation(),
+					SocketTransform.GetRotation().Rotator()
+				);
+			}
+		}
+	}
+	SpendRoundOfAmmo();
+}
+
+
+bool ARangedWeapon::IsRangedWeaponEmpty()
+{
+	return (Ammo <= 0);
+}
+
+bool ARangedWeapon::IsRangedWeaponFull()
+{
+	return Ammo == MagCapacity;
+}
+
+FVector ARangedWeapon::TraceEndWithScatter(const FVector& HitTarget)
+{
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
+	if (MuzzleFlashSocket == nullptr) return FVector();
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FVector TraceStart = SocketTransform.GetLocation();
+
+	const FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	const FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+	const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	const FVector EndLoc = SphereCenter + RandVec;
+	const FVector ToEndLoc = EndLoc - TraceStart;
+
+	/* DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
+		FColor::Cyan,
+		true);*/
+
+	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+}
+
+
+
+
+
+
+
+
+
+

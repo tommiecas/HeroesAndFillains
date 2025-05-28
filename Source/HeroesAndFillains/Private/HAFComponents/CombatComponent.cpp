@@ -49,6 +49,14 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, bWieldingTheSword);
 }
 
+bool UCombatComponent::AreMeshesValid(AWeaponBase* Weapon) const
+{
+	return Character &&
+		  Character->GetMesh() &&
+		  Weapon &&
+		  Weapon->WeaponMesh;
+}
+
 void UCombatComponent::ShotgunShellReload()
 {
 	if (Character && Character->HasAuthority())
@@ -66,7 +74,7 @@ void UCombatComponent::PickupAmmo(ERangedType Type, int32 AmmoAmount)
 		UpdateCarriedAmmo();
 	}
 	ARangedWeapon* FiringWeapon = Cast<ARangedWeapon>(EquippedWeapon);
-	if (FiringWeapon && FiringWeapon->IsRangedWeaponEmpty() && FiringWeapon->GetRangedWeaponType() == RangedType)
+	if (FiringWeapon && FiringWeapon->IsRangedWeaponEmpty() && FiringWeapon->GetRangedType() == RangedType)
 	{
 		Reload();
 	}
@@ -189,6 +197,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
+	if (FightingStyle != EFightingStyle::EFS_Ranged) return;
 	bIsFireButtonPressed = bPressed;
 
 	UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
@@ -233,7 +242,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
-	if (FightingStyle == EFightingStyle::EFS_Ranged)
+	if (FightingStyle != EFightingStyle::EFS_Ranged) return;
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CombatComponent::Fire() called"));
 
@@ -403,37 +412,35 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
+	if (!WeaponToEquip || !Character) return;
+
+	DropEquippedWeapon();
+	EquippedWeapon = WeaponToEquip;
+
 	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToEquip))
 	{
-		DropEquippedWeapon();
-
-		EquippedWeapon = WeaponToEquip;
 		EquippedRangedWeapon = RangedWeapon;
-
 		FightingStyle = EFightingStyle::EFS_Ranged;
-		EquippedRangedWeapon->SetEquippedRangedWeaponState();
-		AttachWeaponToRightHand(WeaponToEquip);
+		RangedWeapon->SetEquippedRangedWeaponState();
+		AttachRangedWeaponToRightHand(RangedWeapon);
 		RangedWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(WeaponToEquip);
+		PlayWeaponEquipSound(RangedWeapon);
 		RangedWeapon->SetHUDAmmo();
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
-
-		UE_LOG(LogTemp, Warning, TEXT("Equipping Weapon: %s"), *RangedWeapon->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Equipping Ranged Weapon: %s"), *RangedWeapon->GetName());
 	}
 	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToEquip))
 	{
-		DropEquippedWeapon();
-
-		EquippedWeapon = WeaponToEquip;
 		EquippedMeleeWeapon = MeleeWeapon;
-
 		FightingStyle = EFightingStyle::EFS_Melee;
-		EquippedMeleeWeapon->SetEquippedWeaponState();
-		AttachWeaponToRightHand(WeaponToEquip);
+		MeleeWeapon->SetEquippedWeaponState();
+		AttachMeleeWeaponToRightHand(MeleeWeapon);
 		MeleeWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(WeaponToEquip);
+		PlayWeaponEquipSound(MeleeWeapon);
+		UE_LOG(LogTemp, Warning, TEXT("Equipping Melee Weapon: %s"), *MeleeWeapon->GetName());
 	}
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
@@ -441,9 +448,9 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 void UCombatComponent::UpdateCarriedAmmo()
 {
 	if (EquippedRangedWeapon == nullptr) return;
-	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedWeaponType()))
+	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedType()))
 	{
-		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()];
+		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()];
 	}
 
 	Controller = Controller == nullptr ? Cast<AFillainPlayerController>(Character->Controller) : Controller;
@@ -484,6 +491,7 @@ void UCombatComponent::SwapWeapons()
 	ActionState = EActionState::EAS_SwappingWeapons;
 	Character->bFinishedSwapping = false;
 	if (SecondaryWeapon) SecondaryWeapon->EnableCustomDepth(false);
+	ActionState = EActionState::EAS_Unoccupied;
 
 }
 
@@ -504,15 +512,17 @@ void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
-		AttachWeaponToRightHand(WeaponToEquip);
+		AttachRangedWeaponToRightHand(WeaponToEquip);
 		RangedWeapon->SetHUDAmmo();	
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
-		AttachWeaponToRightHand(WeaponToEquip);
+		AttachMeleeWeaponToRightHand(WeaponToEquip);
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
@@ -530,6 +540,7 @@ void UCombatComponent::EquipSecondaryWeapon(AWeaponBase* WeaponToEquip)
 	SecondaryWeapon->HoverLight->SetVisibility(false);
 	SecondaryWeapon->HoverDecal->SetVisibility(false);
 	SecondaryWeapon->ShowPickupAndInfoWidgets(false);
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_Aiming()
@@ -542,7 +553,7 @@ void UCombatComponent::OnRep_Aiming()
 
 void UCombatComponent::AttachActorToBackpack(AWeaponBase* WeaponToAttach)
 {
-	if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr) return;
+	if (!AreMeshesValid(WeaponToAttach)) return;
 	const USkeletalMeshSocket* BackpackSocket = Character->GetMesh()->GetSocketByName(FName("BackpackSocket"));
 	if (BackpackSocket)
 	{
@@ -558,62 +569,62 @@ void UCombatComponent::DropEquippedWeapon()
 	}
 }
 
-void UCombatComponent::AttachWeaponToRightHand(class AWeaponBase* WeaponToAttach)
+void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketName)
 {
-	if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr) return;
+	if (!AreMeshesValid(Weapon)) return;
 
-	// Attach the MESH directly, not the root
-	if (WeaponToAttach->WeaponMesh)
+	const USkeletalMeshSocket* Socket = Character->GetMesh()->GetSocketByName(SocketName);
+	if (Socket)
 	{
-		if (ARangedWeapon* Firearm = Cast<ARangedWeapon>(WeaponToAttach))
-		{
-			Firearm->WeaponMesh->AttachToComponent(
-				Character->GetMesh(),
-					FAttachmentTransformRules::SnapToTargetIncludingScale,
-					FName("RightHandSocket"));
-		}
-		if (AMeleeWeapon* Beating = Cast<AMeleeWeapon>(WeaponToAttach))
-		{
-			Beating->WeaponMesh->AttachToComponent(
-				Character->GetMesh(),
-					FAttachmentTransformRules::SnapToTargetIncludingScale,
-					FName("MeleeSocket"));
-		}
+		Socket->AttachActor(Weapon, Character->GetMesh());
 
-		WeaponToAttach->WeaponMesh->SetVisibility(true, true);
-		WeaponToAttach->WeaponMesh->SetHiddenInGame(false, true);
-		WeaponToAttach->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Weapon->WeaponMesh->SetVisibility(true);
+		Weapon->WeaponMesh->SetHiddenInGame(false);
+		Weapon->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	/* if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr) return;
+}
 
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
-	} */
+
+void UCombatComponent::AttachRangedWeaponToRightHand(class AWeaponBase* WeaponToAttach)
+{
+	if (!AreMeshesValid(WeaponToAttach)) return;
+
+	ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToAttach);
+	if (!RangedWeapon) return;
+
+	FName SocketName = (RangedWeapon->GetRangedType() == ERangedType::ERT_AssaultRifle)
+		? FName("AssaultRifleSocket")
+		: FName("RightHandSocket");
+
+	AttachWeaponToSocket(RangedWeapon, SocketName);
+}
+
+void UCombatComponent::AttachMeleeWeaponToRightHand(AWeaponBase* WeaponToAttach)
+{
+	if (!AreMeshesValid(WeaponToAttach)) return;
+
+	AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToAttach);
+	if (!MeleeWeapon) return;
+
+	AttachWeaponToSocket(MeleeWeapon, FName("MeleeSocket"));
 }
 
 void UCombatComponent::AttachWeaponToLeftHand(AWeaponBase* WeaponToAttach)
 {
-	if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr || EquippedWeapon == nullptr) return;
+	if (!AreMeshesValid(WeaponToAttach)) return;
+
+	FName SocketName = FName("LeftHandSocket");
+
 	if (EquippedRangedWeapon)
 	{
-		bool bUsePistolSocket = EquippedRangedWeapon->GetRangedWeaponType() == ERangedType::ERT_Pistol || EquippedRangedWeapon->GetRangedWeaponType() == ERangedType::ERT_SubmachineGun;
-		FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);		
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
-		}
+		bool bUsePistolSocket =
+			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_Pistol ||
+			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_SubmachineGun;
+
+		SocketName = bUsePistolSocket ? FName("PistolSocket") : SocketName;
 	}
-	else if (EquippedMeleeWeapon)
-	{
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("LeftHandSocket"));				
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
-		}
-	}
+
+	AttachWeaponToSocket(WeaponToAttach, SocketName);
 }
 
 void UCombatComponent::Reload()
@@ -623,6 +634,7 @@ void UCombatComponent::Reload()
 		ServerReloading();
 		HandleReload();
 		bLocallyReloading = true;
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
@@ -645,6 +657,7 @@ void UCombatComponent::FinishReloading()
 	}
 	if (bIsFireButtonPressed)
 	{
+		ActionState = EActionState::EAS_Unoccupied;
 		Fire();
 	}
 
@@ -669,12 +682,16 @@ void UCombatComponent::FinishSwapAttachWeapons()
 	
 	EquippedWeapon->SetEquippedWeaponState();
 	SetFightingStyle();
-	AttachWeaponToRightHand(EquippedWeapon);
 	PlayWeaponEquipSound(EquippedWeapon);
 	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
 	{
+		AttachRangedWeaponToRightHand(EquippedWeapon);
 		RangedWeapon->SetHUDAmmo();
 		UpdateCarriedAmmo();
+	}
+	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
+	{
+		AttachMeleeWeaponToRightHand(EquippedWeapon);
 	}
 
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
@@ -685,10 +702,10 @@ void UCombatComponent::UpdateAmmoValues()
 {
 	if (Character == nullptr || EquippedRangedWeapon == nullptr || FightingStyle != EFightingStyle::EFS_Ranged) return;
 	int32 ReloadAmount = AmountToReload();
-	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedWeaponType()))
+	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedType()))
 	{
-		CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()] -= ReloadAmount;
-		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()];
+		CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()];
 	}
 	Controller = Controller == nullptr ? Cast<AFillainPlayerController>(Character->Controller) : Controller;
 	if (Controller)
@@ -702,10 +719,10 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 {
 	if (Character == nullptr || EquippedRangedWeapon == nullptr || FightingStyle != EFightingStyle::EFS_Ranged) return;
 
-	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedWeaponType()))
+	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedType()))
 	{
-		CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()] -= 1;
-		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()];
+		CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()];
 	}
 	Controller = Controller == nullptr ? Cast<AFillainPlayerController>(Character->Controller) : Controller;
 	if (Controller)
@@ -737,7 +754,14 @@ void UCombatComponent::JumpToShotgunEnd()
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-	AttachWeaponToRightHand(EquippedWeapon);
+	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
+	{
+		AttachRangedWeaponToRightHand(EquippedWeapon);
+	}
+	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
+	{
+		AttachMeleeWeaponToRightHand(EquippedWeapon);
+	}
 }
 
 void UCombatComponent::LaunchGrenade()
@@ -777,11 +801,13 @@ void UCombatComponent::OnRep_ActionState()
 	{
 	case EActionState::EAS_Reloading:
 		if (Character && !Character->IsLocallyControlled()) HandleReload();
+		ActionState = EActionState::EAS_Reloading;
 		break;
 	case EActionState::EAS_Unoccupied:
 		if (bIsFireButtonPressed)
 		{
 			Fire();
+			ActionState = EActionState::EAS_Unoccupied;
 		}
 		break;
 	case EActionState::EAS_ThrowingGrenade:
@@ -790,18 +816,22 @@ void UCombatComponent::OnRep_ActionState()
 			Character->PlayThrowGrenadeMontage();
 			AttachWeaponToLeftHand(EquippedWeapon);
 			ShowAttachedGrenade(true);
+			ActionState = EActionState::EAS_Unoccupied;
 		}
 		break;
 	case EActionState::EAS_SwappingWeapons:
 		if (Character && !Character->IsLocallyControlled())
 		{
 			Character->PlaySwapMontage();
+			ActionState = EActionState::EAS_Unoccupied;
 		}
 		break;
 		case EActionState::EAS_MeleeAttacking:
 		if (Character && !Character->IsLocallyControlled())
 		{
+			ActionState = EActionState::EAS_MeleeAttacking;
 			Character->MeleeAttack();
+			ActionState = EActionState::EAS_Unoccupied;
 		}
 	}
 }
@@ -819,9 +849,9 @@ int32 UCombatComponent::AmountToReload()
 	if (EquippedRangedWeapon == nullptr || FightingStyle != EFightingStyle::EFS_Ranged) return 0;
 	int32 RoomInMag = EquippedRangedWeapon->GetMagCapacity() - EquippedRangedWeapon->GetAmmo();
 
-	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedWeaponType()))
+	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedType()))
 	{
-		int32 AmountCarried = CarriedAmmoMap[EquippedRangedWeapon->GetRangedWeaponType()];
+		int32 AmountCarried = CarriedAmmoMap[EquippedRangedWeapon->GetRangedType()];
 		int32 Least = FMath::Min(RoomInMag, AmountCarried);
 		return FMath::Clamp(RoomInMag, 0, Least);
 	}
@@ -839,15 +869,18 @@ void UCombatComponent::ThrowGrenade()
 		Character->PlayThrowGrenadeMontage();
 		AttachWeaponToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 	if (Character && !Character->HasAuthority())
 	{
 		ServerThrowGrenade();
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 	if (Character && Character->HasAuthority())
 	{
 		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
 		UpdateHUDGrenades();
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
@@ -863,6 +896,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	}
 	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
 	UpdateHUDGrenades();
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void UCombatComponent::UpdateHUDGrenades()
@@ -872,6 +906,7 @@ void UCombatComponent::UpdateHUDGrenades()
 	{
 		Controller->SetHUDGrenades(Grenades);
 	}
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool UCombatComponent::ShouldSwapWeapons()
@@ -881,19 +916,24 @@ bool UCombatComponent::ShouldSwapWeapons()
 
 EFightingStyle UCombatComponent::SetFightingStyle()
 {
-	if (EquippedRangedWeapon)
+	if (ARangedWeapon* EquippedGun = Cast<ARangedWeapon>(EquippedWeapon))
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
 	}
-	if (EquippedMeleeWeapon)
+	else if (AMeleeWeapon* EquippedMelee = Cast<AMeleeWeapon>(EquippedWeapon))
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
 	}
-	else
+	else if (!EquippedWeapon)
 	{
 		FightingStyle = EFightingStyle::EFS_Unequipped;
 	}
+	else
+	{
+		FightingStyle = EFightingStyle::EFS_MAX;
+	}
 	return FightingStyle;
+
 }
 
 void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
@@ -909,7 +949,14 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	if (EquippedWeapon && Character)
 	{
 		EquippedWeapon->SetEquippedWeaponState();
-		AttachWeaponToRightHand(EquippedWeapon);
+		if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
+		{
+			AttachRangedWeaponToRightHand(EquippedWeapon);
+		}
+		if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
+		{
+			AttachMeleeWeaponToRightHand(EquippedWeapon);
+		}	
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedWeapon);
@@ -923,7 +970,7 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
 		EquippedMeleeWeapon->SetEquippedWeaponState();
-		AttachWeaponToRightHand(EquippedMeleeWeapon);
+		AttachMeleeWeaponToRightHand(EquippedMeleeWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedMeleeWeapon);
@@ -936,7 +983,7 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
 		EquippedRangedWeapon->SetEquippedRangedWeaponState();
-		AttachWeaponToRightHand(EquippedRangedWeapon);
+		AttachRangedWeaponToRightHand(EquippedRangedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedRangedWeapon);
@@ -1028,7 +1075,7 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
-	if (Character->IsLocallyControlled() && EquippedRangedWeapon->GetRangedWeaponType() == ERangedType::ERT_SniperRifle)
+	if (Character->IsLocallyControlled() && EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_SniperRifle)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
 	} 
@@ -1066,7 +1113,8 @@ bool UCombatComponent::CanFire()
 	if (ActionState != EActionState::EAS_Unoccupied)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CanFire: ❌ ActionState is not EAS_Unoccupied"));
-		return false;
+		ActionState = EActionState::EAS_Unoccupied;
+		return true;
 	}
 
 	if (FightingStyle != EFightingStyle::EFS_Ranged)
@@ -1088,10 +1136,11 @@ void UCombatComponent::OnRep_CarriedAmmo()
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 
-	bool bJumpToShotgunEnd = ActionState == EActionState::EAS_Reloading && EquippedRangedWeapon != nullptr && EquippedRangedWeapon->GetRangedWeaponType() == ERangedType::ERT_Shotgun && CarriedAmmo == 0;
+	bool bJumpToShotgunEnd = ActionState == EActionState::EAS_Reloading && EquippedRangedWeapon != nullptr && EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_Shotgun && CarriedAmmo == 0;
 	if (bJumpToShotgunEnd)
 	{
 		JumpToShotgunEnd();
+		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 

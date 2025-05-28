@@ -16,7 +16,7 @@ UPickupWidgetComponent::UPickupWidgetComponent()
 		if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToBePickedUp))
 		{
 			EMeleeType NoMeleeType = EMeleeType::EMT_None;
-			ERangedType TypeOfRangedWeapon = RangedWeapon->GetRangedWeaponType();
+			ERangedType TypeOfRangedWeapon = RangedWeapon->GetRangedType();
 			GetWeaponTypeDisplayName(TypeOfRangedWeapon, NoMeleeType);			
 		}
 		if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToBePickedUp))

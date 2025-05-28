@@ -205,15 +205,18 @@ public:
 	void CalculateAO_Pitch();
 	void SimProxiesTurn();
 
-	/**********************
-	** Firing the Weapon **
-	**********************/
+	/************************
+	****    Attacking    ****
+	************************/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* FireAction;
+	UInputAction* AttackAction;
 
+
+	void AttackButtonPressed();
+	void AttackButtonReleased();
 
 	void FireButtonPressed();
-	// void FireButtonReleased();
+	void FireButtonReleased();
 
 	/*************************
 	** Reloading the Weapon **
@@ -235,9 +238,6 @@ public:
 	**  Swinging the Stick  **
 	*************************/
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* AttackAction;
-
 	void MeleeAttack();
 	
 protected:

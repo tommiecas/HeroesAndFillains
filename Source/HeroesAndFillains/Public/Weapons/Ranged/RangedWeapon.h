@@ -102,11 +102,12 @@ public:
 	void SetEquippedRangedWeaponState();
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	ERangedType RangedWeaponType;
+	ERangedType RangedType;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EFireType FireType;
 
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnEquipped() override;
@@ -137,7 +138,7 @@ protected:
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	ERangedType RangedType = ERangedType::ERT_None;
+	ERangedType RangedTypeOfWeapon = ERangedType::ERT_None;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class UAnimationAsset* FireAnimation;
@@ -176,7 +177,7 @@ public:
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 	bool IsRangedWeaponEmpty();
 	bool IsRangedWeaponFull();
-	FORCEINLINE ERangedType GetRangedWeaponType() const { return RangedWeaponType; }
+	FORCEINLINE ERangedType GetRangedType() const { return RangedTypeOfWeapon; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	FORCEINLINE UItemInfoWidgetBase* GetItemInfoWidget() const { return ItemInfoWidget; }

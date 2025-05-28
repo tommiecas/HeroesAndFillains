@@ -292,7 +292,7 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 		);
 	}
 	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedRangedWeapon);
-	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedRangedWeapon && Gun && Gun->GetRangedWeaponType() == ERangedType::ERT_SniperRifle;
+	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedRangedWeapon && Gun && Gun->GetRangedType() == ERangedType::ERT_SniperRifle;
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
@@ -519,12 +519,10 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AFillainCharacter::CrouchButtonPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AFillainCharacter::AimButtonPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AFillainCharacter::AimButtonReleased);
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AFillainCharacter::FireButtonPressed);
-		// EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFillainCharacter::FireButtonReleased);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AFillainCharacter::AttackButtonPressed);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AFillainCharacter::AttackButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AFillainCharacter::MeleeAttack);
-
 	}
 }
 
@@ -579,7 +577,7 @@ void AFillainCharacter::PlayReloadingMontage()
 
 		if (Combat->EquippedRangedWeapon)
 		{
-			switch (Combat->EquippedRangedWeapon->GetRangedWeaponType())
+			switch (Combat->EquippedRangedWeapon->GetRangedType())
 			{
 			case ERangedType::ERT_AssaultRifle:
 				SectionName = FName("AssaultRifle");
@@ -840,7 +838,7 @@ void AFillainCharacter::Look(const FInputActionValue& Value)
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	// Deadzone threshold (adjust as needed)
-	const float DeadzoneThreshold = 0.3f;
+	const float DeadzoneThreshold = 0.4f;
 
 	// Check magnitude of the stick input
 	if (LookAxisVector.Size() < DeadzoneThreshold)
@@ -901,6 +899,7 @@ void AFillainCharacter::EquipButtonPressed()
 		PlaySwapMontage();
 		Combat->ActionState = EActionState::EAS_SwappingWeapons;
 		bFinishedSwapping = false;
+		Combat->ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
@@ -955,13 +954,13 @@ void AFillainCharacter::ReloadButtonPressed()
 
 void AFillainCharacter::AimButtonPressed()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
+	if (Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
 	}
 
-	if (Combat)
+	if (Combat && Combat->FightingStyle == EFightingStyle::EFS_Ranged)
 	{
 		Combat->SetAiming(true);
 	}
@@ -969,13 +968,13 @@ void AFillainCharacter::AimButtonPressed()
 
 void AFillainCharacter::AimButtonReleased()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
+	if (Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
 	}
 
-	if (Combat)
+	if (Combat && Combat->FightingStyle == EFightingStyle::EFS_Ranged)
 	{
 		Combat->SetAiming(false);
 	}
@@ -990,7 +989,7 @@ float AFillainCharacter::CalculateSpeed()
 
 void AFillainCharacter::AimOffset(float DeltaTime)
 {
-	if (Combat && Combat->EquippedRangedWeapon == nullptr) return;
+	if (Combat && Combat->EquippedRangedWeapon == nullptr || Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	//FVector Velocity = GetVelocity();
 	//Velocity.Z = 0.f;
 	float Speed = CalculateSpeed();
@@ -1034,7 +1033,7 @@ void AFillainCharacter::CalculateAO_Pitch()
 
 void AFillainCharacter::SimProxiesTurn()
 {
-	if (Combat == nullptr || Combat->EquippedRangedWeapon == nullptr) return;
+	if (Combat == nullptr || Combat->EquippedRangedWeapon == nullptr || Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	bRotateRootBone = false;
 	float Speed = CalculateSpeed();
 	if (Speed > 0.f)
@@ -1067,6 +1066,22 @@ void AFillainCharacter::SimProxiesTurn()
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 }
 
+void AFillainCharacter::AttackButtonPressed()
+{
+	Combat->ActionState = EActionState::EAS_Unoccupied;
+	if (Combat->EquippedWeapon)
+	{
+		if (Combat->EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
+		{
+			FireButtonPressed();
+		}
+		else if (Combat->EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
+		{
+			MeleeAttack();
+		}
+	}
+}
+
 void AFillainCharacter::Jump()
 {
 	if (Combat && Combat->bWieldingTheSword) return;
@@ -1088,73 +1103,40 @@ void AFillainCharacter::MeleeAttack()
 {
 	if (CanAttack())
 	{
-		PlayMeleeAttackMontage();
 		Combat->ActionState = EActionState::EAS_MeleeAttacking;
+		PlayMeleeAttackMontage();
+		Combat->ActionState = EActionState::EAS_Unoccupied;
 	}
-
-
-
-
-
-
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }
 
 void AFillainCharacter::FireButtonPressed()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
+	if (Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
 	} 
-
-	UE_LOG(LogTemp, Warning, TEXT("AFillainCharacter::FireButtonPressed() called"));
 	
-	if (Combat)
+	if (Combat && Combat->FightingStyle == EFightingStyle::EFS_Ranged)
 	{
 		Combat->Fire();
 	}
 }
 
-/* void AFillainCharacter::FireButtonReleased()
+void AFillainCharacter::AttackButtonReleased()
 {
-	/*if (Combat && Combat->bWieldingTheSword) return;
+	if (Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
 	} 
-
-
-	if (Combat)
+	
+	if (Combat && Combat->FightingStyle == EFightingStyle::EFS_Ranged)
 	{
 		Combat->FireButtonPressed(false);
+		Combat->ActionState = EActionState::EAS_Unoccupied;
 	}
-} */
+} 
 
 void AFillainCharacter::TurnInPlace(float DeltaTime)
 {

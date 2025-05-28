@@ -43,7 +43,7 @@ void UAmmoPickupIntelWidget::DelineatePickupType()
 			{
 				EAmmoType NoAmmoSpawnPointType = EAmmoType::EAT_None;
 				EMeleeType NoMeleeType = EMeleeType::EMT_None;
-				ERangedType TypeOfRangedWeapon = Ranged->GetRangedWeaponType();
+				ERangedType TypeOfRangedWeapon = Ranged->GetRangedType();
 				GetPickupTypeDisplayName(TypeOfRangedWeapon, NoMeleeType, NoAmmoSpawnPointType);						
 			}
 			if (AMeleeWeapon* Melee = Cast<AMeleeWeapon>(OwnerActor))

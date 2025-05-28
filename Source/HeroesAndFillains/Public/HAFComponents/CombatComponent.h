@@ -52,6 +52,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
 
+	UFUNCTION(BlueprintCallable)
+	bool AreMeshesValid(AWeaponBase* Weapon) const;
+	
 	void FireButtonPressed(bool bPressed);
 
 	UFUNCTION(BlueprintCallable)
@@ -164,7 +167,10 @@ protected:
 
 	void DropEquippedWeapon();
 
-	void AttachWeaponToRightHand(class AWeaponBase* WeaponToAttach);
+	void AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketName);
+
+	void AttachRangedWeaponToRightHand(class AWeaponBase* WeaponToAttach);
+	void AttachMeleeWeaponToRightHand(class AWeaponBase* WeaponToAttach);
 	void AttachWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
 	void AttachSwordToLeftHand(AMeleeWeapon* Sword);
 	void AttachActorToBackpack(class AWeaponBase* WeaponToAttach);	
