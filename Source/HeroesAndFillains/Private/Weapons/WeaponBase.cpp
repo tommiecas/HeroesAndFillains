@@ -320,10 +320,12 @@ void AWeaponBase::SetEquippedWeaponState()
 	if (WeaponType == EWeaponType::EWT_RocketLauncher || WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponType == EWeaponType::EWT_SniperRifle || WeaponType == EWeaponType::EWT_Shotgun || WeaponType == EWeaponType::EWT_ChaosSword)
 	{
 		WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		OnWeaponStateSet();
 	}
 	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword)
 	{
 		WeaponState = EWeaponState::EWS_EquippedOneHanded;
+		OnWeaponStateSet();
 	}
 }
 
@@ -332,10 +334,10 @@ void AWeaponBase::OnWeaponStateSet()
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_EquippedOneHanded:
-		OnEquipped();
+		OnEquippedOneHanded();
 		break;
 	case EWeaponState::EWS_EquippedTwoHanded:
-		OnEquipped();
+		OnEquippedTwoHanded();
 		break;
 	case EWeaponState::EWS_EquippedSecondary:
 		OnEquippedSecondary();
@@ -346,7 +348,27 @@ void AWeaponBase::OnWeaponStateSet()
 	}
 }
 
-void AWeaponBase::OnEquipped()
+void AWeaponBase::OnEquippedOneHanded()
+{
+	bShouldHover = false;
+	bShouldFloatSpin = false;
+	ShowPickupAndInfoWidgets(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AreaSphere->DestroyComponent(); AreaSphere = nullptr;
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnableCustomDepth(false);
+	
+	HoverDecal->SetVisibility(false);
+	HoverLight->SetVisibility(false);
+
+	// Safely destroy existing widgets
+	if (PickupGearWidgetComponentA) { PickupGearWidgetComponentA->DestroyComponent(); PickupGearWidgetComponentA = nullptr; }
+	if (ItemInfoWidgetComponentA) { ItemInfoWidgetComponentA->DestroyComponent(); ItemInfoWidgetComponentA = nullptr; }
+}
+
+void AWeaponBase::OnEquippedTwoHanded()
 {
 	bShouldHover = false;
 	bShouldFloatSpin = false;

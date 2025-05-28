@@ -71,9 +71,24 @@ void ARangedWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappingComponent
 	
 }
 
-void ARangedWeapon::OnEquipped()
+void ARangedWeapon::OnEquippedOneHanded()
 {
-	Super::OnEquipped();
+	Super::OnEquippedOneHanded();
+	
+	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
+	if (FillainOwnerCharacter && bUseServerSideRewind)
+	{
+		FillainOwnerController = FillainOwnerController == nullptr ? Cast<AFillainPlayerController>(FillainOwnerCharacter->Controller) : FillainOwnerController;
+		if (FillainOwnerController && HasAuthority() && !FillainOwnerController->HighPingDelegate.IsBound())
+		{
+			FillainOwnerController->HighPingDelegate.AddDynamic(this, &ARangedWeapon::OnPingTooHigh);
+		}
+	}
+}
+
+void ARangedWeapon::OnEquippedTwoHanded()
+{
+	Super::OnEquippedTwoHanded();
 	
 	FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(GetOwner()) : FillainOwnerCharacter;
 	if (FillainOwnerCharacter && bUseServerSideRewind)

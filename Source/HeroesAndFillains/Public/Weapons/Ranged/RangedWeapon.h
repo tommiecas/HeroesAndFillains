@@ -110,7 +110,8 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnEquipped() override;
+	virtual void OnEquippedOneHanded() override;
+	virtual void OnEquippedTwoHanded() override;
 	virtual void OnDropped() override;
 	virtual void OnEquippedSecondary() override;
 	

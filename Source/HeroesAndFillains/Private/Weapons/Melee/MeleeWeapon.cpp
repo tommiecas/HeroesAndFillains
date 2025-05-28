@@ -40,10 +40,16 @@ void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	
 }
 
-void AMeleeWeapon::OnEquipped()
+void AMeleeWeapon::OnEquippedOneHanded()
 {
-	Super::OnEquipped();
+	Super::OnEquippedOneHanded();
 }
+
+void AMeleeWeapon::OnEquippedTwoHanded()
+{
+	Super::OnEquippedTwoHanded();
+}
+
 
 void AMeleeWeapon::OnDropped()
 {

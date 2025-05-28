@@ -21,7 +21,8 @@ public:
 	void ResetSword();
 
 protected:
-	virtual void OnEquipped() override;
+	virtual void OnEquippedOneHanded() override;
+	virtual void OnEquippedTwoHanded() override;
 	virtual void OnDropped() override;
 	virtual void BeginPlay() override;
 

@@ -429,6 +429,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
 		UE_LOG(LogTemp, Warning, TEXT("Equipping Ranged Weapon: %s"), *RangedWeapon->GetName());
+		bWieldingTheSword = false;
 	}
 	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToEquip))
 	{
@@ -436,10 +437,14 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		FightingStyle = EFightingStyle::EFS_Melee;
 		MeleeWeapon->SetEquippedWeaponState();
 		AttachMeleeWeaponToRightHand(MeleeWeapon);
+		if (EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		{
+			AttachTwoHandedMeleeWeaponToLeftHand(MeleeWeapon);
+		}
 		MeleeWeapon->SetOwner(Character);
 		PlayWeaponEquipSound(MeleeWeapon);
-		UE_LOG(LogTemp, Warning, TEXT("Equipping Melee Weapon: %s"), *MeleeWeapon->GetName());
-	}
+		bWieldingTheSword = true; // ✅ Add this!
+		UE_LOG(LogTemp, Warning, TEXT("Equipping Melee Weapon: %s"), *MeleeWeapon->GetName());	}
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
@@ -609,22 +614,35 @@ void UCombatComponent::AttachMeleeWeaponToRightHand(AWeaponBase* WeaponToAttach)
 	AttachWeaponToSocket(MeleeWeapon, FName("MeleeSocket"));
 }
 
+void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* WeaponToAttach)
+{
+	if (!AreMeshesValid(WeaponToAttach)) return;
+	AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToAttach);
+	if (!MeleeWeapon) return;
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName("LeftHandMeleeSocket");
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
+	}
+}
+
 void UCombatComponent::AttachWeaponToLeftHand(AWeaponBase* WeaponToAttach)
 {
 	if (!AreMeshesValid(WeaponToAttach)) return;
-
-	FName SocketName = FName("LeftHandSocket");
-
+	
 	if (EquippedRangedWeapon)
 	{
 		bool bUsePistolSocket =
 			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_Pistol ||
 			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_SubmachineGun;
-
-		SocketName = bUsePistolSocket ? FName("PistolSocket") : SocketName;
+		
+		FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
+		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
+		if (HandSocket)
+		{
+			HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
+		}
 	}
-
-	AttachWeaponToSocket(WeaponToAttach, SocketName);
 }
 
 void UCombatComponent::Reload()

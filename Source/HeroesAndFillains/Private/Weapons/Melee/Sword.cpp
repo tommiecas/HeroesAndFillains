@@ -80,7 +80,28 @@ void ASword::ResetSword()
 }
 
 
-void ASword::OnEquipped()
+void ASword::OnEquippedOneHanded()
+{
+    ShowPickupAndInfoWidgets(false);
+    
+    USphereComponent* AreaSpherePtr = GetAreaSphere();
+    if (AreaSpherePtr)
+    {
+        AreaSpherePtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+
+    if (SwordMesh)
+    {
+        SwordMesh->SetSimulatePhysics(false);
+        SwordMesh->SetEnableGravity(false);
+        SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        SwordMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+    }
+
+    EnableCustomDepth(false);
+}
+
+void ASword::OnEquippedTwoHanded()
 {
     ShowPickupAndInfoWidgets(false);
     

@@ -171,6 +171,7 @@ protected:
 
 	void AttachRangedWeaponToRightHand(class AWeaponBase* WeaponToAttach);
 	void AttachMeleeWeaponToRightHand(class AWeaponBase* WeaponToAttach);
+	void AttachTwoHandedMeleeWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
 	void AttachWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
 	void AttachSwordToLeftHand(AMeleeWeapon* Sword);
 	void AttachActorToBackpack(class AWeaponBase* WeaponToAttach);	

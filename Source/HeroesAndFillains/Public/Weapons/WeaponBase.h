@@ -186,7 +186,8 @@ protected:
 	static T Avg(T First, T Second);
 
 	virtual void OnWeaponStateSet();
-	virtual void OnEquipped();
+	virtual void OnEquippedOneHanded();
+	virtual void OnEquippedTwoHanded();
 	virtual void OnDropped();
 	virtual void OnEquippedSecondary();
 

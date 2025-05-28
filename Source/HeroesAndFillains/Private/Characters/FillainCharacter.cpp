@@ -643,36 +643,72 @@ void AFillainCharacter::PlayReloadingMontage()
 
 void AFillainCharacter::PlayMeleeAttackMontage()
 {
+	UE_LOG(LogTemp, Warning, TEXT("🎬 PlayMeleeAttackMontage() triggered"));
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); 
-	if (AnimInstance && AttackMontage && Combat && Combat->bWieldingTheSword)
-	{                                                           
-		AnimInstance->Montage_Play(AttackMontage);              
-		int32 Selection = FMath::RandRange(0, 3);               
-		FName SectionName = FName();                            
-		switch (Selection)                                      
-		{                                                       
-		case 0:                                                 
-			SectionName = FName("Attack1");                     
-			break;                                              
-		case 1:                                                 
-			SectionName = FName("Attack2");                     
-			break;                                              
-		case 2:                                                 
-			SectionName = FName("Attack3");                     
-			break;                                              
-		case 3:                                                 
-			SectionName = FName("Attack4");                     
-			break;                                              
-		default:                                                
-			break;                                              
-		}                                                       
-		AnimInstance->Montage_JumpToSection(SectionName);       
-	}                                                           		
+	if (!AnimInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AnimInstance is NULL"));
+		return;
+	}
+
+	if (!AttackMontage)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AttackMontage is NULL"));
+		return;
+	}
+
+	if (!Combat || !Combat->bWieldingTheSword)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("⚠️ Combat null or not wielding the sword"));
+		return;
+	}
+
+	// At this point, everything is good
+	UE_LOG(LogTemp, Warning, TEXT("✅ Playing Attack Montage"));
+
+	AnimInstance->Montage_Play(AttackMontage);
+
+	int32 Selection = FMath::RandRange(0, 3);               
+	FName SectionName;
+
+	switch (Selection)                                      
+	{                                                       
+	case 0: SectionName = FName("Attack1"); break;
+	case 1: SectionName = FName("Attack2"); break;
+	case 2: SectionName = FName("Attack3"); break;
+	case 3: SectionName = FName("Attack4"); break;
+	default: SectionName = FName("Attack1"); break;
+	}                                                       
+
+	UE_LOG(LogTemp, Warning, TEXT("🎯 Playing Section: %s"), *SectionName.ToString());
+
+	AnimInstance->Montage_JumpToSection(SectionName);
+	if (AttackMontage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("✅ AttackMontage assigned: %s"), *AttackMontage->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AttackMontage is NULL"));
+	}
+	if (!AttackMontage->IsValidSectionName(SectionName))
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ Invalid section name: %s"), *SectionName.ToString());
+	}
 }
 
 void AFillainCharacter::AttackEnd()
 {
-	Combat->ActionState = EActionState::EAS_Unoccupied;
+	if (Combat)
+	{
+		Combat->ActionState = EActionState::EAS_Unoccupied;
+		UE_LOG(LogTemp, Warning, TEXT("✅ AttackEnd() triggered via AnimNotify"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("❌ Combat is NULL in AttackEnd()"));
+	}
 }
 
 bool AFillainCharacter::CanAttack()
@@ -1101,11 +1137,15 @@ void AFillainCharacter::Jump()
 
 void AFillainCharacter::MeleeAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("🗡 MeleeAttack() called"));
+
 	if (CanAttack())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("🟢 Passed CanAttack()"));
+
 		Combat->ActionState = EActionState::EAS_MeleeAttacking;
 		PlayMeleeAttackMontage();
-		Combat->ActionState = EActionState::EAS_Unoccupied;
+		// Don’t set ActionState back to Unoccupied here anymore. Let the montage handle it via Notify.
 	}
 }
 
