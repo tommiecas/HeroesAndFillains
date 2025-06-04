@@ -6,6 +6,7 @@
 #include "Weapons/WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
+#include "Items/Item.h"
 #include "WeaponBase.generated.h"
 
 class UItemInfoWidgetBase;
@@ -26,7 +27,7 @@ enum class EWeaponState : uint8
 };
 
 UCLASS(Blueprintable)
-class HEROESANDFILLAINS_API AWeaponBase : public AActor
+class HEROESANDFILLAINS_API AWeaponBase : public AItem
 {
 	GENERATED_BODY()
 	
@@ -35,126 +36,43 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
-
-	UPROPERTY()
-	class UItemInfoWidgetBase* ItemInfoWidgetInstanceA;
-
-	UPROPERTY()
-	class UItemInfoWidgetBase* ItemInfoWidgetInstanceB;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Unclaimed;
 
 	UFUNCTION()
 	void SetEquippedWeaponState();
-
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	EWeaponType WeaponType = EWeaponType::EWT_None;
 	
 	UFUNCTION()
 	virtual void OnRep_WeaponState();
-	
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	USkeletalMeshComponent* WeaponMesh;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
-	class USphereComponent* AreaSphere;
 
 	virtual void WeaponDropped();
 
 	bool bDestroyWeapon = false;
 	
-	/*****************************
-	***                        ***
-	***   WEAPON INFORMATION   ***
-	***                        ***
-	*****************************/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponProperties")
+	TSubclassOf<AWeaponBase> WeaponClass;
 	
-	// Floating hover parameters
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	bool bShouldHover = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	float HoverAmplitude = 20.f; // How far it moves up/down (units)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	float HoverSpeed = 2.f; // How fast it oscillates
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UPointLightComponent* HoverLight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UDecalComponent* HoverDecal;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	bool bShouldFloatSpin = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* PickupGearWidgetComponentA;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* ItemInfoWidgetComponentA;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	TSubclassOf<UPickupGearWidget> PickupGearWidgetClass;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	TSubclassOf<UUserWidget> ItemInfoWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString RangedWeaponName;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString RangedWeaponDescription;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString RangedWeaponType;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString RangedWeaponRarity;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString RangedWeaponDamage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString MeleeWeaponName;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString MeleeWeaponHistory;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString MeleeWeaponResistances;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString MeleeWeaponWeaknesses;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
-	FString MeleeWeaponDamage;
-
-
-	UPROPERTY()
-	class UPickupWidgetComponent* FloatingWidgetComponent = nullptr;
-
-	virtual void ShowPickupAndInfoWidgets(bool bShow);
-
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class USoundCue* EquipSound;
 
-	/*********************************************
-	****                                      ****
-	****    ENABLE OR DISABLE CUSTOM DEPTH    ****
-	****                                      ****
-	*********************************************/
+	virtual void ShowPickupAndInfoWidgets(bool bShow) override;
 
-	virtual void EnableCustomDepth(bool bEnable);
+	UPROPERTY()
+	bool bIsEquipped = false;
 
-	
-	
+	void SetOneOrTwoHandedWeapon(AWeaponBase* EquippedWeapon);
+
+
+	UPROPERTY()
+	AWeaponBase* OneHandedWeapon;
+
+	UPROPERTY()
+	AWeaponBase* TwoHandedWeapon;
 	
 protected:
 	virtual void BeginPlay() override;
 	
-	UFUNCTION(BlueprintCallable)
     	virtual void OnSphereOverlap(
     		UPrimitiveComponent* OverlappedComponent, 
     		AActor* OtherActor,
@@ -162,25 +80,12 @@ protected:
     		int32 OtherBodyIndex,
     		bool bFromSweep, 
     		const FHitResult& SweepResult);
-    
-    	UFUNCTION(BlueprintCallable)
+	
     	virtual void OnSphereEndOverlap(
     		UPrimitiveComponent* OverlappedComponent,
     		AActor* OtherActor,
     		UPrimitiveComponent* OtherComp,
     		int32 OtherBodyIndex);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sine Parameters")
-	float Amplitude = 0.25f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sine Parameters")
-	float TimeConstant = 5.f;
-	
-	UFUNCTION(BlueprintPure)
-	float TransformedSin() const;
-	
-	UFUNCTION(BlueprintPure)
-	float TransformedCos() const;
 	
 	template<typename T>
 	static T Avg(T First, T Second);
@@ -191,20 +96,15 @@ protected:
 	virtual void OnDropped();
 	virtual void OnEquippedSecondary();
 
+
+	
 	UPROPERTY()
 	class AFillainCharacter* FillainOwnerCharacter;
 	
 	UPROPERTY()
 	class AFillainPlayerController* FillainOwnerController;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	float RunningTime;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* Root;
 	
-	UPROPERTY(VisibleAnywhere)
-	USphereComponent* Sphere;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	float Damage = 20.f;
@@ -221,11 +121,10 @@ public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-	FORCEINLINE UWidgetComponent* GetPickupWidgetComponentA() const { return PickupGearWidgetComponentA; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
-	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponentA() const { return ItemInfoWidgetComponentA; }
+	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponent() const { return ItemInfoWidgetComponent; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 };

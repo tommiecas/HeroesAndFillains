@@ -28,6 +28,15 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
 	Super::NativeUpdateAnimation(DeltaTime);
 
+	if (APawn* Owner = TryGetPawnOwner())
+	{
+		AFillainCharacter* MyChar = Cast<AFillainCharacter>(Owner);
+		if (MyChar && MyChar->CharactersWeapon)
+		{
+			// Pull socket transform from weapon
+			LeftHandTransform = MyChar->CharactersWeapon->WeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
+		}
+	}
 	if (FillainCharacter == nullptr)
 	{
 		FillainCharacter = Cast<AFillainCharacter>(TryGetPawnOwner());

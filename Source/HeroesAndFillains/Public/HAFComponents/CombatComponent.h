@@ -119,6 +119,9 @@ public:
 
 	FVector HitTarget;
 
+	UPROPERTY()
+	AWeaponBase* CurrentlyEquippedWeapon = nullptr;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -167,11 +170,14 @@ protected:
 
 	void DropEquippedWeapon();
 
+	void SetHandsForWeapons(AWeaponBase* EquippedWeapon);
+
 	void AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketName);
 
-	void AttachRangedWeaponToRightHand(class AWeaponBase* WeaponToAttach);
-	void AttachMeleeWeaponToRightHand(class AWeaponBase* WeaponToAttach);
-	void AttachTwoHandedMeleeWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
+	void AttachOneHandedRangedWeaponToRightHand(class AWeaponBase* OneHandedRangedWeaponToAttach);
+	void AttachTwoHandedRangedWeaponToLeftHand(class AWeaponBase* TwoHandedRangedWeaponToAttach);
+	void AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach);
+	void AttachTwoHandedMeleeWeaponToLeftHand(class AWeaponBase* TwoHandedMeleeWeaponToAttach);
 	void AttachWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
 	void AttachSwordToLeftHand(AMeleeWeapon* Sword);
 	void AttachActorToBackpack(class AWeaponBase* WeaponToAttach);	

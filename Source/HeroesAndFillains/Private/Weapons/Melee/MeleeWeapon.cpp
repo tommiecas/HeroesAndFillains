@@ -2,19 +2,20 @@
 
 
 #include "Weapons/Melee/MeleeWeapon.h"
+
+#include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/ItemInfoWidgetBase.h"
 #include "HUD/PickupWidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapons/WeaponBase.h"
 #include "HUD/ItemInfoWidgetBase.h"
-#include "HUD/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponTypes.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
 {
-
+	
 }
 
 void AMeleeWeapon::EnableCustomDepth(bool bEnable)
@@ -38,6 +39,18 @@ void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 {
 	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 	
+}
+
+void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+{
+	AttachMeshToSocket(InParent, InSocketName);
+	ItemState = EItemState::EIS_Equipped;
+}
+
+void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
+{
+	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+	WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
 void AMeleeWeapon::OnEquippedOneHanded()
@@ -75,12 +88,25 @@ void AMeleeWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AMeleeWeapon::SetEquippedMeleeWeaponState()
 {
-	if (MeleeWeaponType == EMeleeType::EMT_RubySword || MeleeWeaponType == EMeleeType::EMT_SapphireSword)
+	if (MeleeType == EMeleeType::EMT_RubySword || MeleeType == EMeleeType::EMT_SapphireSword)
 	{
 		WeaponState = EWeaponState::EWS_EquippedOneHanded;
 	}
-	if (MeleeWeaponType == EMeleeType::EMT_ChaosSword)
+	if (MeleeType == EMeleeType::EMT_ChaosSword)
 	{
 		WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+	}
+}
+
+void AMeleeWeapon::SetMeleeWeaponInformationText(UWidgetComponent* MeleeWidgetComponent, AMeleeWeapon* MeleeWeapon)
+{
+		UItemInfoWidgetBase* MeleeWidget = Cast<UItemInfoWidgetBase>(MeleeWidgetComponent->GetUserWidgetObject());
+		if (MeleeWeapon && MeleeWidget)
+		{
+			if (MeleeWidget->Line1) MeleeWidget->Line1->SetText(FText::FromString(MeleeWeapon->MeleeWeaponName));
+			if (MeleeWidget->Line2) MeleeWidget->Line2->SetText(FText::FromString(MeleeWeapon->MeleeWeaponHistory));
+			if (MeleeWidget->Line3) MeleeWidget->Line3->SetText(FText::FromString(MeleeWeapon->MeleeWeaponResistances));
+			if (MeleeWidget->Line4) MeleeWidget->Line4->SetText(FText::FromString(MeleeWeapon->MeleeWeaponWeaknesses));
+			if (MeleeWidget->Line5) MeleeWidget->Line5->SetText(FText::FromString(MeleeWeapon->MeleeWeaponDamage));
 	}
 }

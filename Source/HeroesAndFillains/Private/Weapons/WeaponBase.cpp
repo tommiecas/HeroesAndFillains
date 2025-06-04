@@ -24,76 +24,66 @@
 #include "HUD/PickupGearWidget.h"
 
 AWeaponBase::AWeaponBase()
+	: Super() 
 {
-	PrimaryActorTick.bCanEverTick = true;
-	bReplicates = true;
-	SetReplicateMovement(true);
+	PrimaryActorTick.bCanEverTick = false;
 
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	RootComponent = Root;
-	
-	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh")); 
+	// ✅ Then create and attach the mesh
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(Root);
+
+	// Reset transforms
+	WeaponMesh->SetRelativeLocation(FVector::ZeroVector);
+	WeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	WeaponMesh->SetRelativeScale3D(FVector(1.0f));
+	
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
 	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-	
+
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
 	AreaSphere->SetupAttachment(Root);
 	AreaSphere->SetSphereRadius(200.f);
 	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	AreaSphere->SetGenerateOverlapEvents(true);
+
+	PickupGearWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponent"));
+	PickupGearWidgetComponent->SetupAttachment(Root);
+	PickupGearWidgetComponent->SetVisibility(false);
+	PickupGearWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	PickupGearWidgetComponent->SetDrawSize(FVector2D(300.f, 50.f));
+	PickupGearWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, -10.f)); // below the we
+	PickupGearWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+	PickupGearWidgetComponent->SetDrawAtDesiredSize(true);
+	PickupGearWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+	PickupGearWidgetComponent->SetVisibility(true);
+	PickupGearWidgetComponent->SetTickWhenOffscreen(true);
+	PickupGearWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+	PickupGearWidgetComponent->SetWorldScale3D(FVector(1.0f));
+	PickupGearWidgetComponent->TranslucencySortPriority = 5;
 	
-	PickupGearWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponentA"));
-	PickupGearWidgetComponentA->SetupAttachment(Root);
-	PickupGearWidgetComponentA->SetVisibility(false);
-	PickupGearWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
-	PickupGearWidgetComponentA->SetDrawSize(FVector2D(300.f, 50.f));
-	PickupGearWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, -10.f)); // below the we
-	PickupGearWidgetComponentA->SetPivot(FVector2D(0.5f, 0.5f));
-	PickupGearWidgetComponentA->SetDrawAtDesiredSize(true);
-	PickupGearWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
-	PickupGearWidgetComponentA->SetVisibility(true);
-	PickupGearWidgetComponentA->SetTickWhenOffscreen(true);
-	PickupGearWidgetComponentA->SetDrawSize(FVector2D(400.f, 200.f));
-	PickupGearWidgetComponentA->SetWorldScale3D(FVector(1.0f));
-	PickupGearWidgetComponentA->TranslucencySortPriority = 5;
-	UPickupGearWidget* PickupWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject());
-	if (PickupWidgetA)
-	{
-		PickupWidgetA->OwningWidgetComponent = ItemInfoWidgetComponentA;
-	}
-	
-	ItemInfoWidgetComponentA = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponentA"));
-	ItemInfoWidgetComponentA->SetupAttachment(Root);
-	ItemInfoWidgetComponentA->SetWidgetClass(ItemInfoWidgetClass);
-	ItemInfoWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
-	ItemInfoWidgetComponentA->SetDrawSize(FVector2D(300.f, 200.f));
-	ItemInfoWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
-	ItemInfoWidgetComponentA->SetPivot(FVector2D(0.5f, 0.5f));
-	ItemInfoWidgetComponentA->SetDrawAtDesiredSize(true);
-	ItemInfoWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
-	ItemInfoWidgetComponentA->SetVisibility(true);
-	ItemInfoWidgetComponentA->SetTickWhenOffscreen(true);
-	ItemInfoWidgetComponentA->SetDrawSize(FVector2D(400.f, 200.f));
-	ItemInfoWidgetComponentA->SetWorldScale3D(FVector(1.0f));
-	ItemInfoWidgetComponentA->TranslucencySortPriority = 5;
-	UItemInfoWidgetBase* InfoWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
-	if (InfoWidgetA)
-	{
-		InfoWidgetA->OwningWidgetComponent = ItemInfoWidgetComponentA;
-	}
-	
+	ItemInfoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponent"));
+	ItemInfoWidgetComponent->SetupAttachment(Root);
+	ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
+	ItemInfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	ItemInfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+	ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+	ItemInfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+	ItemInfoWidgetComponent->SetDrawAtDesiredSize(true);
+	ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+	ItemInfoWidgetComponent->SetVisibility(true);
+	ItemInfoWidgetComponent->SetTickWhenOffscreen(true);
+	ItemInfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+	ItemInfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+	ItemInfoWidgetComponent->TranslucencySortPriority = 5;
 	
 	HoverLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoverLight"));
-	HoverLight->SetupAttachment(RootComponent);
+	HoverLight->SetupAttachment(Root);
 
 	// Settings
 	HoverLight->SetIntensity(2000.f);  // How bright
@@ -104,7 +94,7 @@ AWeaponBase::AWeaponBase()
 	HoverLight->SetVisibility(true);
 
 	HoverDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("HoverDecal"));
-	HoverDecal->SetupAttachment(RootComponent);
+	HoverDecal->SetupAttachment(Root);
 
 	// Settings 
 	HoverDecal->DecalSize = FVector(64.f, 128.f, 128.f); // Flat and wide
@@ -117,6 +107,7 @@ AWeaponBase::AWeaponBase()
 	{
 		HoverDecal->SetDecalMaterial(DecalMat.Object);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Mesh relative to root: %s"), *WeaponMesh->GetRelativeLocation().ToString());
 }
 
 void AWeaponBase::Tick(float DeltaTime)
@@ -126,16 +117,15 @@ void AWeaponBase::Tick(float DeltaTime)
 
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		if (PickupGearWidgetComponentA && ItemInfoWidgetComponentA)
+		if (PickupGearWidgetComponent && ItemInfoWidgetComponent)
 		{
 			FRotator LookRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PC->PlayerCameraManager->GetCameraLocation());
-			PickupGearWidgetComponentA->SetWorldRotation(LookRotation);
-			ItemInfoWidgetComponentA->SetWorldRotation(LookRotation);
+			PickupGearWidgetComponent->SetWorldRotation(LookRotation);
+			ItemInfoWidgetComponent->SetWorldRotation(LookRotation);
 		}
 	}
 	
-	
-	 if (bShouldHover)
+	if (bShouldHover)
 	{
 		float RunTime = GetGameTimeSinceCreation(); // How long this actor has existed
 		float DeltaHeight = FMath::Sin(RunTime * HoverSpeed) * HoverAmplitude * DeltaTime;
@@ -148,7 +138,17 @@ void AWeaponBase::Tick(float DeltaTime)
 	if (bShouldFloatSpin) // You can make a bool for it
 	{
 		AddActorLocalRotation(FRotator(0.f, 30.f * DeltaTime, 0.f)); // 30 degrees per second
-	} 
+	}
+	
+	if (ItemState == EItemState::EIS_Hovering)
+	{
+		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
+	}
+}
+
+void AWeaponBase::ShowPickupAndInfoWidgets(bool bShow)
+{
+	Super::ShowPickupAndInfoWidgets(bShow);
 }
 
 void AWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -158,26 +158,40 @@ void AWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(AWeaponBase, WeaponState);
 }
 
-void AWeaponBase::ShowPickupAndInfoWidgets(bool bShow)
-{
-	if (PickupGearWidgetComponentA) PickupGearWidgetComponentA->SetVisibility(bShow);
-	if (ItemInfoWidgetComponentA) ItemInfoWidgetComponentA->SetVisibility(bShow);
-}
-
-void AWeaponBase::EnableCustomDepth(bool bEnable)
-{
-	if (WeaponMesh)
-	{
-		WeaponMesh->SetRenderCustomDepth(bEnable);
-	}
-}
-
 void AWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (ItemInfoWidgetComponent)
+	{
+		ItemInfoWidgetComponent->UpdateComponentToWorld();
+		UE_LOG(LogTemp, Warning, TEXT("BeginPlay: ItemInfoWidget world location: %s"),
+			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
+
+		if (ItemInfoWidgetComponent->GetUserWidgetObject() == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("ERROR: ItemInfoWidgetComponent has no widget object!"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Widget Class Loaded: %s"), *ItemInfoWidgetComponent->GetUserWidgetObject()->GetName());
+		}
+	}
+
+	UPickupGearWidget* PickupWidget = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
+	if (PickupWidget)
+	{
+		PickupWidget->OwningWidgetComponent = PickupGearWidgetComponent;
+	}
+
+	UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
+	if (InfoWidget)
+	{
+		InfoWidget->OwningWidgetComponent = ItemInfoWidgetComponent;
+	}
 	
-	ItemInfoWidgetComponentA->SetVisibility(false);
-	PickupGearWidgetComponentA->SetVisibility(false);
+	ItemInfoWidgetComponent->SetVisibility(false);
+	PickupGearWidgetComponent->SetVisibility(false);
 
 	if (HasAuthority())
 	{
@@ -185,33 +199,53 @@ void AWeaponBase::BeginPlay()
 		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	}
 	
-	// Use AddUniqueDynamic to safely bind
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeaponBase::OnSphereOverlap);
-	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeaponBase::OnSphereEndOverlap);
-	
-	if (ItemInfoWidgetComponentA)
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
+
+	if (ItemInfoWidgetComponent)
 	{
-		ItemInfoWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
-		ItemInfoWidgetInstanceA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
-		if (ItemInfoWidgetInstanceA)
+		ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+		if (AActor* PickupItemActor = Cast<AActor>(ItemInfoWidgetComponent->GetOwner()))
 		{
-			if (AMeleeWeapon* MeleeWeaponA = Cast<AMeleeWeapon>(ItemInfoWidgetComponentA->GetOwner()))
+			if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(PickupItemActor))
 			{
-				if (ItemInfoWidgetInstanceA->Line1) ItemInfoWidgetInstanceA->Line1->SetText(FText::FromString(MeleeWeaponA->MeleeWeaponName));
-				if (ItemInfoWidgetInstanceA->Line2) ItemInfoWidgetInstanceA->Line2->SetText(FText::FromString(MeleeWeaponA->MeleeWeaponHistory));
-				if (ItemInfoWidgetInstanceA->Line3) ItemInfoWidgetInstanceA->Line3->SetText(FText::FromString(MeleeWeaponA->MeleeWeaponResistances));
-				if (ItemInfoWidgetInstanceA->Line4) ItemInfoWidgetInstanceA->Line4->SetText(FText::FromString(MeleeWeaponA->MeleeWeaponWeaknesses));
-				if (ItemInfoWidgetInstanceA->Line5) ItemInfoWidgetInstanceA->Line5->SetText(FText::FromString(MeleeWeaponA->MeleeWeaponDamage));
+				MeleeWeapon->SetMeleeWeaponInformationText(ItemInfoWidgetComponent, MeleeWeapon);
 			}
-			else if (ARangedWeapon* RangedWeaponA = Cast<ARangedWeapon>(ItemInfoWidgetComponentA->GetOwner()))
+			else if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(PickupItemActor))
 			{
-				if (ItemInfoWidgetInstanceA->Line1) ItemInfoWidgetInstanceA->Line1->SetText(FText::FromString(RangedWeaponA->RangedWeaponName));
-				if (ItemInfoWidgetInstanceA->Line2) ItemInfoWidgetInstanceA->Line2->SetText(FText::FromString(RangedWeaponA->RangedWeaponDescription));
-				if (ItemInfoWidgetInstanceA->Line3) ItemInfoWidgetInstanceA->Line3->SetText(FText::FromString(RangedWeaponA->RangedWeaponType));
-				if (ItemInfoWidgetInstanceA->Line4) ItemInfoWidgetInstanceA->Line4->SetText(FText::FromString(RangedWeaponA->RangedWeaponRarity));
-				if (ItemInfoWidgetInstanceA->Line5) ItemInfoWidgetInstanceA->Line5->SetText(FText::FromString(RangedWeaponA->RangedWeaponDamage));
+				RangedWeapon->SetRangedWeaponInformationText(ItemInfoWidgetComponent, RangedWeapon);
+			}
+			else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(PickupItemActor))
+			{
+				AmmoPickup->SetAmmoPickupInformationText(ItemInfoWidgetComponent, AmmoPickup);
 			}
 		}
+	}
+	if (ItemInfoWidgetComponent)
+	{
+		ItemInfoWidgetComponent->UpdateComponentToWorld();
+		UE_LOG(LogTemp, Warning, TEXT("Updated ItemInfoWidgetComponent world location: %s"),
+			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
+	}
+	ItemInfoWidgetComponent->SetVisibility(true);
+	if (ItemInfoWidgetComponent && ItemInfoWidgetClass)
+    {
+        ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
+    }
+
+	UE_LOG(LogTemp, Warning, TEXT("Weapon spawned: %s"), *GetName());
+	if (ItemInfoWidgetComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  WidgetClass: %s"),
+			*GetNameSafe(ItemInfoWidgetComponent->GetWidgetClass()));
+		UE_LOG(LogTemp, Warning, TEXT("  Widget World Location: %s"),
+			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("  Widget Visible: %s"),
+			ItemInfoWidgetComponent->IsVisible() ? TEXT("YES") : TEXT("NO"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("  No WidgetComponent attached!"));
 	}
 }
 
@@ -219,12 +253,8 @@ void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 								 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 								 bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ShowWidgets(true) called!"));
-	
-	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor))
-	{
-		FillainCharacter->SetOverlappingWeapon(this);
-	}
+	if (!OtherActor || OtherActor == this || bIsEquipped) return;
+	Super::OnSphereOverlap(OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	bShouldFloatSpin = false;
 	AddActorLocalRotation(FRotator(0.f, 0.f, 0.f)); 
 	bShouldHover = false;
@@ -237,9 +267,9 @@ void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 		ShowPickupAndInfoWidgets(true);
 
 	// Fade in Info Widget
-	if (ItemInfoWidgetComponentA)
+	if (ItemInfoWidgetComponent)
 	{
-		UItemInfoWidgetBase* InfoInstanceA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
+		UItemInfoWidgetBase* InfoInstanceA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
 		if (InfoInstanceA && InfoInstanceA->FadeInAnimation)
 		{
 			InfoInstanceA->PlayAnimation(InfoInstanceA->FadeInAnimation);
@@ -247,9 +277,9 @@ void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 	}
 	
 	// Fade in Equip Widget (if you have a subclass for it)
-	if (PickupGearWidgetComponentA)
+	if (PickupGearWidgetComponent)
 	{
-		UPickupGearWidget* PickupGearWidgetInstanceA = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject());
+		UPickupGearWidget* PickupGearWidgetInstanceA = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
 		if (PickupGearWidgetInstanceA && PickupGearWidgetInstanceA->FadeInAnimation)
 		{
 			PickupGearWidgetInstanceA->PlayAnimation(PickupGearWidgetInstanceA->FadeInAnimation);
@@ -260,17 +290,15 @@ void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 void AWeaponBase::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 							   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) 
 {
-	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor))
-	{
-		FillainCharacter->SetOverlappingWeapon(nullptr);
-	}
+	if (!OtherActor || OtherActor == this || bIsEquipped) return;
+	Super::OnSphereEndOverlap(OverlappedComp, OtherActor, OtherComp, OtherBodyIndex);
 
 	if (!OtherActor || OtherActor == this) return;
 
 	// Fade in Info Widget
-	if (ItemInfoWidgetComponentA)
+	if (ItemInfoWidgetComponent)
 	{
-		UItemInfoWidgetBase* InfoInstancedWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponentA->GetUserWidgetObject());
+		UItemInfoWidgetBase* InfoInstancedWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
 		if (InfoInstancedWidgetA && InfoInstancedWidgetA->FadeOutAnimation)
 		{
 			InfoInstancedWidgetA->PlayAnimation(InfoInstancedWidgetA->FadeOutAnimation);
@@ -278,25 +306,15 @@ void AWeaponBase::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 	}
 
 	// Fade in Equip Widget (if you have a subclass for it)
-	if (PickupGearWidgetComponentA)
+	if (PickupGearWidgetComponent)
 	{
-		UPickupGearWidget* PickupGearInstancedWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponentA->GetUserWidgetObject());
+		UPickupGearWidget* PickupGearInstancedWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
 		if (PickupGearInstancedWidgetA && PickupGearInstancedWidgetA->FadeOutAnimation)
 		{
 			PickupGearInstancedWidgetA->PlayAnimation(PickupGearInstancedWidgetA->FadeOutAnimation);
 		}
 	}	
 	ShowPickupAndInfoWidgets(false);
-}
-
-float AWeaponBase::TransformedSin() const
-{
-	return Amplitude * FMath::Sin(RunningTime * TimeConstant);
-}
-
-float AWeaponBase::TransformedCos() const
-{
-	return Amplitude * FMath::Cos(RunningTime * TimeConstant);
 }
 
 void AWeaponBase::OnRep_WeaponState()
@@ -354,7 +372,6 @@ void AWeaponBase::OnEquippedOneHanded()
 	bShouldFloatSpin = false;
 	ShowPickupAndInfoWidgets(false);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	AreaSphere->DestroyComponent(); AreaSphere = nullptr;
 	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetEnableGravity(false);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -364,8 +381,8 @@ void AWeaponBase::OnEquippedOneHanded()
 	HoverLight->SetVisibility(false);
 
 	// Safely destroy existing widgets
-	if (PickupGearWidgetComponentA) { PickupGearWidgetComponentA->DestroyComponent(); PickupGearWidgetComponentA = nullptr; }
-	if (ItemInfoWidgetComponentA) { ItemInfoWidgetComponentA->DestroyComponent(); ItemInfoWidgetComponentA = nullptr; }
+	if (PickupGearWidgetComponent) { PickupGearWidgetComponent->DestroyComponent(); PickupGearWidgetComponent = nullptr; }
+	if (ItemInfoWidgetComponent) { ItemInfoWidgetComponent->DestroyComponent(); ItemInfoWidgetComponent = nullptr; }
 }
 
 void AWeaponBase::OnEquippedTwoHanded()
@@ -374,7 +391,6 @@ void AWeaponBase::OnEquippedTwoHanded()
 	bShouldFloatSpin = false;
 	ShowPickupAndInfoWidgets(false);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	AreaSphere->DestroyComponent(); AreaSphere = nullptr;
 	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetEnableGravity(false);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -384,8 +400,8 @@ void AWeaponBase::OnEquippedTwoHanded()
 	HoverLight->SetVisibility(false);
 
 	// Safely destroy existing widgets
-	if (PickupGearWidgetComponentA) { PickupGearWidgetComponentA->DestroyComponent(); PickupGearWidgetComponentA = nullptr; }
-	if (ItemInfoWidgetComponentA) { ItemInfoWidgetComponentA->DestroyComponent(); ItemInfoWidgetComponentA = nullptr; }
+	if (PickupGearWidgetComponent) { PickupGearWidgetComponent->DestroyComponent(); PickupGearWidgetComponent = nullptr; }
+	if (ItemInfoWidgetComponent) { ItemInfoWidgetComponent->DestroyComponent(); ItemInfoWidgetComponent = nullptr; }
 }
 
 void AWeaponBase::OnDropped()
@@ -400,8 +416,6 @@ void AWeaponBase::OnDropped()
 		AreaSphere = NewObject<USphereComponent>(this, TEXT("Area Sphere"));
 		AreaSphere->RegisterComponent();
 		AreaSphere->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		//AreaSphere->SetupAttachment(GetRootComponent());
-		//AreaSphere->SetupAttachment(RootComponent);
 	}
 	if (HasAuthority())
 	{
@@ -418,28 +432,49 @@ void AWeaponBase::OnDropped()
 	HoverDecal->SetVisibility(true);
 	HoverLight->SetVisibility(true);
 
-	if (!PickupGearWidgetComponentA)
+	if (!PickupGearWidgetComponent)
 	{
-		PickupGearWidgetComponentA = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponentA"));
-		PickupGearWidgetComponentA->RegisterComponent();
-		PickupGearWidgetComponentA->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		PickupGearWidgetComponentA->SetWidgetClass(UPickupGearWidget::StaticClass());
-		PickupGearWidgetComponentA->InitWidget();
-		PickupGearWidgetComponentA->SetVisibility(true);
+		PickupGearWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponentA"));
+		PickupGearWidgetComponent->RegisterComponent();
+		PickupGearWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		PickupGearWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
+		PickupGearWidgetComponent->InitWidget();
+		PickupGearWidgetComponent->SetVisibility(true);
+		PickupGearWidgetComponent->SetTickWhenOffscreen(true);
+		PickupGearWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+		PickupGearWidgetComponent->SetWorldScale3D(FVector(1.0f));
+		PickupGearWidgetComponent->TranslucencySortPriority = 5;
+		UPickupGearWidget* PickupWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
+		if (PickupWidgetA)
+		{
+			PickupWidgetA->OwningWidgetComponent = ItemInfoWidgetComponent;
+		}
 	}
-	if (!ItemInfoWidgetComponentA)
+	
+	if (!ItemInfoWidgetComponent)
 	{
-		ItemInfoWidgetComponentA = NewObject<UWidgetComponent>(this, TEXT("ItemInfoWidgetComponentA"));
-		ItemInfoWidgetComponentA->RegisterComponent();
-		ItemInfoWidgetComponentA->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		ItemInfoWidgetComponentA->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
-		ItemInfoWidgetComponentA->InitWidget();
-		ItemInfoWidgetComponentA->SetVisibility(true);
-		ItemInfoWidgetComponentA->SetWidgetSpace(EWidgetSpace::World);
-		ItemInfoWidgetComponentA->SetDrawSize(FVector2D(300.f, 200.f));
-		ItemInfoWidgetComponentA->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
-		ItemInfoWidgetComponentA->SetPivot(FVector2D(0.5f, 0.5f));
-		ItemInfoWidgetComponentA->SetDrawAtDesiredSize(true);
+		ItemInfoWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("ItemInfoWidgetComponent"));
+		ItemInfoWidgetComponent->RegisterComponent();
+		ItemInfoWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ItemInfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
+		ItemInfoWidgetComponent->InitWidget();
+		ItemInfoWidgetComponent->SetVisibility(true);
+		ItemInfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+		ItemInfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+		ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+		ItemInfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+		ItemInfoWidgetComponent->SetDrawAtDesiredSize(true);
+		ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+		ItemInfoWidgetComponent->SetVisibility(true);
+		ItemInfoWidgetComponent->SetTickWhenOffscreen(true);
+		ItemInfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+		ItemInfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+		ItemInfoWidgetComponent->TranslucencySortPriority = 5;
+		UItemInfoWidgetBase* InfoWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
+		if (InfoWidgetA)
+		{
+			InfoWidgetA->OwningWidgetComponent = ItemInfoWidgetComponent;
+		}
 	}
 }
 
@@ -459,8 +494,22 @@ void AWeaponBase::OnEquippedSecondary()
 	HoverLight->SetVisibility(false);
 
 	// Safely destroy existing widgets
-	if (PickupGearWidgetComponentA) { PickupGearWidgetComponentA->DestroyComponent(); PickupGearWidgetComponentA = nullptr; }
-	if (ItemInfoWidgetComponentA) { ItemInfoWidgetComponentA->DestroyComponent(); ItemInfoWidgetComponentA = nullptr; }
+	if (PickupGearWidgetComponent) { PickupGearWidgetComponent->DestroyComponent(); PickupGearWidgetComponent = nullptr; }
+	if (ItemInfoWidgetComponent) { ItemInfoWidgetComponent->DestroyComponent(); ItemInfoWidgetComponent = nullptr; }
+}
+
+void AWeaponBase::SetOneOrTwoHandedWeapon(AWeaponBase* Weapon)
+{
+	if (WeaponType == EWeaponType::EWT_RocketLauncher || WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponType == EWeaponType::EWT_SniperRifle || WeaponType == EWeaponType::EWT_Shotgun || WeaponType == EWeaponType::EWT_ChaosSword)
+	{
+		Weapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		Weapon = TwoHandedWeapon;
+	}
+	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword)
+	{
+		Weapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+		Weapon = OneHandedWeapon;
+	} 
 }
 
 void AWeaponBase::SetWeaponState(EWeaponState State)

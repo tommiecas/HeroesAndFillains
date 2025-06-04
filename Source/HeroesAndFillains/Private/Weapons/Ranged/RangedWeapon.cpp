@@ -18,6 +18,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "Components/TextBlock.h"
 #include "HAFComponents/CombatComponent.h"
 #include "HUD/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponTypes.h"
@@ -279,6 +280,20 @@ FVector ARangedWeapon::TraceEndWithScatter(const FVector& HitTarget)
 		true);*/
 
 	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+}
+
+void ARangedWeapon::SetRangedWeaponInformationText(UWidgetComponent* RangedWidgetComponent,
+	ARangedWeapon* RangedWeapon)
+{
+	UItemInfoWidgetBase* RangedWidget = Cast<UItemInfoWidgetBase>(RangedWidgetComponent->GetUserWidgetObject());
+	if (RangedWeapon && RangedWidget)
+	{
+		if (RangedWidget->Line1) RangedWidget->Line1->SetText(FText::FromString(RangedWeapon->RangedWeaponName));
+		if (RangedWidget->Line2) RangedWidget->Line2->SetText(FText::FromString(RangedWeapon->RangedWeaponDescription));
+		if (RangedWidget->Line3) RangedWidget->Line3->SetText(FText::FromString(RangedWeapon->RangedWeaponType));
+		if (RangedWidget->Line4) RangedWidget->Line4->SetText(FText::FromString(RangedWeapon->RangedWeaponRarity));
+		if (RangedWidget->Line5) RangedWidget->Line5->SetText(FText::FromString(RangedWeapon->RangedWeaponDamage));
+	}
 }
 
 

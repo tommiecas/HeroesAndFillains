@@ -171,10 +171,10 @@ void ASword::BeginPlay()
     InitialTransform = GetActorTransform();
 
     // Cache and validate widget component
-    UWidgetComponent* WidgetComponent = GetPickupGearWidgetComponentA();
+    UWidgetComponent* WidgetComponent = GetPickupGearWidgetComponent();
     if (!WidgetComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PickupGearWidgetComponentA is null"));
+        UE_LOG(LogTemp, Warning, TEXT("PickupGearWidgetComponent is null"));
         return;
     }
 

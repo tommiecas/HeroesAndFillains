@@ -35,6 +35,23 @@ public:
 	void AddAmmo(int32 AmmoToAdd);
 	FVector TraceEndWithScatter(const FVector& HitTarget);
 
+	UFUNCTION()
+	void SetRangedWeaponInformationText(UWidgetComponent* RangedWidgetComponent, ARangedWeapon* RangedWeapon);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
+	FString RangedWeaponName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
+	FString RangedWeaponDescription;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
+	FString RangedWeaponType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
+	FString RangedWeaponRarity;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
+	FString RangedWeaponDamage;
 	
 	/*********************************************
 	***                                        ***
@@ -100,9 +117,6 @@ public:
 
 	UFUNCTION()
 	void SetEquippedRangedWeaponState();
-
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	ERangedType RangedType;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EFireType FireType;
@@ -167,11 +181,8 @@ private:
 	// Incremented in SpendRound, decremented in ClientUpdateAmmo.
 	int32 Sequence = 0;
 
-	UPROPERTY(EditAnywhere)
-	AFillainCharacter* Fillain;
-
 	UPROPERTY()
-	UItemInfoWidgetBase* ItemInfoWidget;
+	AFillainCharacter* Fillain;
 
 public:
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }

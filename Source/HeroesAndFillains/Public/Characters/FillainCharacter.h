@@ -121,6 +121,7 @@ public:
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
 	void PlayMeleeAttackMontage();
+	void PlayArmDisarmMontage(FName SectionName);
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
@@ -157,9 +158,6 @@ public:
 	void MulticastLostTheLead();
 
 	void SetTeamColor(ETeam Team);
-
-	UPROPERTY()
-	AActor* OverlappingActor;
 
 	/****************** 
 	** Moving Around **
@@ -239,6 +237,9 @@ public:
 	*************************/
 	
 	void MeleeAttack();
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AWeaponBase* CharactersWeapon;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -316,9 +317,18 @@ protected:
 
 	void SetSpawnPoint();
 	void OnPlayerStateInitialized();
-	
 
-private:	
+	bool CanDisarm();
+	bool CanArm();
+	
+	UFUNCTION(BlueprintCallable)
+	void Disarm();
+
+	UFUNCTION(BlueprintCallable)
+	void Arm();
+	
+private:
+	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
 
@@ -328,11 +338,23 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingItem)
+	class AItem* OverlappingItem;
+
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeaponBase* OverlappingWeapon;
 
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingPickup)
+	class AAmmoPickup* OverlappingPickup;
+
+	UFUNCTION()
+	void OnRep_OverlappingItem(AItem* LastItem);
+
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
+
+	UFUNCTION()
+	void OnRep_OverlappingPickup(AAmmoPickup* LastPickup);
 
 	UPROPERTY(VisibleInstanceOnly)
 	class AMeleeWeapon* MeleeWeaponOverlapped;
@@ -379,6 +401,9 @@ private:
 
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
+	UAnimMontage* ArmDisarmMontage;
 
 	void HideCharacterIfCameraClose();
 
@@ -516,14 +541,18 @@ private:
 	class AHAFGameMode* HAFGameMode;
 
 public:
+	void SetOverlappingPickup(AAmmoPickup* Pickup);
 	void SetOverlappingWeapon(AWeaponBase* Weapon);
+	void SetOverlappingItem(AItem* Item);
 	bool IsWeaponEquipped();
 	bool IsAiming();
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AWeaponBase* GetOverlappingWeapon();
+	AAmmoPickup* GetPickupThatOverlaps(AAmmoPickup* PickupThatOverlaps);
+	AItem* GetItemThatOverlaps(AItem* ItemThatOverlaps);
+	AWeaponBase* GetWeaponThatOverlaps(AWeaponBase* WeaponThatOverlaps);
 	AWeaponBase* GetEquippedWeapon();
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;

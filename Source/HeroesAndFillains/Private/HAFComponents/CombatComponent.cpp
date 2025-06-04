@@ -20,6 +20,7 @@
 #include "Weapons/Ranged/Shotgun.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/WeaponBase.h"
@@ -412,42 +413,53 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
+		   *WeaponToEquip->GetName(), 
+		   *FFrame::GetScriptCallstack());
 	if (!WeaponToEquip || !Character) return;
 
+	if (CurrentlyEquippedWeapon == WeaponToEquip)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon %s is already equipped."), *WeaponToEquip->GetName());
+		return;
+	}
+
+	CurrentlyEquippedWeapon = WeaponToEquip;
+	
 	DropEquippedWeapon();
 	EquippedWeapon = WeaponToEquip;
-
-	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToEquip))
+	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
 	{
-		EquippedRangedWeapon = RangedWeapon;
+		EquippedRangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Ranged;
-		RangedWeapon->SetEquippedRangedWeaponState();
-		AttachRangedWeaponToRightHand(RangedWeapon);
-		RangedWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(RangedWeapon);
-		RangedWeapon->SetHUDAmmo();
+		EquippedRangedWeapon->SetEquippedRangedWeaponState();
+		SetHandsForWeapons(EquippedRangedWeapon);
+		EquippedRangedWeapon->ItemState = EItemState::EIS_Equipped;
+		EquippedRangedWeapon->SetOwner(Character);
+		PlayWeaponEquipSound(EquippedRangedWeapon);
+		EquippedRangedWeapon->SetHUDAmmo();
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
-		UE_LOG(LogTemp, Warning, TEXT("Equipping Ranged Weapon: %s"), *RangedWeapon->GetName());
 		bWieldingTheSword = false;
+		EquippedRangedWeapon->ShowPickupAndInfoWidgets(false);
+		EquippedRangedWeapon->bIsEquipped = true;
 	}
-	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToEquip))
+	else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
 	{
-		EquippedMeleeWeapon = MeleeWeapon;
+		EquippedMeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Melee;
-		MeleeWeapon->SetEquippedWeaponState();
-		AttachMeleeWeaponToRightHand(MeleeWeapon);
-		if (EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
-		{
-			AttachTwoHandedMeleeWeaponToLeftHand(MeleeWeapon);
-		}
-		MeleeWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(MeleeWeapon);
+		EquippedMeleeWeapon->SetEquippedWeaponState();
+		SetHandsForWeapons(EquippedMeleeWeapon);
+		EquippedMeleeWeapon->ItemState = EItemState::EIS_Equipped;
+		EquippedMeleeWeapon->SetOwner(Character);
+		PlayWeaponEquipSound(EquippedMeleeWeapon);
 		bWieldingTheSword = true; // ✅ Add this!
-		UE_LOG(LogTemp, Warning, TEXT("Equipping Melee Weapon: %s"), *MeleeWeapon->GetName());	}
-
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+		EquippedMeleeWeapon->ShowPickupAndInfoWidgets(false);
+		EquippedMeleeWeapon->bIsEquipped = true;
+		
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UCombatComponent::UpdateCarriedAmmo()
@@ -514,19 +526,20 @@ void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 	EquippedWeapon->HoverDecal->SetVisibility(false);
 	EquippedWeapon->ShowPickupAndInfoWidgets(false);
 	PlayWeaponEquipSound(EquippedWeapon);
-	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
+	SetHandsForWeapons(EquippedWeapon);
+	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
 	{
+		ARangedWeapon* Ranged = Cast<ARangedWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Ranged;
-		AttachRangedWeaponToRightHand(WeaponToEquip);
-		RangedWeapon->SetHUDAmmo();	
+		Ranged->SetHUDAmmo();	
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
 		ActionState = EActionState::EAS_Unoccupied;
 	}
-	else if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
+	else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
 	{
+		AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Melee;
-		AttachMeleeWeaponToRightHand(WeaponToEquip);
 		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
@@ -569,79 +582,99 @@ void UCombatComponent::DropEquippedWeapon()
 {
 	if (EquippedWeapon)
 	{
+		EquippedWeapon->WeaponState = EWeaponState::EWS_Dropped;
 		EquippedWeapon->WeaponDropped();
 		FightingStyle = EFightingStyle::EFS_Unequipped;
+		
 	}
 }
 
 void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketName)
 {
 	if (!AreMeshesValid(Weapon)) return;
-
-	const USkeletalMeshSocket* Socket = Character->GetMesh()->GetSocketByName(SocketName);
-	if (Socket)
+	if (!Character)
 	{
-		Socket->AttachActor(Weapon, Character->GetMesh());
-
-		Weapon->WeaponMesh->SetVisibility(true);
-		Weapon->WeaponMesh->SetHiddenInGame(false);
-		Weapon->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character is null."));
+		return;
 	}
-}
 
-
-void UCombatComponent::AttachRangedWeaponToRightHand(class AWeaponBase* WeaponToAttach)
-{
-	if (!AreMeshesValid(WeaponToAttach)) return;
-
-	ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WeaponToAttach);
-	if (!RangedWeapon) return;
-
-	FName SocketName = (RangedWeapon->GetRangedType() == ERangedType::ERT_AssaultRifle)
-		? FName("AssaultRifleSocket")
-		: FName("RightHandSocket");
-
-	AttachWeaponToSocket(RangedWeapon, SocketName);
-}
-
-void UCombatComponent::AttachMeleeWeaponToRightHand(AWeaponBase* WeaponToAttach)
-{
-	if (!AreMeshesValid(WeaponToAttach)) return;
-
-	AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToAttach);
-	if (!MeleeWeapon) return;
-
-	AttachWeaponToSocket(MeleeWeapon, FName("MeleeSocket"));
-}
-
-void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* WeaponToAttach)
-{
-	if (!AreMeshesValid(WeaponToAttach)) return;
-	AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponToAttach);
-	if (!MeleeWeapon) return;
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName("LeftHandMeleeSocket");
-	if (HandSocket)
+	USkeletalMeshComponent* Mesh = Character->GetMesh();
+	if (!Mesh)
 	{
-		HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
+		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character mesh is null."));
+		return;
 	}
+
+	if (!Mesh->DoesSocketExist(SocketName))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Socket '%s' does not exist."), *SocketName.ToString());
+		return;
+	}
+	
+	
+	// 🧪 Attach using KeepWorld so actor stays at the transform we just set
+	FAttachmentTransformRules AttachRules(EAttachmentRule::KeepWorld, true);
+	Weapon->AttachToComponent(Mesh, AttachRules, SocketName);
+
+	// DEBUG: Log final transforms
+	UE_LOG(LogTemp, Warning, TEXT("Weapon Actor Transform AFTER attach: %s"), *Weapon->GetActorTransform().ToString());
+
+	// Cleanup visual/collision
+	Weapon->SetActorHiddenInGame(false);
+	Weapon->SetActorEnableCollision(false);
+	Weapon->WeaponMesh->SetVisibility(true);
+	Weapon->WeaponMesh->SetHiddenInGame(false);
+	Weapon->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	UE_LOG(LogTemp, Warning, TEXT("Sword Mesh Relative Loc: %s"), *Weapon->WeaponMesh->GetRelativeLocation().ToString());
 }
+
+void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase* OneHandedRangedWeaponToAttach)
+{
+	FName SocketName = (OneHandedRangedWeaponToAttach->GetWeaponType() == EWeaponType::EWT_AssaultRifle)
+			? FName("AssaultRifleSocket")
+			: FName("RightHandSocket");
+	AttachWeaponToSocket(OneHandedRangedWeaponToAttach, SocketName);
+}
+
+void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach)
+{
+	AttachWeaponToSocket(OneHandedMeleeWeaponToAttach, FName("MeleeSocket"));
+}
+
+void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHandedMeleeWeaponToAttach)
+{
+	AttachOneHandedMeleeWeaponToRightHand(TwoHandedMeleeWeaponToAttach);
+	AttachWeaponToSocket(TwoHandedMeleeWeaponToAttach, FName("LeftHandSocket"));
+}
+
+
+void UCombatComponent::AttachTwoHandedRangedWeaponToLeftHand(class AWeaponBase* TwoHandedRangedWeaponToAttach)
+{
+	AttachOneHandedRangedWeaponToRightHand(TwoHandedRangedWeaponToAttach);
+	AttachWeaponToSocket(TwoHandedRangedWeaponToAttach, FName("LeftHandSocket"));
+}
+
 
 void UCombatComponent::AttachWeaponToLeftHand(AWeaponBase* WeaponToAttach)
 {
-	if (!AreMeshesValid(WeaponToAttach)) return;
-	
-	if (EquippedRangedWeapon)
+	if (Character == nullptr || Character->GetMesh() == nullptr || WeaponToAttach == nullptr || EquippedWeapon == nullptr) return;
+
+	bool bUsePistolSocket = 
+
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol ||
+
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachineGun;
+
+	FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
+
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
+
+	if (HandSocket)
+
 	{
-		bool bUsePistolSocket =
-			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_Pistol ||
-			EquippedRangedWeapon->GetRangedType() == ERangedType::ERT_SubmachineGun;
-		
-		FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
-		}
+
+		HandSocket->AttachActor(WeaponToAttach, Character->GetMesh());
+
 	}
 }
 
@@ -678,7 +711,6 @@ void UCombatComponent::FinishReloading()
 		ActionState = EActionState::EAS_Unoccupied;
 		Fire();
 	}
-
 }
 
 void UCombatComponent::FinishSwap()
@@ -689,7 +721,6 @@ void UCombatComponent::FinishSwap()
 	}
 	if (Character) Character->bFinishedSwapping = true;
 	if (SecondaryWeapon) SecondaryWeapon->EnableCustomDepth(true);
-
 }
 
 void UCombatComponent::FinishSwapAttachWeapons()
@@ -701,20 +732,20 @@ void UCombatComponent::FinishSwapAttachWeapons()
 	EquippedWeapon->SetEquippedWeaponState();
 	SetFightingStyle();
 	PlayWeaponEquipSound(EquippedWeapon);
-	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
+	SetHandsForWeapons(EquippedWeapon);
+	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
 	{
-		AttachRangedWeaponToRightHand(EquippedWeapon);
-		RangedWeapon->SetHUDAmmo();
-		UpdateCarriedAmmo();
+		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
+		if (RangedWeapon)
+		{
+			RangedWeapon->SetHUDAmmo();
+			UpdateCarriedAmmo();
+		}
 	}
-	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
-	{
-		AttachMeleeWeaponToRightHand(EquippedWeapon);
-	}
-
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	AttachActorToBackpack(SecondaryWeapon);
 }
+
 
 void UCombatComponent::UpdateAmmoValues()
 {
@@ -772,14 +803,7 @@ void UCombatComponent::JumpToShotgunEnd()
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
-	{
-		AttachRangedWeaponToRightHand(EquippedWeapon);
-	}
-	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
-	{
-		AttachMeleeWeaponToRightHand(EquippedWeapon);
-	}
+	SetHandsForWeapons(EquippedWeapon);
 }
 
 void UCombatComponent::LaunchGrenade()
@@ -962,19 +986,38 @@ void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 	}
 }
 
+void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
+{
+	if (WeaponEquipping->IsA(ARangedWeapon::StaticClass()))
+	{
+		if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		{
+			AttachOneHandedRangedWeaponToRightHand(WeaponEquipping);			
+		}
+		else if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		{
+			AttachTwoHandedRangedWeaponToLeftHand(WeaponEquipping);
+		}
+	}
+	else if (WeaponEquipping->IsA(AMeleeWeapon::StaticClass()))
+	{
+		if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		{
+			AttachOneHandedMeleeWeaponToRightHand(WeaponEquipping);
+		}
+		else if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		{
+			AttachTwoHandedMeleeWeaponToLeftHand(WeaponEquipping);
+		}
+	}
+}
+
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon && Character)
 	{
 		EquippedWeapon->SetEquippedWeaponState();
-		if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon))
-		{
-			AttachRangedWeaponToRightHand(EquippedWeapon);
-		}
-		if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon))
-		{
-			AttachMeleeWeaponToRightHand(EquippedWeapon);
-		}	
+		SetHandsForWeapons(EquippedWeapon);	
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedWeapon);
@@ -988,7 +1031,7 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
 		EquippedMeleeWeapon->SetEquippedWeaponState();
-		AttachMeleeWeaponToRightHand(EquippedMeleeWeapon);
+		SetHandsForWeapons(EquippedMeleeWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedMeleeWeapon);
@@ -1001,7 +1044,14 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
 		EquippedRangedWeapon->SetEquippedRangedWeaponState();
-		AttachRangedWeaponToRightHand(EquippedRangedWeapon);
+		if (EquippedRangedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		{
+			AttachOneHandedRangedWeaponToRightHand(EquippedRangedWeapon);
+		}
+		else if (EquippedRangedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		{
+			AttachTwoHandedRangedWeaponToLeftHand(EquippedRangedWeapon);
+		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedRangedWeapon);

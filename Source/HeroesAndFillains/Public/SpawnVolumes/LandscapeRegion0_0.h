@@ -42,13 +42,13 @@ public:
 	void ShowPickupsAndInfoWidgets(bool bShowWidgets);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* PickupGearWidgetComponentA;
+	UWidgetComponent* PickupGearWidgetComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
 	UWidgetComponent* PickupGearWidgetComponentB;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* ItemInfoWidgetComponentA;
+	UWidgetComponent* ItemInfoWidgetComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
 	UWidgetComponent* ItemInfoWidgetComponentB;

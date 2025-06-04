@@ -33,9 +33,9 @@ ALandscapeRegion0_0::ALandscapeRegion0_0()
 
 void ALandscapeRegion0_0::ShowPickupsAndInfoWidgets(bool bShowWidgets)
 {
-    if (PickupGearWidgetComponentA) PickupGearWidgetComponentA->SetVisibility(bShowWidgets);
+    if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(bShowWidgets);
     if (PickupGearWidgetComponentB) PickupGearWidgetComponentB->SetVisibility(bShowWidgets);
-    if (ItemInfoWidgetComponentA) ItemInfoWidgetComponentA->SetVisibility(bShowWidgets);
+    if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(bShowWidgets);
     if (ItemInfoWidgetComponentB) ItemInfoWidgetComponentB->SetVisibility(bShowWidgets);
 }
 
@@ -85,6 +85,7 @@ void ALandscapeRegion0_0::BeginPlay()
             SpawnActorInBox(Entry.ActorClass, {}, Entry.DebugColor, nullptr);
         }
     }
+    ShowPickupsAndInfoWidgets(false);
 }
 
 FVector ALandscapeRegion0_0::RandomBoxPoints() const
@@ -110,6 +111,7 @@ void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UU
             Widget->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
             Widget->SetWidgetClass(WidgetClass);
         }
+        ShowPickupsAndInfoWidgets(false);
     });
 }
 
@@ -228,4 +230,5 @@ void ALandscapeRegion0_0::SpawnActorInBox(
             }
         }
     }
+    ShowPickupsAndInfoWidgets(false);
 }

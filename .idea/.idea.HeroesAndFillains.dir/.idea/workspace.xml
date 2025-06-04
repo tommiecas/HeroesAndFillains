@@ -9,15 +9,114 @@
   <component name="ChangeListManager">
     <list default="true" id="17f4fd26-433a-424d-bf11-a5c700b257e7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/AssaultRifle/Animations/Animations/NP_01_Fire_single_Anim.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/AssaultRifle/Animations/Animations/NP_01_Fire_single_Anim.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/MeleeAnimations/MeleeAttack03.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/MeleeAnimations/MeleeAttack03.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/MeleeAnimations/MeleeAttack04.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/MeleeAnimations/MeleeAttack04.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/SKEL_FillainOptimized.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/SKEL_FillainOptimized.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/SKM_FillainOptimized.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/SKM_FillainOptimized.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_AssaultRifle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_AssaultRifle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_GrenadeLauncher.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_GrenadeLauncher.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_Pistol.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_Pistol.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_RocketLauncher.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_RocketLauncher.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_SMG.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_SMG.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_Shotgun.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_Shotgun.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_SniperRifle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/BP_SniperRifle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/Projectiles/BP_ProjectileBullet.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/Projectiles/BP_ProjectileBullet.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/Projectiles/BP_Rocket.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/Projectiles/BP_Rocket.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/RangedAnimations/ANIM_RocketLauncherFire.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/GunsAndLaunchers/RangedAnimations/ANIM_RocketLauncherFire.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_ChaosSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_ChaosSword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_RubySword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_RubySword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_SapphireSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Weapons/Melee/BP_SapphireSword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Bullet_Impact_Hit/Prefabs/Metal/Fx_Bullet_Metal_Impact_Debris.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Bullet_Impact_Hit/Prefabs/Metal/Fx_Bullet_Metal_Impact_Debris.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/FX/NS_RocketLauncherMuzzle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/FX/NS_RocketLauncherMuzzle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/FX/PS_HitScanFireImpact.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/FX/PS_HitScanFireImpact.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/FX/RocketTrail/MI_TrailSmoke.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/FX/RocketTrail/MI_TrailSmoke.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/FX/RocketTrail/NS_TrailSmokeBullet.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/FX/RocketTrail/NS_TrailSmokeBullet.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/FX/SmokeBeam/P_SmokeTrail.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/FX/SmokeBeam/P_SmokeTrail.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MarketplaceBlockout/Modern/Weapons/Assets/Launchers/01/SK_Modern_Weapons_Launcher_01.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MarketplaceBlockout/Modern/Weapons/Assets/Launchers/01/SK_Modern_Weapons_Launcher_01.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Materials/Fissures/MI_D_Fissures_02_N1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Materials/Fissures/MI_D_Fissures_02_N1.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MsvFx_Niagara_Explosion_Pack_01/Prefabs/ProjectileRocket.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MsvFx_Niagara_Explosion_Pack_01/Prefabs/ProjectileRocket.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/Cinematics/DemoLevelSequence.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/Cinematics/DemoLevelSequence.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/M_FPGun.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/M_FPGun.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_Plastic_Shiny_Beige.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_Plastic_Shiny_Beige.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_Screen.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_Screen.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_SoftMetal_UE4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/ML_SoftMetal_UE4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Aluminum01.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Aluminum01.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_FineRubber.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_FineRubber.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun_PhysicsAsset.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun_PhysicsAsset.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun_Skeleton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Mesh/SK_FPGun_Skeleton.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Textures/T_FPGun_M.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Textures/T_FPGun_M.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Textures/T_FPGun_N.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Demo/FPWeapon/Textures/T_FPGun_N.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_FlameBurst.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_FlameBurst.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Fumes.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Fumes.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Haze.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Haze.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_SmokeBurst.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_SmokeBurst.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Sparks.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Sparks.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Tracer.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Emitters/NE_Tracer.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlashGuard_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlashGuard_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_3_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_3_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_4+_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_4+_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_4X_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_4X_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_5_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_5_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_6_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_6_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_Blast_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_Blast_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_HighVelocity_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_HighVelocity_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_Single_Futuristic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Futuristic/NS_MuzzleFlash_Single_Futuristic.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_Fumes.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_Fumes.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlashGuard.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlashGuard.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_3.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_4+.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_4+.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_4X.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_4X.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_6.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_6.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Blast.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Blast.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Gas.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Gas.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_HighVelocity.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_HighVelocity.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Single.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Modern/NS_MuzzleFlash_Single.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Scripts/NMS_GlobalScale.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/FX/Scripts/NMS_GlobalScale.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Maps/Overview.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Maps/Overview.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Flames.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Flames.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_HeatHaze.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_HeatHaze.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Smoke.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Smoke.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Sparks.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Sparks.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Tracer.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Materials/M_Tracer.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Cloud_Noise.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Cloud_Noise.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_HeatHaze.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_HeatHaze.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_HeatHaze_Normal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_HeatHaze_Normal.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Particulate_Hard.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Particulate_Hard.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Smoke_Grunge.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_Smoke_Grunge.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_SquareGradient.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_SquareGradient.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_ThickSplatter_Diffuse.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/MuzzleFlash3D/Textures/T_ThickSplatter_Diffuse.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/PCG/BP_GaeaVillage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/PCG/BP_GaeaVillage.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/PCG/PCG_DesertFoliage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/PCG/PCG_DesertFoliage.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/PCG/PCG_DesertGaeaVillage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/PCG/PCG_DesertGaeaVillage.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/SmokeBeam/SmokeBeam/P_SmokeTrailFinal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SmokeBeam/SmokeBeam/P_SmokeTrailFinal.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/SKM_Mesh_ChaosSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TenFantasyWeapon/Mesh/SKM_Mesh_ChaosSword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HeroesAndFillains.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.uproject.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/ItemInfoWidgetBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/ItemInfoWidgetBase.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/AmmoPickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/AmmoPickup.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/Pickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/Pickup.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/LandscapeRegion0_0.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/SpawnVolumes/LandscapeRegion0_0.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/MeleeWeapon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/MeleeWeapon.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/Sword.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/Sword.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/RangedWeapon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/RangedWeapon.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/WeaponBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/WeaponBase.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/AmmoPickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/AmmoPickup.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/Pickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/Pickup.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/SpawnVolumes/LandscapeRegion0_0.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/SpawnVolumes/LandscapeRegion0_0.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/MeleeWeapon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/MeleeWeapon.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/Sword.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/Sword.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/RangedWeapon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/RangedWeapon.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponBase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponBase.h" afterDir="false" />
@@ -46,73 +145,12 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Platforms/VisionOS/Plugins/Runtime/OpenXRVisionOS/Source/OXRVisionOS/OXRVisionOS.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Platforms/VisionOS/Source/Developer/VisionOSTargetPlatformSettings/VisionOSTargetPlatformSettings.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/AI/MLAdapter/Source/MLAdapter/MLAdapter.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/GameplayInsights/Source/RewindDebugger/RewindDebugger.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Developer/Concert/ConcertSync/ConcertSyncServer/Source/ConcertSyncServer/ConcertSyncServer.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Experimental/AVCodecs/NVCodecs/Source/NVENC/NVENC.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Experimental/ChaosFlesh/Source/ChaosFleshEditor/ChaosFleshEditor.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Experimental/LandscapePatch/Source/LandscapePatch/LandscapePatch.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Importers/USDImporter/Source/USDSchemas/USDSchemas.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Media/ElectraUtil/Source/ElectraHTTPStream/ElectraHTTPStream.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/Online/OnlineSubsystemNull/Source/Private/OnlineSubsystemNull.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/VirtualProduction/TextureShare/Source/TextureShareDisplayCluster/TextureShareDisplayCluster.Build.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Classes/BehaviorTree/TestBTTask_SetFlag.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Private/BehaviorTree/TestBTTask_SetValue.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Private/Tests/ResourceIdTest.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Public/AITestSuite.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Public/AITestsCommon.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AITestSuite/Public/TestableEnsures.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/Android/AndroidDeviceDetection/Private/AndroidDeviceDetectionModule.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AnimationDataController/Private/AnimDataController.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AnimationDataController/Public/AnimDataController.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AnimationWidgets/Public/SAdvancedRotationInputBox.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Internal/AssetHeaderPatcher.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetDefinition_AssetTypeActionsProxy.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetFixUpRedirectors.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTools.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetToolsModule.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTypeActions/AssetTypeActions_AnimBoneCompressionSettings.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTypeActions/AssetTypeActions_DataAsset.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetTypeActions/AssetTypeActions_ParticleSystem.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/AssetViewUtils.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SAdvancedCopyReportDialog.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SAdvancedCopyReportDialog.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Private/SPackageReportDialog.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Public/AssetViewUtils.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AssetTools/Public/IAssetTypeActions.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AudioFormatRad/Private/AudioFormatRad.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AutomationController/Private/AutomationCommandline.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AutomationDriver/Private/AutomationDriver.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/AutomationDriver/Private/SlateWidgetElement.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/CookMetadata/Public/CookMetadata.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/DerivedDataBackendInterface.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/Tests/HttpCacheStoreTest.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DesktopPlatform/Private/Windows/WindowsNativeFeedbackContext.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DesktopPlatform/Public/IDesktopPlatform.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/GraphColor/Private/graphExtensions.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/Localization/Private/LocTextHelper.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/PhysicsUtilities/Private/SkinnedLevelSetBuilder.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/ProjectLauncher/Private/Widgets/Build/SProjectLauncherBuildPage.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Developer/ShaderCompilerCommon/Private/ShaderMinifier.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/AnimGraph/Private/AnimBlueprintNodeOptionalPinManager.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/DetailCustomizations/Private/BodyInstanceCustomization.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/Experimental/EditorInteractiveToolsFramework/Private/EdModeInteractiveToolsContext.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/MovieSceneTools/Private/TrackEditors/AttachTrackEditor.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/Persona/Public/AnimationEditorViewportClient.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Editor/VREditor/Public/UI/VREditorFloatingUI.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Actor.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartitionLevelHelper.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Renderer/Private/DistanceFieldObjectManagement.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/Components/Widget.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/Components/WidgetComponent.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Public/Components/WidgetComponent.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/OpenSubdiv/OpenSubdiv.Build.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/libOpus/libOpus.build.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/libjpeg-turbo/LibJpegTurbo.Build.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/MLDeformer/MLDeformerFramework/Source/MLDeformerFramework/MLDeformerFramework.Build.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Online/OnlineSubsystemNull/Source/Private/OnlineSubsystemNull.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/PCG/Source/PCG/Public/Elements/PCGSpawnActor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Private/ProfilingDebugging/CsvProfiler.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Delegates/DelegateInstancesImpl.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/HeroesAndFillains/UHT/Item.gen.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/ItemInfoWidgetBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/ItemInfoWidgetBase.h" root0="FORCE_HIGHLIGHTING" />
@@ -150,7 +188,7 @@
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
         <option name="EXECUTABLE_PATH" value="C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor-Win64-DebugGame.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;C:\Users\it-admin\Documents\GitHub\HeroesAndFillains\HeroesAndFillains.uproject&quot;" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\HeroesAndFillains\HeroesAndFillains.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.5" />
         <option name="PASS_PARENT_ENVS" value="1" />
@@ -162,7 +200,7 @@
         <option name="CONFIGURATION" value="DebugGame" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="C:\Users\it-admin\Documents\GitHub\HeroesAndFillains\Binaries\Win64\HeroesAndFillains-Win64-DebugGame.exe" />
+        <option name="EXECUTABLE_PATH" value="D:\HeroesAndFillains\Binaries\Win64\HeroesAndFillains-Win64-DebugGame.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.5" />
@@ -176,7 +214,7 @@
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
         <option name="EXECUTABLE_PATH" value="C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;C:\Users\it-admin\Documents\GitHub\HeroesAndFillains\HeroesAndFillains.uproject&quot;" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\HeroesAndFillains\HeroesAndFillains.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.5" />
         <option name="PASS_PARENT_ENVS" value="1" />
@@ -188,7 +226,7 @@
         <option name="CONFIGURATION" value="Development" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="C:\Users\it-admin\Documents\GitHub\HeroesAndFillains\Binaries\Win64\HeroesAndFillains.exe" />
+        <option name="EXECUTABLE_PATH" value="D:\HeroesAndFillains\Binaries\Win64\HeroesAndFillains.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.5" />
@@ -201,7 +239,7 @@
         <option name="CONFIGURATION" value="Shipping" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="C:\Users\it-admin\Documents\GitHub\HeroesAndFillains\Binaries\Win64\HeroesAndFillains-Win64-Shipping.exe" />
+        <option name="EXECUTABLE_PATH" value="D:\HeroesAndFillains\Binaries\Win64\HeroesAndFillains-Win64-Shipping.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.5" />
@@ -240,6 +278,8 @@
       <workItem from="1748133262502" duration="30337000" />
       <workItem from="1748255386455" duration="2440000" />
       <workItem from="1748298941310" duration="38527000" />
+      <workItem from="1748454866442" duration="36147000" />
+      <workItem from="1748770862923" duration="1082000" />
     </task>
     <task id="LOCAL-00001" summary="WIDGETS FINALLY WORK!!!!!!!!!">
       <option name="closed" value="true" />
@@ -288,6 +328,36 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1311</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1313</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1315</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1317</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1319</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp</url>
+          <line>1321</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

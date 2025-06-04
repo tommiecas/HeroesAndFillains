@@ -20,20 +20,30 @@ public:
 	virtual void EnableCustomDepth(bool bEnable) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	void Equip(USceneComponent* InParent, FName InSocketName);
+	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
+	
 	UFUNCTION()
 	void SetEquippedMeleeWeaponState();
-	
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	EMeleeType MeleeType = EMeleeType::EMT_None;
-	
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	EMeleeType MeleeWeaponType = EMeleeType::EMT_None;
-	
-	UPROPERTY(EditAnywhere, Category = "UI Properties")
-	UItemInfoWidgetBase* ItemInfoWidget;
 
-	
+	UFUNCTION(BlueprintCallable)
+	void SetMeleeWeaponInformationText(UWidgetComponent* MeleeWidgetComponent, AMeleeWeapon* MeleeWeapon);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
+	FString MeleeWeaponName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
+	FString MeleeWeaponHistory;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
+	FString MeleeWeaponResistances;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
+	FString MeleeWeaponWeaknesses;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
+	FString MeleeWeaponDamage;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -54,7 +64,7 @@ private:
 	
 
 public:
-	FORCEINLINE EMeleeType GetMeleeWeaponType() const { return MeleeWeaponType; }
+	FORCEINLINE EMeleeType GetMeleeWeaponType() const { return MeleeType; }
 	FORCEINLINE UItemInfoWidgetBase* GetItemInfoWidget() const { return ItemInfoWidget; }
 	
 
