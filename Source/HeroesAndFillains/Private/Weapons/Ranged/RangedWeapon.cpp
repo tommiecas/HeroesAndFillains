@@ -246,6 +246,33 @@ void ARangedWeapon::Fire(const FVector& HitTarget)
 	SpendRoundOfAmmo();
 }
 
+void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+{
+	if (!InParent) return;
+    
+	// Make sure we're attaching to the skeletal mesh
+	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
+	{
+		if (!SkeletalMesh->DoesSocketExist(InSocketName))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
+			return;
+		}
+        
+		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, 
+											   EAttachmentRule::SnapToTarget, 
+											   EAttachmentRule::SnapToTarget, 
+											   true);
+		WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+        
+		// Debug log the attachment
+		FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSocketName);
+		UE_LOG(LogTemp, Warning, TEXT("Attaching to socket %s at location: %s"), 
+			   *InSocketName.ToString(), 
+			   *SocketTransform.GetLocation().ToString());
+	}
+}
+
 
 bool ARangedWeapon::IsRangedWeaponEmpty()
 {

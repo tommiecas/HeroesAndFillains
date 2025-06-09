@@ -156,4 +156,21 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		GroundSpeed = UKismetMathLibrary::VSizeXY(FillainCharacterMovement->Velocity);
 		IsFalling = FillainCharacterMovement->IsFalling();
 	}
+
+	if (FillainCharacter->Combat->EquippedMeleeWeapon && FillainCharacter->Combat->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded) bEquippedMeleeWeaponIsTwoHanded = true;
+	if (FillainCharacter->Combat->EquippedMeleeWeapon && FillainCharacter->Combat->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded) bEquippedMeleeWeaponIsOneHanded = true;;
+	StyleOfFighter = FillainCharacter->Combat->FightingStyle;
+
+	if (FillainCharacter->BattlePrepped == EBattlePrepped::EBP_Armed)
+	{
+		bIsArmed = true;
+		bIsDisarmed = false;
+	}
+
+	if (FillainCharacter->BattlePrepped == EBattlePrepped::EBP_Disarmed)
+	{
+		bIsArmed = false;
+		bIsDisarmed = true;
+	}
+
 }

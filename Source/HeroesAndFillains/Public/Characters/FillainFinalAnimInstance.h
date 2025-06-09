@@ -8,6 +8,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/WeaponTypes.h"
+#include "HAFComponents/CombatComponent.h"
 #include "FillainFinalAnimInstance.generated.h"
 
 /**
@@ -82,7 +83,7 @@ private:
 
 	bool bEliminated;
 
-	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bUseFABRIK;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -117,6 +118,21 @@ private:
 	
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	AWeaponBase* CachedEquippedWeapon = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bEquippedMeleeWeaponIsTwoHanded = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bEquippedMeleeWeaponIsOneHanded = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	EFightingStyle StyleOfFighter = EFightingStyle::EFS_Unequipped;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bIsArmed;
+	
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+    bool bIsDisarmed;
 
 	
 	

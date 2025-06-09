@@ -15,6 +15,22 @@ class UWidgetComponent;
 class USphereComponent;
 
 UENUM(BlueprintType)
+enum class EWeaponCategory : uint8
+{
+	EWC_NothingButYourFists UMETA(DisplayName = "Unarmed...Except Your Fists"),
+
+	EWC_Firearm UMETA(DisplayName = "Any Old Gun"),
+	EWC_OneHandedFirearm UMETA(DisplayName = "A Gun You Point and Shoot"),
+	EWC_TwoHandedFirearm UMETA(DisplayName = "A HUGE Gun You Point and Shoot Using Both Hands"),
+	EWC_Sword UMETA(DisplayName = "Just a Sword. What kind? Who knows..."),
+	EWC_OneHandedSword UMETA(DisplayName = "A Sharp, Pointy Thing You Wield"),
+	EWC_TwoHandedSword UMETA(DisplayName = "A REALLY HEAVY, Sharp, Pointy Thing You Wield"),
+	EWC_Launcher UMETA(DisplayName = "Like a Gun, But Launches Projectiles for Mass Destruction, Always Two-Handed"),
+
+	EWC_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
 	EWS_Unclaimed UMETA(DisplayName = "Initial Unclaimed State"),
@@ -36,9 +52,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
+
+	UFUNCTION()
+	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
+
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Unclaimed;
+
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponCategory, VisibleAnywhere, Category = "Weapon Properties")
+	EWeaponCategory WeaponCategory = EWeaponCategory::EWC_NothingButYourFists;
+
+	UPROPERTY()
+	FTimerHandle VisualEffectsTimerHandle;
 
 	UFUNCTION()
 	void SetEquippedWeaponState();
@@ -46,6 +72,9 @@ public:
 	UFUNCTION()
 	virtual void OnRep_WeaponState();
 
+	UFUNCTION()
+	virtual void OnRep_WeaponCategory();
+	
 	virtual void WeaponDropped();
 
 	bool bDestroyWeapon = false;
@@ -72,6 +101,10 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector InitialMeshScale = FVector(1.0f);
+
 	
     	virtual void OnSphereOverlap(
     		UPrimitiveComponent* OverlappedComponent, 

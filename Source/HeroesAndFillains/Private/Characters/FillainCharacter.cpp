@@ -81,12 +81,14 @@ AFillainCharacter::AFillainCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	// SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	// GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
-	CameraBoom->TargetArmLength = 600.f;
+	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -388,6 +390,7 @@ void AFillainCharacter::Disarm()
 	if (Combat->EquippedMeleeWeapon)
 	{
 		Combat->EquippedMeleeWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+		BattlePrepped = EBattlePrepped::EBP_Disarmed;
 	}
 }
 
@@ -396,7 +399,13 @@ void AFillainCharacter::Arm()
 	if (Combat->EquippedMeleeWeapon)
 	{
 		Combat->EquippedMeleeWeapon->AttachMeshToSocket(GetMesh(), FName("MeleeSocket"));
+		BattlePrepped = EBattlePrepped::EBP_Armed;
 	}
+}
+
+void AFillainCharacter::FinishEquipping()
+{
+	Combat->ActionState = EActionState::EAS_Unoccupied;
 }
 
 void AFillainCharacter::SetSpawnPoint()
@@ -753,9 +762,12 @@ void AFillainCharacter::PlayArmDisarmMontage(FName SectionName)
 	// At this point, everything is good
 	UE_LOG(LogTemp, Warning, TEXT("✅ Playing Arm/Disarm Montage"));
 
-	AnimInstance->Montage_Play(ArmDisarmMontage);
-	AnimInstance->Montage_JumpToSection(SectionName, ArmDisarmMontage);
-	
+	UAnimInstance* AnimationInstance = GetMesh()->GetAnimInstance();
+	if (AnimationInstance && ArmDisarmMontage)
+	{
+		AnimInstance->Montage_Play(ArmDisarmMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, ArmDisarmMontage);
+	}
 }
 
 void AFillainCharacter::AttackEnd()
@@ -903,7 +915,7 @@ void AFillainCharacter::SetTeamColor(ETeam Team)
 
 void AFillainCharacter::Move(const FInputActionValue& Value)
 {
-	if (Combat->ActionState == EActionState::EAS_MeleeAttacking) return;
+	if (Combat->ActionState != EActionState::EAS_Unoccupied) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
@@ -952,6 +964,165 @@ void AFillainCharacter::Look(const FInputActionValue& Value)
 
 void AFillainCharacter::EquipButtonPressed()
 {
+	/*if (!HasAuthority() && !IsLocallyControlled()) return;
+    
+	// Don't try to equip if we don't have a weapon to equip
+	if (!OverlappingWeapon) return;
+	// Don't try to equip if we're already in an equipped state
+
+	if (ARangedWeapon* OverlappingRangedWeapon = Cast<ARangedWeapon>(OverlappingWeapon))
+	{
+		if (OverlappingRangedWeapon->WeaponState == EWeaponState::EWS_Unclaimed && 
+			OverlappingRangedWeapon->WeaponCategory == EWeaponCategory::EWC_Firearm)
+		{
+			OverlappingRangedWeapon->Equip(GetMesh(), FName("RangedSocket"));
+			OverlappingRangedWeapon->SetEquippedRangedWeaponState();
+			OverlappingWeapon = nullptr;
+			Combat->EquippedWeapon = OverlappingRangedWeapon;
+			ServerEquipButtonPressed();
+		}
+	}
+	else if (AMeleeWeapon* OverlappingMeleeWeapon = Cast<AMeleeWeapon>(OverlappingWeapon))
+	{
+		if (OverlappingMeleeWeapon->WeaponState == EWeaponState::EWS_Unclaimed && 
+			OverlappingMeleeWeapon->WeaponCategory == EWeaponCategory::EWC_Sword)
+		{
+			OverlappingMeleeWeapon->Equip(GetMesh(), FName("MeleeSocket"));
+			OverlappingMeleeWeapon->SetEquippedMeleeWeaponState();
+			OverlappingWeapon = nullptr;
+			Combat->EquippedWeapon = OverlappingMeleeWeapon;
+			ServerEquipButtonPressed();
+		}
+	}
+	else if (OverlappingWeapon && 
+		(OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded || 
+		 OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded))
+	{
+		AlreadyEquippedSoArmDisarmInstead(OverlappingWeapon);
+	}*/
+	 if (!HasAuthority() && !IsLocallyControlled()) return;
+    
+    if (!OverlappingWeapon)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No overlapping weapon"));
+        return;
+    }
+
+    // Debug logging
+    UE_LOG(LogTemp, Warning, TEXT("Attempting to equip weapon. Class: %s"), *OverlappingWeapon->GetClass()->GetName());
+
+	// Handle already equipped state
+	if (OverlappingWeapon && 
+		(OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded || 
+		 OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded))
+	{
+		AlreadyEquippedSoArmDisarmInstead(OverlappingWeapon);
+	}
+	
+    // First try to cast to RangedWeapon
+    if (OverlappingWeapon->IsA(ARangedWeapon::StaticClass()))
+    {
+
+		ARangedWeapon* OverlappingRangedWeapon = Cast<ARangedWeapon>(OverlappingWeapon);
+    	if (OverlappingRangedWeapon) UE_LOG(LogTemp, Warning, TEXT("Successfully cast to RangedWeapon"));
+    	if (OverlappingRangedWeapon->WeaponState == EWeaponState::EWS_Unclaimed && 
+            OverlappingRangedWeapon->WeaponCategory == EWeaponCategory::EWC_Firearm)
+        {
+            OverlappingRangedWeapon->Equip(GetMesh(), FName("RangedSocket"));
+            OverlappingRangedWeapon->SetEquippedRangedWeaponState();
+            OverlappingWeapon = nullptr;
+            Combat->EquippedWeapon = OverlappingRangedWeapon;
+            ServerEquipButtonPressed();
+        }
+        return;
+    }
+    
+    // Then try to cast to MeleeWeapon
+    if (OverlappingWeapon->IsA(AMeleeWeapon::StaticClass()))
+    {
+    	AMeleeWeapon* OverlappingMeleeWeapon = Cast<AMeleeWeapon>(OverlappingWeapon);
+    	if (OverlappingMeleeWeapon) UE_LOG(LogTemp, Warning, TEXT("Successfully cast to MeleeWeapon"));
+        if (OverlappingMeleeWeapon->WeaponState == EWeaponState::EWS_Unclaimed)
+        {
+            OverlappingMeleeWeapon->Equip(GetMesh(), FName("MeleeSocket"));
+            OverlappingMeleeWeapon->SetEquippedMeleeWeaponState();
+            OverlappingWeapon = nullptr;
+            Combat->EquippedWeapon = OverlappingMeleeWeapon;
+            ServerEquipButtonPressed();
+        }
+        return;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to cast to MeleeWeapon"));
+        
+        // Print the class hierarchy
+        UClass* CurrentClass = OverlappingWeapon->GetClass();
+        while (CurrentClass)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Class in hierarchy: %s"), *CurrentClass->GetName());
+            CurrentClass = CurrentClass->GetSuperClass();
+        }
+    }
+}
+
+void AFillainCharacter::AlreadyEquippedSoArmDisarmInstead(AWeaponBase* AnyWeapon)
+{
+	CharactersMeleeWeapon = Cast <AMeleeWeapon>(AnyWeapon);
+	if (CharactersMeleeWeapon && CanDisarm())
+	{
+		if (CharactersMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		{
+			PlayArmDisarmMontage(FName("DisarmOneHanded"));
+			CharactersWeapon->WeaponState = EWeaponState::EWS_Unclaimed;
+			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+		}
+		if (CharactersWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		{
+			PlayArmDisarmMontage(FName("DisarmTwoHanded"));
+			CharactersWeapon->WeaponState = EWeaponState::EWS_Unclaimed;
+			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+		}
+	}
+	else if (CharactersMeleeWeapon && CanArm())
+	{
+		if (CharactersMeleeWeapon->WeaponState == EWeaponState::EWS_Unclaimed && CharactersMeleeWeapon->WeaponCategory == EWeaponCategory::EWC_OneHandedSword)
+		{
+			PlayArmDisarmMontage(FName("ArmOneHanded"));
+			CharactersWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+		}
+		if (CharactersWeapon->WeaponState == EWeaponState::EWS_Unclaimed && CharactersMeleeWeapon->WeaponCategory == EWeaponCategory::EWC_TwoHandedSword)
+		{
+			PlayArmDisarmMontage(FName("ArmTwoHanded"));
+			CharactersWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+			ServerEquipButtonPressed();
+		}
+	}
+}
+		
+
+void AFillainCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (!OverlappingWeapon) return;
+    
+	// Additional weapon state validation
+	if (OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded || 
+		OverlappingWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded) 
+	{
+		return;
+	}
+    
+	if (OverlappingWeapon == nullptr) return;
+	if (Combat && OverlappingWeapon)
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+	else if (Combat->ShouldSwapWeapons())
+	{
+		Combat->SwapWeapons();
+	}
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
@@ -976,13 +1147,13 @@ void AFillainCharacter::EquipButtonPressed()
 			OverlappingWeapon = nullptr;
 			Combat->EquippedMeleeWeapon->SetEquippedMeleeWeaponState();
 		}
-		else if (AAmmoPickup* OverlappingAmmoPickup = Cast<AAmmoPickup>(OverlappingWeapon))
+		else if (AAmmoPickup* OverlappingAmmoPickup = Cast<AAmmoPickup>(OverlappingItem))
 		{
 			Combat->PickupAmmo(Combat->RangedType, OverlappingAmmoPickup->AmountOfAmmoInside);
 			OverlappingAmmoPickup->Destroy();
 		}
 	}
-	else 
+	else
 	{
 		AMeleeWeapon* WeaponInHand = Cast<AMeleeWeapon>(CharactersWeapon);
 		CharactersWeapon->SetOneOrTwoHandedWeapon(WeaponInHand);
@@ -1012,32 +1183,35 @@ void AFillainCharacter::EquipButtonPressed()
 				Combat->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
 			}
 		}
-	}
-	if (Combat->ActionState == EActionState::EAS_Unoccupied) ServerEquipButtonPressed();
-	bool bSwap = Combat->ShouldSwapWeapons() &&
-				!HasAuthority() &&
-				Combat->ActionState == EActionState::EAS_Unoccupied &&
-				OverlappingItem == nullptr;
+	
 
-	if (bSwap)
-	{
-		PlaySwapMontage();
-		Combat->ActionState = EActionState::EAS_SwappingWeapons;
-		bFinishedSwapping = false;
-		Combat->ActionState = EActionState::EAS_Unoccupied;
-	}
-}
+		if (Combat->ActionState == EActionState::EAS_Unoccupied) ServerEquipButtonPressed();
+		bool bSwap = Combat->ShouldSwapWeapons() &&
+					!HasAuthority() &&
+					Combat->ActionState == EActionState::EAS_Unoccupied &&
+					OverlappingItem == nullptr;
 
-void AFillainCharacter::ServerEquipButtonPressed_Implementation()
-{
-	if (OverlappingWeapon == nullptr) return;
-	if (Combat && OverlappingWeapon)
-	{
-		Combat->EquipWeapon(OverlappingWeapon);
-	}
-	else if (Combat->ShouldSwapWeapons())
-	{
-		Combat->SwapWeapons();
+		if (bSwap)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[DEBUG] Swap Requested - Frame: %d"), GFrameCounter);
+			if (Combat)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[DEBUG] Combat State: %s, Character Valid: %s"), 
+	*UEnum::GetValueAsString(TEXT("EActionState"), Combat->ActionState),  // Remove (int64) cast
+	IsValid(this) ? TEXT("True") : TEXT("False"));
+
+				if (Combat->ActionState == EActionState::EAS_Unoccupied)
+				{
+					Combat->ActionState = EActionState::EAS_SwappingWeapons;
+					bFinishedSwapping = false;
+            
+					UE_LOG(LogTemp, Warning, TEXT("[DEBUG] Starting Swap Montage"));
+					PlaySwapMontage();
+            
+					UE_LOG(LogTemp, Warning, TEXT("[DEBUG] Swap Montage Started"));
+				}
+			}
+		}
 	}
 }
 
@@ -1204,7 +1378,6 @@ void AFillainCharacter::AttackButtonPressed()
 
 void AFillainCharacter::Jump()
 {
-	if (Combat && Combat->bWieldingTheSword) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
@@ -1439,7 +1612,7 @@ void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
 	{
 		if (OverlappingWeapon)
 		{
-			OverlappingWeapon->ShowPickupAndInfoWidgets(true);
+			OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 		}
 	}	
 }

@@ -30,6 +30,7 @@ enum class EActionState : uint8
 	EAS_ThrowingGrenade UMETA(DisplayName = "Throwing Grenade"),
 	EAS_SwappingWeapons UMETA(DisplayName = "Swapping Weapons"),
 	EAS_MeleeAttacking UMETA(DisplayName = "Melee Attacking"),
+	EAS_EquippingWeapon UMETA(DisplayName = "Equipping Weapon"),
 
 	EAS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -66,7 +67,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FinishSwapAttachWeapons();
 
-	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_EquippedWeapon)
 	class AWeaponBase* EquippedWeapon;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedMeleeWeapon)

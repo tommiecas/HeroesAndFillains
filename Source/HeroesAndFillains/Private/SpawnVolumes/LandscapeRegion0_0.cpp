@@ -16,6 +16,7 @@
 #include "LandscapeComponent.h"
 #include "Engine/OverlapResult.h"             // 🔥 For FOverlapResult
 #include "HUD/ItemInfoWidgetBase.h"
+#include "HUD/PickupGearWidget.h"
 #include "Pickups/AmmoPickup.h"
 #include "Pickups/PickupSpawnPoint.h"
 #include "Templates/Function.h"               // 🔥 For TFunction
@@ -33,24 +34,39 @@ ALandscapeRegion0_0::ALandscapeRegion0_0()
 
 void ALandscapeRegion0_0::ShowPickupsAndInfoWidgets(bool bShowWidgets)
 {
-    if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(bShowWidgets);
-    if (PickupGearWidgetComponentB) PickupGearWidgetComponentB->SetVisibility(bShowWidgets);
-    if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(bShowWidgets);
-    if (ItemInfoWidgetComponentB) ItemInfoWidgetComponentB->SetVisibility(bShowWidgets);
+    // Delay the update to next frame to batch visibility changes
+    GetWorld()->GetTimerManager().SetTimerForNextTick([this, bShowWidgets]()
+    {
+        TArray<UWidgetComponent*> Widgets = {
+            PickupGearWidgetComponent,
+            ItemInfoWidgetComponent
+        };
+
+        for (auto* Widget : Widgets)
+        {
+            if (IsValid(Widget))
+            {
+                Widget->SetVisibility(bShowWidgets);
+            }
+        }
+    });
 }
 
 void ALandscapeRegion0_0::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Debug visualization - keep this but make it conditional
     if (SpawnBox)
     {
+#if WITH_EDITOR
         FVector Origin = SpawnBox->Bounds.Origin;
         FVector Extent = SpawnBox->Bounds.BoxExtent;
         UE_LOG(LogTemp, Warning, TEXT("Spawn Box Bounds - Origin: %s, Extent: %s"),
             *Origin.ToString(), *Extent.ToString());
 
         DrawDebugBox(GetWorld(), Origin, Extent, FColor::Red, true, -1.f, 0, 5.f);
+#endif
     }
 
     if (!bShouldSpawnWeapons) return;
@@ -59,33 +75,65 @@ void ALandscapeRegion0_0::BeginPlay()
     if (!GetWorld()->IsPlayInEditor()) return;
 #endif
 
-    for (const FSpawnVolumes& Entry : WeaponSpawnList)
-    {
-        if (Entry.ActorClass)
-        {
-            UE_LOG(LogTemp, Log, TEXT("Spawning Weapon: %s"), *Entry.Label);
-            SpawnActorInBox(Entry.ActorClass, {}, Entry.DebugColor, Entry.WidgetClass, nullptr);
-        }
-    }
+    // Stagger spawns across frames
+    float SpawnDelay = 0.0f;
+    const float DelayBetweenSpawns = 0.1f;
 
-    for (const FSpawnVolumes& Entry : AmmoSpawnList)
+    //Spawn Ranged Weapons with delay
+    for (const FSpawnVolumes& RangedEntry : WeaponSpawnList)
     {
-        if (Entry.ActorClass)
+        if (RangedEntry.ActorClass)
         {
-            UE_LOG(LogTemp, Log, TEXT("Spawning Ammo: %s"), *Entry.Label);
-            SpawnActorInBox(Entry.ActorClass, {}, Entry.DebugColor, nullptr);
-        }
+            FTimerHandle SpawnTimerHandle;
+            GetWorld()->GetTimerManager().SetTimer(
+            SpawnTimerHandle,
+            [this, RangedEntry]()
+            {
+                SpawnActorInBox(RangedEntry.ActorClass, {}, RangedEntry.DebugColor, RangedEntry.WidgetClass, nullptr);
+            },
+            SpawnDelay,
+            false
+        );
+        SpawnDelay += DelayBetweenSpawns;
     }
+        // Spawn ammo with additional delay
+        for (const FSpawnVolumes& AmmoEntry : AmmoSpawnList)
+        {
+            if (AmmoEntry.ActorClass)
+            {
+                FTimerHandle SpawnTimerHandle;
+                GetWorld()->GetTimerManager().SetTimer(
+                    SpawnTimerHandle,
+                    [this, AmmoEntry]()
+                    {
+                        SpawnActorInBox(AmmoEntry.ActorClass, {}, AmmoEntry.DebugColor, nullptr);
+                    },
+                    SpawnDelay,
+                    false
+                );
+                SpawnDelay += DelayBetweenSpawns;
+            }
+        }
 
-    for (const FSpawnVolumes& Entry : MeleeSpawnList)
-    {
-        if (Entry.ActorClass)
+        // Spawn melee weapons with additional delay
+        for (const FSpawnVolumes& MeleeEntry : MeleeSpawnList)
         {
-            UE_LOG(LogTemp, Log, TEXT("Spawning Melee: %s"), *Entry.Label);
-            SpawnActorInBox(Entry.ActorClass, {}, Entry.DebugColor, nullptr);
+            if (MeleeEntry.ActorClass)
+            {
+                FTimerHandle SpawnTimerHandle;
+                GetWorld()->GetTimerManager().SetTimer(
+                    SpawnTimerHandle,
+                    [this, MeleeEntry]()
+                    {
+                        SpawnActorInBox(MeleeEntry.ActorClass, {}, MeleeEntry.DebugColor, nullptr);
+                    },
+                    SpawnDelay,
+                    false
+                );
+                SpawnDelay += DelayBetweenSpawns;
+            }
         }
     }
-    ShowPickupsAndInfoWidgets(false);
 }
 
 FVector ALandscapeRegion0_0::RandomBoxPoints() const
@@ -95,27 +143,71 @@ FVector ALandscapeRegion0_0::RandomBoxPoints() const
 
 void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UUserWidget> WidgetClass)
 {
-    if (!TargetActor || !TargetActor->GetRootComponent() || !WidgetClass) return;
+     if (!TargetActor || !TargetActor->GetRootComponent() || !WidgetClass) return;
 
+    // Initial delay to ensure actor is fully spawned
     GetWorld()->GetTimerManager().SetTimerForNextTick([this, TargetActor, WidgetClass]()
     {
         if (!IsValid(TargetActor)) return;
 
-        UPickupWidgetComponent* Widget = NewObject<UPickupWidgetComponent>(TargetActor);
-        if (Widget)
+        if (AWeaponBase* Weapon = Cast<AWeaponBase>(TargetActor))
         {
-            Widget->RegisterComponent();
-            Widget->AttachToComponent(TargetActor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-            Widget->SetWidgetSpace(EWidgetSpace::World);
-            Widget->SetDrawSize(FVector2D(100.f, 50.f));
-            Widget->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
-            Widget->SetWidgetClass(WidgetClass);
+            // Setup widgets with delays between operations
+            if (Weapon->PickupGearWidgetComponent)
+            {
+                Weapon->PickupGearWidgetComponent->SetVisibility(false);
+                
+                // Delay widget class assignment
+                GetWorld()->GetTimerManager().SetTimerForNextTick([Weapon, WidgetClass]()
+                {
+                    if (!IsValid(Weapon)) return;
+                    Weapon->PickupGearWidgetComponent->SetWidgetClass(WidgetClass);
+                    
+                    // Delay visibility change
+                    FTimerHandle VisibilityTimerHandle;
+                    Weapon->GetWorld()->GetTimerManager().SetTimer(
+                        VisibilityTimerHandle,
+                        [Weapon]()
+                        {
+                            if (IsValid(Weapon) && Weapon->PickupGearWidgetComponent)
+                            {
+                                Weapon->PickupGearWidgetComponent->SetVisibility(false);
+                            }
+                        },
+                        0.1f,
+                        false
+                    );
+                });
+            }
+
+            // Setup ItemInfo widget with separate delay
+            if (Weapon->ItemInfoWidgetComponent)
+            {
+                Weapon->ItemInfoWidgetComponent->SetVisibility(false);
+                
+                GetWorld()->GetTimerManager().SetTimerForNextTick([Weapon]()
+                {
+                    if (!IsValid(Weapon)) return;
+                    Weapon->ItemInfoWidgetComponent->SetWidgetClass(Weapon->ItemInfoWidgetClass);
+                    
+                    FTimerHandle VisibilityTimerHandle;
+                    Weapon->GetWorld()->GetTimerManager().SetTimer(
+                        VisibilityTimerHandle,
+                        [Weapon]()
+                        {
+                            if (IsValid(Weapon) && Weapon->ItemInfoWidgetComponent)
+                            {
+                                Weapon->ItemInfoWidgetComponent->SetVisibility(false);
+                            }
+                        },
+                        0.15f,  // Slightly delayed from PickupGear widget
+                        false
+                    );
+                });
+            }
         }
-        ShowPickupsAndInfoWidgets(false);
     });
 }
-
-
 
 bool ALandscapeRegion0_0::IsValidSpawnPoint(const FVector& Location, FHitResult& GroundHit)
 {

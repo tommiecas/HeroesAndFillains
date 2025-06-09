@@ -11,6 +11,7 @@
 #include "Weapons/WeaponBase.h"
 #include "HUD/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponTypes.h"
+#include "Weapons/Melee/ChaosSword.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
@@ -43,15 +44,72 @@ void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 
 void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 {
-	AttachMeshToSocket(InParent, InSocketName);
-	ItemState = EItemState::EIS_Equipped;
+	if (!InParent) return;
+    
+	// Make sure we're attaching to the skeletal mesh
+	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
+	{
+		if (!SkeletalMesh->DoesSocketExist(InSocketName))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
+			return;
+		}
+        
+		// Set scale before attachment for ChaosSword
+		if (Cast<AChaosSword>(this) && WeaponMesh)
+		{
+			WeaponMesh->SetRelativeScale3D(FVector(0.01f));
+			UE_LOG(LogTemp, Warning, TEXT("ChaosSword Equip - Setting scale to 0.01"));
+		}
+        
+		FAttachmentTransformRules TransformRules(
+			EAttachmentRule::SnapToTarget,
+			EAttachmentRule::SnapToTarget,
+			EAttachmentRule::SnapToTarget,  // Changed to SnapToTarget for scale
+			true);
+            
+		WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+        
+		// Ensure scale after attachment for ChaosSword
+		if (Cast<AChaosSword>(this) && WeaponMesh)
+		{
+			WeaponMesh->SetRelativeScale3D(FVector(0.01f));
+			UE_LOG(LogTemp, Warning, TEXT("ChaosSword Equip - After attachment scale: %s"), 
+				*WeaponMesh->GetRelativeScale3D().ToString());
+		}
+	}
 }
 
-void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
+void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
-	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+	Super::AttachMeshToSocket(InParent, InSocketName);
+	
+	if (!WeaponMesh || !InParent)
+	{
+		return;
+	}
+
+	// Store desired scale
+	const FVector DesiredScale = Cast<AChaosSword>(this) ? FVector(0.01f) : WeaponMesh->GetRelativeScale3D();
+
+	// Set world scale before attachment
+	WeaponMesh->SetWorldScale3D(DesiredScale);
+
+	FAttachmentTransformRules TransformRules(
+		EAttachmentRule::SnapToTarget,  // Location
+		EAttachmentRule::SnapToTarget,  // Rotation
+		EAttachmentRule::SnapToTarget,  // Scale - Changed from KeepWorld to SnapToTarget
+		true
+	);
+
 	WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+    
+	// Force the scale after attachment
+	WeaponMesh->SetRelativeScale3D(DesiredScale);  // Changed from SetWorldScale3D to SetRelativeScale3D
 }
+
+
+
 
 void AMeleeWeapon::OnEquippedOneHanded()
 {
@@ -61,6 +119,25 @@ void AMeleeWeapon::OnEquippedOneHanded()
 void AMeleeWeapon::OnEquippedTwoHanded()
 {
 	Super::OnEquippedTwoHanded();
+
+	if (WeaponMesh)
+	{
+		// Create and set up a socket for the left hand if it doesn't exist
+		if (!WeaponMesh->DoesSocketExist(FName("LeftHandSocket")))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket does not exist on weapon mesh"));
+			return;
+		}
+
+		// Get the socket transform
+		FTransform LeftHandSocketTransform = WeaponMesh->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
+        
+		// Log the socket location for debugging
+		UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
+			*LeftHandSocketTransform.GetLocation().ToString(),
+			*LeftHandSocketTransform.GetRotation().Rotator().ToString());
+	}
+
 }
 
 

@@ -37,6 +37,16 @@ class ALobbyGameMode;
 class AProjectileFinal;
 class UBoxComponent;
 
+UENUM(BlueprintType)
+enum class EBattlePrepped : uint8
+{
+	EBP_Defenseless UMETA(DisplayName = "Has No Weapon"),
+	EBP_Armed UMETA(DisplayName = "Armed With an Equipped Weapon"),
+	EBP_Disarmed UMETA(DisplayName = "Equipped With a Weapon, But Currently Disarmed"),
+	
+	EBP_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
 
 UCLASS()
@@ -63,7 +73,9 @@ public:
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
 	void SwitchWeapon(AWeaponBase* NewWeapon);
-	
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+	EBattlePrepped BattlePrepped = EBattlePrepped::EBP_MAX;
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
@@ -240,6 +252,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeaponBase* CharactersWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AMeleeWeapon* CharactersMeleeWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	ARangedWeapon* CharactersRangedWeapon;
+
+	UFUNCTION(BlueprintCallable)
+	void FinishEquipping();
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -326,9 +347,11 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void Arm();
+
+	UFUNCTION(BlueprintCallable)
+	void AlreadyEquippedSoArmDisarmInstead(AWeaponBase* AnyWeapon);
 	
 private:
-	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
 

@@ -21,7 +21,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void Equip(USceneComponent* InParent, FName InSocketName);
-	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
+	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName) override;
 	
 	UFUNCTION()
 	void SetEquippedMeleeWeaponState();

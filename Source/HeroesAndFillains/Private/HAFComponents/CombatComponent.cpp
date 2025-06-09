@@ -632,26 +632,27 @@ void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase*
 {
 	FName SocketName = (OneHandedRangedWeaponToAttach->GetWeaponType() == EWeaponType::EWT_AssaultRifle)
 			? FName("AssaultRifleSocket")
-			: FName("RightHandSocket");
+			: FName("RangedSocket");
 	AttachWeaponToSocket(OneHandedRangedWeaponToAttach, SocketName);
 }
 
 void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach)
 {
-	AttachWeaponToSocket(OneHandedMeleeWeaponToAttach, FName("MeleeSocket"));
+	EquippedMeleeWeapon->AttachMeshToSocket(Character->GetMesh(), FName("MeleeSocket"));
 }
 
 void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHandedMeleeWeaponToAttach)
 {
+	// Just attach to right hand - FABRIK will handle the left hand
 	AttachOneHandedMeleeWeaponToRightHand(TwoHandedMeleeWeaponToAttach);
-	AttachWeaponToSocket(TwoHandedMeleeWeaponToAttach, FName("LeftHandSocket"));
+    
+	// Remove this line:
+	// EquippedMeleeWeapon->AttachMeshToSocket(Character->GetMesh(), FName("LeftHandSocket"));
 }
-
 
 void UCombatComponent::AttachTwoHandedRangedWeaponToLeftHand(class AWeaponBase* TwoHandedRangedWeaponToAttach)
 {
 	AttachOneHandedRangedWeaponToRightHand(TwoHandedRangedWeaponToAttach);
-	AttachWeaponToSocket(TwoHandedRangedWeaponToAttach, FName("LeftHandSocket"));
 }
 
 
@@ -715,12 +716,27 @@ void UCombatComponent::FinishReloading()
 
 void UCombatComponent::FinishSwap()
 {
-	if (Character && Character->HasAuthority())
+	if (!Character) return;
+
+	// Ensure we're still in swapping state before changing it
+	if (ActionState == EActionState::EAS_SwappingWeapons)
 	{
-		ActionState = EActionState::EAS_Unoccupied;
+		if (Character->HasAuthority())
+		{
+			ActionState = EActionState::EAS_Unoccupied;
+		}
+        
+		if (Character)
+		{
+			Character->bFinishedSwapping = true;
+		}
+        
+		if (SecondaryWeapon)
+		{
+			SecondaryWeapon->EnableCustomDepth(true);
+		}
 	}
-	if (Character) Character->bFinishedSwapping = true;
-	if (SecondaryWeapon) SecondaryWeapon->EnableCustomDepth(true);
+
 }
 
 void UCombatComponent::FinishSwapAttachWeapons()
