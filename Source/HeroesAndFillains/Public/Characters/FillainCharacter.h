@@ -133,7 +133,7 @@ public:
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
 	void PlayMeleeAttackMontage();
-	void PlayArmDisarmMontage(FName SectionName);
+	void PlayArmDisarmMontage(const FName& SectionName);
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
@@ -194,6 +194,8 @@ public:
 	UInputAction* EquipAction;
 
 	void EquipButtonPressed();
+	void TryEquipOverlappedWeapon();
+	void ToggleWeaponStateIfEquipped();
 
 	/**************
 	** Crouching **
@@ -261,7 +263,25 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
+
+	bool CanDisarm();
+	bool CanArm();
 	
+	UFUNCTION(BlueprintCallable)
+	void Disarm();
+
+	UFUNCTION(BlueprintCallable)
+	void Arm();
+	
+	UFUNCTION(BlueprintCallable, Category = "Weapon Properties")
+	void OnArmDisarmMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+
+
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* HAFMappingContext;
@@ -339,14 +359,7 @@ protected:
 	void SetSpawnPoint();
 	void OnPlayerStateInitialized();
 
-	bool CanDisarm();
-	bool CanArm();
 	
-	UFUNCTION(BlueprintCallable)
-	void Disarm();
-
-	UFUNCTION(BlueprintCallable)
-	void Arm();
 
 	UFUNCTION(BlueprintCallable)
 	void AlreadyEquippedSoArmDisarmInstead(AWeaponBase* AnyWeapon);

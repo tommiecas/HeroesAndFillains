@@ -8,17 +8,13 @@
 AChaosSword::AChaosSword()
 	: AMeleeWeapon()
 {
-	InitialMeshScale = FVector(0.01f);
 }
 
 void AChaosSword::BeginPlay()
 {
 	Super::BeginPlay();
     
-	if (WeaponMesh)
-	{
-		WeaponMesh->SetRelativeScale3D(FVector(0.01f));
-	}
+	
 }
 
 void AChaosSword::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -37,19 +33,11 @@ void AChaosSword::OnEquippedTwoHanded()
 	UE_LOG(LogTemp, Warning, TEXT("ChaosSword OnEquippedTwoHanded - Before: Scale = %s"), 
 		  *WeaponMesh->GetRelativeScale3D().ToString());
     
-	if (WeaponMesh)
-	{
-		WeaponMesh->SetRelativeScale3D(FVector(0.01f));
-	}
+	
         
 	Super::OnEquippedTwoHanded();
         
-	if (WeaponMesh)
-	{
-		WeaponMesh->SetRelativeScale3D(FVector(0.01f));
-		UE_LOG(LogTemp, Warning, TEXT("ChaosSword OnEquippedTwoHanded - After: Scale = %s"), 
-			   *WeaponMesh->GetRelativeScale3D().ToString());
-	}
+	
 
 }
 
@@ -65,7 +53,7 @@ void AChaosSword::OnRep_WeaponState()
 
 }
 
-void AChaosSword::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
+void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName)
 {
 	// Set scale before attachment
 	if (WeaponMesh)
@@ -73,7 +61,7 @@ void AChaosSword::AttachMeshToSocket(USceneComponent* InParent, FName InSocketNa
 		WeaponMesh->SetWorldScale3D(InitialMeshScale);
 	}
     
-	Super::AttachMeshToSocket(InParent, InSocketName);
+	Super::Equip(InParent, InSocketName);
     
 	// Ensure scale after attachment
 	if (WeaponMesh)

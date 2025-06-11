@@ -122,6 +122,12 @@ public:
 
 	UPROPERTY()
 	AWeaponBase* CurrentlyEquippedWeapon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_ActionState, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_ActionState();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -307,11 +313,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_ActionState, meta = (AllowPrivateAccess = "true"))
-	EActionState ActionState = EActionState::EAS_Unoccupied;
+	
 
-	UFUNCTION()
-	void OnRep_ActionState();
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
 

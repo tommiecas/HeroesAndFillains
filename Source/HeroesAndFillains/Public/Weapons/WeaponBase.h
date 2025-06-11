@@ -52,9 +52,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
+	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
 
 	UFUNCTION()
-	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
+	virtual void Equip(USceneComponent* InParent, FName InSocketName);
 
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
@@ -83,7 +84,7 @@ public:
 	TSubclassOf<AWeaponBase> WeaponClass;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	class USoundCue* EquipSound;
+	class USoundBase* EquipSound;
 
 	virtual void ShowPickupAndInfoWidgets(bool bShow) override;
 
@@ -146,9 +147,9 @@ protected:
 	float HeadShotDamage = 40.f;
 	
 	UPROPERTY(EditAnywhere)
-	ETeam Team;	
+	ETeam Team;
+	
 private:
-
 
 public:
 	void SetWeaponState(EWeaponState State);

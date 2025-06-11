@@ -19,6 +19,8 @@
 #include "HUD/ItemInfoWidgetBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Pickups/AmmoPickUp.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/BoxComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/PickupGearWidget.h"
@@ -43,7 +45,7 @@ AWeaponBase::AWeaponBase()
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
 	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-
+	
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
 	AreaSphere->SetupAttachment(Root);
 	AreaSphere->SetSphereRadius(200.f);
@@ -107,7 +109,6 @@ AWeaponBase::AWeaponBase()
 	{
 		HoverDecal->SetDecalMaterial(DecalMat.Object);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Mesh relative to root: %s"), *WeaponMesh->GetRelativeLocation().ToString());
 }
 
 void AWeaponBase::Tick(float DeltaTime)
@@ -165,17 +166,8 @@ void AWeaponBase::BeginPlay()
 	if (ItemInfoWidgetComponent)
 	{
 		ItemInfoWidgetComponent->UpdateComponentToWorld();
-		UE_LOG(LogTemp, Warning, TEXT("BeginPlay: ItemInfoWidget world location: %s"),
-			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
 
-		if (ItemInfoWidgetComponent->GetUserWidgetObject() == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("ERROR: ItemInfoWidgetComponent has no widget object!"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Widget Class Loaded: %s"), *ItemInfoWidgetComponent->GetUserWidgetObject()->GetName());
-		}
+		
 	}
 
 	UPickupGearWidget* PickupWidget = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
@@ -224,29 +216,13 @@ void AWeaponBase::BeginPlay()
 	if (ItemInfoWidgetComponent)
 	{
 		ItemInfoWidgetComponent->UpdateComponentToWorld();
-		UE_LOG(LogTemp, Warning, TEXT("Updated ItemInfoWidgetComponent world location: %s"),
-			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
+
 	}
 	ItemInfoWidgetComponent->SetVisibility(true);
 	if (ItemInfoWidgetComponent && ItemInfoWidgetClass)
     {
         ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
     }
-
-	UE_LOG(LogTemp, Warning, TEXT("Weapon spawned: %s"), *GetName());
-	if (ItemInfoWidgetComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  WidgetClass: %s"),
-			*GetNameSafe(ItemInfoWidgetComponent->GetWidgetClass()));
-		UE_LOG(LogTemp, Warning, TEXT("  Widget World Location: %s"),
-			*ItemInfoWidgetComponent->GetComponentLocation().ToString());
-		UE_LOG(LogTemp, Warning, TEXT("  Widget Visible: %s"),
-			ItemInfoWidgetComponent->IsVisible() ? TEXT("YES") : TEXT("NO"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("  No WidgetComponent attached!"));
-	}
 }
 
 void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -340,15 +316,26 @@ void AWeaponBase::OnRep_Owner()
 
 void AWeaponBase::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
+	// Set up attachment rules
+	FAttachmentTransformRules AttachmentRules(
+		EAttachmentRule::SnapToTarget,  // Location
+		EAttachmentRule::SnapToTarget,  // Rotation
+		EAttachmentRule::KeepWorld,     // Scale
+		true);
+
+	// Perform the attachment
+	WeaponMesh->AttachToComponent(InParent, AttachmentRules, InSocketName);
+}
+
+void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
+{
 	if (!WeaponMesh)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AttachMeshToSocket: WeaponMesh is null"));
 		return;
 	}
 
 	if (!InParent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AttachMeshToSocket: Parent component is null"));
 		return;
 	}
 
@@ -363,15 +350,16 @@ void AWeaponBase::AttachMeshToSocket(USceneComponent* InParent, FName InSocketNa
 			*SocketTransform.GetRotation().Rotator().ToString());
 	}
 
-	// Set up attachment rules
-	FAttachmentTransformRules AttachmentRules(
-		EAttachmentRule::SnapToTarget,  // Location
-		EAttachmentRule::SnapToTarget,  // Rotation
-		EAttachmentRule::KeepWorld,     // Scale
-		true);
-
-	// Perform the attachment
-	WeaponMesh->AttachToComponent(InParent, AttachmentRules, InSocketName);
+	AttachMeshToSocket(InParent, InSocketName);
+	ItemState = EItemState::EIS_Equipped;
+	if (EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+	}
+	if (AreaSphere)
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
 	// Log the weapon transform after attachment
 	FTransform WeaponTransform = WeaponMesh->GetComponentTransform();

@@ -198,14 +198,21 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
-	if (FightingStyle != EFightingStyle::EFS_Ranged) return;
-	bIsFireButtonPressed = bPressed;
-
-	UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
-
-	if (bIsFireButtonPressed)
+	if (FightingStyle != EFightingStyle::EFS_Ranged || FightingStyle != EFightingStyle::EFS_Melee) return;
+	if (FightingStyle == EFightingStyle::EFS_Ranged)
 	{
-		Fire(); 
+		bIsFireButtonPressed = bPressed;
+
+		UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
+
+		if (bIsFireButtonPressed)
+		{
+			Fire(); 
+		}
+	}
+	if (FightingStyle == EFightingStyle::EFS_Melee)
+	{
+		Character->MeleeAttack();
 	}
 }
 
@@ -456,6 +463,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		bWieldingTheSword = true; // ✅ Add this!
 		EquippedMeleeWeapon->ShowPickupAndInfoWidgets(false);
 		EquippedMeleeWeapon->bIsEquipped = true;
+		Character->BattlePrepped = EBattlePrepped::EBP_Armed;
 		
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
@@ -541,6 +549,7 @@ void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 		AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Melee;
 		ActionState = EActionState::EAS_Unoccupied;
+		Character->BattlePrepped = EBattlePrepped::EBP_Armed;
 	}
 }
 
@@ -638,7 +647,7 @@ void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase*
 
 void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach)
 {
-	EquippedMeleeWeapon->AttachMeshToSocket(Character->GetMesh(), FName("MeleeSocket"));
+	OneHandedMeleeWeaponToAttach->Equip(Character->GetMesh(), FName("MeleeSocket"));
 }
 
 void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHandedMeleeWeaponToAttach)

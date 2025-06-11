@@ -3,6 +3,7 @@
 
 #include "Weapons/Melee/MeleeWeapon.h"
 
+#include "Characters/FillainCharacter.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/ItemInfoWidgetBase.h"
@@ -12,11 +13,28 @@
 #include "HUD/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponTypes.h"
 #include "Weapons/Melee/ChaosSword.h"
+#include "Components/BoxComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Interfaces/HitInterface.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
 {
-	
+	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
+	WeaponBox->SetupAttachment(Root);
+	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	TracePointHilt = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointHilt"));
+	TracePointHilt->SetupAttachment(WeaponMesh);
+
+	TracePointMid = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointMid"));
+	TracePointMid->SetupAttachment(WeaponMesh);
+
+	TracePointTip = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointTip"));
+	TracePointTip->SetupAttachment(WeaponMesh);
+
 }
 
 void AMeleeWeapon::EnableCustomDepth(bool bEnable)
@@ -55,28 +73,10 @@ void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 			return;
 		}
         
-		// Set scale before attachment for ChaosSword
-		if (Cast<AChaosSword>(this) && WeaponMesh)
-		{
-			WeaponMesh->SetRelativeScale3D(FVector(0.01f));
-			UE_LOG(LogTemp, Warning, TEXT("ChaosSword Equip - Setting scale to 0.01"));
-		}
+		
         
-		FAttachmentTransformRules TransformRules(
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,  // Changed to SnapToTarget for scale
-			true);
-            
-		WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
-        
-		// Ensure scale after attachment for ChaosSword
-		if (Cast<AChaosSword>(this) && WeaponMesh)
-		{
-			WeaponMesh->SetRelativeScale3D(FVector(0.01f));
-			UE_LOG(LogTemp, Warning, TEXT("ChaosSword Equip - After attachment scale: %s"), 
-				*WeaponMesh->GetRelativeScale3D().ToString());
-		}
+		AttachMeshToSocket(InParent, InSocketName);
+        ItemState = EItemState::EIS_Equipped;
 	}
 }
 
@@ -89,11 +89,7 @@ void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketN
 		return;
 	}
 
-	// Store desired scale
-	const FVector DesiredScale = Cast<AChaosSword>(this) ? FVector(0.01f) : WeaponMesh->GetRelativeScale3D();
-
-	// Set world scale before attachment
-	WeaponMesh->SetWorldScale3D(DesiredScale);
+	
 
 	FAttachmentTransformRules TransformRules(
 		EAttachmentRule::SnapToTarget,  // Location
@@ -103,13 +99,7 @@ void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketN
 	);
 
 	WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
-    
-	// Force the scale after attachment
-	WeaponMesh->SetRelativeScale3D(DesiredScale);  // Changed from SetWorldScale3D to SetRelativeScale3D
 }
-
-
-
 
 void AMeleeWeapon::OnEquippedOneHanded()
 {
@@ -137,9 +127,7 @@ void AMeleeWeapon::OnEquippedTwoHanded()
 			*LeftHandSocketTransform.GetLocation().ToString(),
 			*LeftHandSocketTransform.GetRotation().Rotator().ToString());
 	}
-
 }
-
 
 void AMeleeWeapon::OnDropped()
 {
@@ -151,7 +139,87 @@ void AMeleeWeapon::OnEquippedSecondary()
 {
 	Super::OnEquippedSecondary();
 }
-	
+
+void AMeleeWeapon::BeginAttack()
+{
+	bIsTracing = true;
+
+	LastTraceLocationTip  = TracePointTip->GetComponentLocation();
+	LastTraceLocationMid  = TracePointMid->GetComponentLocation();
+	LastTraceLocationHilt = TracePointHilt->GetComponentLocation();
+
+	AlreadyHitActors.Empty();
+
+	UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
+}
+
+void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint)
+{
+	FVector CurrentLocation = TracePoint->GetComponentLocation();
+	FHitResult Hit;
+
+	TArray<AActor*> IgnoreActors = { this, GetOwner() };
+
+	bool bHit = UKismetSystemLibrary::LineTraceSingle(
+		this,
+		LastLocation,
+		CurrentLocation,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		IgnoreActors,
+		EDrawDebugTrace::ForDuration,
+		Hit,
+		true
+	);
+	if (Hit.GetActor())
+	{
+		if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
+		{
+			HitInterface->GetHit(Hit.ImpactPoint);
+		}
+	}
+	if (bHit && !AlreadyHitActors.Contains(Hit.GetActor()))
+	{
+		AlreadyHitActors.Add(Hit.GetActor());
+		// Apply damage
+
+		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
+	}
+
+	LastLocation = CurrentLocation;
+}
+
+void AMeleeWeapon::TickAttackTrace()
+{
+	TraceBetweenPoints(LastTraceLocationHilt, TracePointHilt);
+	TraceBetweenPoints(LastTraceLocationMid, TracePointMid);
+	TraceBetweenPoints(LastTraceLocationTip, TracePointTip);
+
+}
+
+void AMeleeWeapon::EndAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("☑️ Melee Trace Ended"));
+
+	bIsTracing = false;
+
+	LastTraceLocationTip = FVector::ZeroVector;
+	LastTraceLocationMid = FVector::ZeroVector;
+	LastTraceLocationHilt = FVector::ZeroVector;
+
+	AlreadyHitActors.Empty();
+
+	// ✅ Allow player to attack again
+	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (AFillainCharacter* FillainChar = Cast<AFillainCharacter>(OwnerCharacter))
+		{
+			FillainChar->Combat->ActionState = EActionState::EAS_Unoccupied;
+			UE_LOG(LogTemp, Warning, TEXT("🎮 ActionState set to Unoccupied"));
+		}
+	}
+}
+
 void AMeleeWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

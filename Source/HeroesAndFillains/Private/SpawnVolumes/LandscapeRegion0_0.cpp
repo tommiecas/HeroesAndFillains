@@ -62,8 +62,7 @@ void ALandscapeRegion0_0::BeginPlay()
 #if WITH_EDITOR
         FVector Origin = SpawnBox->Bounds.Origin;
         FVector Extent = SpawnBox->Bounds.BoxExtent;
-        UE_LOG(LogTemp, Warning, TEXT("Spawn Box Bounds - Origin: %s, Extent: %s"),
-            *Origin.ToString(), *Extent.ToString());
+  
 
         DrawDebugBox(GetWorld(), Origin, Extent, FColor::Red, true, -1.f, 0, 5.f);
 #endif
@@ -317,7 +316,6 @@ void ALandscapeRegion0_0::SpawnActorInBox(
                         AttachFloatingIcon(SpawnedWeapon, WidgetClass);
                     }
                     DrawDebugSphere(GetWorld(), FinalLocation, 25.f, 12, DebugColor, false, 30.f);
-                    UE_LOG(LogTemp, Log, TEXT("Spawned: %s at %s"), *ActorToSpawn->GetName(), *FinalLocation.ToString());
                 }
             }
         }

@@ -24,5 +24,5 @@ protected:
 	virtual void OnEquippedTwoHanded() override;
 	virtual void OnRep_WeaponState() override;
 
-	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName) override;
+	virtual void Equip(USceneComponent* InParent, FName InSocketName) override;
 };
