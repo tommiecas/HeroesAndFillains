@@ -69,7 +69,7 @@ void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 	{
 		if (!SkeletalMesh->DoesSocketExist(InSocketName))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
+			// UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
 			return;
 		}
         
@@ -115,7 +115,7 @@ void AMeleeWeapon::OnEquippedTwoHanded()
 		// Create and set up a socket for the left hand if it doesn't exist
 		if (!WeaponMesh->DoesSocketExist(FName("LeftHandSocket")))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket does not exist on weapon mesh"));
+			// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket does not exist on weapon mesh"));
 			return;
 		}
 
@@ -123,7 +123,7 @@ void AMeleeWeapon::OnEquippedTwoHanded()
 		FTransform LeftHandSocketTransform = WeaponMesh->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
         
 		// Log the socket location for debugging
-		UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
+		// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
 			*LeftHandSocketTransform.GetLocation().ToString(),
 			*LeftHandSocketTransform.GetRotation().Rotator().ToString());
 	}
@@ -148,9 +148,9 @@ void AMeleeWeapon::BeginAttack()
 	LastTraceLocationMid  = TracePointMid->GetComponentLocation();
 	LastTraceLocationHilt = TracePointHilt->GetComponentLocation();
 
-	AlreadyHitActors.Empty();
+	IgnoreActors.Empty();
 
-	UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
+	// UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
 }
 
 void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint)
@@ -158,7 +158,12 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 	FVector CurrentLocation = TracePoint->GetComponentLocation();
 	FHitResult Hit;
 
-	TArray<AActor*> IgnoreActors = { this, GetOwner() };
+	TArray<AActor*> ActorsToIgnore = { this, GetOwner() };
+
+	for (AActor* Actor : IgnoreActors)
+	{
+		ActorsToIgnore.AddUnique(Actor);
+	}
 
 	bool bHit = UKismetSystemLibrary::LineTraceSingle(
 		this,
@@ -167,7 +172,7 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		IgnoreActors,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		Hit,
 		true
 	);
@@ -178,12 +183,12 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 			HitInterface->GetHit(Hit.ImpactPoint);
 		}
 	}
-	if (bHit && !AlreadyHitActors.Contains(Hit.GetActor()))
+	if (bHit && !IgnoreActors.Contains(Hit.GetActor()))
 	{
-		AlreadyHitActors.Add(Hit.GetActor());
+		IgnoreActors.Add(Hit.GetActor());
 		// Apply damage
 
-		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
+		// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
 	}
 
 	LastLocation = CurrentLocation;
@@ -199,7 +204,7 @@ void AMeleeWeapon::TickAttackTrace()
 
 void AMeleeWeapon::EndAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("☑️ Melee Trace Ended"));
+	// UE_LOG(LogTemp, Warning, TEXT("☑️ Melee Trace Ended"));
 
 	bIsTracing = false;
 
@@ -207,7 +212,7 @@ void AMeleeWeapon::EndAttack()
 	LastTraceLocationMid = FVector::ZeroVector;
 	LastTraceLocationHilt = FVector::ZeroVector;
 
-	AlreadyHitActors.Empty();
+	IgnoreActors.Empty();
 
 	// ✅ Allow player to attack again
 	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
@@ -215,7 +220,7 @@ void AMeleeWeapon::EndAttack()
 		if (AFillainCharacter* FillainChar = Cast<AFillainCharacter>(OwnerCharacter))
 		{
 			FillainChar->Combat->ActionState = EActionState::EAS_Unoccupied;
-			UE_LOG(LogTemp, Warning, TEXT("🎮 ActionState set to Unoccupied"));
+			// UE_LOG(LogTemp, Warning, TEXT("🎮 ActionState set to Unoccupied"));
 		}
 	}
 }

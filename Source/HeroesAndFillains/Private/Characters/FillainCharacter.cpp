@@ -385,7 +385,7 @@ bool AFillainCharacter::CanDisarm()
 
 bool AFillainCharacter::CanArm()
 {
-	UE_LOG(LogTemp, Warning, TEXT("CanArm? Equipped: %d, ActionState: %s, BattlePrepped: %s"),
+	// UE_LOG(LogTemp, Warning, TEXT("CanArm? Equipped: %d, ActionState: %s, BattlePrepped: %s"),
 		Combat->EquippedWeapon != nullptr,
 		*UEnum::GetValueAsString(Combat->ActionState),
 		*UEnum::GetValueAsString(BattlePrepped));
@@ -422,7 +422,7 @@ void AFillainCharacter::Disarm()
 
 void AFillainCharacter::Arm()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Trying to Arm... CanArm = %d"), CanArm());
+	// UE_LOG(LogTemp, Warning, TEXT("Trying to Arm... CanArm = %d"), CanArm());
 
 	if (!CanArm()) return;  // ✅ Correct check here
 
@@ -468,7 +468,7 @@ void AFillainCharacter::OnArmDisarmMontageEnded(UAnimMontage* Montage, bool bInt
 {
 	if (Montage == ArmDisarmMontage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Arm/Disarm Montage Ended. Interrupted: %d"), bInterrupted);
+		// UE_LOG(LogTemp, Warning, TEXT("Arm/Disarm Montage Ended. Interrupted: %d"), bInterrupted);
 		Combat->ActionState = EActionState::EAS_Unoccupied;
 	}
 }
@@ -478,6 +478,7 @@ void AFillainCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collis
 	if (Combat->EquippedMeleeWeapon && Combat->EquippedMeleeWeapon->GetWeaponBox())
 	{
 		Combat->EquippedMeleeWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+		Combat->EquippedMeleeWeapon->IgnoreActors.Empty();
 	}
 }
 
@@ -765,18 +766,18 @@ void AFillainCharacter::PlayReloadingMontage()
 
 void AFillainCharacter::PlayMeleeAttackMontage()
 {
-	UE_LOG(LogTemp, Warning, TEXT("🎬 PlayMeleeAttackMontage() triggered"));
+	// UE_LOG(LogTemp, Warning, TEXT("🎬 PlayMeleeAttackMontage() triggered"));
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); 
 	if (!AnimInstance)
 	{
-		UE_LOG(LogTemp, Error, TEXT("❌ AnimInstance is NULL"));
+		// UE_LOG(LogTemp, Error, TEXT("❌ AnimInstance is NULL"));
 		return;
 	}
 
 	if (!AttackMontage)
 	{
-		UE_LOG(LogTemp, Error, TEXT("❌ AttackMontage is NULL"));
+		// UE_LOG(LogTemp, Error, TEXT("❌ AttackMontage is NULL"));
 		return;
 	}
 

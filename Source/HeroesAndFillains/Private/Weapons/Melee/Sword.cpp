@@ -133,7 +133,7 @@ void ASword::OnDropped()
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("AreaSphere is null in OnDropped"));
+            // UE_LOG(LogTemp, Warning, TEXT("AreaSphere is null in OnDropped"));
         }
     }
 
@@ -151,7 +151,7 @@ void ASword::OnDropped()
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("SwordMesh is null in OnDropped"));
+        // UE_LOG(LogTemp, Warning, TEXT("SwordMesh is null in OnDropped"));
     }
     
     EnableCustomDepth(true);
@@ -164,7 +164,7 @@ void ASword::BeginPlay()
     
     if (!IsValid(this))
     {
-        UE_LOG(LogTemp, Error, TEXT("Invalid Sword instance in BeginPlay"));
+        // UE_LOG(LogTemp, Error, TEXT("Invalid Sword instance in BeginPlay"));
         return;
     }
     
@@ -174,7 +174,7 @@ void ASword::BeginPlay()
     UWidgetComponent* WidgetComponent = GetPickupGearWidgetComponent();
     if (!WidgetComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PickupGearWidgetComponent is null"));
+        // UE_LOG(LogTemp, Warning, TEXT("PickupGearWidgetComponent is null"));
         return;
     }
 
@@ -182,7 +182,7 @@ void ASword::BeginPlay()
     UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject();
     if (!UserWidget)
     {
-        UE_LOG(LogTemp, Warning, TEXT("UserWidget is null"));
+        // UE_LOG(LogTemp, Warning, TEXT("UserWidget is null"));
         return;
     }
 
@@ -193,17 +193,17 @@ void ASword::BeginPlay()
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to cast to PickupGearWidget"));
+        // UE_LOG(LogTemp, Warning, TEXT("Failed to cast to PickupGearWidget"));
     }
     
     // Verify critical components
     if (!SwordMesh)
     {
-        UE_LOG(LogTemp, Error, TEXT("SwordMesh is null in BeginPlay"));
+        // UE_LOG(LogTemp, Error, TEXT("SwordMesh is null in BeginPlay"));
     }
     
     if (!RootComponent)
     {
-        UE_LOG(LogTemp, Error, TEXT("RootComponent is null in BeginPlay"));
+        // UE_LOG(LogTemp, Error, TEXT("RootComponent is null in BeginPlay"));
     }
 }

@@ -48,6 +48,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
 	FString MeleeWeaponDamage;
 
+	UPROPERTY()
+	TArray<AActor*> IgnoreActors;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -72,8 +75,7 @@ protected:
 	UPROPERTY()
 	bool bIsTracing = false;
 
-	UPROPERTY()
-	TArray<AActor*> AlreadyHitActors;
+	
 	
 private:
 	void NativeConstruct();
@@ -84,6 +86,7 @@ private:
 	FVector LastTraceLocationTip;
 	FVector LastTraceLocationMid;
 	FVector LastTraceLocationHilt;
+
 
 	
 

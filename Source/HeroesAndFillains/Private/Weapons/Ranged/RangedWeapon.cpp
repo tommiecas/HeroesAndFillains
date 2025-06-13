@@ -219,7 +219,7 @@ void ARangedWeapon::Fire(const FVector& HitTarget)
 
 	if (!IsValid(GetWorld())) return; // Add world validity check
     
-	UE_LOG(LogTemp, Warning, TEXT("ARangedWeapon::Fire called on %s"), *GetName());
+	// UE_LOG(LogTemp, Warning, TEXT("ARangedWeapon::Fire called on %s"), *GetName());
 
 	if (FireAnimation && IsValid(WeaponMesh))
 	{
@@ -255,7 +255,7 @@ void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 	{
 		if (!SkeletalMesh->DoesSocketExist(InSocketName))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
+			// UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
 			return;
 		}
         
@@ -267,7 +267,7 @@ void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName)
         
 		// Debug log the attachment
 		FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSocketName);
-		UE_LOG(LogTemp, Warning, TEXT("Attaching to socket %s at location: %s"), 
+		// UE_LOG(LogTemp, Warning, TEXT("Attaching to socket %s at location: %s"), 
 			   *InSocketName.ToString(), 
 			   *SocketTransform.GetLocation().ToString());
 	}

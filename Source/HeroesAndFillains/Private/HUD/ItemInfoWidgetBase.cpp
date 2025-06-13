@@ -55,7 +55,7 @@ void UItemInfoWidgetBase::SetRangedInfo(const FString& Name, const FString& Desc
     if (Line4) Line4->SetText(FText::FromString(Rarity));
     if (Line5) Line5->SetText(FText::FromString(Damage));
     
-    UE_LOG(LogTemp, Warning, TEXT("SetRangedInfo(): Name=%s, Desc=%s"), *Name, *Description);
+    // UE_LOG(LogTemp, Warning, TEXT("SetRangedInfo(): Name=%s, Desc=%s"), *Name, *Description);
 }
 
 void UItemInfoWidgetBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

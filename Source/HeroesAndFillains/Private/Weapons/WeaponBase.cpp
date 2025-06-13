@@ -344,7 +344,7 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
 	if (ParentMesh)
 	{
 		FTransform SocketTransform = ParentMesh->GetSocketTransform(InSocketName);
-		UE_LOG(LogTemp, Warning, TEXT("Socket '%s' transform before attachment - Location: %s, Rotation: %s"),
+		// UE_LOG(LogTemp, Warning, TEXT("Socket '%s' transform before attachment - Location: %s, Rotation: %s"),
 			*InSocketName.ToString(),
 			*SocketTransform.GetLocation().ToString(),
 			*SocketTransform.GetRotation().Rotator().ToString());
@@ -363,7 +363,7 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
 
 	// Log the weapon transform after attachment
 	FTransform WeaponTransform = WeaponMesh->GetComponentTransform();
-	UE_LOG(LogTemp, Warning, TEXT("Weapon transform after attachment - Location: %s, Rotation: %s, Scale: %s"),
+	// UE_LOG(LogTemp, Warning, TEXT("Weapon transform after attachment - Location: %s, Rotation: %s, Scale: %s"),
 		*WeaponTransform.GetLocation().ToString(),
 		*WeaponTransform.GetRotation().Rotator().ToString(),
 		*WeaponTransform.GetScale3D().ToString());

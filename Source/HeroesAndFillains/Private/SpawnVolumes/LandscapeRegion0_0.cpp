@@ -64,7 +64,7 @@ void ALandscapeRegion0_0::BeginPlay()
         FVector Extent = SpawnBox->Bounds.BoxExtent;
   
 
-        DrawDebugBox(GetWorld(), Origin, Extent, FColor::Red, true, -1.f, 0, 5.f);
+        // DrawDebugBox(GetWorld(), Origin, Extent, FColor::Red, true, -1.f, 0, 5.f);
 #endif
     }
 
@@ -247,7 +247,7 @@ void ALandscapeRegion0_0::SpawnActorInBox(
 {
     if (!ActorToSpawn || !SpawnBox)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid ActorToSpawn or SpawnBox is null"));
+        // UE_LOG(LogTemp, Warning, TEXT("Invalid ActorToSpawn or SpawnBox is null"));
         return;
     }
 
@@ -315,7 +315,7 @@ void ALandscapeRegion0_0::SpawnActorInBox(
                     {
                         AttachFloatingIcon(SpawnedWeapon, WidgetClass);
                     }
-                    DrawDebugSphere(GetWorld(), FinalLocation, 25.f, 12, DebugColor, false, 30.f);
+                    // DrawDebugSphere(GetWorld(), FinalLocation, 25.f, 12, DebugColor, false, 30.f);
                 }
             }
         }

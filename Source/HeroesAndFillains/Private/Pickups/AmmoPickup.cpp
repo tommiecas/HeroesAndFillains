@@ -61,7 +61,7 @@ void AAmmoPickup::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 	}
 	ShowPickupAndInfoWidgets(false);
 
-	UE_LOG(LogTemp, Warning, TEXT("Exited proximity of weapon: %s"), *GetName());
+	// UE_LOG(LogTemp, Warning, TEXT("Exited proximity of weapon: %s"), *GetName());
 }
 
 void AAmmoPickup::SetAmmoPickupInformationText(UWidgetComponent* AmmoPickupWidgetComponent, AAmmoPickup* AmmoPickup)

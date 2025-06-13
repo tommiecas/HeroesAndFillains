@@ -30,7 +30,7 @@ void AChaosSword::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 void AChaosSword::OnEquippedTwoHanded()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ChaosSword OnEquippedTwoHanded - Before: Scale = %s"), 
+	// UE_LOG(LogTemp, Warning, TEXT("ChaosSword OnEquippedTwoHanded - Before: Scale = %s"), 
 		  *WeaponMesh->GetRelativeScale3D().ToString());
     
 	

@@ -17,6 +17,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void DirectionalHitReact(const FVector& ImpactPoint);
 
 	virtual void GetHit(const FVector& ImpactPoint) override;
 
@@ -28,6 +29,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	class UAnimMontage* HitReactMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Visual Effects")
+	class UNiagaraSystem* HitReactSystem;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -43,6 +47,8 @@ protected:
 
 	void PlayHitReactMontage(const FName& SectionName);
 
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* HitSound;
 
 
 private:

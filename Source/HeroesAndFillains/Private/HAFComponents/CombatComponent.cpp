@@ -203,7 +203,7 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 	{
 		bIsFireButtonPressed = bPressed;
 
-		UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
+		// UE_LOG(LogTemp, Warning, TEXT("CombatComponent::FireButtonPressed called: %s"), bPressed ? TEXT("true") : TEXT("false"));
 
 		if (bIsFireButtonPressed)
 		{
@@ -252,15 +252,15 @@ void UCombatComponent::Fire()
 {
 	if (FightingStyle != EFightingStyle::EFS_Ranged) return;
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CombatComponent::Fire() called"));
+		// UE_LOG(LogTemp, Warning, TEXT("CombatComponent::Fire() called"));
 
 		if (CanFire())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("CanFire() == true"));
+			// UE_LOG(LogTemp, Warning, TEXT("CanFire() == true"));
 			bCanGunFire = false;
 			if (EquippedRangedWeapon)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
+				// UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
 					*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
 
 				CrosshairShootingFactor = 0.75f;
@@ -268,22 +268,22 @@ void UCombatComponent::Fire()
 				switch (EquippedRangedWeapon->FireType)
 				{
 				case EFireType::EFT_Projectile:
-					UE_LOG(LogTemp, Warning, TEXT("Calling FireProjectileWeapon()"));
+					// UE_LOG(LogTemp, Warning, TEXT("Calling FireProjectileWeapon()"));
 					FireProjectileWeapon();
 					break;
 				case EFireType::EFT_HitScan:
-					UE_LOG(LogTemp, Warning, TEXT("Calling FireHitScanWeapon()"));
+					// UE_LOG(LogTemp, Warning, TEXT("Calling FireHitScanWeapon()"));
 					FireHitScanWeapon();
 					break;
 				case EFireType::EFT_Shotgun:
-					UE_LOG(LogTemp, Warning, TEXT("Calling FireShotgun()"));
+					// UE_LOG(LogTemp, Warning, TEXT("Calling FireShotgun()"));
 					FireShotgun();
 					break;
 				}
 			}	
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("CanFire() == false"));
+				// UE_LOG(LogTemp, Warning, TEXT("CanFire() == false"));
 			}
 			StartFireTimer();
 		}
@@ -420,14 +420,14 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
+	// UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
 		   *WeaponToEquip->GetName(), 
 		   *FFrame::GetScriptCallstack());
 	if (!WeaponToEquip || !Character) return;
 
 	if (CurrentlyEquippedWeapon == WeaponToEquip)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon %s is already equipped."), *WeaponToEquip->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("Weapon %s is already equipped."), *WeaponToEquip->GetName());
 		return;
 	}
 
@@ -603,20 +603,20 @@ void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketNam
 	if (!AreMeshesValid(Weapon)) return;
 	if (!Character)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character is null."));
+		// UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character is null."));
 		return;
 	}
 
 	USkeletalMeshComponent* Mesh = Character->GetMesh();
 	if (!Mesh)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character mesh is null."));
+		// UE_LOG(LogTemp, Error, TEXT("AttachWeaponToSocket failed: Character mesh is null."));
 		return;
 	}
 
 	if (!Mesh->DoesSocketExist(SocketName))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Socket '%s' does not exist."), *SocketName.ToString());
+		// UE_LOG(LogTemp, Error, TEXT("Socket '%s' does not exist."), *SocketName.ToString());
 		return;
 	}
 	
@@ -626,7 +626,7 @@ void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketNam
 	Weapon->AttachToComponent(Mesh, AttachRules, SocketName);
 
 	// DEBUG: Log final transforms
-	UE_LOG(LogTemp, Warning, TEXT("Weapon Actor Transform AFTER attach: %s"), *Weapon->GetActorTransform().ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Weapon Actor Transform AFTER attach: %s"), *Weapon->GetActorTransform().ToString());
 
 	// Cleanup visual/collision
 	Weapon->SetActorHiddenInGame(false);
@@ -634,7 +634,7 @@ void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketNam
 	Weapon->WeaponMesh->SetVisibility(true);
 	Weapon->WeaponMesh->SetHiddenInGame(false);
 	Weapon->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	UE_LOG(LogTemp, Warning, TEXT("Sword Mesh Relative Loc: %s"), *Weapon->WeaponMesh->GetRelativeLocation().ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Sword Mesh Relative Loc: %s"), *Weapon->WeaponMesh->GetRelativeLocation().ToString());
 }
 
 void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase* OneHandedRangedWeaponToAttach)
