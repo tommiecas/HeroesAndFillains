@@ -137,7 +137,8 @@ public:
 	ERangedType RangedType = ERangedType::ERT_None;
 
 protected:
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	class UNiagaraComponent* EmbersEffect;
 private:
 	
 };

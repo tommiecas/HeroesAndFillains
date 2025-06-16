@@ -386,9 +386,9 @@ bool AFillainCharacter::CanDisarm()
 bool AFillainCharacter::CanArm()
 {
 	// UE_LOG(LogTemp, Warning, TEXT("CanArm? Equipped: %d, ActionState: %s, BattlePrepped: %s"),
-		Combat->EquippedWeapon != nullptr,
-		*UEnum::GetValueAsString(Combat->ActionState),
-		*UEnum::GetValueAsString(BattlePrepped));
+		// Combat->EquippedWeapon != nullptr,
+		// *UEnum::GetValueAsString(Combat->ActionState),
+		// *UEnum::GetValueAsString(BattlePrepped));
 	return Combat &&
 		   Combat->EquippedWeapon &&
 		   Combat->ActionState == EActionState::EAS_Unoccupied &&

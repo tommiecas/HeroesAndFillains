@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Pickups/AmmoPickup.h"
+#include "NiagaraComponent.h"
 
 
 AItem::AItem()
@@ -22,7 +23,13 @@ AItem::AItem()
 	SetReplicateMovement(true);
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);	
+	SetRootComponent(Root);
+
+	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
+	AreaSphere->SetupAttachment(Root);
+
+	EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
+	EmbersEffect->SetupAttachment(Root);
 }
 
 void AItem::BeginPlay()
@@ -77,6 +84,10 @@ void AItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	RunningTime += DeltaTime;
 
+	if (ItemState == EItemState::EIS_Hovering)
+	{
+		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
+	}
 	
 }
 

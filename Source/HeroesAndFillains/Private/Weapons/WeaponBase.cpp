@@ -24,6 +24,7 @@
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/PickupGearWidget.h"
+#include "NiagaraComponent.h"
 
 AWeaponBase::AWeaponBase()
 	: Super() 
@@ -345,9 +346,9 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
 	{
 		FTransform SocketTransform = ParentMesh->GetSocketTransform(InSocketName);
 		// UE_LOG(LogTemp, Warning, TEXT("Socket '%s' transform before attachment - Location: %s, Rotation: %s"),
-			*InSocketName.ToString(),
-			*SocketTransform.GetLocation().ToString(),
-			*SocketTransform.GetRotation().Rotator().ToString());
+		//	*InSocketName.ToString(),
+		//	*SocketTransform.GetLocation().ToString(),
+		//	*SocketTransform.GetRotation().Rotator().ToString());
 	}
 
 	AttachMeshToSocket(InParent, InSocketName);
@@ -360,13 +361,17 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
 	{
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	if (EmbersEffect)
+	{
+		EmbersEffect->Deactivate();
+	}
 
 	// Log the weapon transform after attachment
 	FTransform WeaponTransform = WeaponMesh->GetComponentTransform();
 	// UE_LOG(LogTemp, Warning, TEXT("Weapon transform after attachment - Location: %s, Rotation: %s, Scale: %s"),
-		*WeaponTransform.GetLocation().ToString(),
-		*WeaponTransform.GetRotation().Rotator().ToString(),
-		*WeaponTransform.GetScale3D().ToString());
+		//*WeaponTransform.GetLocation().ToString(),
+		// eaponTransform.GetRotation().Rotator().ToString(),
+		// *WeaponTransform.GetScale3D().ToString());
 }
 
 void AWeaponBase::SetEquippedWeaponState()

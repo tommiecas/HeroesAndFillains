@@ -268,8 +268,8 @@ void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 		// Debug log the attachment
 		FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSocketName);
 		// UE_LOG(LogTemp, Warning, TEXT("Attaching to socket %s at location: %s"), 
-			   *InSocketName.ToString(), 
-			   *SocketTransform.GetLocation().ToString());
+			//   *InSocketName.ToString(), 
+			 //  *SocketTransform.GetLocation().ToString());
 	}
 }
 

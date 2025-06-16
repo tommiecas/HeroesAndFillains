@@ -124,8 +124,8 @@ void AMeleeWeapon::OnEquippedTwoHanded()
         
 		// Log the socket location for debugging
 		// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
-			*LeftHandSocketTransform.GetLocation().ToString(),
-			*LeftHandSocketTransform.GetRotation().Rotator().ToString());
+//			*LeftHandSocketTransform.GetLocation().ToString(),
+//			*LeftHandSocketTransform.GetRotation().Rotator().ToString());;
 	}
 }
 
@@ -176,11 +176,15 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 		Hit,
 		true
 	);
+	AActor* HitActor = Hit.GetActor(); // or whatever you're using
 	if (Hit.GetActor())
 	{
 		if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
 		{
-			HitInterface->GetHit(Hit.ImpactPoint);
+			if (HitActor && HitActor->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+			{
+				HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint);
+			}
 		}
 	}
 	if (bHit && !IgnoreActors.Contains(Hit.GetActor()))
@@ -190,7 +194,7 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 
 		// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
 	}
-
+	CreateFields(Hit.ImpactPoint);
 	LastLocation = CurrentLocation;
 }
 

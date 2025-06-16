@@ -261,7 +261,7 @@ void UCombatComponent::Fire()
 			if (EquippedRangedWeapon)
 			{
 				// UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
-					*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
+				//	*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
 
 				CrosshairShootingFactor = 0.75f;
 
@@ -421,8 +421,8 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
 	// UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
-		   *WeaponToEquip->GetName(), 
-		   *FFrame::GetScriptCallstack());
+		//   *WeaponToEquip->GetName(), 
+		  // *FFrame::GetScriptCallstack());
 	if (!WeaponToEquip || !Character) return;
 
 	if (CurrentlyEquippedWeapon == WeaponToEquip)

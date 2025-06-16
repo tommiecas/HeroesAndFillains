@@ -74,6 +74,9 @@ protected:
 
 	UPROPERTY()
 	bool bIsTracing = false;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void CreateFields(const FVector& FieldLocation);
 
 	
 	
