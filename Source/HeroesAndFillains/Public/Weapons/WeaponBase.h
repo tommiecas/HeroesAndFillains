@@ -55,7 +55,7 @@ public:
 	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
 
 	UFUNCTION()
-	virtual void Equip(USceneComponent* InParent, FName InSocketName);
+	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")

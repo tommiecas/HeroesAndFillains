@@ -20,12 +20,12 @@ public:
 	virtual void EnableCustomDepth(bool bEnable) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void Equip(USceneComponent* InParent, FName InSocketName) override;
+	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator) override;
 	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName) override;
-	void BeginAttack();
-	void TickAttackTrace();
-	void TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint);
-	void EndAttack();
+	virtual void BeginAttack();
+	virtual void TickAttackTrace();
+	virtual void TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint);
+	virtual void EndAttack();
 
 	UFUNCTION()
 	void SetEquippedMeleeWeaponState();
@@ -81,7 +81,8 @@ protected:
 	
 	
 private:
-	void NativeConstruct();
+	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
+	float MeleeDamage;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UBoxComponent* WeaponBox;

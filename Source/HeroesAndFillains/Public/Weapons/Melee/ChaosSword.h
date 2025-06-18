@@ -17,6 +17,10 @@ class HEROESANDFILLAINS_API AChaosSword : public AMeleeWeapon
 public:
 	AChaosSword();
 	virtual void BeginPlay() override;
+	virtual void BeginAttack() override;
+	virtual void TickAttackTrace() override;
+	virtual void TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint) override;
+	virtual void EndAttack() override;
 	
 protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
@@ -24,5 +28,5 @@ protected:
 	virtual void OnEquippedTwoHanded() override;
 	virtual void OnRep_WeaponState() override;
 
-	virtual void Equip(USceneComponent* InParent, FName InSocketName) override;
+	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator) override;
 };

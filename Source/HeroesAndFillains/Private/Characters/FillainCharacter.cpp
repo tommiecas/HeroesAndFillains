@@ -1086,7 +1086,7 @@ void AFillainCharacter::TryEquipOverlappedWeapon()
 		if (Ranged->WeaponState == EWeaponState::EWS_Unclaimed &&
 			Ranged->WeaponCategory == EWeaponCategory::EWC_Firearm)
 		{
-			Ranged->Equip(GetMesh(), FName("RangedSocket"));
+			Ranged->Equip(GetMesh(), FName("RangedSocket"), this, this);
 			Ranged->SetEquippedRangedWeaponState();
 			Combat->EquippedWeapon = Ranged;
 			OverlappingWeapon = nullptr;
@@ -1101,7 +1101,7 @@ void AFillainCharacter::TryEquipOverlappedWeapon()
 		UE_LOG(LogTemp, Warning, TEXT("Successfully cast to MeleeWeapon"));
 		if (Melee->WeaponState == EWeaponState::EWS_Unclaimed)
 		{
-			Melee->Equip(GetMesh(), FName("MeleeSocket"));
+			Melee->Equip(GetMesh(), FName("MeleeSocket"), this, this);
 			Melee->SetEquippedMeleeWeaponState();
 			Combat->EquippedWeapon = Melee;
 			OverlappingWeapon = nullptr;

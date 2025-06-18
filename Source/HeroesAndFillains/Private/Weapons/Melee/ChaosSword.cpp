@@ -17,6 +17,26 @@ void AChaosSword::BeginPlay()
 	
 }
 
+void AChaosSword::BeginAttack()
+{
+	Super::BeginAttack();
+}
+
+void AChaosSword::TickAttackTrace()
+{
+	Super::TickAttackTrace();
+}
+
+void AChaosSword::TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint)
+{
+	Super::TraceBetweenPoints(LastLocation, TracePoint);
+}
+
+void AChaosSword::EndAttack()
+{
+	Super::EndAttack();
+}
+
 void AChaosSword::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -53,7 +73,7 @@ void AChaosSword::OnRep_WeaponState()
 
 }
 
-void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName)
+void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName,  AActor* NewOwner, APawn* NewInstigator)
 {
 	// Set scale before attachment
 	if (WeaponMesh)
@@ -61,7 +81,7 @@ void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName)
 		WeaponMesh->SetWorldScale3D(InitialMeshScale);
 	}
     
-	Super::Equip(InParent, InSocketName);
+	Super::Equip(InParent, InSocketName, NewOwner, NewInstigator);
     
 	// Ensure scale after attachment
 	if (WeaponMesh)

@@ -18,8 +18,9 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void DirectionalHitReact(const FVector& ImpactPoint);
-
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void EnemyDies();
 
 	/*****************************
     ***                        ***
@@ -30,8 +31,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	class UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	class UAnimMontage* DeathMontage;
+	
 	UPROPERTY(EditAnywhere, Category = "Visual Effects")
 	class UNiagaraSystem* HitReactSystem;
+
+	UPROPERTY()
+	AActor* CombatTarget;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	double CombatRadius = 500.f;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -45,14 +55,24 @@ protected:
 	***                            ***
 	*********************************/
 
-	void PlayHitReactMontage(const FName& SectionName);
+	virtual void PlayHitReactMontage(const FName& SectionName);
+	virtual void PlayDeathMontage();
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	class USoundBase* HitSound;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	class UHealthBarWidgetComponent* NewHealthBarWidgetComponent;
+
+	
 
 private:
+	UPROPERTY(VisibleAnywhere)
+	class UAttributeComponent* AttributeComponent;
 
+
+
+	
 private:
 
 	

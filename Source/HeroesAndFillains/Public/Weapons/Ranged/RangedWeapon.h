@@ -31,7 +31,7 @@ public:
 	virtual void OnRep_Owner() override;
 	void SetHUDAmmo();
 	virtual void Fire(const FVector& HitTarget);
-	void Equip(USceneComponent* InParent, FName InSocketName);
+	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
 	
 	void AddAmmo(int32 AmmoToAdd);

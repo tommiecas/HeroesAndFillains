@@ -328,7 +328,7 @@ void AWeaponBase::AttachMeshToSocket(USceneComponent* InParent, FName InSocketNa
 	WeaponMesh->AttachToComponent(InParent, AttachmentRules, InSocketName);
 }
 
-void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName)
+void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
 	if (!WeaponMesh)
 	{

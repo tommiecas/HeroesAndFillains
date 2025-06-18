@@ -8,7 +8,11 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"  
-#include "NiagaraFunctionLibrary.h"  
+#include "NiagaraFunctionLibrary.h"
+#include "Components/WidgetComponent.h"
+#include "HAFComponents/AttributeComponent.h"
+#include "HUD/HealthBarWidget.h"
+#include "HUD/HealthBarWidgetComponent.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -43,6 +47,12 @@ AEnemyBase::AEnemyBase()
 		CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	}
 
+	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
+	// Create the WidgetComponent
+	NewHealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
+	NewHealthBarWidgetComponent->SetupAttachment(RootComponent);
+	NewHealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	NewHealthBarWidgetComponent->SetDrawSize(FVector2D(300.f, 25.f));
 }
 
 void AEnemyBase::BeginPlay()
@@ -59,16 +69,54 @@ void AEnemyBase::PlayHitReactMontage(const FName& SectionName)
 	}
         
 	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
-	if (AnimInstance)
+	if (AnimInstance && HitReactMontage)
 	{
 		AnimInstance->Montage_Play(HitReactMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, HitReactMontage);
 	}
 }
 
+void AEnemyBase::PlayDeathMontage()
+{
+	if (!IsValid(DeathMontage))
+	{
+		return;
+	}
+	
+	UAnimInstance* Instance = GetMesh()->GetAnimInstance(); 
+	if (!Instance)
+	{
+		// UE_LOG(LogTemp, Error, TEXT("❌ AnimInstance is NULL"));
+		return;
+	}
+
+	if (!DeathMontage)
+	{
+		// UE_LOG(LogTemp, Error, TEXT("❌ AttackMontage is NULL"));
+		return;
+	}
+
+	// At this point, everything is good
+	UE_LOG(LogTemp, Warning, TEXT("✅ Playing Death Montage"));
+}
+	
+
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CombatTarget)
+	{
+		const double DistanceToTarget = (CombatTarget->GetActorLocation() - GetActorLocation()).Size();
+		if (DistanceToTarget > CombatRadius)
+		{
+			CombatTarget = nullptr;
+			if (NewHealthBarWidgetComponent)
+			{
+				NewHealthBarWidgetComponent->SetVisibility((false));
+			}
+		}
+	}
 
 }
 
@@ -94,6 +142,7 @@ void AEnemyBase::DirectionalHitReact(const FVector& ImpactPoint)
 	const FVector ActorLocation = GetActorLocation();
 	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, ActorLocation.Z);
 	const FVector ToHit = (ImpactLowered - ActorLocation);
+	const FVector ToHitNormalized = ToHit.GetSafeNormal();
     
 	// Ensure we're not dealing with a zero-length vector
 	if (ToHit.IsNearlyZero())
@@ -102,25 +151,25 @@ void AEnemyBase::DirectionalHitReact(const FVector& ImpactPoint)
 		return;
 	}
 
-	const FVector ToHitNormalized = ToHit.GetSafeNormal();
 	const double CosTheta = FVector::DotProduct(Forward, ToHitNormalized);
     
-	// Protect against invalid input to Acos
+	/* // Protect against invalid input to Acos
 	if (CosTheta < -1.0 || CosTheta > 1.0)
 	{
 		PlayHitReactMontage(FName("FromFront"));
 		return;
-	}
+	} */
 
-	double Theta = FMath::RadiansToDegrees(FMath::Acos(CosTheta));
-    
+	double Theta = FMath::Acos(CosTheta);
+    Theta = FMath::RadiansToDegrees(Theta);
 	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHitNormalized);
 	if (CrossProduct.Z < 0)
 	{
 		Theta *= -1.f;
 	}
 
-	FName Section;
+	FName Section("FromBack");
+	
 	if (Theta >= -45.f && Theta < 45.f)
 	{
 		Section = FName("FromFront");
@@ -133,10 +182,6 @@ void AEnemyBase::DirectionalHitReact(const FVector& ImpactPoint)
 	{
 		Section = FName("FromRight");
 	}
-	else
-	{
-		Section = FName("FromBack");
-	}
 
 	PlayHitReactMontage(Section);
 
@@ -145,6 +190,18 @@ void AEnemyBase::DirectionalHitReact(const FVector& ImpactPoint)
 
 	// UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + Forward * 60.f, 5.f, FColor::Red, 5.f);
 	// UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + ToHit * 60.f, 5.f, FColor::Green, 5.f);
+}
+
+float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	if (AttributeComponent && NewHealthBarWidgetComponent)
+	{
+		AttributeComponent->EnemiesReceiveMeleeDamage(DamageAmount);
+		NewHealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
+	CombatTarget = EventInstigator->GetPawn();
+	return DamageAmount;
 }
 
 void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint)
@@ -162,10 +219,19 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint)
 		return;
 	}
 
+	if (NewHealthBarWidgetComponent)
+	{
+		NewHealthBarWidgetComponent->SetVisibility((true));
+	}
+	
 	// Handle hit reaction
-	if (IsValid(HitReactMontage))
+	if (IsValid(HitReactMontage) && AttributeComponent && AttributeComponent->IsCharacterAlive())
 	{
 		DirectionalHitReact(ImpactPoint);
+	}
+	else if (IsValid(DeathMontage) && AttributeComponent && AttributeComponent->IsCharacterAlive() == false)
+	{
+		EnemyDies();
 	}
 
 	// Play sound if available
@@ -188,6 +254,17 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint)
 			GetActorRotation()
 		);
 	}
+}
+
+void AEnemyBase::EnemyDies()
+{
+	PlayDeathMontage();
+	if (NewHealthBarWidgetComponent)
+	{
+		NewHealthBarWidgetComponent->SetVisibility((false));
+	}
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetLifeSpan(3.f);
 }
 
 

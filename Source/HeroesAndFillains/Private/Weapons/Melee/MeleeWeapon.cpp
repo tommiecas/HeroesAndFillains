@@ -3,6 +3,7 @@
 
 #include "Weapons/Melee/MeleeWeapon.h"
 
+#include "NiagaraComponent.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
@@ -14,8 +15,10 @@
 #include "Weapons/WeaponTypes.h"
 #include "Weapons/Melee/ChaosSword.h"
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
@@ -60,7 +63,7 @@ void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	
 }
 
-void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
 	if (!InParent) return;
     
@@ -73,10 +76,30 @@ void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 			return;
 		}
         
-		
-        
+		SetOwner(NewOwner);
+        SetInstigator(NewInstigator);
 		AttachMeshToSocket(InParent, InSocketName);
         ItemState = EItemState::EIS_Equipped;
+		if (EquipSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+		}
+		if (AreaSphere)
+		{
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		if (EmbersEffect)
+		{
+			EmbersEffect->Deactivate();
+		}
+		AActor* OwnerCharacter = GetOwner(); // Typically set on equip
+
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this); // Ignore the weapon itself
+		if (OwnerCharacter)
+		{
+			TraceParams.AddIgnoredActor(OwnerCharacter); // ✅ Ignore the wielder!
+		}
 	}
 }
 
@@ -171,7 +194,7 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 		CurrentLocation,
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
-		IgnoreActors,
+		ActorsToIgnore,
 		EDrawDebugTrace::None,
 		Hit,
 		true
@@ -179,23 +202,26 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 	AActor* HitActor = Hit.GetActor(); // or whatever you're using
 	if (Hit.GetActor())
 	{
+		UGameplayStatics::ApplyDamage(Hit.GetActor(), MeleeDamage, GetInstigator()->GetController(), this,  UDamageType::StaticClass());
+
+		if (HitActor->GetInstigator() == GetInstigator())
+		{
+			return;
+		}
+		
 		if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
 		{
-			if (HitActor && HitActor->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+			if (HitInterface)
 			{
 				HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint);
 			}
-		}
-	}
-	if (bHit && !IgnoreActors.Contains(Hit.GetActor()))
-	{
-		IgnoreActors.Add(Hit.GetActor());
-		// Apply damage
+			IgnoreActors.AddUnique(Hit.GetActor());
 
+			CreateFields(Hit.ImpactPoint);
+
+		}
 		// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
 	}
-	CreateFields(Hit.ImpactPoint);
-	LastLocation = CurrentLocation;
 }
 
 void AMeleeWeapon::TickAttackTrace()

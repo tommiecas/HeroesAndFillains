@@ -647,7 +647,7 @@ void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase*
 
 void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach)
 {
-	OneHandedMeleeWeaponToAttach->Equip(Character->GetMesh(), FName("MeleeSocket"));
+	OneHandedMeleeWeaponToAttach->Equip(Character->GetMesh(), FName("MeleeSocket"), OneHandedMeleeWeaponToAttach->GetOwner(), Character);
 }
 
 void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHandedMeleeWeaponToAttach)

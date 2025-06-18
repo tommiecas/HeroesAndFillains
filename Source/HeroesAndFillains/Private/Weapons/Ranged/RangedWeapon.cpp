@@ -246,7 +246,7 @@ void ARangedWeapon::Fire(const FVector& HitTarget)
 	SpendRoundOfAmmo();
 }
 
-void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName,  AActor* NewOwner, APawn* NewInstigator)
 {
 	if (!InParent) return;
     
