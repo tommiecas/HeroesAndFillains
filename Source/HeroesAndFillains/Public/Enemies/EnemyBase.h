@@ -46,9 +46,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere)
-	class USceneComponent* Root;
-
 	/*********************************
 	***                            ***
 	***   PLAY MONTAGE FUNCTIONS   ***

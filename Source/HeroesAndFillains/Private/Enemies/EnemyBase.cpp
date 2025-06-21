@@ -10,6 +10,7 @@
 #include "NiagaraComponent.h"  
 #include "NiagaraFunctionLibrary.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "HAFComponents/AttributeComponent.h"
 #include "HUD/HealthBarWidget.h"
 #include "HUD/HealthBarWidgetComponent.h"
@@ -19,40 +20,32 @@ AEnemyBase::AEnemyBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Create root component
-	if (!Root)
-	{
-		Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-		if (Root)
-		{
-			SetRootComponent(Root);
-		}
-	}
-
+	RootComponent = GetCapsuleComponent();
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	
 	// Setup mesh component
 	USkeletalMeshComponent* MeshComponent = GetMesh();
 	if (MeshComponent)
 	{
-		MeshComponent->SetupAttachment(Root);
+		MeshComponent->SetupAttachment(GetCapsuleComponent());
 		MeshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-		MeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-		MeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		MeshComponent->SetGenerateOverlapEvents(true);
-	}
-
-	// Setup capsule component
-	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
-	if (CapsuleComp)
-	{
-		CapsuleComp->SetupAttachment(Root);
-		CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	}
 
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 	// Create the WidgetComponent
 	NewHealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
-	NewHealthBarWidgetComponent->SetupAttachment(RootComponent);
+	NewHealthBarWidgetComponent->SetupAttachment(GetCapsuleComponent());
 	NewHealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	NewHealthBarWidgetComponent->SetDrawSize(FVector2D(300.f, 25.f));
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	
 }
 
 void AEnemyBase::BeginPlay()

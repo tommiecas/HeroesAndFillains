@@ -11,8 +11,6 @@ AGnarled::AGnarled()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent->SetWorldScale3D(FVector(3.0f));
-
 }
 
 void AGnarled::BeginPlay()
@@ -50,8 +48,6 @@ void AGnarled::PlayDeathMontage()
 		{                                                       
 		case 0: Section = FName("Death1"); GnarledDeath = EGnarledDeath::EGD_Death1; break;
 		case 1: Section = FName("Death2"); GnarledDeath = EGnarledDeath::EGD_Death2; break;
-		case 2: Section = FName("Death3"); GnarledDeath = EGnarledDeath::EGD_Death3; break;
-		case 3: Section = FName("Death4"); GnarledDeath = EGnarledDeath::EGD_Death4; break;
 		default: Section = FName("Death1"); GnarledDeath = EGnarledDeath::EGD_Death1; break;
 		}                                                       
 
