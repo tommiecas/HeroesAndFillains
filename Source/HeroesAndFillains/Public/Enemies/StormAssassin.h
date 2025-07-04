@@ -6,14 +6,6 @@
 #include "Enemies/EnemyBase.h"
 #include "StormAssassin.generated.h"
 
-UENUM(BlueprintType)
-enum class EStormDeath : uint8
-{
-	ESD_Alive UMETA(DisplayName = "Alive"),
-	ESD_Death1 UMETA(DisplayName = "Death1"),
-	ESD_Death2 UMETA(DisplayName = "Death2"),
-	EGD_MAX UMETA(DisplayName = "DefaultMAX")
-};
 
 /**
  * 
@@ -28,14 +20,16 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void EnemyDies() override;
+	virtual void CharacterDies() override;
+	virtual void MeleeAttack() override;
+	virtual void AttackEnd() override;
+	virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
+
+
 
 protected:
 	virtual void BeginPlay() override;
-
-	UPROPERTY(BlueprintReadWrite)
-	EStormDeath StormDeath = EStormDeath::ESD_Alive;	
-
+	
 	/*********************************
 	***                            ***
 	***   PLAY MONTAGE FUNCTIONS   ***
@@ -43,7 +37,8 @@ protected:
 	*********************************/
 
 	virtual void PlayHitReactMontage(const FName& SectionName) override;
-	virtual void PlayDeathMontage() override;
+	virtual int32 PlayDeathMontage() override;
+	virtual int32 PlayMeleeAttackMontage() override;
 
 private:
 	

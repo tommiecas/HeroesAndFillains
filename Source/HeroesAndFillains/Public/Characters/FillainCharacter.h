@@ -4,15 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "HUD/OverheadWidget.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
+#include "Engine/DamageEvents.h"
 #include "GameMode/LobbyGameMode.h"
 #include "HAFComponents/CombatComponent.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "Weapons/WeaponBase.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 #include "FillainCharacter.generated.h"
 
 class AWeaponBase;
@@ -50,7 +53,7 @@ enum class EBattlePrepped : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
 
 UCLASS()
-class HEROESANDFILLAINS_API AFillainCharacter : public ACharacter, public IInteractWithCrosshairsInterface
+class HEROESANDFILLAINS_API AFillainCharacter : public ABaseCharacter, public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -58,24 +61,59 @@ public:
 	AFillainCharacter();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual void DirectionalHitReact(const FVector& ImpactPoint) override;
+
 	// virtual void Restart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void EquipOneHandedRangedWeapon(AWeaponBase* Weapon);
+	void EquipTwoHandedRangedWeapon(AWeaponBase* Weapon);
+	void EquipOneHandedMeleeWeapon(AWeaponBase* Weapon);
+	void EquipTwoHandedMeleeWeapon(AWeaponBase* Weapon);
+	void EquipWeapon(AWeaponBase* Weapon);
+	void ActivateCombatCharacter();
+	void InitializeBuffProperties();
+	void ConfigureLagCompensation();
 	virtual void OnRep_PlayerState() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
+	bool IsWeaponASword();
+	bool PlayMeleeMontageForMeleeWeapons();
+	void PlayRangedAnimationsForRangedWeapons(bool bAiming);
+	void AssignTypeOfRangedWeapon(AWeaponBase* Weapon, FName SectionName);
+	bool IsPlayerWeaponlessAndUnableToCombat();
 	virtual void OnRep_ReplicatedMovement() override;
 	void Eliminate(bool bPlayerLeftGame);
+	void HideSniperScope();
+	void ShowSniperScope();
+	void StartDissolveEffect();
+	void DisableAllComponents();
+	void SpawnEliminationBotEffect();
+	void PlayEliminationSound();
+	void DestroyCrown();
 	// void FinishElimination();
 	virtual void Destroyed() override;
+	void HideAttachedGrenade();
 	// void OnFillainDying(AFillainCharacter* InstigatorFillain, AFillainCharacter* DyingFillain, class AFillainPlayerController* InstigatorController);
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
 	void SwitchWeapon(AWeaponBase* NewWeapon);
+	ARangedWeapon* EquippedWeaponIsARangedWeapon();
+	AMeleeWeapon* EquippedWeaponIsAMeleeWeapon();
+
+	bool WeaponIsUnclaimedFirearm(ARangedWeapon* Ranged);
+	bool WeaponIsUnclaimedMeleeWeapon(AMeleeWeapon* Melee);
+
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-	EBattlePrepped BattlePrepped = EBattlePrepped::EBP_MAX;
+	EBattlePrepped BattlePrepped = EBattlePrepped::EBP_Defenseless;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	AMeleeWeapon* AcquiredMeleeWeapon;
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
@@ -99,8 +137,7 @@ public:
 	****    HAF COMPONENTS    *****
 	******************************/
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UCombatComponent* Combat;
+	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UBuffComponent* Buff;
@@ -127,29 +164,32 @@ public:
 	** PLAY MONTAGES **
 	******************/
 	void PlayFireMontage(bool bAiming);
-	void PlayHitReactMontage();
+	virtual void PlayHitReactMontage(const FName& SectionName) override;
 	void PlayEliminatedMontage();
 	void PlayReloadingMontage();
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
-	void PlayMeleeAttackMontage();
+	virtual int32 PlayMeleeAttackMontage() override;
+	void ResetToFightAgain();
 	void PlayArmDisarmMontage(const FName& SectionName);
 
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	virtual void AttackEnd() override;
+	bool IfPlayerIsReadyToFightAgain();
+	bool IfPlayerHasEquippedAWeapon();
 
-	bool CanAttack();
+	virtual bool CanAttack() override;
 
 	UPROPERTY()
 	class AProjectile* Projectile;
 
-	UFUNCTION()
-	void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
 	void SpawnDefaultWeapon();
+	void SpawnCrown();
+	void ActivateCrown();
 
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> HitCollisionBoxes;
@@ -194,8 +234,8 @@ public:
 	UInputAction* EquipAction;
 
 	void EquipButtonPressed();
-	void TryEquipOverlappedWeapon();
-	void ToggleWeaponStateIfEquipped();
+	void ToggleArmingAndDisarming();
+	bool IfPlayerAlreadyEquippedAnyWeapon();
 
 	/**************
 	** Crouching **
@@ -203,6 +243,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* CrouchAction;
 
+	bool PlayerHasSword();
 	void CrouchButtonPressed();
 
 	/**********************
@@ -215,6 +256,7 @@ public:
 	void AimButtonReleased();
 	void AimOffset(float DeltaTime);
 	void CalculateAO_Pitch();
+	bool SetTurningInPlaceEnum();
 	void SimProxiesTurn();
 
 	/************************
@@ -228,6 +270,8 @@ public:
 	void AttackButtonReleased();
 
 	void FireButtonPressed();
+	bool PlayerNotUsingRangedOrMeleeWeapons();
+	bool PlayerUsingMeleeWeapons();
 	void FireButtonReleased();
 
 	/*************************
@@ -237,6 +281,8 @@ public:
 	UInputAction* ReloadAction;
 
 	void ReloadButtonPressed();
+	bool PlayerNotUsingRangedWeapons();
+	bool PlayerUsingRangedWeapons();
 
 	/*************************
 	** Throwing the Grenade **
@@ -245,12 +291,13 @@ public:
 	UInputAction* ThrowAction;
 
 	void GrenadeButtonPressed();
+	void CalculateShieldDamage(float Damage, float& DamageToHealth);
+	void DetermineRolesOnPlayerDeath(AActor* DamagedPawn, AController* InstigatorController);
 
 	/*************************
 	**  Swinging the Stick  **
 	*************************/
 	
-	void MeleeAttack();
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeaponBase* CharactersWeapon;
@@ -265,10 +312,18 @@ public:
 	void FinishEquipping();
 
 	bool CanDisarm();
+	bool IfPlayerIsDisarmed();
 	bool CanArm();
-	
+	bool bIsTogglingWeapon = false;
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToSpineSocket();
+
 	UFUNCTION(BlueprintCallable)
 	void Disarm();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToMeleeSocket();
 
 	UFUNCTION(BlueprintCallable)
 	void Arm();
@@ -276,10 +331,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon Properties")
 	void OnArmDisarmMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+    virtual void MeleeAttack() override;
 
+	/******************
+	** Player Health **
+	******************/
 
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxHealth = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health(float LastHealth);
+
+	UPROPERTY()
+	class AHAFGameMode* HAFGameMode;
+
+	bool bIsEliminated = false;
+
+	FTimerHandle EliminationTimer;
+
+	void EliminationTimerFinished();
+
+	UPROPERTY(EditDefaultsOnly)
+	float EliminationDelay = 3.f;
 
 
 protected:
@@ -359,11 +436,20 @@ protected:
 	void SetSpawnPoint();
 	void OnPlayerStateInitialized();
 
-	
 
-	UFUNCTION(BlueprintCallable)
-	void AlreadyEquippedSoArmDisarmInstead(AWeaponBase* AnyWeapon);
 	
+	UFUNCTION(BlueprintCallable)
+	bool WeaponIsRanged();
+	bool WeaponIsMelee();
+	bool ItemIsPickup();
+	void SetAllWeaponEnumsForRanged();
+	void SetAllWeaponEnumsForMelee();
+	void SetAllItemEnumsForPickup();
+	void DisarmOneHandedWeapon(AMeleeWeapon* WeaponInHand);
+	void DisarmTwoHandedWeapon(AMeleeWeapon* WeaponInHand);
+	void ArmOneHandedWeapon(AMeleeWeapon* WeaponInHand);
+	void ArmTwoHandedWeapon(AMeleeWeapon* WeaponInHand);
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
@@ -380,17 +466,11 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeaponBase* OverlappingWeapon;
 
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingPickup)
-	class AAmmoPickup* OverlappingPickup;
-
 	UFUNCTION()
 	void OnRep_OverlappingItem(AItem* LastItem);
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
-
-	UFUNCTION()
-	void OnRep_OverlappingPickup(AAmmoPickup* LastPickup);
 
 	UPROPERTY(VisibleInstanceOnly)
 	class AMeleeWeapon* MeleeWeaponOverlapped;
@@ -402,7 +482,7 @@ private:
 	AWeaponBase* WeaponOverlapped;
 
 	UFUNCTION(Server, Reliable)
-	void ServerEquipButtonPressed();
+	void ServerEquipButtonPressed(AWeaponBase* Weapon);
 
 	float AO_Yaw;
 	float InterpAO_Yaw;
@@ -421,9 +501,6 @@ private:
 	class UAnimMontage* FireWeaponMontage;
 
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
-	class UAnimMontage* HitReactMontage;
-
-	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
 	class UAnimMontage* EliminatedMontage;
 
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
@@ -434,9 +511,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* SwapMontage;
-
-	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
-	UAnimMontage* AttackMontage;
+	
 
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
 	UAnimMontage* ArmDisarmMontage;
@@ -455,19 +530,6 @@ private:
 	float CalculateSpeed();
 
 	/******************
-	** Player Health **
-	******************/
-
-	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
-	float Health = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxHealth = 100.f;
-
-	UFUNCTION()
-	void OnRep_Health(float LastHealth);
-
-	/******************
 	** Player Shield **
 	******************/
 
@@ -482,14 +544,6 @@ private:
 
 
 
-	bool bIsEliminated = false;
-
-	FTimerHandle EliminationTimer;
-
-	void EliminationTimerFinished();
-
-	UPROPERTY(EditDefaultsOnly)
-	float EliminationDelay = 3.f;
 
 	/********************
 	** Dissolve Effect **
@@ -554,12 +608,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class UNiagaraComponent* CrownComponent;
-	
-	AActor* CachedDamagedPawn;
-	float CachedDamage;
-	const UDamageType* CachedDamageType;
-	AController* CachedInstigatorController;
-	AActor* CachedDamageCauser;
 
 	/************
 	** Grenade **
@@ -573,23 +621,20 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AWeaponBase> DefaultWeaponClass;
 
-	UPROPERTY()
-	class AHAFGameMode* HAFGameMode;
-
 public:
-	void SetOverlappingPickup(AAmmoPickup* Pickup);
-	void SetOverlappingWeapon(AWeaponBase* Weapon);
 	void SetOverlappingItem(AItem* Item);
+	void SetOverlappingWeapon(AWeaponBase* Weapon);
 	bool IsWeaponEquipped();
 	bool IsAiming();
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AAmmoPickup* GetPickupThatOverlaps(AAmmoPickup* PickupThatOverlaps);
 	AItem* GetItemThatOverlaps(AItem* ItemThatOverlaps);
 	AWeaponBase* GetWeaponThatOverlaps(AWeaponBase* WeaponThatOverlaps);
+	class AAmmoPickup* GetPickupThatOverlaps(class AAmmoPickup* PickupThatOverlaps);
 	AWeaponBase* GetEquippedWeapon();
+	FORCEINLINE FString GetRangedWeaponName() const { return Combat->EquippedRangedWeapon->RangedWeaponName; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -613,8 +658,8 @@ public:
 	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
-	bool IsWieldingTheSword() const;
 	ETeam GetTeam();
-	void SetWieldingTheSword(bool bWielding);
+	FORCEINLINE AItem* GetOverlappingItem() const { return OverlappingItem; }
+	FORCEINLINE AWeaponBase* GetOverlappingWeapon() const { return OverlappingWeapon; }
 
 };

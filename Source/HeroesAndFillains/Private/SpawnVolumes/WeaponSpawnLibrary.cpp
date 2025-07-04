@@ -5,6 +5,7 @@
 #include "Weapons/Ranged/ProjectileWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 AProjectileWeapon* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldContextObject, TSubclassOf<AProjectileWeapon> WeaponClass, FVector SpawnLocation, FRotator SpawnRotation)
 {
@@ -27,7 +28,8 @@ AProjectileWeapon* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldContex
         {
             SpawnedWeapon->AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
             SpawnedWeapon->AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-            SpawnedWeapon->AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+            SpawnedWeapon->AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+            SpawnedWeapon->AreaSphere->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
             SpawnedWeapon->AreaSphere->SetGenerateOverlapEvents(true);
         }
     }

@@ -6,6 +6,7 @@
 #include "GeometryCollection/GeometryCollectionComponent.h"
 #include "Items/Treasure.h"
 #include "Components/CapsuleComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 ABreakableActorBase::ABreakableActorBase()
 {
@@ -15,12 +16,14 @@ ABreakableActorBase::ABreakableActorBase()
 	SetRootComponent(GeometryCollection);
 	GeometryCollection->SetGenerateOverlapEvents(true);
 	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	GeometryCollection->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Ignore);
 
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	Capsule->SetupAttachment(RootComponent);
 	Capsule->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	Capsule->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block); 
+	Capsule->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); 
+	Capsule->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); 
+
 }
 
 void ABreakableActorBase::BeginPlay()

@@ -42,7 +42,7 @@ public:
 
 	UFUNCTION()
 	void SetAmmoPickupInformationText(UWidgetComponent* AmmoPickupWidgetComponent, AAmmoPickup* AmmoPickup);
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup Info")
 	FString AmmoName;
 

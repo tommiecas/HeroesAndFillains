@@ -26,6 +26,8 @@ class HEROESANDFILLAINS_API AItem : public AActor
 public:	
 	AItem();
 	virtual void Tick(float DeltaTime) override;
+	virtual void PostInitializeComponents() override;
+
 
 	virtual void ShowPickupAndInfoWidgets(bool bShow);
 
@@ -65,23 +67,17 @@ public:
 
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* Root;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USkeletalMeshComponent* WeaponMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* PickupMesh;
+	UStaticMeshComponent* ItemMesh;
 	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float RunningTime;
 
-	UPROPERTY(VisibleAnywhere, Category = "ItemProperties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* AreaSphere;
-
+	
 	UPROPERTY()
 	class UItemInfoWidgetBase* ItemInfoWidgetInstance;
 	
@@ -136,9 +132,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
 	ERangedType RangedType = ERangedType::ERT_None;
 
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	class UNiagaraComponent* EmbersEffect;
+	
+protected:
+	
 private:
 	
 };

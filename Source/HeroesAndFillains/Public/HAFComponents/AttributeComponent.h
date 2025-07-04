@@ -15,21 +15,25 @@ class HEROESANDFILLAINS_API UAttributeComponent : public UActorComponent
 public:	
 	UAttributeComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void EnemiesReceiveMeleeDamage(float Damage);
+	int32 CharactersReceiveMeleeDamage(float Damage);
 	float GetHealthPercent();
 	bool IsCharacterAlive();
 
-protected:
-	virtual void BeginPlay() override;
-
-private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float Health;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float MaxHealth;
+	
+protected:
+	virtual void BeginPlay() override;
+
+private:
+
 
 public:
+	FORCEINLINE float GetHealth() const { return Health; }
+	
 
 
 		

@@ -17,11 +17,6 @@ void UAttributeComponent::BeginPlay()
 	
 }
 
-void UAttributeComponent::EnemiesReceiveMeleeDamage(float Damage)
-{
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-}
-
 float UAttributeComponent::GetHealthPercent()
 {
 	return Health / MaxHealth;
@@ -37,5 +32,12 @@ void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+}
+
+int32 UAttributeComponent::CharactersReceiveMeleeDamage(float Damage)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("🧪 Before: Health = %f, After = %f"), Health, FMath::Clamp(Health - Damage, 0.f, MaxHealth));
+	return Health;
 }
 

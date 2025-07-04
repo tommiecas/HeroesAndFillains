@@ -25,38 +25,31 @@
 #include "Components/WidgetComponent.h"
 #include "HUD/PickupGearWidget.h"
 #include "NiagaraComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 AWeaponBase::AWeaponBase()
 	: Super() 
 {
 	PrimaryActorTick.bCanEverTick = false;
-
+	
 	// ✅ Then create and attach the mesh
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(Root);
-
+	WeaponMesh->SetupAttachment(RootComponent);
+	
+	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 	// Reset transforms
 	WeaponMesh->SetRelativeLocation(FVector::ZeroVector);
 	WeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
 	WeaponMesh->SetRelativeScale3D(InitialMeshScale);
-	
-	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
 	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-	
-	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
-	AreaSphere->SetupAttachment(Root);
-	AreaSphere->SetSphereRadius(200.f);
-	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	AreaSphere->SetGenerateOverlapEvents(true);
 
 	PickupGearWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponent"));
-	PickupGearWidgetComponent->SetupAttachment(Root);
+	PickupGearWidgetComponent->SetupAttachment(RootComponent);
 	PickupGearWidgetComponent->SetVisibility(false);
 	PickupGearWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
 	PickupGearWidgetComponent->SetDrawSize(FVector2D(300.f, 50.f));
@@ -71,7 +64,7 @@ AWeaponBase::AWeaponBase()
 	PickupGearWidgetComponent->TranslucencySortPriority = 5;
 	
 	ItemInfoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponent"));
-	ItemInfoWidgetComponent->SetupAttachment(Root);
+	ItemInfoWidgetComponent->SetupAttachment(RootComponent);
 	ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
 	ItemInfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
 	ItemInfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
@@ -86,7 +79,7 @@ AWeaponBase::AWeaponBase()
 	ItemInfoWidgetComponent->TranslucencySortPriority = 5;
 	
 	HoverLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoverLight"));
-	HoverLight->SetupAttachment(Root);
+	HoverLight->SetupAttachment(RootComponent);
 
 	// Settings
 	HoverLight->SetIntensity(2000.f);  // How bright
@@ -97,7 +90,7 @@ AWeaponBase::AWeaponBase()
 	HoverLight->SetVisibility(true);
 
 	HoverDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("HoverDecal"));
-	HoverDecal->SetupAttachment(Root);
+	HoverDecal->SetupAttachment(RootComponent);
 
 	// Settings 
 	HoverDecal->DecalSize = FVector(64.f, 128.f, 128.f); // Flat and wide
@@ -167,8 +160,6 @@ void AWeaponBase::BeginPlay()
 	if (ItemInfoWidgetComponent)
 	{
 		ItemInfoWidgetComponent->UpdateComponentToWorld();
-
-		
 	}
 
 	UPickupGearWidget* PickupWidget = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
@@ -182,19 +173,17 @@ void AWeaponBase::BeginPlay()
 	{
 		InfoWidget->OwningWidgetComponent = ItemInfoWidgetComponent;
 	}
+	PickupGearWidgetComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	PickupGearWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PickupGearWidgetComponent->SetGenerateOverlapEvents(false);
+
+	ItemInfoWidgetComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ItemInfoWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ItemInfoWidgetComponent->SetGenerateOverlapEvents(false);
 	
 	ItemInfoWidgetComponent->SetVisibility(false);
 	PickupGearWidgetComponent->SetVisibility(false);
-
-	if (HasAuthority())
-	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	}
 	
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
-	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
-
 	if (ItemInfoWidgetComponent)
 	{
 		ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
@@ -224,6 +213,10 @@ void AWeaponBase::BeginPlay()
     {
         ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
     }
+	UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
+	WeaponBox->SetRelativeRotation(FRotator::ZeroRotator); // or whatever it needs
+	WeaponBox->SetUsingAbsoluteRotation(true); // Will ignore parent rotation
+	SetHandsNeeded(this);
 }
 
 void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -328,8 +321,71 @@ void AWeaponBase::AttachMeshToSocket(USceneComponent* InParent, FName InSocketNa
 	WeaponMesh->AttachToComponent(InParent, AttachmentRules, InSocketName);
 }
 
+void AWeaponBase::SetHandsNeeded(AWeaponBase* WeaponBase)
+{
+	if (WeaponBase->WeaponType == EWeaponType::EWT_RocketLauncher || WeaponBase->WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponBase->WeaponType == EWeaponType::EWT_SniperRifle || WeaponBase->WeaponType == EWeaponType::EWT_Shotgun || WeaponBase->WeaponType == EWeaponType::EWT_ChaosSword)
+	{
+		WeaponBase->HandsNeeded = EHandsNeeded::EHN_TwoHandedWeapon;
+	}
+	if (WeaponBase->WeaponType == EWeaponType::EWT_AssaultRifle || WeaponBase->WeaponType == EWeaponType::EWT_SubmachineGun || WeaponBase->WeaponType == EWeaponType::EWT_Pistol || WeaponBase->WeaponType == EWeaponType::EWT_RubySword || WeaponBase->WeaponType == EWeaponType:: EWT_SapphireSword || WeaponBase->WeaponType == EWeaponType:: EWT_SandSword || WeaponBase->WeaponType == EWeaponType:: EWT_SoulSword || WeaponBase->WeaponType == EWeaponType:: EWT_ShadowSword || WeaponBase->WeaponType == EWeaponType:: EWT_SkyMace)
+	{
+		WeaponBase->HandsNeeded = EHandsNeeded::EHN_OneHandedWeapon;
+	}
+}
+
+void AWeaponBase::PlayEquipSound()
+{
+	if (EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+	}
+}
+
+void AWeaponBase::DisableSphereCollision()
+{
+	if (AreaSphere)
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AWeaponBase::DeactivateEmbers()
+{
+	if (EmbersEffect)
+	{
+		EmbersEffect->Deactivate();
+	}
+}
+
+void AWeaponBase::EnableCustomDepth(bool bEnable)
+{
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+}
+
 void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());
+
+	if (!WeaponMesh)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh is null on %s"), *GetName());
+		return;
+	}
+
+	if (!InParent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ InParent is null on %s"), *GetName());
+		return;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());
 	if (!WeaponMesh)
 	{
 		return;
@@ -339,7 +395,7 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	{
 		return;
 	}
-
+	
 	// Get the socket transform before attachment for logging
 	USkeletalMeshComponent* ParentMesh = Cast<USkeletalMeshComponent>(InParent);
 	if (ParentMesh)
@@ -350,28 +406,55 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 		//	*SocketTransform.GetLocation().ToString(),
 		//	*SocketTransform.GetRotation().Rotator().ToString());
 	}
+	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	AttachToComponent(InParent, AttachmentRules, InSocketName);
 
-	AttachMeshToSocket(InParent, InSocketName);
+	if (!WeaponMesh->IsAttachedTo(InParent))
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh not attached after Equip!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("✅ WeaponMesh is attached to %s"), *InParent->GetName());
+	}
+	
 	ItemState = EItemState::EIS_Equipped;
-	if (EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
-	}
-	if (AreaSphere)
-	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	if (EmbersEffect)
-	{
-		EmbersEffect->Deactivate();
-	}
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
+	AttachMeshToSocket(InParent, InSocketName);
+	PlayEquipSound();
+	DisableSphereCollision();
+	DeactivateEmbers();
+	// Hide widgets
+	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(false);
+	if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(false);
 
-	// Log the weapon transform after attachment
-	FTransform WeaponTransform = WeaponMesh->GetComponentTransform();
-	// UE_LOG(LogTemp, Warning, TEXT("Weapon transform after attachment - Location: %s, Rotation: %s, Scale: %s"),
-		//*WeaponTransform.GetLocation().ToString(),
-		// eaponTransform.GetRotation().Rotator().ToString(),
-		// *WeaponTransform.GetScale3D().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("✔️ Weapon::Equip called on %s, attaching to socket %s"), *GetName(), *InSocketName.ToString());
+
+	// Stop float/spin effects
+	bShouldHover = false;
+	bShouldFloatSpin = false;
+
+	// Clean up collision
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (ItemMesh)
+	{
+		ItemMesh->SetVisibility(false, true); // hide it and all children
+	}
+	
+	AActor* OwnerCharacter = GetOwner(); // Typically set on equip
+
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this); // Ignore the weapon itself
+	if (OwnerCharacter)
+	{
+		TraceParams.AddIgnoredActor(OwnerCharacter); // ✅ Ignore the wielder!
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Attaching %s to %s at socket %s"), *GetName(), *InParent->GetName(), *InSocketName.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Post-Attach Location: %s"), *GetActorLocation().ToString());
+	SetEquippedWeaponState();
 }
 
 void AWeaponBase::SetEquippedWeaponState()
@@ -381,7 +464,7 @@ void AWeaponBase::SetEquippedWeaponState()
 		WeaponState = EWeaponState::EWS_EquippedTwoHanded;
 		OnWeaponStateSet();
 	}
-	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword)
+	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword || WeaponType == EWeaponType:: EWT_SandSword || WeaponType == EWeaponType:: EWT_SoulSword || WeaponType == EWeaponType:: EWT_ShadowSword || WeaponType == EWeaponType:: EWT_SkyMace)
 	{
 		WeaponState = EWeaponState::EWS_EquippedOneHanded;
 		OnWeaponStateSet();
@@ -473,15 +556,16 @@ void AWeaponBase::OnDropped()
 	{
 		AreaSphere = NewObject<USphereComponent>(this, TEXT("Area Sphere"));
 		AreaSphere->RegisterComponent();
-		AreaSphere->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		AreaSphere->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	}
 	if (HasAuthority())
 	{
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
+		AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
 		AreaSphere->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 	}
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Enemy, ECollisionResponse::ECR_Overlap);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 	// Delay visual effects
@@ -509,7 +593,7 @@ void AWeaponBase::OnDropped()
 		if (PickupGearWidgetComponent)
 		{
 			PickupGearWidgetComponent->RegisterComponent();
-			PickupGearWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			PickupGearWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			PickupGearWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
 			PickupGearWidgetComponent->InitWidget();
 			PickupGearWidgetComponent->SetVisibility(true);
@@ -533,7 +617,7 @@ void AWeaponBase::OnDropped()
 		if (ItemInfoWidgetComponent)
 		{
 			ItemInfoWidgetComponent->RegisterComponent();
-			ItemInfoWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			ItemInfoWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			ItemInfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
 			ItemInfoWidgetComponent->InitWidget();
 			ItemInfoWidgetComponent->SetVisibility(true);

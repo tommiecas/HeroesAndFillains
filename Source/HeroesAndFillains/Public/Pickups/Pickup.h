@@ -18,6 +18,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void Destroyed() override;
 	virtual void EnableCustomDepth(bool bEnable) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Properties")
+	UStaticMeshComponent* PickupMesh;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -29,12 +32,12 @@ protected:
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult
-	);
+	) override;
 
 	virtual void OnSphereEndOverlap(
 		class UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor, 
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	
 	UPROPERTY(EditAnywhere)
 	float BaseTurnRate = 45.f;

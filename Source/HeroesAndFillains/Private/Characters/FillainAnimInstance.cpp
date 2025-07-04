@@ -39,7 +39,6 @@ void UFillainAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	TurningInPlace = FillainCharacter->GetTurningInPlace();
 	bRotateRootBone = FillainCharacter->ShouldRotateRootBone();
 	bIsEliminated = FillainCharacter->IsEliminated();
-	bWieldingTheSword = FillainCharacter->IsWieldingTheSword();
 
 	//Offset Yaw for Strafing
 	FRotator AimRotation = FillainCharacter->GetBaseAimRotation();

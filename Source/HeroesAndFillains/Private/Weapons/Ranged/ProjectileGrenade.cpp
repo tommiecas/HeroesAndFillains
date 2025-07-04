@@ -9,7 +9,7 @@
 AProjectileGrenade::AProjectileGrenade()
 {
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Grenade Mesh"));
-	ProjectileMesh->SetupAttachment(RootComponent);
+	SetRootComponent(ProjectileMesh);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));

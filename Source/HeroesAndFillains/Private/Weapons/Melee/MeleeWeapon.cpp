@@ -19,25 +19,26 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
+#include "Enemies/EnemyBase.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
 {
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
-	WeaponBox->SetupAttachment(Root);
+	WeaponBox->SetupAttachment(WeaponMesh, TEXT("RootSocket"));
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-
+	WeaponBox->SetBoxExtent(FVector(10.f, 50.f, 50.f)); // exaggerate to test
+	
 	TracePointHilt = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointHilt"));
-	TracePointHilt->SetupAttachment(WeaponMesh);
+	TracePointHilt->SetupAttachment(WeaponBox);
 
 	TracePointMid = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointMid"));
-	TracePointMid->SetupAttachment(WeaponMesh);
+	TracePointMid->SetupAttachment(WeaponBox);
 
 	TracePointTip = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointTip"));
-	TracePointTip->SetupAttachment(WeaponMesh);
-
+	TracePointTip->SetupAttachment(WeaponBox);
 }
 
 void AMeleeWeapon::EnableCustomDepth(bool bEnable)
@@ -49,6 +50,8 @@ void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 3.f);
+    UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
 }
 
 void AMeleeWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -65,63 +68,28 @@ void AMeleeWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 
 void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
-	if (!InParent) return;
-    
-	// Make sure we're attaching to the skeletal mesh
-	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
-	{
-		if (!SkeletalMesh->DoesSocketExist(InSocketName))
-		{
-			// UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on parent mesh"), *InSocketName.ToString());
-			return;
-		}
-        
-		SetOwner(NewOwner);
-        SetInstigator(NewInstigator);
-		AttachMeshToSocket(InParent, InSocketName);
-        ItemState = EItemState::EIS_Equipped;
-		if (EquipSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
-		}
-		if (AreaSphere)
-		{
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		if (EmbersEffect)
-		{
-			EmbersEffect->Deactivate();
-		}
-		AActor* OwnerCharacter = GetOwner(); // Typically set on equip
+	Super::Equip(InParent, InSocketName, NewOwner, NewInstigator);
 
-		FCollisionQueryParams TraceParams;
-		TraceParams.AddIgnoredActor(this); // Ignore the weapon itself
-		if (OwnerCharacter)
-		{
-			TraceParams.AddIgnoredActor(OwnerCharacter); // ✅ Ignore the wielder!
-		}
+	// Set melee-specific collision responses
+	if (GetOwner()->IsA(AFillainCharacter::StaticClass()))
+	{
+		WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+	}
+
+	// ✅ Disable collision until attack
+	if (WeaponBox)
+	{
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
+
 
 void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
 	Super::AttachMeshToSocket(InParent, InSocketName);
 	
-	if (!WeaponMesh || !InParent)
-	{
-		return;
-	}
-
-	
-
-	FAttachmentTransformRules TransformRules(
-		EAttachmentRule::SnapToTarget,  // Location
-		EAttachmentRule::SnapToTarget,  // Rotation
-		EAttachmentRule::SnapToTarget,  // Scale - Changed from KeepWorld to SnapToTarget
-		true
-	);
-
-	WeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
 void AMeleeWeapon::OnEquippedOneHanded()
@@ -165,15 +133,44 @@ void AMeleeWeapon::OnEquippedSecondary()
 
 void AMeleeWeapon::BeginAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("BeginAttack — Tracing Started. Time: %f"), GetWorld()->GetTimeSeconds());
 	bIsTracing = true;
 
+	IgnoreActors.Empty();
+
+	for (AActor* Ignored : IgnoreActors)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
+	}
+	
 	LastTraceLocationTip  = TracePointTip->GetComponentLocation();
 	LastTraceLocationMid  = TracePointMid->GetComponentLocation();
 	LastTraceLocationHilt = TracePointHilt->GetComponentLocation();
 
 	IgnoreActors.Empty();
-
+	for (AActor* Ignored : IgnoreActors)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
+	}
 	// UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
+}
+
+void AMeleeWeapon::ImplementLineTraceGetHit(FHitResult Hit)
+{
+	if (AFillainCharacter* HitChar = Cast<AFillainCharacter>(Hit.GetActor()))
+	{
+		HitChar->CachedDamageAmount = MeleeDamage;
+		HitChar->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
+		HitChar->CachedEventInstigator = GetInstigator()->GetController();
+		HitChar->CachedDamageCauser = this;
+	}
+	if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
+	{
+		if (HitInterface)
+		{
+			HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint);
+		}
+	}
 }
 
 void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint)
@@ -200,26 +197,46 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 		true
 	);
 	AActor* HitActor = Hit.GetActor(); // or whatever you're using
+	
+	if (HitActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HitActor Name: %s"), *HitActor->GetName());
+	}
+	
 	if (Hit.GetActor())
 	{
-		UGameplayStatics::ApplyDamage(Hit.GetActor(), MeleeDamage, GetInstigator()->GetController(), this,  UDamageType::StaticClass());
+		if (AFillainCharacter* HitCharacter = Cast<AFillainCharacter>(HitActor))
+		{
+			HitCharacter->CachedDamageAmount = MeleeDamage;
+			HitCharacter->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
+			HitCharacter->CachedEventInstigator = GetInstigator()->GetController();
+			HitCharacter->CachedDamageCauser = this;
 
+			HitCharacter->Execute_GetHit(HitCharacter, Hit.ImpactPoint);
+		}
+		if (AEnemyBase* HitEnemy = Cast<AEnemyBase>(HitActor))
+		{
+			HitEnemy->CachedDamageAmount = MeleeDamage;
+			HitEnemy->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
+			HitEnemy->CachedEventInstigator = GetInstigator()->GetController();
+			HitEnemy->CachedDamageCauser = this;
+		}
 		if (HitActor->GetInstigator() == GetInstigator())
 		{
 			return;
 		}
+
+		UE_LOG(LogTemp, Warning, TEXT("🎯 Melee hit %s | Instigator: %s | Owner: %s"),
+		*GetNameSafe(HitActor),
+		*GetNameSafe(GetInstigator()),
+		*GetNameSafe(GetOwner()));
 		
-		if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
-		{
-			if (HitInterface)
-			{
-				HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint);
-			}
-			IgnoreActors.AddUnique(Hit.GetActor());
+		ImplementLineTraceGetHit(Hit);
+		IgnoreActors.AddUnique(Hit.GetActor());
 
-			CreateFields(Hit.ImpactPoint);
+		CreateFields(Hit.ImpactPoint);
 
-		}
+		
 		// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
 	}
 }
@@ -251,6 +268,10 @@ void AMeleeWeapon::EndAttack()
 		{
 			FillainChar->Combat->ActionState = EActionState::EAS_Unoccupied;
 			// UE_LOG(LogTemp, Warning, TEXT("🎮 ActionState set to Unoccupied"));
+		}
+		else if (AEnemyBase* EnemyOwner = Cast<AEnemyBase>(GetOwner()))
+		{
+			EnemyOwner->EnemyState = EEnemyState::EES_Patrolling;
 		}
 	}
 }

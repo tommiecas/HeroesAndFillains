@@ -8,26 +8,22 @@
 #include "Kismet/GameplayStatics.h"
 
 ATreasure::ATreasure()
+	: Super()
 {
-	// DO NOT re-create Root. It's already created in AItem
-	check(Root); // Safe to use since AItem sets it as RootComponent
+	
+	
+}
 
-	// Create and attach TreasureMesh
-	TreasureMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TreasureMesh"));
-	TreasureMesh->SetupAttachment(Root); // ✅ Use inherited Root
-
-	// Configure inherited AreaSphere (created in AItem)
-	check(AreaSphere); // Ensure it was initialized in AItem
-
-	AreaSphere->SetSphereRadius(200.f);
-	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	AreaSphere->SetGenerateOverlapEvents(true);
-	AreaSphere->SetCollisionProfileName("OverlapAllDynamic");
-	AreaSphere->SetCollisionObjectType(ECC_Pawn);
+void ATreasure::BeginPlay()
+{
+	Super::BeginPlay();
 
 	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ATreasure::OnSphereOverlap);
+
+}
+void ATreasure::EnableCustomDepth(bool bEnable)
+{
+	Super::EnableCustomDepth(bEnable);
 }
 
 void ATreasure::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

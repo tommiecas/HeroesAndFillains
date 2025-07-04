@@ -7,28 +7,16 @@
 #include "Characters/FillainCharacter.h"
 #include "HUD/PickupWidgetComponent.h"
 #include "Components/WidgetComponent.h"  
+#include "HeroesAndFillains/HeroesAndFillains.h"
 #include "HUD/PickupGearWidget.h"
 
 ASword::ASword()  
 {  
     // Create and setup SwordMesh with null check
     SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
-    if (SwordMesh && RootComponent)
-    {
-        SwordMesh->SetupAttachment(RootComponent);
-        SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);  
-        SwordMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);  
-    }
-
-    // Setup AreaSphere with null checks
-    if (GetAreaSphere() && RootComponent)
-    {
-        GetAreaSphere()->SetupAttachment(RootComponent);
-        GetAreaSphere()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-        GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        GetAreaSphere()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-        GetAreaSphere()->SetGenerateOverlapEvents(true);
-    }
+    SetRootComponent(SwordMesh);
+    SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);  
+    SwordMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);  
 }
 
 void ASword::WeaponDropped()
@@ -51,7 +39,6 @@ void ASword::ResetSword()
     AFillainCharacter* SwordWielder = Cast<AFillainCharacter>(GetOwner());
     if (SwordWielder)
     {
-        SwordWielder->SetWieldingTheSword(false);
         SwordWielder->SetOverlappingWeapon(nullptr);
         SwordWielder->UnCrouch();
     }
@@ -70,7 +57,7 @@ void ASword::ResetSword()
     if (AreaSpherePtr)
     {
         AreaSpherePtr->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        AreaSpherePtr->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+        AreaSpherePtr->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
     }
 
     SetOwner(nullptr);
@@ -129,7 +116,7 @@ void ASword::OnDropped()
         if (AreaSphere)
         {
             AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-            AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
+            AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
         }
         else
         {
@@ -142,8 +129,8 @@ void ASword::OnDropped()
         SwordMesh->SetSimulatePhysics(true);
         SwordMesh->SetEnableGravity(true);
         SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-        SwordMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+        SwordMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+        SwordMesh->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Ignore);
         SwordMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
         
         SwordMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);

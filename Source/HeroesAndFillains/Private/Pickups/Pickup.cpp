@@ -8,6 +8,8 @@
 #include "Weapons/WeaponTypes.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 // Sets default values
 APickup::APickup()
@@ -16,24 +18,16 @@ APickup::APickup()
 	bReplicates = true;
 
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh")); 
-	PickupMesh->SetupAttachment(Root);
-	PickupMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-	PickupMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	SetRootComponent(PickupMesh);
+	PickupMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	PickupMesh->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
 	PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
 	PickupMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-
-	OverlapSphere = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
-	OverlapSphere->SetupAttachment(Root);
-	OverlapSphere->SetSphereRadius(150.f);
-	OverlapSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OverlapSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	OverlapSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	OverlapSphere->AddLocalOffset(FVector(0.f, 0.f, 85.f));
 	
 	PickupEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponent"));
-	PickupEffectComponent->SetupAttachment(Root);
+	PickupEffectComponent->SetupAttachment(RootComponent);
 }
 
 void APickup::BeginPlay()

@@ -23,16 +23,18 @@ public:
 	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator) override;
 	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName) override;
 	virtual void BeginAttack();
+	virtual void ImplementLineTraceGetHit(FHitResult Hit);
 	virtual void TickAttackTrace();
 	virtual void TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint);
 	virtual void EndAttack();
 
+	
 	UFUNCTION()
 	void SetEquippedMeleeWeaponState();
 
 	UFUNCTION(BlueprintCallable)
 	void SetMeleeWeaponInformationText(UWidgetComponent* MeleeWidgetComponent, AMeleeWeapon* MeleeWeapon);
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
 	FString MeleeWeaponName;
 
@@ -84,8 +86,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
 	float MeleeDamage;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class UBoxComponent* WeaponBox;
+
 	
 	FVector LastTraceLocationTip;
 	FVector LastTraceLocationMid;
@@ -102,7 +103,6 @@ public:
 	FORCEINLINE USceneComponent* GetTracePointTip() const { return TracePointTip; }
 	FORCEINLINE USceneComponent* GetTracePointMid() const { return TracePointMid; }
 	FORCEINLINE USceneComponent* GetTracePointHilt() const { return TracePointHilt; }
-	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE FVector GetLastTraceLocationTip() const { return LastTraceLocationTip; }
 	FORCEINLINE FVector GetLastTraceLocationMid() const { return LastTraceLocationMid; }
 	FORCEINLINE FVector GetLastTraceLocationHilt() const { return LastTraceLocationHilt; }

@@ -3,13 +3,25 @@
 
 #include "Enemies/StormAssassin.h"
 
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "HUD/HealthBarWidgetComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
+#include "Weapons/Melee/StormWeapons.h"
 
 AStormAssassin::AStormAssassin()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
+
+	SetRootComponent(GetCapsuleComponent());
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
 }
 
 void AStormAssassin::BeginPlay()
@@ -22,64 +34,27 @@ void AStormAssassin::BeginPlay()
 	}
 }
 
+
+void AStormAssassin::AttackEnd()
+{
+	Super::AttackEnd();
+}
+
 void AStormAssassin::PlayHitReactMontage(const FName& SectionName)
 {
 	Super::PlayHitReactMontage(SectionName);
 }
 
-void AStormAssassin::PlayDeathMontage()
+int32 AStormAssassin::PlayDeathMontage()
 {
 	Super::PlayDeathMontage();
-	
-	if (!IsValid(DeathMontage))
-	{
-		return;
-	}
+	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+}
 
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); 
-	if (AnimInstance && DeathMontage)
-	{
-		AnimInstance->Montage_Play(DeathMontage);
-		int32 Selection = FMath::RandRange(0, 3);               
-		FName Section;
-
-		switch (Selection)                                      
-		{                                                       
-		case 0: Section = FName("Death1"); StormDeath = EStormDeath::ESD_Death1; break;
-		case 1: Section = FName("Death2"); StormDeath = EStormDeath::ESD_Death2; break;
-		}                                                       
-
-		UE_LOG(LogTemp, Warning, TEXT("🎯 Playing Section: %s"), *Section.ToString());
-		AnimInstance->Montage_JumpToSection(Section, DeathMontage);
-		if (DeathMontage)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("✅ DeathMontage assigned: %s"), *DeathMontage->GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ DeathMontage is NULL"));
-		}
-		if (!DeathMontage->IsValidSectionName(Section))
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ Invalid section name: %s"), *Section.ToString());
-		}
-
-		if (DeathMontage)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Trying to play montage: %s"), *DeathMontage->GetName());
-			AnimInstance->Montage_Stop(0.1f);
-			float Result = AnimInstance->Montage_Play(DeathMontage, 1.0f);
-			UE_LOG(LogTemp, Warning, TEXT("Montage_Play returned: %f"), Result);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("DeathMontage is null!"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("No AnimInstance on enemy mesh!"));
-	}
+int32 AStormAssassin::PlayMeleeAttackMontage()
+{
+	Super::PlayMeleeAttackMontage();
+	return PlayRandomMontageSection(MeleeAttackMontage, MeleeAttackMontageSections);
 }
 
 void AStormAssassin::Tick(float DeltaTime)
@@ -91,6 +66,7 @@ void AStormAssassin::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	// Always call parent implementation first
 	Super::GetHit_Implementation(ImpactPoint);
+	
 
 	// Add any Gnarled-specific hit reaction logic here
 	// Make sure to add null checks for any component or asset references
@@ -103,6 +79,27 @@ void AStormAssassin::GetHit_Implementation(const FVector& ImpactPoint)
 	DirectionalHitReact(ImpactPoint);
 }
 
+void AStormAssassin::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedEnemyMeleeWeapon->WeaponBox)
+	{
+		EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionEnabled(CollisionEnabled);
+		EquippedEnemyMeleeWeapon->WeaponBox->SetGenerateOverlapEvents(CollisionEnabled == ECollisionEnabled::QueryOnly);
+
+		UE_LOG(LogTemp, Warning, TEXT("WeaponBox collision enabled: %d | OverlapEvents: %d"),
+				   CollisionEnabled == ECollisionEnabled::QueryOnly,
+				   EquippedEnemyMeleeWeapon->WeaponBox->GetGenerateOverlapEvents());
+	}
+
+	if (CollisionEnabled == ECollisionEnabled::NoCollision)
+	{
+		AStormWeapons* StormWeapon = Cast<AStormWeapons>(EquippedEnemyMeleeWeapon);
+		StormWeapon->DamagedActors.Empty();
+		UE_LOG(LogTemp, Warning, TEXT("🧹 DamagedActors list cleared at end of swing"));
+	}
+}
+
+
 float AStormAssassin::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
@@ -111,13 +108,12 @@ float AStormAssassin::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	return DamageAmount;
 }
 
-void AStormAssassin::EnemyDies()
+void AStormAssassin::CharacterDies()
 {
-	PlayDeathMontage();
-	if (NewHealthBarWidgetComponent)
-	{
-		NewHealthBarWidgetComponent->SetVisibility((false));
-	}
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetLifeSpan(3.f);
+	Super::CharacterDies();
+}
+
+void AStormAssassin::MeleeAttack()
+{
+	Super::MeleeAttack();
 }

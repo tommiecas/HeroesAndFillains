@@ -43,6 +43,8 @@ class HEROESANDFILLAINS_API UCombatComponent : public UActorComponent
 public:	
 	UCombatComponent();
 	friend class AFillainCharacter;
+	friend class ABaseCharacter;
+	friend class AEnemyBase;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeaponBase* WeaponToEquip);
@@ -76,7 +78,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedRangedWeapon)
 	class ARangedWeapon* EquippedRangedWeapon;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	EFightingStyle FightingStyle = EFightingStyle::EFS_Unequipped;
 
 	UFUNCTION()
@@ -128,6 +130,21 @@ public:
 
 	UFUNCTION()
 	void OnRep_ActionState();
+
+	UFUNCTION(BlueprintCallable)
+	void ReceiveMeleeDamage(
+		float DamageAmount,
+		const FDamageEvent& DamageEvent,
+		AController* EventInstigator,
+		AActor* DamageCauser,
+		const FVector& WeaponOrigin,
+		const FVector& HitLocation
+	);
+
+	void ResetRecentlyDamaged();
+	bool bRecentlyDamaged = false;
+	FTimerHandle RecentDamageHandle;
+
 	
 protected:
 	virtual void BeginPlay() override;
@@ -194,7 +211,8 @@ protected:
 	
 	void ReloadEmptyRangedWeapon();
 
-	void ShowAttachedGrenade(bool bShowGrenade); 
+	void ShowAttachedGrenade(bool bShowGrenade);
+	bool EquippedWeaponUsesOneHand(AWeaponBase* WeaponEquipping);
 
 	void UpdateHUDGrenades();
 
@@ -203,7 +221,10 @@ protected:
 
 private:
 	UPROPERTY()
-	class AFillainCharacter* Character;
+	AFillainCharacter* Character = nullptr;
+
+	UPROPERTY()
+	AEnemyBase* Enemy = nullptr;
 	
 	UPROPERTY()
 	class AFillainPlayerController* Controller;
@@ -343,6 +364,8 @@ public:
 	bool ShouldSwapWeapons();
 	FORCEINLINE EFightingStyle GetFightingStyle() const { return FightingStyle; }
 	EFightingStyle SetFightingStyle();
+	void SetCharacter(AFillainCharacter* InCharacter);
+	void SetEnemy(AEnemyBase* InEnemy);
 	
 		
 };

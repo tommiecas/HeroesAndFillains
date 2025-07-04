@@ -18,7 +18,7 @@
 AProjectileRocket::AProjectileRocket()
 {
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
-	ProjectileMesh->SetupAttachment(RootComponent);
+	SetRootComponent(ProjectileMesh);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));

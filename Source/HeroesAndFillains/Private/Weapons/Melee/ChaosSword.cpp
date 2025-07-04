@@ -8,14 +8,10 @@
 AChaosSword::AChaosSword()
 	: AMeleeWeapon()
 {
+
 }
 
-void AChaosSword::BeginPlay()
-{
-	Super::BeginPlay();
-    
-	
-}
+
 
 void AChaosSword::BeginAttack()
 {
@@ -35,6 +31,12 @@ void AChaosSword::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tra
 void AChaosSword::EndAttack()
 {
 	Super::EndAttack();
+}
+
+void AChaosSword::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }
 
 void AChaosSword::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

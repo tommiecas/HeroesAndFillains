@@ -53,16 +53,23 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
 	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
+	virtual void SetHandsNeeded(AWeaponBase* WeaponBase);
+	virtual void PlayEquipSound();
+	virtual void DisableSphereCollision();
+	virtual void DeactivateEmbers();
+	virtual void EnableCustomDepth(bool bEnable) override;
 
 	UFUNCTION()
 	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
-
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Unclaimed;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponCategory, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponCategory WeaponCategory = EWeaponCategory::EWC_NothingButYourFists;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
+	USkeletalMeshComponent* WeaponMesh;
 
 	UPROPERTY()
 	FTimerHandle VisualEffectsTimerHandle;
@@ -93,12 +100,17 @@ public:
 
 	void SetOneOrTwoHandedWeapon(AWeaponBase* EquippedWeapon);
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UBoxComponent* WeaponBox;
+	
 	UPROPERTY()
 	AWeaponBase* OneHandedWeapon;
 
 	UPROPERTY()
 	AWeaponBase* TwoHandedWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	EHandsNeeded HandsNeeded = EHandsNeeded::EHN_None;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -148,12 +160,15 @@ protected:
 	
 	UPROPERTY(EditAnywhere)
 	ETeam Team;
+
+
 	
 private:
 
 public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
+	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
@@ -161,6 +176,7 @@ public:
 	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponent() const { return ItemInfoWidgetComponent; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
+	FORCEINLINE EHandsNeeded GetHandsNeeded() const { return HandsNeeded; }
 };
 
 template<typename T>

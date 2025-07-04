@@ -25,6 +25,7 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/WeaponTypes.h"
+#include "Enemies/EnemyBase.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -35,6 +36,19 @@ UCombatComponent::UCombatComponent()
 	AimWalkSpeed = 600.f;
 
 }
+
+void UCombatComponent::SetCharacter(AFillainCharacter* InCharacter)
+{
+	Character = InCharacter;
+	UE_LOG(LogTemp, Warning, TEXT("✅ CombatComponent: Character set to %s"), *GetNameSafe(Character));
+}
+
+void UCombatComponent::SetEnemy(AEnemyBase* InEnemy)
+{
+	Enemy = InEnemy;
+	UE_LOG(LogTemp, Warning, TEXT("✅ CombatComponent: Enemy set to %s"), *GetNameSafe(Enemy));
+}
+
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -418,6 +432,69 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 	}
 }
 
+void UCombatComponent::ReceiveMeleeDamage(
+	float DamageAmount,
+	const FDamageEvent& DamageEvent,
+	AController* EventInstigator,
+	AActor* DamageCauser,
+	const FVector& WeaponOrigin,
+	const FVector& HitLocation
+)
+{
+	if (!Character)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ ReceiveMeleeDamage failed: Character is null"));
+		return;
+	}
+
+	// Apply actual damage
+	float FinalDamage = Character->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (FinalDamage <= 0.f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("⚠️ No damage applied"));
+		return;
+	}
+
+	// Log and react
+	UE_LOG(LogTemp, Warning, TEXT("⚔️ %s took %.2f melee damage"), *Character->GetName(), FinalDamage);
+
+	// Optional: cache for post-hit logic
+	Character->CachedDamageAmount = FinalDamage;
+	Character->CachedDamageEvent = DamageEvent;
+	Character->CachedEventInstigator = EventInstigator;
+	Character->CachedDamageCauser = DamageCauser;
+
+	Character->DirectionalHitReact(HitLocation);
+
+	if (!Character->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ Character does NOT implement HitInterface!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("✅ Character implements HitInterface!"));
+	}
+	
+	Character->GetHit_Implementation(HitLocation);
+	
+	// Optional: spawn effects like blood, sparks, decals
+	Character->PlayHitSound(HitLocation);
+	Character->SpawnHitSpecialEffects(HitLocation);
+
+	if (bRecentlyDamaged) return;
+	bRecentlyDamaged = true;
+
+	// Reset in 0.2s
+	GetWorld()->GetTimerManager().SetTimer(RecentDamageHandle, this, &UCombatComponent::ResetRecentlyDamaged, 0.2f, false);
+	
+	UE_LOG(LogTemp, Warning, TEXT("🎯 ReceiveMeleeDamage called on %s for %.1f damage"), *Character->GetName(), DamageAmount);
+}
+
+void UCombatComponent::ResetRecentlyDamaged()
+{
+	bRecentlyDamaged = false;
+}
+
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
 	// UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
@@ -454,6 +531,12 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 	else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
 	{
 		EquippedMeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon);
+		if (!EquippedMeleeWeapon)
+		{
+			UE_LOG(LogTemp, Error, TEXT("❌ EquippedWeapon cast to AMeleeWeapon failed! Weapon was: %s"),
+				EquippedWeapon ? *EquippedWeapon->GetName() : TEXT("nullptr"));
+			return; // Prevent the crash
+		}
 		FightingStyle = EFightingStyle::EFS_Melee;
 		EquippedMeleeWeapon->SetEquippedWeaponState();
 		SetHandsForWeapons(EquippedMeleeWeapon);
@@ -512,6 +595,7 @@ void UCombatComponent::SwapWeapons()
 {
 	if (ActionState != EActionState::EAS_Unoccupied || Character == nullptr || !Character->HasAuthority()) return;
 
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 	Character->PlaySwapMontage();
 	ActionState = EActionState::EAS_SwappingWeapons;
 	Character->bFinishedSwapping = false;
@@ -874,38 +958,41 @@ void UCombatComponent::OnRep_ActionState()
 		if (bIsFireButtonPressed)
 		{
 			Fire();
-			ActionState = EActionState::EAS_Unoccupied;
+			Character->ResetToFightAgain();
 		}
 		break;
 	case EActionState::EAS_ThrowingGrenade:
 		if (Character && !Character->IsLocallyControlled())
 		{
+			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			Character->PlayThrowGrenadeMontage();
 			AttachWeaponToLeftHand(EquippedWeapon);
 			ShowAttachedGrenade(true);
-			ActionState = EActionState::EAS_Unoccupied;
+			Character->ResetToFightAgain();
 		}
 		break;
 	case EActionState::EAS_SwappingWeapons:
 		if (Character && !Character->IsLocallyControlled())
 		{
+			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			Character->PlaySwapMontage();
-			ActionState = EActionState::EAS_Unoccupied;
+			Character->ResetToFightAgain();
 		}
 		break;
-		case EActionState::EAS_MeleeAttacking:
+	case EActionState::EAS_MeleeAttacking:
 		if (Character && !Character->IsLocallyControlled())
 		{
+			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			ActionState = EActionState::EAS_MeleeAttacking;
 			Character->MeleeAttack();
-			ActionState = EActionState::EAS_Unoccupied;
+			Character->ResetToFightAgain();
 		}
 	}
 }
 
 void UCombatComponent::HandleReload()
 {
-	if (Character && FightingStyle == EFightingStyle::EFS_Ranged)
+	if (Character && Character->PlayerUsingRangedWeapons())
 	{
 		Character->PlayReloadingMontage();
 	}
@@ -913,7 +1000,7 @@ void UCombatComponent::HandleReload()
 
 int32 UCombatComponent::AmountToReload()
 {
-	if (EquippedRangedWeapon == nullptr || FightingStyle != EFightingStyle::EFS_Ranged) return 0;
+	if (Character->PlayerNotUsingRangedWeapons()) return 0;
 	int32 RoomInMag = EquippedRangedWeapon->GetMagCapacity() - EquippedRangedWeapon->GetAmmo();
 
 	if (CarriedAmmoMap.Contains(EquippedRangedWeapon->GetRangedType()))
@@ -933,21 +1020,22 @@ void UCombatComponent::ThrowGrenade()
 	ActionState = EActionState::EAS_ThrowingGrenade;
 	if (Character)
 	{
+		UAnimInstance* AnimInstance = nullptr;
 		Character->PlayThrowGrenadeMontage();
 		AttachWeaponToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
-		ActionState = EActionState::EAS_Unoccupied;
+		Character->ResetToFightAgain();
 	}
 	if (Character && !Character->HasAuthority())
 	{
 		ServerThrowGrenade();
-		ActionState = EActionState::EAS_Unoccupied;
+		Character->ResetToFightAgain();
 	}
 	if (Character && Character->HasAuthority())
 	{
 		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
 		UpdateHUDGrenades();
-		ActionState = EActionState::EAS_Unoccupied;
+		Character->ResetToFightAgain();
 	}
 }
 
@@ -957,13 +1045,14 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	ActionState = EActionState::EAS_ThrowingGrenade;
 	if (Character)
 	{
+		UAnimInstance* AnimInstance = nullptr;
 		Character->PlayThrowGrenadeMontage();
 		AttachWeaponToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
 	}
 	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
 	UpdateHUDGrenades();
-	ActionState = EActionState::EAS_Unoccupied;
+	Character->ResetToFightAgain();
 }
 
 void UCombatComponent::UpdateHUDGrenades()
@@ -973,7 +1062,7 @@ void UCombatComponent::UpdateHUDGrenades()
 	{
 		Controller->SetHUDGrenades(Grenades);
 	}
-	ActionState = EActionState::EAS_Unoccupied;
+	Character->ResetToFightAgain();
 }
 
 bool UCombatComponent::ShouldSwapWeapons()
@@ -983,11 +1072,11 @@ bool UCombatComponent::ShouldSwapWeapons()
 
 EFightingStyle UCombatComponent::SetFightingStyle()
 {
-	if (ARangedWeapon* EquippedGun = Cast<ARangedWeapon>(EquippedWeapon))
+	if (Character->EquippedWeaponIsARangedWeapon())
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
 	}
-	else if (AMeleeWeapon* EquippedMelee = Cast<AMeleeWeapon>(EquippedWeapon))
+	else if (Character->EquippedWeaponIsAMeleeWeapon())
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
 	}
@@ -1011,11 +1100,16 @@ void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 	}
 }
 
+bool UCombatComponent::EquippedWeaponUsesOneHand(AWeaponBase* WeaponEquipping)
+{
+	return WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedOneHanded;
+}
+
 void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
 {
-	if (WeaponEquipping->IsA(ARangedWeapon::StaticClass()))
+	if (Character->EquippedWeaponIsARangedWeapon())
 	{
-		if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		if (EquippedWeaponUsesOneHand(WeaponEquipping))
 		{
 			AttachOneHandedRangedWeaponToRightHand(WeaponEquipping);			
 		}
@@ -1026,12 +1120,14 @@ void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
 	}
 	else if (WeaponEquipping->IsA(AMeleeWeapon::StaticClass()))
 	{
-		if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+		if (WeaponEquipping->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 		{
+			WeaponEquipping->WeaponState = EWeaponState::EWS_EquippedOneHanded;
 			AttachOneHandedMeleeWeaponToRightHand(WeaponEquipping);
 		}
-		else if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+		else if (WeaponEquipping->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 		{
+			WeaponEquipping->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
 			AttachTwoHandedMeleeWeaponToLeftHand(WeaponEquipping);
 		}
 	}

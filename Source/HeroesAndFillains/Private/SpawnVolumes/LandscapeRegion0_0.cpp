@@ -29,7 +29,7 @@ ALandscapeRegion0_0::ALandscapeRegion0_0()
 {
     PrimaryActorTick.bCanEverTick = false;
     SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
-    RootComponent = SpawnBox;
+    SetRootComponent(SpawnBox);
 }
 
 void ALandscapeRegion0_0::ShowPickupsAndInfoWidgets(bool bShowWidgets)

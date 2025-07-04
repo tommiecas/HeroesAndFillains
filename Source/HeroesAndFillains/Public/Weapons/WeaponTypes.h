@@ -21,6 +21,10 @@ enum class EWeaponType : uint8
 	EWT_RubySword UMETA(DisplayName = "Ruby Sword"),
 	EWT_SapphireSword UMETA(DisplayName = "Sapphire Sword"),
 	EWT_ChaosSword UMETA(DisplayName = "Chaos Sword"),
+	EWT_ShadowSword UMETA(DisplayName = "ShadowSword"),
+	EWT_SandSword UMETA(DisplayName = "SandSword"),
+	EWT_SoulSword UMETA(DisplayName = "SoulSword"),
+	EWT_SkyMace UMETA(DisplayName = "SkyMace"),
 
 	EWT_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -49,6 +53,20 @@ enum class EMeleeType : uint8
 	EMT_RubySword UMETA(DisplayName = "Ruby Sword"),
 	EMT_SapphireSword UMETA(DisplayName = "Sapphire Sword"),
 	EMT_ChaosSword UMETA(DisplayName = "Chaos Sword"),
+	EWT_ShadowSword UMETA(DisplayName = "ShadowSword"),
+	EMT_SandSword UMETA(DisplayName = "SandSword"),
+	EMT_SoulSword UMETA(DisplayName = "SoulSword"),
+	EMT_SkyMace UMETA(DisplayName = "SkyMace"),
 
 	EMT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType, Blueprintable)
+enum class EHandsNeeded : uint8
+{
+	EHN_None UMETA(DisplayName = "No Hands Needed"),
+	EHN_OneHandedWeapon UMETA(DisplayName = "One Handed Weapon"),
+	EHN_TwoHandedWeapon UMETA(DisplayName = "Two Handed Weapon"),
+
+	EHN_MAX UMETA(DisplayName = "DefaultMAX")
 };
