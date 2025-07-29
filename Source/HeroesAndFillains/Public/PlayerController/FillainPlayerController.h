@@ -10,6 +10,7 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
+class UTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
 struct FInputActionValue;
@@ -31,12 +32,19 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDShield(float Shield, float MaxShield);
+	void SetHUDStamina(float Stamina, float MaxStamina);
+	void SetHUDMajix(float Majix, float MaxMajix);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
+	void SetHUDSoulsCount(int32 SoulsCount);
 	void SetHUDWeaponAmmo(int32 WeaponAmmo);
+	void SetHUDGoldCount(int32 GoldAmount);
 	void SetHUDCarriedAmmo(int32 CarriedAmmo);
 	void SetHUDWeaponType(APawn* InPawn);
-	void SetHUDEliminationMessage(AFillainPlayerController* ConstKillerController, AFillainPlayerController* ConstVictimController);
+	void ShowEliminationUI(FString Victim, FString Killer, FText Message);
+	void UpdateEliminationMessageForPvE(AFillainPlayerController* VictimPlayerController, AController* InstigatorController);
+	void UpdateEliminationMessageForPvP(AFillainPlayerController* KillerPlayerController, AFillainPlayerController* VictimPlayerController);
+	void InitializeHUDEliminationMessage(AFillainPlayerController* KillerPlayerController, AFillainPlayerController* VictimPlayerController, AController* InstigatorController);
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
@@ -82,9 +90,7 @@ public:
 	FHighPingDelegate HighPingDelegate;
 
 	void BroadcastElimination(APlayerState* Killer, APlayerState* Victim);
-
-	void AddPlayerChatTextBlock();
-
+	
 	UFUNCTION()
 	void ToggleInputChatBox();
 
@@ -214,10 +220,14 @@ private:
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 	bool bInitializeHealth = false;
+	bool bInitializeShield = false;
+	bool bInitializeStamina = false;
+	bool bInitializeMajix = false;
 	bool bInitializeScore = false;
+	bool bInitializeSouls = false;
+	bool bInitializeGold = false;
 	bool bInitializeDefeats = false;
 	bool bInitializeGrenades = false;
-	bool bInitializeShield = false;
 	bool bInitializeWeaponAmmo = false;
 	bool bInitializeCarriedAmmo = false;
 
@@ -230,6 +240,12 @@ private:
 	float HUDMaxShield;
 	float HUDCarriedAmmo;
 	float HUDWeaponAmmo;
+	float HUDStamina;
+	float HUDMaxStamina;
+	float HUDMajix;
+	float HUDMaxMajix;
+	int32 HUDSouls;
+	int32 HUDGold;
 
 	int32 ThirtySecondsOnTheClock = 30;
 
@@ -253,6 +269,15 @@ public:
 	FORCEINLINE AFillainCharacter* GetFillain() const { return Fillain; }
 	FORCEINLINE AHAFPlayerState* GetHAFPlayerState() const { return State; }
 	FORCEINLINE float GetMatchTime() const { return MatchTime; }
+	FORCEINLINE float GetWarmupTime() const { return WarmupTime; }
+	FORCEINLINE float GetLevelStartingTime() const { return LevelStartingTime; }
+	FORCEINLINE float GetCooldownTime() const { return CooldownTime; }
+	FORCEINLINE FName GetMatchState() const { return MatchState; }
+	FORCEINLINE bool GetShowTeamScores() const { return bShowTeamScores; }
+	FORCEINLINE float GetHighPingDuration() const { return HighPingDuration; }
+	FORCEINLINE float GetHighPingThreshold() const { return HighPingThreshold; }
+	FORCEINLINE float GetCheckPingFrequency() const { return CheckPingFrequency; }
+	FORCEINLINE float GetHighPingRunningTime() const { return HighPingRunningTime; }
 
 	
 

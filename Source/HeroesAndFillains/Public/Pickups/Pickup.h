@@ -46,15 +46,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* OverlapSphere;
 
-	UPROPERTY(EditAnywhere)
-	class USoundCue* PickupSound;
-
-	UPROPERTY(VisibleAnywhere)
-	class UNiagaraComponent* PickupEffectComponent;
-
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* PickupEffect;
-
 	FTimerHandle BindOverlapTimer;
 	float BindOverlapTime = 0.25f;
 	void BindOverlapTimerFinished();

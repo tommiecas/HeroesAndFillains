@@ -10,17 +10,24 @@
 #include "HAFPlayerState.generated.h"
 
 
+class UHAFAttributeSet;
+class UHAFAbilitySystemComponent;
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState
+class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
+	AHAFPlayerState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Score() override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	UAttributeSet* GetAttributeSet() const { return AttributeSet; };
+	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const { return HAFAbilitySystemComponent; };
+	UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; };
 	
 	/*
 	** Replication Notifies
@@ -30,6 +37,18 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_Defeats();
+
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY()
+	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY()
+	TObjectPtr<UHAFAttributeSet> HAFAttributeSet;
+
+	UPROPERTY()
+	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent;
 
 protected:
 

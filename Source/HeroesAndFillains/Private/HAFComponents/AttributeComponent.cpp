@@ -3,9 +3,14 @@
 
 #include "HAFComponents/AttributeComponent.h"
 
+#include "HUD/FillainHUD.h"
+#include "PlayerController/FillainPlayerController.h"
+
 UAttributeComponent::UAttributeComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
+
+	SoulsGathered = 0;
 
 }
 
@@ -17,27 +22,42 @@ void UAttributeComponent::BeginPlay()
 	
 }
 
-float UAttributeComponent::GetHealthPercent()
+void UAttributeComponent::RegenStamina(float DeltaTime)
 {
-	return Health / MaxHealth;
-}
-
-bool UAttributeComponent::IsCharacterAlive()
-{
-	return Health > 0.f;
-}
-
-
-void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
 
 }
 
-int32 UAttributeComponent::CharactersReceiveMeleeDamage(float Damage)
+void UAttributeComponent::UpdateTotalSouls(int32 NumberOfSouls)
+{
+	SoulsGathered += NumberOfSouls;  
+	UE_LOG(LogTemp, Warning, TEXT("SoulsGathered is now: %d"), SoulsGathered);
+    
+	// Update HUD
+	AFillainPlayerController* FillainPlayerController = Cast<AFillainPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (FillainPlayerController)
+	{
+		FillainPlayerController->SetHUDSoulsCount(SoulsGathered);
+	}
+}
+
+void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
+{
+	AFillainPlayerController* FillainPlayerController = Cast<AFillainPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (FillainPlayerController)
+	{
+		FillainPlayerController->SetHUDGoldCount(GoldAcquired += AmountOfGold);
+	}
+}
+
+
+void UAttributeComponent::CharactersReceiveMeleeDamage(float Damage)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-	UE_LOG(LogTemp, Warning, TEXT("🧪 Before: Health = %f, After = %f"), Health, FMath::Clamp(Health - Damage, 0.f, MaxHealth));
-	return Health;
+}
+
+void UAttributeComponent::UseStamina(float StaminaCost)
+{
+	Stamina = FMath::Clamp(Stamina - StaminaCost, 0.f, MaxStamina);
 }
 

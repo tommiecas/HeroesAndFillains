@@ -7,6 +7,19 @@
 #include "StormAssassin.generated.h"
 
 
+class UBoxComponent;
+
+UENUM(BlueprintType, Blueprintable)
+enum class EStormAssassin : uint8
+{
+	ESA_Sandstorm UMETA(DisplayName = "Sandstorm"),
+	ESA_Soulstorm UMETA(DisplayName = "Soulstorm"),
+	ESA_Skystorm UMETA(DisplayName = "Skystorm"),
+	ESA_Shadowstorm UMETA(DisplayName = "Shadowstorm"),
+
+	ESA_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
 /**
  * 
  */
@@ -18,14 +31,7 @@ class HEROESANDFILLAINS_API AStormAssassin : public AEnemyBase
 public:
 	AStormAssassin();
 	virtual void Tick(float DeltaTime) override;
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void CharacterDies() override;
-	virtual void MeleeAttack() override;
-	virtual void AttackEnd() override;
 	virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
-
-
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,11 +42,48 @@ protected:
 	***                            ***
 	*********************************/
 
-	virtual void PlayHitReactMontage(const FName& SectionName) override;
 	virtual int32 PlayDeathMontage() override;
-	virtual int32 PlayMeleeAttackMontage() override;
 
+	UFUNCTION(BlueprintCallable)
+	void OnFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	bool bCanDamage = true;;
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float FootDamage = 15.f;
+
+	FTimerHandle FootDamageResetTimer;
+
+	UFUNCTION(BlueprintCallable)
+	void EnableLeftFoot();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableLeftFoot();
+
+	UFUNCTION(BlueprintCallable)
+	void EnableRightFoot();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableRightFoot();
+	
+	UFUNCTION(BlueprintCallable)
+	void ResetCanDamage();
+
+	UPROPERTY()
+	TArray<AActor*> RightFootDamagedActors;
+
+	UPROPERTY()
+	TArray<AActor*> LeftFootDamagedActors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	EStormAssassin StormAssassin = EStormAssassin::ESA_MAX;
+	
 private:
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	UBoxComponent* RightFootCollision;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	UBoxComponent* LeftFootCollision;
 	
 	
 };

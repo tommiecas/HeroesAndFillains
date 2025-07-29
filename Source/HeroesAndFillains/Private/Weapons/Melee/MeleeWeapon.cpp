@@ -50,7 +50,7 @@ void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 3.f);
+	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 3.f); */
     UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
 }
 
@@ -168,7 +168,7 @@ void AMeleeWeapon::ImplementLineTraceGetHit(FHitResult Hit)
 	{
 		if (HitInterface)
 		{
-			HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint);
+			HitInterface->Execute_GetHit(Hit.GetActor(), Hit.ImpactPoint, GetOwner());
 		}
 	}
 }
@@ -212,7 +212,7 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 			HitCharacter->CachedEventInstigator = GetInstigator()->GetController();
 			HitCharacter->CachedDamageCauser = this;
 
-			HitCharacter->Execute_GetHit(HitCharacter, Hit.ImpactPoint);
+			HitCharacter->Execute_GetHit(HitCharacter, Hit.ImpactPoint, GetOwner());
 		}
 		if (AEnemyBase* HitEnemy = Cast<AEnemyBase>(HitActor))
 		{

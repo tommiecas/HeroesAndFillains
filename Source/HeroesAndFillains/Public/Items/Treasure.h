@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/PickupInterface.h"
 #include "Items/Item.h"
 #include "Treasure.generated.h"
 
@@ -26,10 +27,10 @@ protected:
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Sounds")
-	USoundBase* PickupSound;
-
 	UPROPERTY(EditAnywhere, Category = "Treasure Properties")
-	int32 Gold; 
+	int32 GoldValue;
+
+public:
+	FORCEINLINE int32 GetGoldValue() const { return GoldValue; }
 	
 };

@@ -6,6 +6,13 @@
 #include "GameFramework/HUD.h"
 #include "FillainHUD.generated.h"
 
+class UCharacterOverlay;
+class UHAFUserWidget;
+class UAttributeSet;
+class UAbilitySystemComponent;
+struct FWidgetControllerParams;
+class UOverlayWidgetController;;
+
 USTRUCT(BlueprintType)
 struct FHUDPackage
 {
@@ -34,13 +41,21 @@ public:
 	void AddCharacterOverlay();
 	void AddAnnouncement();
 	void AddEliminationAnnouncement(FString Killer, FString Victim);
+	void InitializeOverlay (APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
 
+	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UHAFUserWidget>  OverlayWidget;
 
 	UPROPERTY(EditAnywhere, Category = "PlayerStats")
-	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+	TSubclassOf<class UHAFUserWidget> OverlayWidgetClass;
 
-	UPROPERTY()
-	class UCharacterOverlay* CharacterOverlay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UCharacterOverlay>  CharacterOverlayWidget;
+
+	UPROPERTY(EditAnywhere, Category = "PlayerStats")
+	TSubclassOf<class UCharacterOverlay> CharacterOverlayWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "Announcements")
 	TSubclassOf<class UUserWidget> AnnouncementClass;
@@ -48,8 +63,11 @@ public:
 	UPROPERTY()
 	class UAnnouncement* Announcement;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UCharacterOverlay* CharacterOverlay;
+
 protected:
-	virtual void BeginPlay() override;
+
 private:
 	UPROPERTY()
 	class APlayerController* OwningPlayer;
@@ -73,6 +91,12 @@ private:
 
 	UPROPERTY()
 	TArray<UEliminationAnnouncement*> EliminationMessages;
+
+	UPROPERTY()
+	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

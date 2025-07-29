@@ -139,7 +139,7 @@ void AStormWeapons::BeginPlay()
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AStormWeapons::OnBoxOverlap);
 	UE_LOG(LogTemp, Warning, TEXT("🔗 Overlap delegate bound: %d"), WeaponBox->OnComponentBeginOverlap.IsBound());
 
-	// Debug Box (visual)
+	/* Debug Box (visual)
 	DrawDebugBox(
 		GetWorld(),
 		WeaponBox->GetComponentLocation(),
@@ -149,8 +149,8 @@ void AStormWeapons::BeginPlay()
 		false,
 		5.0f,
 		0,
-		2.0f
-	);
+		2.0f 
+	); */
 
 
 	
@@ -182,21 +182,21 @@ void AStormWeapons::OnAttackHit(const FHitResult& HitResult)
 {
 	FVector ImpactPoint = HitResult.ImpactPoint;
 
-	DrawDebugSphere(
+	/*DrawDebugSphere(
 		GetWorld(),
 		ImpactPoint,
 		20.f,
 		12,
 		FColor::Red,
 		false,
-		2.0f);
+		2.0f); */
 }
 
 void AStormWeapons::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 2.f);
+	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 2.f); */
 }
 void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -283,7 +283,7 @@ void AStormWeapons::ExecuteGetHit(FHitResult& BoxHit)
 	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
 	if (HitInterface)
 	{
-		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);
+		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
 	}
 	OnAttackHit(BoxHit);
 }
@@ -291,7 +291,7 @@ void AStormWeapons::ExecuteGetHit(FHitResult& BoxHit)
 void AStormWeapons::BoxTrace(FHitResult& BoxHit)
 {
 
-	DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Green, false, 2.0f);
+	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Green, false, 2.0f); */
 	const FVector Start = BoxTraceStart->GetComponentLocation();
 	const FVector End = BoxTraceEnd->GetComponentLocation();
 
@@ -318,13 +318,13 @@ void AStormWeapons::BoxTrace(FHitResult& BoxHit)
 	);
 	IgnoreActors.AddUnique(BoxHit.GetActor());
 
-	DrawDebugBox(
+	/* DrawDebugBox(
 	GetWorld(),
 	Start,
 	BoxTraceExtent,
 	BoxTraceStart->GetComponentQuat(),
 	FColor::Red,
 	false,
-	2.0f);
+	2.0f); */
 	
 }

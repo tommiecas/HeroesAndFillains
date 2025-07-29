@@ -25,9 +25,6 @@ APickup::APickup()
 	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
 	PickupMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
-	
-	PickupEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponent"));
-	PickupEffectComponent->SetupAttachment(RootComponent);
 }
 
 void APickup::BeginPlay()
@@ -84,21 +81,6 @@ void APickup::Destroyed()
 {
 	Super::Destroyed();
 
-	if (PickupSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			PickupSound,
-			GetActorLocation()
-		);
-	}
-	if (PickupEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			this,
-			PickupEffect,
-			GetActorLocation(),
-			GetActorRotation()
-		);
-	}
+	SpawnPickupSound();
+	SpawnPickupSystem();
 }

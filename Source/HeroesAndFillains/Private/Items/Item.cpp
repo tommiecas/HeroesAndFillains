@@ -15,8 +15,9 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Pickups/AmmoPickup.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
-
+#include "Interfaces/PickupInterface.h"
 
 AItem::AItem()
 {
@@ -41,16 +42,16 @@ AItem::AItem()
 	AreaSphere->SetGenerateOverlapEvents(true);
 	AreaSphere->AddLocalOffset(FVector(0.f, 0.f, 85.f));
 
-	AreaSphere->SetHiddenInGame(false);
+	AreaSphere->SetHiddenInGame(true);
 	AreaSphere->ShapeColor = FColor::Green;
 
-	EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmbersEffect"));
-	EmbersEffect->SetupAttachment(RootComponent);
-	EmbersEffect->SetHiddenInGame(false);
-	EmbersEffect->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
-	EmbersEffect->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
-	EmbersEffect->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-	EmbersEffect->SetVisibility(true);
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemEffect"));
+	ItemEffect->SetupAttachment(RootComponent);
+	ItemEffect->SetHiddenInGame(false);
+	ItemEffect->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	ItemEffect->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+	ItemEffect->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	ItemEffect->SetVisibility(true);
 }
 
 void AItem::BeginPlay()
@@ -106,54 +107,60 @@ float AItem::TransformedCos()
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AItem::OnSphereOverlap triggered by %s"), *OtherActor->GetName());
-
-	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
-	if (!IsValid(FillainCharacter))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("❌ Overlap actor is not a FillainCharacter"));
-		return;
-	}
+	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
 	
 	// Prevent equippable weapons already in use from being set as overlapping
 	if (IsA(AWeaponBase::StaticClass()))
 	{
 		AWeaponBase* Weapon = Cast<AWeaponBase>(this);
-		if (Weapon && Weapon->ItemState == EItemState::EIS_Equipped)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("❌ Weapon is already equipped, not setting overlap"));
-			return; // Don't set overlapping weapon if it's already equipped
-		}
-		UE_LOG(LogTemp, Warning, TEXT("✅ Setting OverlappingWeapon on character: %s"), *GetName());
+		if (Weapon && Weapon->ItemState == EItemState::EIS_Equipped) return;
+
 		// Set OverlappingWeapon (and implicitly OverlappingItem if you wish)
-		FillainCharacter->SetOverlappingWeapon(Weapon);
+		PickupInterface->SetOverlappingWeapon(Weapon);
 	}
 	else
 	{
 		// Set OverlappingItem for non-weapon item types
-		FillainCharacter->SetOverlappingItem(this);
+		PickupInterface->SetOverlappingItem(this);
 	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
-	if (!FillainCharacter) return;
+	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (!PickupInterface) return;
 
 	// ⚠️ Don't clear if this item is already equipped
-	if (ItemState == EItemState::EIS_Equipped)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("⚠️ OnSphereEndOverlap: Skipping clear because item is already equipped"));
-		return;
-	}
+	if (ItemState == EItemState::EIS_Equipped) return;
+
 	SetOwner(OtherActor);
-	if (GetOwner())
+	if (GetOwner()) return;
+
+	PickupInterface->SetOverlappingItem(nullptr);
+}
+
+void AItem::SpawnPickupSystem()
+{
+	if (PickupEffect)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("⚠️ OnSphereEndOverlap: Skipping clear — item is now owned"));
-		return;
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			this,
+			PickupEffect,
+			GetActorLocation()
+		);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("⚠️ OnSphereEndOverlap clearing overlap for: %s"), *GetName());
-	FillainCharacter->SetOverlappingItem(nullptr);
+}
+
+void AItem::SpawnPickupSound()
+{
+	if (PickupSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			PickupSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void AItem::Tick(float DeltaTime)

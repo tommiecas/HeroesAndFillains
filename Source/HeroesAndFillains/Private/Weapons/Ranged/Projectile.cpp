@@ -43,7 +43,14 @@ void AProjectile::Destroyed()
 {
 	Super::Destroyed();
 
-	
+	if (ImpactNiagaraSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(ImpactNiagaraSystem, GetRootComponent(), FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+	}
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
 }
 
 void AProjectile::BeginPlay()
@@ -58,21 +65,11 @@ void AProjectile::BeginPlay()
 	if (HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
-		CollisionBox->IgnoreActorWhenMoving(Owner, true);
 	}
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,  FVector NormalImpulse, const FHitResult& Hit)
 {
-	HitResult = Hit.ImpactPoint;
-	HitRotation = Hit.ImpactNormal.Rotation();
-
-	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
-	if (FillainCharacter)
-	{
-		FillainCharacter->MulticastHit();
-	}
-
 	Destroy();
 }
 

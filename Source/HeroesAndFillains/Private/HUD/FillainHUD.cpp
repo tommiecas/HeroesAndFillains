@@ -9,23 +9,14 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/Overlay.h"
+#include "HUD/HUD/HAFUserWidget.h"
+#include "HUD/WidgetControllers/OverlayWidgetController.h"
 
-
-
-void AFillainHUD::BeginPlay()
-{
-	Super::BeginPlay();
-
-}
 
 void AFillainHUD::AddCharacterOverlay()
 {
-	APlayerController* PlayerController = GetOwningPlayerController();
-	if (PlayerController && CharacterOverlayClass)
-	{
-		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
-		CharacterOverlay->AddToViewport();
-	}
+	return;
 }
 
 void AFillainHUD::AddAnnouncement()
@@ -71,6 +62,38 @@ void AFillainHUD::AddEliminationAnnouncement(FString Killer, FString Victim)
 			GetWorldTimerManager().SetTimer(EliminationMessageTimer, EliminationMessageDelegate, EliminationAnnouncementTime, false);
 		}
 	}
+}
+
+void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC,
+	UAttributeSet* AS)
+{
+	checkf(CharacterOverlayWidgetClass, TEXT("Character Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
+	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
+	
+	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), CharacterOverlayWidgetClass);
+	CharacterOverlayWidget = Cast<UCharacterOverlay>(Widget);
+
+	const FWidgetControllerParams WWidgetControllerParams (PC, PS, ASC, AS);
+
+	UOverlayWidgetController*  WidgetController = GetOverlayWidgetController(WWidgetControllerParams);
+
+	CharacterOverlayWidget->SetWidgetController (WidgetController);
+
+	WidgetController->BroadcastInitialValues();
+
+	Widget->AddToViewport();
+}
+
+UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (OverlayWidgetController == nullptr)
+	{
+		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
+		OverlayWidgetController->SetWidgetControllerParams(WCParams);
+
+		return OverlayWidgetController;
+	}
+	return OverlayWidgetController;
 }
 
 void AFillainHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)

@@ -8,6 +8,7 @@
 #include "Gnarled.generated.h"
 
 
+class UBoxComponent;
 /**
  * 
  */
@@ -19,13 +20,41 @@ class HEROESANDFILLAINS_API AGnarled : public AEnemyBase
 public:
 	AGnarled();
 	virtual void Tick(float DeltaTime) override;
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void CharacterDies() override;
-	virtual void MeleeAttack() override;
+	virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
 
 protected:
 	virtual void BeginPlay() override;
+	
+	UFUNCTION()
+	void OnFistOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	bool bCanDamage = true;;
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float FistDamage = 30.f;
+
+	FTimerHandle FistDamageResetTimer;
+
+	UFUNCTION(BlueprintCallable)
+	void EnableLeftFist();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableLeftFist();
+
+	UFUNCTION(BlueprintCallable)
+	void EnableRightFist();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableRightFist();
+	
+	UFUNCTION(BlueprintCallable)
+	void ResetCanDamage();
+
+	UPROPERTY()
+	TArray<AActor*> RightFistDamagedActors;
+
+	UPROPERTY()
+	TArray<AActor*> LeftFistDamagedActors;
 	
 	/*********************************
 	***                            ***
@@ -33,11 +62,22 @@ protected:
 	***                            ***
 	*********************************/
 
-	virtual void PlayHitReactMontage(const FName& SectionName) override;
 	virtual int32 PlayDeathMontage() override;
-	virtual int32 PlayMeleeAttackMontage() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gender")
+	bool bIsGnarledMale = true;
 
 private:
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	UBoxComponent* RightFistCollision;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	UBoxComponent* LeftFistCollision;
+
+
+
+
+
 	
 	
 };

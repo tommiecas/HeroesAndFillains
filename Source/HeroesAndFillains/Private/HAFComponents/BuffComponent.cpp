@@ -22,8 +22,22 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 void UBuffComponent::ReplenishShield(float ShieldReplenishAmount, float ShieldReplenishingTime)
 {
 	bAmIAlreadyReplenishingShield = true;
-	ShieldReplenishingRate = ShieldReplenishAmount / ShieldReplenishingTime;
-	AmountToReplenishShield += ShieldReplenishAmount;
+	ReplenishingRate = ShieldReplenishAmount / ShieldReplenishingTime;
+	AmountOfShieldReplenished += ShieldReplenishAmount;
+}
+
+void UBuffComponent::Recharge(float StaminaRechargeAmount, float StaminaRechargeTime)
+{
+	bAmIAlreadyRechargingStamina = true;
+	RechargingRate = StaminaRechargeAmount / StaminaRechargeTime;
+	AmountOfStaminaRecharged += StaminaRechargeAmount; 
+}
+
+void UBuffComponent::Summon(float MajixSummonedAmount, float MajixSummonedTime)
+{
+	bAmIAlreadySummoningMajix = true;
+	SummoningRate = MajixSummonedAmount / MajixSummonedTime;
+	AmountOfMajixSummoned += MajixSummonedAmount;
 }
 
 void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
@@ -108,15 +122,47 @@ void UBuffComponent::ShieldRampUp(float DeltaTime)
 {
 	if (!bAmIAlreadyReplenishingShield || Character == nullptr || Character->IsEliminated()) return;
 
-	const float ReplenishShieldThisFrame = ShieldReplenishingRate * DeltaTime;
+	const float ReplenishShieldThisFrame = ReplenishingRate * DeltaTime;
 	Character->SetShield(FMath::Clamp(Character->GetShield() + ReplenishShieldThisFrame, 0.f, Character->GetMaxShield()));
 	Character->UpdateHUDShield();
-	AmountToReplenishShield -= ReplenishShieldThisFrame;
+	AmountOfShieldReplenished -= ReplenishShieldThisFrame;
 
-	if (AmountToReplenishShield <= 0.f || Character->GetShield() >= Character->GetMaxShield())
+	if (AmountOfShieldReplenished<= 0.f || Character->GetShield() >= Character->GetMaxShield())
 	{
 		bAmIAlreadyReplenishingShield = false;
-		AmountToReplenishShield = 0.f;
+		AmountOfShieldReplenished= 0.f;
+	}
+}
+
+inline void UBuffComponent::StaminaRampUp(float DeltaTime)
+{
+	if (!bAmIAlreadyRechargingStamina || Character == nullptr || Character->IsEliminated()) return;
+
+	const float RechargeThisFrame = RechargingRate * DeltaTime;
+	Character->SetStamina(FMath::Clamp(Character->GetStamina() + RechargeThisFrame, 0.f, Character -> GetMaxStamina()));
+	Character->UpdateHUDStamina();
+	AmountOfStaminaRecharged -= RechargeThisFrame;
+
+	if (AmountOfStaminaRecharged <= 0.f || Character->GetStamina() >= Character->GetMaxStamina())
+	{
+		bAmIAlreadyRechargingStamina = false;
+		AmountOfStaminaRecharged = 0.f;
+	}
+}
+
+inline void UBuffComponent::MajixRampUp(float DeltaTime)
+{
+	if (!bAmIAlreadySummoningMajix ||  Character == nullptr || Character->IsEliminated()) return;
+
+	const float SummonThisFrame = SummoningRate * DeltaTime;
+	Character->SetMajix(FMath::Clamp(Character->GetMajix() + SummonThisFrame, 0.f, Character -> GetMaxMajix()));
+	Character->UpdateHUDMajix();
+	AmountOfMajixSummoned -= SummonThisFrame;
+
+	if (AmountOfMajixSummoned <= 0.f || Character->GetMajix() >= Character->GetMaxMajix())
+	{
+		bAmIAlreadySummoningMajix = false;
+		AmountOfMajixSummoned = 0.f;
 	}
 }
 
@@ -136,5 +182,7 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 
 	HealRampUp(DeltaTime);
 	ShieldRampUp(DeltaTime);
+	StaminaRampUp(DeltaTime);
+	MajixRampUp(DeltaTime);
 }
 

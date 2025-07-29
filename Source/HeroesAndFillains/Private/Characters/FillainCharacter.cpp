@@ -42,6 +42,10 @@
 #include "Pickups/AmmoPickup.h"
 #include "Components/StaticMeshComponent.h"
 #include "HAFComponents/AttributeComponent.h"
+#include "HUD/CharacterOverlay.h"
+#include "Items/Treasure.h"
+#include "Items/Soul.h"
+#include "AbilitySystemComponent.h"
 
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -76,9 +80,17 @@
 #include "HAFComponents/LagCompensationComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "Enemies/EnemyBase.h"
 #include "GameStates/HAFGameState.h"
+#include "HUD/CharacterOverlay.h"
+#include "Items/Soul.h"
+#include "Items/Treasure.h"
 #include "Pickups/AmmoPickup.h"
+#include "Pickups/HealthPickup.h"
+#include "Pickups/MajixPickup.h"
+#include "Pickups/ShieldPickup.h"
+#include "Pickups/StaminaPickup.h"
 #include "PlayerStart/TeamPlayerStart.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 
@@ -130,8 +142,8 @@ AFillainCharacter::AFillainCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-	SetNetUpdateFrequency(66.f);
-	SetMinNetUpdateFrequency(33.f);
+	SetNetUpdateFrequency(100.f);
+	SetMinNetUpdateFrequency(50.f);
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
@@ -231,50 +243,15 @@ void AFillainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bIsCharacterDead = false;
+
 	Combat = FindComponentByClass<UCombatComponent>();
 
 	if (Combat)
 	{
 		Combat->SetCharacter(this); // this is AFillainCharacter*
 	}
-
-	if (HitReactMontage)
-	{
-		PlayHitReactMontage(FName("FromFront"));
-	}
-	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
-	if (!AnimInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ No AnimInstance on mesh!"));
-		return;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ AnimInstance is valid: %s"), *AnimInstance->GetName());
-	}
-	if (!HitReactMontage)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ HitReactMontage is null!"));
-		return;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ HitReactMontage is valid: %s"), *HitReactMontage->GetName());
-	}
-	float PlayResult = AnimInstance->Montage_Play(HitReactMontage, 1.0f);
-	if (PlayResult <= 0.f)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ Montage_Play returned 0. It failed to start playback."));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ Montage_Play returned: %f"), PlayResult);
-	}
-	UE_LOG(LogTemp, Warning, TEXT("IsAnyMontagePlaying: %s"), AnimInstance->IsAnyMontagePlaying() ? TEXT("TRUE") : TEXT("FALSE"));
 	
-	UE_LOG(LogTemp, Warning, TEXT("Player Capsule Collision ObjectType: %d"), GetCapsuleComponent()->GetCollisionObjectType());
-	UE_LOG(LogTemp, Warning, TEXT("Player Capsule response to ECC_EnemyWeaponBox: %d"),
-		GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_EnemyWeaponBox));
 	
 	if (AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(Controller))
 	{
@@ -301,12 +278,15 @@ void AFillainCharacter::BeginPlay()
 	UpdateHUDAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
+	UpdateHUDStamina();
+	UpdateHUDMajix();
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &AFillainCharacter::ReceiveDamage);
 	}
 	HideAttachedGrenade();
 
+	UAnimInstance* AnimInstance = Cast<UAnimInstance>(GetMesh()->GetAnimInstance());
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &AFillainCharacter::OnArmDisarmMontageEnded);
@@ -315,17 +295,14 @@ void AFillainCharacter::BeginPlay()
 	Tags.Add(FName("EngageableTarget"));
 
 	Tags.Add(FName("FillainCharacter"));
-
-	UE_LOG(LogTemp, Warning, TEXT("Player Capsule ObjectType: %d"), GetCapsuleComponent()->GetCollisionObjectType());
-	UE_LOG(LogTemp, Warning, TEXT("Player Capsule responds to ECC_EnemyWeaponBox: %d"), GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_EnemyWeaponBox));
-	UE_LOG(LogTemp, Warning, TEXT("⚔️ Combat Component: %s"), Combat ? TEXT("VALID") : TEXT("NULL"));
+	
 }
 
 void AFillainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	DrawDebugSphere(
+	/* DrawDebugSphere(
 	GetWorld(),
 	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation(),
 	25.0f,
@@ -333,7 +310,7 @@ void AFillainCharacter::Tick(float DeltaTime)
 	FColor::Magenta,
 	false,
 	0.f
-);
+); */
 
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
@@ -351,6 +328,12 @@ void AFillainCharacter::Tick(float DeltaTime)
 	RotateInPlace(DeltaTime);
 	HideCharacterIfCameraClose();
 	PollInit();
+
+	if (AttributeComponent)
+	{
+		AttributeComponent->RegenStamina(DeltaTime);
+		FillainPlayerController->SetHUDStamina(AttributeComponent->GetStamina(), AttributeComponent->GetMaxStamina());
+	}
 }
 
 void AFillainCharacter::NotifyHit(
@@ -374,6 +357,14 @@ void AFillainCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 	Super::DirectionalHitReact(ImpactPoint);
 }
 
+float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	HandleDamage(DamageAmount);
+	SetHUDHealth();
+	return DamageAmount;
+}
+
 void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -382,6 +373,8 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AFillainCharacter, Health);
 	DOREPLIFETIME(AFillainCharacter, Shield);
+	DOREPLIFETIME(AFillainCharacter, Stamina);
+	DOREPLIFETIME(AFillainCharacter, Majix);
 	DOREPLIFETIME(AFillainCharacter, bDisableGameplay);
 }
 
@@ -733,33 +726,13 @@ void AFillainCharacter::HideAttachedGrenade()
 }
 
 
-void AFillainCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+void AFillainCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (!IsValid(this)) return;
 
-	if (AttributeComponent && AttributeComponent->IsCharacterAlive())
-	{
-		DirectionalHitReact(ImpactPoint);  // This plays the montage
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("💥 GetHit called. Damage = %f"), CachedDamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("Player Capsule response to ECC_EnemyWeaponBox: %d"),
-		GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_EnemyWeaponBox));
-}
-
-float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
-{
-	Health -= DamageAmount;
-
-	UE_LOG(LogTemp, Warning, TEXT("⚠️ Player took damage! New health: %f"), Health);
-
-	if (Health <= 0.f)
-	{
-		Eliminate(true); // Or whatever function handles death
-	}
-
-	return DamageAmount;
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	Combat->ActionState = EActionState::EAS_HitReaction;
 }
 
 void AFillainCharacter::RotateInPlace(float DeltaTime)
@@ -812,6 +785,84 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AFillainCharacter::AttackButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Dodge);
+	}
+}
+
+void AFillainCharacter::SetHUDHealth()
+{
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD && FillainHUD->CharacterOverlay && AttributeComponent)
+	{
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetHUDHealth(GetHealth(), GetMaxHealth());			
+		}
+	}
+}
+
+void AFillainCharacter::SetHUDShield()
+{
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD && FillainHUD->CharacterOverlay && AttributeComponent)
+	{
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetHUDShield(GetShield(), GetMaxShield());			
+		}
+	}
+}
+
+void AFillainCharacter::SetHUDStamina()
+{
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD && FillainHUD->CharacterOverlay && AttributeComponent)
+	{
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetHUDStamina(GetStamina(), GetMaxStamina());			
+		}
+	}
+}
+
+void AFillainCharacter::SetHUDMajix()
+{
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD && FillainHUD->CharacterOverlay && AttributeComponent)
+	{
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetHUDMajix(GetMajix(), GetMaxMajix());			
+		}
+	}
+}
+
+
+void AFillainCharacter::AddSoulsGatheredToTotalSouls(class ASoul* Soul)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Adding Souls: %d"), Soul->GetSoulValue());
+
+	if (AttributeComponent)
+	{
+		AttributeComponent->UpdateTotalSouls(AttributeComponent->GetSoulsGathered());
+
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		PlayerController->SetHUDSoulsCount(AttributeComponent->GetSoulsGathered());
+	}
+}
+
+void AFillainCharacter::AddGoldAcquiredToTotalGold(class ATreasure* Treasure)
+{
+	if (AttributeComponent)
+	{
+		AttributeComponent->UpdateTotalGold(AttributeComponent->GetGoldAcquired());
+
+		AFillainPlayerController* PlayerController = Cast<AFillainPlayerController>(Controller);
+		PlayerController->SetHUDGoldCount(AttributeComponent->GetGoldAcquired());
 	}
 }
 
@@ -1010,6 +1061,8 @@ void AFillainCharacter::AttackButtonPressed()
 		}
 		else if (EquippedWeaponIsAMeleeWeapon())
 		{
+			Combat->ActionState = EActionState::EAS_Unoccupied;
+			Combat->FightingStyle = EFightingStyle::EFS_Melee;
 			MeleeAttack();
 		}
 	}
@@ -1032,14 +1085,34 @@ void AFillainCharacter::MeleeAttack()
 	if (CanAttack())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("🟢 Passed CanAttack()"));
-
-		PlayMeleeAttackMontage();
 		Combat->ActionState = EActionState::EAS_MeleeAttacking;
+		PlayMeleeAttackMontage();
 		
 		// Don’t set ActionState back to Unoccupied here anymore. Let the montage handle it via Notify.
 	}
 }
 
+bool AFillainCharacter::IsOccupied()
+{
+	return Combat->ActionState != EActionState::EAS_Unoccupied;
+}
+
+bool AFillainCharacter::HasEnoughStamina()
+{
+	return AttributeComponent && AttributeComponent->GetStamina() > AttributeComponent->GetDodgeCost();
+}
+
+void AFillainCharacter::Dodge()
+{
+	if (IsOccupied() || !HasEnoughStamina()) return;
+	PlayDodgeMontage();
+	Combat->ActionState = EActionState::EAS_Dodging;
+	if (AttributeComponent && FillainPlayerController)
+	{
+		AttributeComponent->UseStamina(AttributeComponent->GetDodgeCost());
+		FillainPlayerController->SetHUDStamina(AttributeComponent->GetStamina(), AttributeComponent->GetMaxStamina());
+	}
+}
 
 
 void AFillainCharacter::FireButtonPressed()
@@ -1087,6 +1160,13 @@ void AFillainCharacter::AttackEnd()
 	}
 }
 
+void AFillainCharacter::DodgeEnd()
+{
+	Super::DodgeEnd();
+
+	Combat->ActionState = EActionState::EAS_Unoccupied;
+}
+
 bool AFillainCharacter::IfPlayerIsReadyToFightAgain()
 {
 	return Combat->ActionState == EActionState::EAS_Unoccupied;
@@ -1099,16 +1179,12 @@ bool AFillainCharacter::IfPlayerHasEquippedAWeapon()
 
 bool AFillainCharacter::CanAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("CanAttack: ActionState = %d | FightingStyle = %d"),
-	(int32)Combat->ActionState,
-	(int32)Combat->FightingStyle);
-	return IfPlayerIsReadyToFightAgain() && IfPlayerHasEquippedAWeapon();
-}
+	UE_LOG(LogTemp, Warning, TEXT("CanAttack: ActionState = %d | FightingStyle = %d"), (int32)Combat->ActionState, (int32)Combat->FightingStyle);
+	UE_LOG(LogTemp, Warning, TEXT("Checking CanAttack for: %s"), *GetName());
 
-void AFillainCharacter::PlayHitReactMontage(const FName& SectionName)
-{
-	Super::PlayHitReactMontage(SectionName);
-}	
+	return IfPlayerIsReadyToFightAgain() && IfPlayerHasEquippedAWeapon();
+
+}
 
 void AFillainCharacter::GrenadeButtonPressed()
 {
@@ -1148,8 +1224,8 @@ void AFillainCharacter::DetermineRolesOnPlayerDeath(AActor* DamagedPawn, AContro
 		AFillainCharacter* VictimFillain = Cast<AFillainCharacter>(DamagedPawn);
 		AFillainPlayerController* ControllerOfVictim = Cast<AFillainPlayerController>(VictimFillain->GetController());
 		HAFGameMode->PlayerEliminated(this, ControllerOfVictim, KillerController);
-		ControllerOfVictim->SetHUDEliminationMessage(KillerController, ControllerOfVictim);
-		KillerController->SetHUDEliminationMessage(KillerController, ControllerOfVictim);
+		ControllerOfVictim->InitializeHUDEliminationMessage(KillerController, ControllerOfVictim, CachedEventInstigator);
+		KillerController->InitializeHUDEliminationMessage(KillerController, ControllerOfVictim, CachedEventInstigator);
 	}
 }
 
@@ -1157,6 +1233,39 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
 	AController* InstigatorController, AActor* DamageCauser)
 {
 	Super::ReceiveDamage(DamagedPawn, Damage, DamageType, InstigatorController, DamageCauser);
+	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
+	if (bIsEliminated || HAFGameMode == nullptr) return;
+	Damage = HAFGameMode->CalculateDamage(InstigatorController, Controller, Damage);
+
+	float DamageToHealth = Damage;
+	if (Shield > 0.f)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else
+		{
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+			Shield = 0.f;
+		}
+	}
+
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+
+	UpdateHUDHealth();
+	UpdateHUDShield();
+
+	if (Health == 0.f)
+	{
+		if (HAFGameMode)
+		{
+			FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
+			KillerPlayerController = Cast<AFillainPlayerController>(InstigatorController);
+			HAFGameMode->PlayerEliminated(this, FillainPlayerController, KillerPlayerController);
+		}
+	}
 }
 
 void AFillainCharacter::SpawnDefaultWeapon()
@@ -1716,6 +1825,11 @@ void AFillainCharacter::ArmTwoHandedWeapon(AMeleeWeapon* WeaponInHand)
 	ResetToFightAgain();
 }
 
+void AFillainCharacter::HitReactEnd()
+{
+	Combat->ActionState = EActionState::EAS_Unoccupied;
+}
+
 bool AFillainCharacter::PlayerHasSword()
 {
 	return Combat && Combat->bWieldingTheSword;
@@ -1938,11 +2052,11 @@ void AFillainCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void AFillainCharacter::MulticastHit_Implementation()
+/* void AFillainCharacter::MulticastHit_Implementation()
 {
 	FName SectionName = FName("FromFront");
 	PlayHitReactMontage(SectionName);
-}
+} */
 
 void AFillainCharacter::HideCharacterIfCameraClose()
 {
@@ -1968,22 +2082,21 @@ void AFillainCharacter::HideCharacterIfCameraClose()
 void AFillainCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	UpdateHUDShield();
-	if (Health < LastHealth)
-	{
-		FName SectionName("FromFront");
-		PlayHitReactMontage(SectionName);
-	}
 }
 
 void AFillainCharacter::OnRep_Shield(float LastShield)
 {
 	UpdateHUDShield();
-	if (Shield < LastShield)
-	{
-		FName SectionName("FromFront");
-		PlayHitReactMontage(SectionName);
-	}
+}
+
+void AFillainCharacter::OnRep_Stamina(float LastStamina)
+{
+	UpdateHUDStamina();
+}
+
+void AFillainCharacter::OnRep_Majix(float LastMajix)
+{
+	UpdateHUDMajix();
 }
 
 void AFillainCharacter::UpdateHUDHealth()
@@ -2005,6 +2118,27 @@ void AFillainCharacter::UpdateHUDShield()
 		FillainPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
+
+void AFillainCharacter::UpdateHUDStamina()
+{
+	FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
+
+	if (FillainPlayerController)
+	{
+		FillainPlayerController->SetHUDStamina(Stamina, MaxStamina);
+	}
+}
+
+void AFillainCharacter::UpdateHUDMajix()
+{
+	FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
+
+	if (FillainPlayerController)
+	{
+		FillainPlayerController->SetHUDMajix(Majix, MaxMajix);
+	}
+}
+
 void AFillainCharacter::UpdateHUDAmmo()
 {
 	FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
@@ -2054,88 +2188,51 @@ void AFillainCharacter::StartDissolve()
 
 void AFillainCharacter::SetOverlappingItem(AItem* Item)
 {
-	UE_LOG(LogTemp, Error, TEXT("SetOverlappingItem called — Item: %s | Current OverlappingItem: %s"),
-	Item ? *Item->GetName() : TEXT("nullptr"),
-	OverlappingItem ? *OverlappingItem->GetName() : TEXT("nullptr"));
-	
-	UE_LOG(LogTemp, Warning, TEXT("SetOverlappingItem called with: %s"), Item ? *Item->GetName() : TEXT("nullptr"));
-
-	if (Item)
+	if (AWeaponBase* Weapon = Cast<AWeaponBase>(Item))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ItemState = %s"), *UEnum::GetValueAsString(Item->ItemState));
+		SetOverlappingWeapon(Weapon);
 	}
-	else
+	if (ATreasure* Treasure = Cast<ATreasure>(Item))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ItemState = nullptr — no item to report"));
+		AddGoldAcquiredToTotalGold(Treasure);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Setting OverlappingItem: %s"), Item ? *Item->GetName() : TEXT("nullptr"));
-	
-	// Prevent clearing equipped weapon via null update
-	if (!IsValid(Item))
+	if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(Item))
 	{
-		if (OverlappingItem && OverlappingItem->ItemState == EItemState::EIS_Equipped)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Ignoring null OverlappingItem because item is equipped"));
-			return;
-		}
-
-		if (EquippedWeapon)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Ignoring nullptr because player is armed"));
-			return;
-		}
-
-		OverlappingItem = nullptr;
-		OverlappingWeapon = nullptr;
-		return;
+		Combat->PickupAmmo(Combat->RangedType, AmmoPickup->AmountOfAmmoInside);
 	}
-
-	OverlappingItem = Item;
-	UE_LOG(LogTemp, Warning, TEXT("✅ Assigned OverlappingItem to: %s"), *OverlappingItem->GetName());
-
-	if (Item->IsA(AWeaponBase::StaticClass()))
+	if (AHealthPickup* HealthPickup = Cast<AHealthPickup>(Item))
 	{
-		AWeaponBase* Weapon = Cast<AWeaponBase>(Item);
-		OverlappingWeapon = Weapon;
-		UE_LOG(LogTemp, Warning, TEXT("OverlappingWeapon is now: %s"), *Weapon->GetName());
+		UpdateHUDHealth();
 	}
-	else
+	if (AShieldPickup* ShieldPickup = Cast<AShieldPickup>(Item))
 	{
-		OverlappingWeapon = nullptr;
+		UpdateHUDShield();
 	}
-
-	// Hide pickup widget if it's an ammo pickup (non-weapon)
-	if (OverlappingItem->IsA(AAmmoPickup::StaticClass()))
+	if (AStaminaPickup* StaminaPickup = Cast<AStaminaPickup>(Item))
 	{
-		OverlappingItem->ShowPickupAndInfoWidgets(false);
+		UpdateHUDStamina();
 	}
-
-	// Show widgets for valid locally controlled weapons
-	if (IsLocallyControlled() && OverlappingWeapon)
+	if (AMajixPickup* MajixPickup = Cast<AMajixPickup>(Item))
 	{
-		OverlappingWeapon->ShowPickupAndInfoWidgets(true);
+		UpdateHUDMajix();
 	}
+	if (ASoul* Soul = Cast<ASoul>(Item))
+	{
+		AddSoulsGatheredToTotalSouls(Soul);
+	}
+	else OverlappingItem = Item;
 }
 
 void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
 {
-	if (!Weapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("❌ SetOverlappingWeapon called with nullptr"));
-		return;
-	}
 
 	OverlappingWeapon = Weapon;
-	UE_LOG(LogTemp, Warning, TEXT("✅ OverlappingWeapon set to: %s"), *Weapon->GetName());
 	
 	if (OverlappingWeapon && OverlappingWeapon != Weapon)
 	{
 		OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 	}
-
-	OverlappingWeapon = Weapon;
-
+	
 	if (IsLocallyControlled() && OverlappingWeapon)
 	{
 		OverlappingWeapon->ShowPickupAndInfoWidgets(true);
@@ -2262,13 +2359,6 @@ AAmmoPickup* AFillainCharacter::GetPickupThatOverlaps(AAmmoPickup* PickupThatOve
 	return PickupThatOverlaps;
 }
 
-AFillainPlayerController* AFillainCharacter::GetFillainPlayerController()
-{
-	AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(GetController());
-	return FillainController;
-}
-
-
 void AFillainCharacter::CacheDamageParameters(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
 	if (CachedDamagedPawn == nullptr && CachedDamage == 0.0f && CachedDamageType == nullptr && CachedInstigatorController == nullptr && CachedCauser == nullptr)
@@ -2294,10 +2384,37 @@ void AFillainCharacter::ResetCachedDamageParameters()
 	CachedCauser = nullptr;
 }
 
+void AFillainCharacter::InitializeAbilityActorInfo()
+{
+	APlayerState* PState = Cast<APlayerState>(GetPlayerState()); 
+	AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(GetController());
+	if (!PState && FillainController)
+	{
+		if (FillainController)
+		{
+			PState = FillainController->GetHAFPlayerState();
+		}
+	}
+	AHAFPlayerState* HAFPState = Cast<AHAFPlayerState>(PState);
+	HAFPState->GetAbilitySystemComponent()->InitAbilityActorInfo(HAFPState, this);
+	AbilitySystemComponent = HAFPState->GetAbilitySystemComponent();
+	AttributeSet = HAFPState->GetAttributeSet();
+
+	if (FillainController) 
+	{
+		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(FillainController->GetHUD()))
+		{
+			FillainHUD->InitializeOverlay(FillainController, HAFPState, AbilitySystemComponent, AttributeSet);
+		}
+	}
+	
+}
+
 void AFillainCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	ShowPlayerName();
+	InitializeAbilityActorInfo();
 }
 
 void AFillainCharacter::PossessedBy(AController* NewController)
@@ -2313,6 +2430,9 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 		}
 		
 		ShowPlayerName();
+
+		// Init Ability Actor Info for the server
+		InitializeAbilityActorInfo();
 	}
 }
 

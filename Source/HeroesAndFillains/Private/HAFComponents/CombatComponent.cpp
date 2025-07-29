@@ -475,7 +475,7 @@ void UCombatComponent::ReceiveMeleeDamage(
 		UE_LOG(LogTemp, Warning, TEXT("✅ Character implements HitInterface!"));
 	}
 	
-	Character->GetHit_Implementation(HitLocation);
+	Character->GetHit_Implementation(HitLocation, DamageCauser);
 	
 	// Optional: spawn effects like blood, sparks, decals
 	Character->PlayHitSound(HitLocation);

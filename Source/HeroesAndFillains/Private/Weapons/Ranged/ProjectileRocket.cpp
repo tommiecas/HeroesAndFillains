@@ -35,9 +35,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	ExplodeDamage();
 	StartDestroyTimer();
 
-	if (ImpactParticles)
+	if (ImpactNiagaraSystem)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactParticles, HitResult, HitRotation);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactNiagaraSystem, HitResult, HitRotation);
 	}
 	if (ImpactSound)
 	{

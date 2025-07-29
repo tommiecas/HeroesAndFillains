@@ -7,13 +7,15 @@ public class HeroesAndFillains : ModuleRules
 	public HeroesAndFillains(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiplayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam", "SlateCore", "UMG", "Landscape", "GeometryCollectionEngine", "AIModule", });
+		
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiplayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam", "SlateCore", "UMG", "Landscape", "GeometryCollectionEngine", "AIModule", "GameplayAbilities",});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "MotionWarping", "GameplayTags", "GameplayTasks", });
 
-        PublicIncludePaths.AddRange(new string[] { "HeroesAndFillains/Public" });
-        PrivateIncludePaths.AddRange(new string[] { "HeroesAndFillains/Private" });
+		PublicIncludePaths.AddRange(new string[] { "HeroesAndFillains/Public" });
+		PrivateIncludePaths.AddRange(new string[] { "HeroesAndFillains/Private"  });
+		
+
 
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

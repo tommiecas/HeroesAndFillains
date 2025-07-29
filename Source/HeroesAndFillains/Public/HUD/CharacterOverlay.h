@@ -4,31 +4,33 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "HUD/HAFUserWidget.h"
 #include "CharacterOverlay.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API UCharacterOverlay : public UUserWidget
+class HEROESANDFILLAINS_API UCharacterOverlay : public UHAFUserWidget
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* HealthBar;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* HealthText;
+	class UFillainHealthWidget* WBP_FillainHealthWidget;
 
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* ShieldBar;
+	class UFillainShieldWidget* WBP_FillainShieldWidget;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ShieldText;
+	class UFillainStaminaWidget* WBP_FillainStaminaWidget;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ScoreAmount;
+	class UFillainMajixWidget* WBP_FillainMajixWidget;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ScoreAmount;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* RedTeamScore;
@@ -38,8 +40,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreSpacerText;
-
-
+	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsAmount;
 
@@ -72,5 +73,16 @@ public:
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	class UWidgetAnimation* HighPingAnimation;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* EliminationAnimation;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GoldCountText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* SoulsCountText;
+
+	
 
 };

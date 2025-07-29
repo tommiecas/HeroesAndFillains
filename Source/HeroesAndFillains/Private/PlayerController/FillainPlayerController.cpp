@@ -42,7 +42,13 @@
 #include "HUD/PlayerChatTextBlock.h"
 #include "Components/EditableText.h"
 #include "Components/ScrollBox.h"
+#include "Enemies/EnemyBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
+#include "HUD/HUD/FillainHealthWidget.h"
+#include "HUD/HUD/FillainMajixWidget.h"
+#include "HUD/HUD/FillainShieldWidget.h"
+#include "HUD/HUD/FillainStaminaWidget.h"
+#include "Items/Soul.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 
@@ -179,7 +185,10 @@ void AFillainPlayerController::BeginPlay()
 
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		Subsystem->AddMappingContext(FillainMappingContext, 0);
+		if (Subsystem)
+		{
+			Subsystem->AddMappingContext(FillainMappingContext, 0);
+		}
 	}
 
 	if (!IsLocalPlayerController()) return;  // This line is added because the editor keeps on giving me an error after exiting saying only local player controller can access widgets
@@ -202,6 +211,7 @@ void AFillainPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	DOREPLIFETIME(AFillainPlayerController, MatchState);
 	DOREPLIFETIME(AFillainPlayerController, bShowTeamScores);
 }
+
 
 void AFillainPlayerController::Tick(float DeltaTime)
 {
@@ -230,7 +240,7 @@ void AFillainPlayerController::Tick(float DeltaTime)
 		else if (MatchTimeElapsedTime >= MatchTime)
 		{
 			FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-			bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->MatchCountdownText;
+			bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay  && FillainHUD->CharacterOverlay->MatchCountdownText;
 			const FString TimesUpText = TEXT("TIME'S UP!!");
 			if (bIsHUDValid)
 			{
@@ -380,13 +390,13 @@ void AFillainPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->HealthBar && FillainHUD->CharacterOverlay->HealthText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WBP_FillainHealthWidget->HealthBar && FillainHUD->CharacterOverlay->WBP_FillainHealthWidget->HealthText;
 	if (bIsHUDValid)
 	{
 		const float HealthPercent = Health / MaxHealth;
-		FillainHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
+		FillainHUD->CharacterOverlay->WBP_FillainHealthWidget->HealthBar->SetPercent(HealthPercent);
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
-		FillainHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+		FillainHUD->CharacterOverlay->WBP_FillainHealthWidget->HealthText->SetText(FText::FromString(HealthText));
 	}
 	else
 	{
@@ -400,19 +410,59 @@ void AFillainPlayerController::SetHUDShield(float Shield, float MaxShield)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->ShieldBar && FillainHUD->CharacterOverlay->ShieldText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WBP_FillainShieldWidget->ShieldBar && FillainHUD->CharacterOverlay->WBP_FillainShieldWidget->ShieldText;
 	if (bIsHUDValid)
 	{
 		const float ShieldPercent = Shield / MaxShield;
-		FillainHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		FillainHUD->CharacterOverlay->WBP_FillainShieldWidget->ShieldBar->SetPercent(ShieldPercent);
 		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
-		FillainHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+		FillainHUD->CharacterOverlay->WBP_FillainShieldWidget->ShieldText->SetText(FText::FromString(ShieldText));
 	}
 	else
 	{
 		bInitializeShield = true;
 		HUDShield = Shield;
 		HUDMaxShield = MaxShield;
+	}
+}
+
+void AFillainPlayerController::SetHUDStamina(float Stamina, float MaxStamina)
+{
+	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
+
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WBP_FillainStaminaWidget->StaminaBar && FillainHUD->CharacterOverlay->WBP_FillainStaminaWidget->StaminaText;
+	if (bIsHUDValid)
+	{
+		const float StaminaPercent = Stamina / MaxStamina;
+		FillainHUD->CharacterOverlay->WBP_FillainStaminaWidget->StaminaBar->SetPercent(StaminaPercent);
+		FString StaminaText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Stamina), FMath::CeilToInt(MaxStamina));
+		FillainHUD->CharacterOverlay->WBP_FillainStaminaWidget->StaminaText->SetText(FText::FromString(StaminaText));
+	}
+	else
+	{
+		bInitializeStamina = true;
+		HUDStamina = Stamina;
+		HUDMaxStamina = MaxStamina;
+	}
+}
+
+void AFillainPlayerController::SetHUDMajix(float Majix, float MaxMajix)
+{
+	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
+
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->WBP_FillainMajixWidget->MajixBar && FillainHUD->CharacterOverlay->WBP_FillainMajixWidget->MajixText;
+	if (bIsHUDValid)
+	{
+		const float MajixPercent = Majix / MaxMajix;
+		FillainHUD->CharacterOverlay->WBP_FillainMajixWidget->MajixBar->SetPercent(MajixPercent);
+		FString MajixText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Majix), FMath::CeilToInt(MaxMajix));
+		FillainHUD->CharacterOverlay->WBP_FillainMajixWidget->MajixText->SetText(FText::FromString(MajixText));
+	}
+	else
+	{
+		bInitializeMajix = true;
+		HUDMajix = Majix;
+		HUDMaxMajix = MaxMajix;
 	}
 }
 
@@ -432,6 +482,33 @@ void AFillainPlayerController::SetHUDScore(float Score)
 	}
 }
 
+void AFillainPlayerController::SetHUDSoulsCount(int32 SoulsCountGathered)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SoulsGathered when SetHUDSoulsCount launches: %d"), SoulsCountGathered);
+	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
+	UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after verifying the HUD: %d"), SoulsCountGathered);
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->SoulsCountText;
+	UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after verifying all the HUD components: %d"), SoulsCountGathered);
+
+	if (bIsHUDValid)
+	{
+		FString SoulsText = FString::Printf(TEXT("%d"), SoulsCountGathered);
+		UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after creating the text with the SoulsCountGathered number: %d"), SoulsCountGathered);
+		FillainHUD->CharacterOverlay->SoulsCountText->SetText(FText::FromString(SoulsText));
+		UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after HUD display updated to: %d"), SoulsCountGathered);
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SoulsGathered if we enter the ELSE because the HUD wasn't valid: %d"), SoulsCountGathered);
+		bInitializeSouls = true;
+		UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after initializing Souls: %d"), SoulsCountGathered);
+		HUDSouls = SoulsCountGathered;
+		UE_LOG(LogTemp, Warning, TEXT("SoulsGathered after setting HUDSouls to SoulsCountGathered: %d"), SoulsCountGathered);
+
+	}
+}
+
 void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
@@ -445,6 +522,21 @@ void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 	{
 		bInitializeDefeats = true;
 		HUDDefeats = Defeats;
+	}
+}
+void AFillainPlayerController::SetHUDGoldCount(int32 GoldAmountOwned)
+{
+	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->GoldCountText;
+	if (bIsHUDValid)
+	{
+		FString GoldText = FString::Printf(TEXT("%d"), GoldAmountOwned);
+		FillainHUD->CharacterOverlay->GoldCountText->SetText(FText::FromString(GoldText));
+	}
+	else
+	{
+		bInitializeGold = true;
+		HUDGold = GoldAmountOwned;
 	}
 }
 
@@ -976,40 +1068,93 @@ void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
 	}
 }
 
+void AFillainPlayerController::ShowEliminationUI(FString Victim, FString Killer, FText Message)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ShowEliminationUI called for Victim: %s, Killer: %s"), *Victim, *Killer);
 
-void AFillainPlayerController::SetHUDEliminationMessage(AFillainPlayerController* KillerController, AFillainPlayerController* VictimController)
+	if (!FillainHUD || !FillainHUD->CharacterOverlay) return;
+
+	UCharacterOverlay* Overlay = FillainHUD->CharacterOverlay;
+
+	// Set text first
+	Overlay->VictimNameText->SetText(FText::FromString(Victim));
+	Overlay->KillerNameText->SetText(FText::FromString(Killer));
+	Overlay->EliminationMessageText->SetText(Message);
+
+	// Make visible
+	Overlay->VictimNameText->SetVisibility(ESlateVisibility::Visible);
+	Overlay->KillerNameText->SetVisibility(ESlateVisibility::Visible);
+	Overlay->EliminationMessageText->SetVisibility(ESlateVisibility::Visible);
+
+	// Delay animation slightly to ensure text is updated (optional test)
+/*	FTimerHandle PlayAnimHandle;
+	GetWorldTimerManager().SetTimer(PlayAnimHandle, [Overlay]() { */
+		if (Overlay->EliminationAnimation)
+		{
+			Overlay->PlayAnimation(Overlay->EliminationAnimation);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EliminationAnimation is null!"));
+		}
+/*	}, 0.01f, false);  // Slight delay (~1 frame) */
+	
+/*	// Clear and hide after 3 seconds
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, [this, Overlay]() {
+		Overlay->VictimNameText->SetText(FText::GetEmpty());
+		Overlay->KillerNameText->SetText(FText::GetEmpty());
+		Overlay->EliminationMessageText->SetText(FText::GetEmpty());
+
+		Overlay->VictimNameText->SetVisibility(ESlateVisibility::Hidden);
+		Overlay->KillerNameText->SetVisibility(ESlateVisibility::Hidden);
+		Overlay->EliminationMessageText->SetVisibility(ESlateVisibility::Hidden);
+	}, 4.f, false); */
+}
+
+void AFillainPlayerController::UpdateEliminationMessageForPvE(AFillainPlayerController* VictimPlayerController, AController* InstigatorController)
+{
+	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
+	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->EliminationMessageText && FillainHUD->CharacterOverlay->VictimNameText && FillainHUD->CharacterOverlay->KillerNameText && FillainHUD->CharacterOverlay->EliminationAnimation;
+	if (FillainHUD && bIsHUDValid && VictimPlayerController)
+	{
+		FString NameOfVictim = VictimPlayerController->PlayerState->GetPlayerName();
+		AEnemyBase* KillerVillain = Cast<AEnemyBase>(InstigatorController->GetPawn());
+		FString NameOfKiller = KillerVillain->GetEnemyDisplayName();
+		FText EliminationMessage = FText::FromString(TEXT("Was Eliminated By"));
+		FString VictimName = NameOfVictim;
+		FString KillerName = NameOfKiller;
+		ShowEliminationUI(VictimName, KillerName, EliminationMessage);
+
+		
+	}
+}
+
+void AFillainPlayerController::UpdateEliminationMessageForPvP(AFillainPlayerController* KillerPlayerController, AFillainPlayerController* VictimPlayerController)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlay && FillainHUD->CharacterOverlay->EliminationMessageText && FillainHUD->CharacterOverlay->VictimNameText && FillainHUD->CharacterOverlay->KillerNameText;
 
-	if (FillainHUD && bIsHUDValid && VictimController && KillerController)
+	if (FillainHUD && bIsHUDValid && VictimPlayerController && KillerPlayerController)
 	{
-		FString NameOfVictim = VictimController->PlayerState->GetPlayerName();
-		FString NameOfKiller = KillerController->PlayerState->GetPlayerName();
-		FString EliminationMessage = FString::Printf(TEXT("Was Eliminated By"));
+		FString NameOfVictim = VictimPlayerController->PlayerState->GetPlayerName();
+		FString NameOfKiller = KillerPlayerController->PlayerState->GetPlayerName();
+		FText EliminationMessage = FText::FromString(TEXT("Was Eliminated By"));
 		FString VictimName = FString::Printf(TEXT("%s"), *NameOfVictim);
 		FString KillerName = FString::Printf(TEXT("%s"), *NameOfKiller);
-		FillainHUD->CharacterOverlay->VictimNameText->SetText(FText::FromString(VictimName));
-		FillainHUD->CharacterOverlay->KillerNameText->SetText(FText::FromString(KillerName));
-		FillainHUD->CharacterOverlay->EliminationMessageText->SetText(FText::FromString(EliminationMessage));
-		FTimerHandle TimerHandleVictim;
-		FTimerHandle TimerHandleKiller;
-		FTimerHandle TimerHandleElimination;
-		GetWorldTimerManager().SetTimer(TimerHandleVictim, [this]() {
-			FillainHUD->CharacterOverlay->VictimNameText->SetText(FText::GetEmpty()); },
-			3.0f,
-			false
-			);
-		GetWorldTimerManager().SetTimer(TimerHandleKiller, [this]() {
-			FillainHUD->CharacterOverlay->KillerNameText->SetText(FText::GetEmpty()); },
-			3.0f,
-			false
-			);
-		GetWorldTimerManager().SetTimer(TimerHandleElimination, [this]() {
-			FillainHUD->CharacterOverlay->EliminationMessageText->SetText(FText::GetEmpty()); },
-			3.0f,
-			false
-			);
+		ShowEliminationUI(VictimName, KillerName, EliminationMessage);
+	}
+}
+
+void AFillainPlayerController::InitializeHUDEliminationMessage(AFillainPlayerController* KillerPlayerController, AFillainPlayerController* VictimPlayerController, AController* InstigatorController)
+{
+	if (!KillerPlayerController && InstigatorController)
+	{
+		UpdateEliminationMessageForPvE(VictimPlayerController, InstigatorController);	
+	}
+	if (KillerPlayerController && VictimPlayerController)
+	{
+		UpdateEliminationMessageForPvP(KillerPlayerController, VictimPlayerController);
 	}
 }
 	

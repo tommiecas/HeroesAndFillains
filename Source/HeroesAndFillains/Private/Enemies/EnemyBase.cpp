@@ -2,6 +2,9 @@
 
 
 #include "Enemies/EnemyBase.h"
+
+#include <Items/Soul.h>
+
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "HeroesAndFillains/DebugMacros.h"
@@ -16,6 +19,7 @@
 #include "HUD/HealthBarWidgetComponent.h"
 #include "AIController.h"
 #include "NavigationPath.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Components/BoxComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/PawnSensingComponent.h"
@@ -24,6 +28,9 @@
 #include "HAFComponents/CombatComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "Weapons/Melee/MeleeWeapon.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
+#include "AbilitySystem/HAFAttributeSet.h"
+
 
 AEnemyBase::AEnemyBase()
 {
@@ -40,10 +47,10 @@ AEnemyBase::AEnemyBase()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
 
 	// Create the WidgetComponent
-	NewHealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
-	NewHealthBarWidgetComponent->SetupAttachment(GetCapsuleComponent());
-	NewHealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	NewHealthBarWidgetComponent->SetDrawSize(FVector2D(300.f, 25.f));
+	HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
+	HealthBarWidgetComponent->SetupAttachment(GetCapsuleComponent());
+	HealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthBarWidgetComponent->SetDrawSize(FVector2D(300.f, 25.f));
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationPitch = false;
@@ -56,94 +63,202 @@ AEnemyBase::AEnemyBase()
 
 	GetMesh()->SetGenerateOverlapEvents(true);
 	GetMesh()->SetCollisionObjectType(ECC_Enemy);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
+	GetMesh()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Ignore);
 
-	EnemyCombat = CreateDefaultSubobject<UCombatComponent>(TEXT("EnemyCombat"));
-	EnemyCombat->SetIsReplicated(true);
+	DeadEnemySoulCount = AttributeComponent->GetSoulsGathered();
+
+	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
 }
 
-void AEnemyBase::SpawnEnemyWeapon()
+void AEnemyBase::Tick(float DeltaTime)
 {
-	UWorld* World = GetWorld();
-	if (World && WeaponClass)
+	Super::Tick(DeltaTime);
+	if (IsEnemyDead()) return;
+	if (EnemyState > EEnemyState::EES_Patrolling)
 	{
-		AWeaponBase* DefaultWeapon = World->SpawnActor<AWeaponBase>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		EquippedEnemyWeapon = DefaultWeapon;
-		EquippedWeapon = DefaultWeapon; // ✅ also assign to BaseCharacter's pointer
-		EquippedEnemyMeleeWeapon = Cast<AMeleeWeapon>(EquippedEnemyWeapon);
-		EquippedMeleeWeapon = EquippedEnemyMeleeWeapon;
-		EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
-		EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EquippedEnemyMeleeWeapon->WeaponBox->SetGenerateOverlapEvents(true);
-		EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-		EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-		
+		CheckCombatTarget();
+	}
+	else
+	{
+		CheckPatrolTarget();
 	}
 }
 
-void AEnemyBase::HideHealthBarWidget()
+float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (NewHealthBarWidgetComponent)
+	HandleDamage(DamageAmount);
+	CombatTarget = EventInstigator->GetPawn();
+
+	if (IsInsideAttackRadius())
 	{
-		NewHealthBarWidgetComponent->SetVisibility(false);
+		EnemyState = EEnemyState::EES_Attacking;
 	}
+	else if (IsOutsideAttackRadius())
+	{
+		EnemiesChaseTarget();
+	}
+
+	return DamageAmount;
 }
 
-void AEnemyBase::LaunchEnemyAIController()
+void AEnemyBase::Destroyed()
 {
-	EnemyController = Cast<AAIController>(GetController());
+	Super::Destroyed();
+
+	if (EquippedEnemyWeapon) EquippedEnemyWeapon->Destroy();
+	if (EquippedEnemyMeleeWeapon) EquippedEnemyMeleeWeapon->Destroy();
+	else return;
 }
 
-void AEnemyBase::InitializeEnemy()
+void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	HideHealthBarWidget();
-	LaunchEnemyAIController();
-	MoveToTarget(PatrolTarget);
-	SpawnEnemyWeapon();
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	if (!IsEnemyDead()) ShowHealthBarWidgetComponent();
+	ClearPatrolTimer();
+	ClearAttackTimer();
+	
+	StopMontage(CurrentAttackMontage);
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (IsInsideAttackRadius())
+	{
+		if (!IsEnemyDead()) StartAttackTimer();
+	}
 }
 
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (EnemyCombat)
-	{
-		EnemyCombat->SetEnemy(this); // this is AEnemyBase*
-	}
-
-	EnemyCombat = Cast<UCombatComponent>(GetComponentByClass(UCombatComponent::StaticClass()));
-    
-	if (!EnemyCombat)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ EnemyCombat is null in BeginPlay!"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ EnemyCombat successfully assigned in BeginPlay"));
-	}
 	
-	InitializeEnemy();
 	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemyBase::PawnSeen);
+	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
-
-	if (!EnemyCombat)
-	{
-		EnemyCombat = FindComponentByClass<UCombatComponent>();
-		if (!EnemyCombat)
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ EnemyCombat is NULL on %s"), *GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("✅ EnemyCombat found at runtime: %s"), *GetName());
-		}
-	}
-	
-
 }
+
+void AEnemyBase::SpawnSoul()
+{
+	UWorld* World = GetWorld();
+	if (World && SoulClass && AttributeComponent)
+	{
+		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedSoul) SpawnedSoul->OriginEnemy = this; // or your enemy reference
+		int32 EnemySouls = AttributeComponent->GetSoulsGathered();
+		SpawnedSoul->SetSoulValue(EnemySouls);
+		SpawnedSoul->SetOriginEnemy(this);
+	}
+}
+
+void AEnemyBase::CharacterDies()
+{
+	Super::CharacterDies();
+	EnemyState = EEnemyState::EES_Dead;
+	ClearAttackTimer();
+	HideHealthBarWidgetComponent();
+	DisableCapsule();
+	SetLifeSpan(DeathLifeSpan);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	UE_LOG(LogTemp, Warning, TEXT("Calling SpawnSoul now!"));
+	SpawnSoul();
+	UE_LOG(LogTemp, Warning, TEXT("SpawnSoul completed!"));
+}
+
+int32 AEnemyBase::PlayDeathMontage()
+{
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	TEnumAsByte<EDeathPose> Pose(Selection);;
+	if (Pose < EDeathPose::EDP_MAX)
+	{
+		DeathPose = Pose;
+	}
+	return Selection;
+}
+void AEnemyBase::MeleeAttack()
+{
+	Super::MeleeAttack();
+	if (CombatTarget == nullptr) return;
+	EnemyState = EEnemyState::EES_Engaged;
+	if (IsValid(MeleeAttackMontage) && MeleeAttackMontages.IsEmpty()) PlayMeleeAttackMontage();
+	if (!MeleeAttackMontages.IsEmpty()) PlayRandomAttackMontage();
+}
+
+int32 AEnemyBase::PlayMeleeAttackMontage()
+{
+	const int32 Selection = Super::PlayMeleeAttackMontage();
+	return Selection;
+}
+
+void AEnemyBase::PlayRandomAttackMontage()
+{
+	if (MeleeAttackMontages.Num() == 0 || !GetMesh() || !GetMesh()->GetAnimInstance()) return;
+
+	// Pick a random montage
+	int32 Index = FMath::RandRange(0, MeleeAttackMontages.Num() - 1);
+	UAnimMontage* SelectedMontage = MeleeAttackMontages[Index];
+	if (!SelectedMontage) return;
+
+	// Optional: pick a random section
+	FName SectionToPlay = NAME_None;
+	const TArray<FCompositeSection>& Sections = SelectedMontage->CompositeSections;
+	if (Sections.Num() > 0)
+	{
+		const int32 SectionIndex = FMath::RandRange(0, Sections.Num() - 1);
+		SectionToPlay = Sections[SectionIndex].SectionName;
+	}
+
+	// ✅ Store for use in stop/interruption logic
+	CurrentAttackMontage = SelectedMontage;
+
+	// ✅ Disable movement so root motion can fully take over
+	UCharacterMovementComponent* CharMove = GetCharacterMovement();
+	if (CharMove && SelectedMontage->GetName().StartsWith("Root_"))
+	{
+		CharMove->DisableMovement();
+		CharMove->StopMovementImmediately();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("🔥 Gnarled is trying to play an attack montage!"));
+
+	// ✅ Play the montage
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	float MontageDuration = AnimInstance->Montage_Play(SelectedMontage);
+	if (MontageDuration > 0.f && SectionToPlay != NAME_None)
+	{
+		AnimInstance->Montage_JumpToSection(SectionToPlay, SelectedMontage);
+		UE_LOG(LogTemp, Warning, TEXT("Root motion active: %s"),
+			GetCharacterMovement()->IsMovingOnGround() ? TEXT("Grounded") : TEXT("Not grounded"));
+	}
+
+	// ✅ Optional: Set up callback to re-enable movement
+	AnimInstance->OnMontageEnded.AddDynamic(this, &AEnemyBase::OnAttackMontageEnded);
+}
+
+void AEnemyBase::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage == CurrentAttackMontage)
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		CurrentAttackMontage = nullptr;
+	}
+}
+
+bool AEnemyBase::CanAttack()
+{
+	bool bCanAttack = IsInsideAttackRadius() &&
+		!IsEnemyAttacking() &&
+		!IsEnemyEngaged() &&
+		!IsEnemyDead();
+	return bCanAttack;
+}
+
 
 void AEnemyBase::AttackEnd()
 {
@@ -151,9 +266,159 @@ void AEnemyBase::AttackEnd()
 	CheckCombatTarget();
 }
 
-void AEnemyBase::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+void AEnemyBase::HandleDamage(float DamageAmount)
 {
-	Super::SetWeaponCollisionEnabled(CollisionEnabled);
+	Super::HandleDamage(DamageAmount);
+
+	if (AttributeComponent && HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
+}
+
+void AEnemyBase::InitializeAbilitySystem()
+{
+	if (AbilitySystemComponent) AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void AEnemyBase::InitializeEnemy()
+{
+	LaunchEnemyAIController();
+	MoveToTarget(PatrolTarget);
+	HideHealthBarWidgetComponent();
+	SpawnEnemyWeapon();
+	InitializeAbilitySystem();
+}
+
+
+AAIController* AEnemyBase::LaunchEnemyAIController()
+{
+	EnemyController = Cast<AAIController>(GetController());
+	return EnemyController;;
+}
+
+void AEnemyBase::CheckPatrolTarget()
+{
+	if (InTargetRange(PatrolTarget, PatrolRadius))
+	{
+		PatrolTarget = ChoosePatrolTarget();
+		const float WaitTime = FMath::RandRange(PatrolWaitMin, PatrolWaitMax);
+		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemyBase::PatrolTimerFinished, WaitTime);
+	}
+}
+
+
+void AEnemyBase::CheckCombatTarget()
+{
+	if (IsOutsideCombatRadius())
+	{
+		ClearAttackTimer();
+		EnemiesLoseInterest();
+		if (!IsEnemyEngaged()) EnemiesStartPatrolling();
+	}
+	else if (IsOutsideAttackRadius() && !IsEnemyChasing())
+	{
+		ClearAttackTimer();
+		if (!IsEnemyEngaged()) EnemiesChaseTarget();
+
+	}
+	else if (CanAttack())
+	{
+		StartAttackTimer();
+	}
+}
+
+void AEnemyBase::PatrolTimerFinished()
+{
+	MoveToTarget(PatrolTarget);
+}
+
+void AEnemyBase::HideHealthBarWidgetComponent()
+{
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+}
+
+void AEnemyBase::ShowHealthBarWidgetComponent()
+{
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility((true));
+	}
+}
+
+void AEnemyBase::EnemiesLoseInterest()
+{
+	CombatTarget = nullptr;
+	HideHealthBarWidgetComponent();
+}
+
+void AEnemyBase::EnemiesStartPatrolling()
+{
+	EnemyState = EEnemyState::EES_Patrolling;
+	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
+	MoveToTarget(PatrolTarget);
+}
+
+void AEnemyBase::EnemiesChaseTarget()
+{
+	EnemyState = EEnemyState::EES_Chasing;
+	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+	MoveToTarget(CombatTarget);
+}
+
+bool AEnemyBase::IsOutsideCombatRadius()
+{
+	return !InTargetRange(CombatTarget, CombatRadius);
+}
+
+bool AEnemyBase::IsOutsideAttackRadius()
+{
+	return !InTargetRange(CombatTarget, AttackRadius);
+}
+
+bool AEnemyBase::IsInsideAttackRadius()
+{
+	return InTargetRange(CombatTarget, AttackRadius);
+}
+
+bool AEnemyBase::IsEnemyChasing()
+{
+	return EnemyState == EEnemyState::EES_Chasing;
+}
+
+bool AEnemyBase::IsEnemyAttacking()
+{
+	return EnemyState == EEnemyState::EES_Attacking;
+}
+
+bool AEnemyBase::IsEnemyEngaged()
+{
+	return EnemyState == EEnemyState::EES_Engaged;
+}
+
+bool AEnemyBase::IsEnemyDead()
+{
+	return EnemyState == EEnemyState::EES_Dead;
+}
+
+void AEnemyBase::ClearPatrolTimer()
+{
+	GetWorldTimerManager().ClearTimer(PatrolTimer);
+}
+
+void AEnemyBase::StartAttackTimer()
+{
+	EnemyState = EEnemyState::EES_Attacking;
+	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
+	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemyBase::MeleeAttack, AttackTime);
+}
+
+void AEnemyBase::ClearAttackTimer()
+{
+	GetWorldTimerManager().ClearTimer(AttackTimer);
 }
 
 bool AEnemyBase::InTargetRange(AActor* Target, double Radius)
@@ -169,7 +434,7 @@ void AEnemyBase::MoveToTarget(AActor* Target)
 	
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalActor(Target);
-	MoveRequest.SetAcceptanceRadius(60.f);
+	MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
 	EnemyController->MoveTo(MoveRequest);
 }
 
@@ -192,10 +457,29 @@ AActor* AEnemyBase::ChoosePatrolTarget()
 	return nullptr;
 }
 
-void AEnemyBase::ClearPatrolTimer()
+void AEnemyBase::SpawnEnemyWeapon()
 {
-	GetWorldTimerManager().ClearTimer(PatrolTimer);
+	UWorld* World = GetWorld();
+	if (World && WeaponClass)
+	{
+		AWeaponBase* DefaultWeapon = World->SpawnActor<AWeaponBase>(WeaponClass);
+		DefaultWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		EquippedEnemyWeapon = DefaultWeapon;
+		EquippedWeapon = DefaultWeapon; // ✅ also assign to BaseCharacter's pointer
+		EquippedEnemyMeleeWeapon = Cast<AMeleeWeapon>(EquippedEnemyWeapon);
+		EquippedMeleeWeapon = EquippedEnemyMeleeWeapon;
+		if (EquippedEnemyMeleeWeapon->WeaponBox)
+		{
+			EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
+			EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			EquippedEnemyMeleeWeapon->WeaponBox->SetGenerateOverlapEvents(true);
+			EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+			EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+			EquippedEnemyMeleeWeapon->WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+		}
+	}
 }
+
 
 void AEnemyBase::PawnSeen(APawn* SeenPawn)
 {
@@ -215,223 +499,23 @@ void AEnemyBase::PawnSeen(APawn* SeenPawn)
 
 
 
-void AEnemyBase::PatrolTimerFinished()
-{
-	MoveToTarget(PatrolTarget);
-	
-}
 
 
-void AEnemyBase::HideHealthBar()
-{
-	if (NewHealthBarWidgetComponent)
-	{
-		NewHealthBarWidgetComponent->SetVisibility((false));
-	}
-}
 
-void AEnemyBase::ShowHealthBar()
-{
-	if (NewHealthBarWidgetComponent)
-	{
-		NewHealthBarWidgetComponent->SetVisibility((true));
-	}
-}
 
-void AEnemyBase::EnemiesLoseInterest()
-{
-	CombatTarget = nullptr;
-	HideHealthBar();
-}
 
-void AEnemyBase::EnemiesStartPatrolling()
-{
-	EnemyState = EEnemyState::EES_Patrolling;
-	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
-	MoveToTarget(PatrolTarget);
-}
 
-bool AEnemyBase::IsOutsideCombatRadius()
-{
-	return !InTargetRange(CombatTarget, CombatRadius);
-}
 
-void AEnemyBase::EnemiesChaseTarget()
-{
-	EnemyState = EEnemyState::EES_Chasing;
-	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
-	MoveToTarget(CombatTarget);
-}
 
-bool AEnemyBase::IsOutsideAttackRadius()
-{
-	return !InTargetRange(CombatTarget, AttackRadius);
-}
 
-bool AEnemyBase::IsInsideAttackRadius()
-{
-	return InTargetRange(CombatTarget, AttackRadius);
-}
 
-bool AEnemyBase::IsEnemyDead()
-{
-	return EnemyState == EEnemyState::EES_Dead;
-}
 
-bool AEnemyBase::IsEnemyChasing()
-{
-	return EnemyState == EEnemyState::EES_Chasing;
-}
 
-bool AEnemyBase::IsEnemyAttacking()
-{
-	return EnemyState == EEnemyState::EES_Attacking;
-}
 
-bool AEnemyBase::IsEnemyEngaged()
-{
-	return EnemyState == EEnemyState::EES_Engaged;
-}
 
-void AEnemyBase::CheckCombatTarget()
-{
-	if (IsOutsideCombatRadius())
-	{
-		ClearAttackTimer();
-		EnemiesLoseInterest();
-		if (!IsEnemyEngaged()) EnemiesStartPatrolling();
-	}
-	else if (IsOutsideAttackRadius() && !IsEnemyChasing())
-	{
-		ClearAttackTimer();
-		if (!IsEnemyEngaged()) EnemiesChaseTarget();
 
-	}
-	else if (CanAttack())
-	{
-		StartAttackTimer();
-	}
-}
 
-void AEnemyBase::CheckPatrolTarget()
-{
-	if (InTargetRange(PatrolTarget, PatrolRadius))
-	{
-		PatrolTarget = ChoosePatrolTarget();
-		const float WaitTime = FMath::RandRange(PatrolWaitMin, PatrolWaitMax);
-		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemyBase::PatrolTimerFinished, WaitTime);
-	}
-}
 
-void AEnemyBase::StartAttackTimer()
-{
-	EnemyState = EEnemyState::EES_Attacking;
-	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
-	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemyBase::MeleeAttack, AttackTime);
-}
-
-void AEnemyBase::ClearAttackTimer()
-{
-	GetWorldTimerManager().ClearTimer(AttackTimer);
-}
-
-void AEnemyBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	if (IsEnemyDead()) return;
-	if (EnemyState > EEnemyState::EES_Patrolling)
-	{
-		CheckCombatTarget();
-	}
-	else
-	{
-		CheckPatrolTarget();
-	}
-}
-
-float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
-{
-	UE_LOG(LogTemp, Warning, TEXT("💥 AEnemyBase::TakeDamage — DamageAmount: %f"), DamageAmount);
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CalculateDamage(this, DamageAmount, EventInstigator);
-	CombatTarget = EventInstigator->GetPawn();
-	EnemiesChaseTarget();
-	return DamageAmount;
-}
-
-void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint)
-{
-	Super::GetHit_Implementation(ImpactPoint);
-	ShowHealthBar();
-}
-
-void AEnemyBase::CharacterDies()
-{
-	EnemyState = EEnemyState::EES_Dead;
-	PlayDeathMontage();
-	ClearAttackTimer();
-	HideHealthBar();
-	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
-	GetCharacterMovement()->bOrientRotationToMovement = false;
-}
-
-void AEnemyBase::Destroyed()
-{
-	Super::Destroyed();
-
-	if (EquippedEnemyWeapon) EquippedEnemyWeapon->Destroy();
-	if (EquippedEnemyMeleeWeapon) EquippedEnemyMeleeWeapon->Destroy();
-	else return;
-}
-
-float AEnemyBase::CalculateDamage(AActor* DamagedPawn, float DamageAmount, AController* InstigatorController)
-{
-	Super::CalculateDamage(DamagedPawn, DamageAmount, InstigatorController);
-	return DamageAmount;
-}
-
-int32 AEnemyBase::PlayDeathMontage()
-{
-	const int32 Selection = Super::PlayDeathMontage();
-	TEnumAsByte<EDeathPose> Pose(Selection);
-	if (Pose < EDeathPose::EDP_MAX)
-	{
-		DeathPose = Pose;
-	}
-	return Selection;
-}
-
-void AEnemyBase::MeleeAttack()
-{
-	UE_LOG(LogTemp, Warning, TEXT("🔍 Enemy %s attacking — EnemyCombat is %s"),
-	*GetName(),
-	EnemyCombat ? TEXT("VALID") : TEXT("NULL"));
-	EnemyState = EEnemyState::EES_Engaged;
-	Super::MeleeAttack();
-	PlayMeleeAttackMontage();
-}
-
-int32 AEnemyBase::PlayMeleeAttackMontage()
-{
-	const int32 Selection = Super::PlayMeleeAttackMontage();
-	return Selection;
-}
-
-bool AEnemyBase::CanAttack()
-{
-	bool bCanAttack = IsInsideAttackRadius() &&
-		!IsEnemyAttacking() &&
-		!IsEnemyEngaged() &&
-		!IsEnemyDead();
-	return bCanAttack;
-}
-
-void AEnemyBase::PlayMontageSection(UAnimMontage* Montage, const FName& SectionName)
-{
-	Super::PlayMontageSection(Montage, SectionName);
-}
 
 
 

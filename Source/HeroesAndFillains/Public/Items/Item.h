@@ -67,6 +67,9 @@ public:
 
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	virtual void SpawnPickupSystem();
+	virtual void SpawnPickupSound();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ItemMesh;
@@ -133,7 +136,13 @@ public:
 	ERangedType RangedType = ERangedType::ERT_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	class UNiagaraComponent* EmbersEffect;
+	class UNiagaraComponent* ItemEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Pickup Effects")
+	class UNiagaraSystem* PickupEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Pickup Effects")
+	USoundBase* PickupSound;
 	
 protected:
 	

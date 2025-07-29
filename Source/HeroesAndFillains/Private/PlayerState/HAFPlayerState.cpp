@@ -2,11 +2,25 @@
 
 
 #include "PlayerState/HAFPlayerState.h"
+
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "Characters/FillainCharacter.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
 
+AHAFPlayerState::AHAFPlayerState()
+{
+	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+
+	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
+	
+	SetNetUpdateFrequency(100.f);
+}
 
 void AHAFPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -43,6 +57,11 @@ void AHAFPlayerState::OnRep_Score()
 			Controller->SetHUDScore(GetScore());
 		}
 	}
+}
+
+UAbilitySystemComponent* AHAFPlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 void AHAFPlayerState::AddToDefeats(int32 DefeatsAmount)

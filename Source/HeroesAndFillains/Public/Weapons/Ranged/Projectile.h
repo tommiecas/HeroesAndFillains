@@ -51,7 +51,7 @@ protected:
 	float HeadShotDamage = 40.f;
 
 	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* ImpactParticles;
+	class UNiagaraSystem* ImpactNiagaraSystem;
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
