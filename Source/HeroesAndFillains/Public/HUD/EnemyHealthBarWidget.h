@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "HealthBarWidget.generated.h"
+#include "EnemyHealthBarWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API UHealthBarWidget : public UUserWidget
+class HEROESANDFILLAINS_API UEnemyHealthBarWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* HealthProgressBar;
-/*
-	void SetHealthPercent(float HealthPercent);
-*/
+	class UProgressBar* EnemyHealthProgressBar;
+
+	void SetEnemyHealthPercent(float HealthPercent);
+
 	
 };

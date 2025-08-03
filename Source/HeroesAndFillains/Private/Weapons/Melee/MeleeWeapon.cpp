@@ -29,6 +29,7 @@ AMeleeWeapon::AMeleeWeapon()
 	WeaponBox->SetupAttachment(WeaponMesh, TEXT("RootSocket"));
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	WeaponBox->SetBoxExtent(FVector(10.f, 50.f, 50.f)); // exaggerate to test
 	
 	TracePointHilt = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointHilt"));
@@ -51,7 +52,6 @@ void AMeleeWeapon::BeginPlay()
 	Super::BeginPlay();
 	
 	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 3.f); */
-    UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
 }
 
 void AMeleeWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -133,25 +133,25 @@ void AMeleeWeapon::OnEquippedSecondary()
 
 void AMeleeWeapon::BeginAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("BeginAttack — Tracing Started. Time: %f"), GetWorld()->GetTimeSeconds());
+	// UE_LOG(LogTemp, Warning, TEXT("BeginAttack — Tracing Started. Time: %f"), GetWorld()->GetTimeSeconds());
 	bIsTracing = true;
 
 	IgnoreActors.Empty();
 
-	for (AActor* Ignored : IgnoreActors)
+	/* for (AActor* Ignored : IgnoreActors)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
-	}
+	} */
 	
 	LastTraceLocationTip  = TracePointTip->GetComponentLocation();
 	LastTraceLocationMid  = TracePointMid->GetComponentLocation();
 	LastTraceLocationHilt = TracePointHilt->GetComponentLocation();
 
 	IgnoreActors.Empty();
-	for (AActor* Ignored : IgnoreActors)
+	/* for (AActor* Ignored : IgnoreActors)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
-	}
+	} */
 	// UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
 }
 
@@ -198,38 +198,31 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 	);
 	AActor* HitActor = Hit.GetActor(); // or whatever you're using
 	
-	if (HitActor)
+	/* if (HitActor)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("HitActor Name: %s"), *HitActor->GetName());
-	}
+	} */
 	
 	if (Hit.GetActor())
 	{
-		if (AFillainCharacter* HitCharacter = Cast<AFillainCharacter>(HitActor))
+		if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
 		{
-			HitCharacter->CachedDamageAmount = MeleeDamage;
-			HitCharacter->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
-			HitCharacter->CachedEventInstigator = GetInstigator()->GetController();
-			HitCharacter->CachedDamageCauser = this;
+			HitBase->CachedDamageAmount = MeleeDamage;
+			HitBase->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
+			HitBase->CachedEventInstigator = GetInstigator()->GetController();
+			HitBase->CachedDamageCauser = this;
 
-			HitCharacter->Execute_GetHit(HitCharacter, Hit.ImpactPoint, GetOwner());
-		}
-		if (AEnemyBase* HitEnemy = Cast<AEnemyBase>(HitActor))
-		{
-			HitEnemy->CachedDamageAmount = MeleeDamage;
-			HitEnemy->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
-			HitEnemy->CachedEventInstigator = GetInstigator()->GetController();
-			HitEnemy->CachedDamageCauser = this;
+			HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
 		}
 		if (HitActor->GetInstigator() == GetInstigator())
 		{
 			return;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("🎯 Melee hit %s | Instigator: %s | Owner: %s"),
+		/* UE_LOG(LogTemp, Warning, TEXT("🎯 Melee hit %s | Instigator: %s | Owner: %s"),
 		*GetNameSafe(HitActor),
 		*GetNameSafe(GetInstigator()),
-		*GetNameSafe(GetOwner()));
+		*GetNameSafe(GetOwner())); */
 		
 		ImplementLineTraceGetHit(Hit);
 		IgnoreActors.AddUnique(Hit.GetActor());

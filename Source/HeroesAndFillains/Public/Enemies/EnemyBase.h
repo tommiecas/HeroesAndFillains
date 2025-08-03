@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Characters/BaseCharacter.h"
+#include "Interfaces/EnemyInterface.h"
 #include "Interfaces/HitInterface.h"
 #include "Items/Soul.h"
 #include "EnemyBase.generated.h"
 
+class ARangedWeapon;
 class AAIController;
-class UHealthBarWidgetComponent;
-class UHealthBarWidget;
+class UEnemyHealthBarWidgetComponent;
+class UEnemyHealthBarWidget;
 
 UENUM(BlueprintType, Blueprintable)
 enum class EEnemyState : uint8
@@ -27,12 +29,18 @@ enum class EEnemyState : uint8
 };
 
 UCLASS()
-class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter
+class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter, public IEnemyInterface
 {
 	GENERATED_BODY()
 
 public:
 	AEnemyBase();
+	virtual auto HighlightActor() -> void override;
+	virtual void UnHighlightActor() override;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	bool bHighlighted = false;
+	
 	void SpawnEnemyWeapon();
 	
 	UFUNCTION(BlueprintCallable)
@@ -53,11 +61,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Navigation")
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	USceneComponent* SceneComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	AMeleeWeapon* EquippedEnemyMeleeWeapon;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	AWeaponBase* EquippedEnemyWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	ARangedWeapon* EquippedEnemyRangedWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	TArray<UAnimMontage*> MeleeAttackMontages;

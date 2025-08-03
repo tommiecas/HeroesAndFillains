@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "FillainHUD.generated.h"
 
+class UCharacterOverlayFixed;
 class UCharacterOverlay;
 class UHAFUserWidget;
 class UAttributeSet;
@@ -45,17 +46,11 @@ public:
 
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UHAFUserWidget>  OverlayWidget;
+	UPROPERTY()
+	TObjectPtr<UCharacterOverlayFixed>  CharacterOverlayWidgetFixed;
 
-	UPROPERTY(EditAnywhere, Category = "PlayerStats")
-	TSubclassOf<class UHAFUserWidget> OverlayWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UCharacterOverlay>  CharacterOverlayWidget;
-
-	UPROPERTY(EditAnywhere, Category = "PlayerStats")
-	TSubclassOf<class UCharacterOverlay> CharacterOverlayWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStats")
+	TSubclassOf<class UCharacterOverlayFixed> CharacterOverlayWidgetFixedClass;
 
 	UPROPERTY(EditAnywhere, Category = "Announcements")
 	TSubclassOf<class UUserWidget> AnnouncementClass;
@@ -63,11 +58,20 @@ public:
 	UPROPERTY()
 	class UAnnouncement* Announcement;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UCharacterOverlay* CharacterOverlay;
+	UPROPERTY()
+	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
+
+	UPROPERTY()
+	bool bIsOverlayInitialized = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> DebugOverlayClass;
+	
 protected:
-
+	
 private:
 	UPROPERTY()
 	class APlayerController* OwningPlayer;
@@ -92,12 +96,7 @@ private:
 	UPROPERTY()
 	TArray<UEliminationAnnouncement*> EliminationMessages;
 
-	UPROPERTY()
-	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
-
+	
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 	

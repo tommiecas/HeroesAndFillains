@@ -8,7 +8,7 @@ public class HeroesAndFillains : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiplayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam", "SlateCore", "UMG", "Landscape", "GeometryCollectionEngine", "AIModule", "GameplayAbilities",});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiplayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam", "SlateCore", "UMG", "Landscape", "GeometryCollectionEngine", "AIModule", "GameplayAbilities", "CommonInput", "CommonUI", });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "MotionWarping", "GameplayTags", "GameplayTasks", });
 

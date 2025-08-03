@@ -58,22 +58,22 @@ void AStormWeapons::SetupWeaponBox()
 
 
 	// Optional: Visual debug (for testing)
-	UE_LOG(LogTemp, Warning, TEXT("✅ WeaponBox setup complete — Extent: %s"), *WeaponBox->GetUnscaledBoxExtent().ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("✅ WeaponBox setup complete — Extent: %s"), *WeaponBox->GetUnscaledBoxExtent().ToString());
 }
 
 void AStormWeapons::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Validate WeaponBox
+	/* Validate WeaponBox
 	if (!WeaponBox)
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ WeaponBox is null in %s"), *GetName());
 		return;
-	}
+	}*/
 
 	// Initial Debug Color
-	FColor DebugColor = FColor::Red;
+	// FColor DebugColor = FColor::Red;
 
 	// Check owner and tags
 	AActor* WeaponOwner = GetOwner();
@@ -81,7 +81,7 @@ void AStormWeapons::BeginPlay()
 	{
 		if (WeaponOwner->Tags.Contains("Enemy"))
 		{
-			DebugColor = FColor::Blue;
+			/* DebugColor = FColor::Blue;
 			UE_LOG(LogTemp, Warning, TEXT("✅ WeaponOwner '%s' has 'Enemy' tag"), *WeaponOwner->GetName());
 		}
 		else if (WeaponOwner->Tags.Contains("Player"))
@@ -97,74 +97,72 @@ void AStormWeapons::BeginPlay()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ Weapon has no valid owner"));
-	}
+	}*/
 
-	// Collision Setup
-	WeaponBox->SetBoxExtent(FVector(20.f, 100.f, 100.f));
-	WeaponBox->SetHiddenInGame(false);
-	WeaponBox->SetVisibility(true);
-	WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
-	WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-	WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+			// Collision Setup
+			WeaponBox->SetBoxExtent(FVector(20.f, 100.f, 100.f));
+			WeaponBox->SetHiddenInGame(false);
+			WeaponBox->SetVisibility(true);
+			WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
+			WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+			WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+			WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
 
-	// Log Collision Info
-	UE_LOG(LogTemp, Warning, TEXT("📦 WeaponBox Setup"));
-	UE_LOG(LogTemp, Warning, TEXT(" - ObjectType: %d"), WeaponBox->GetCollisionObjectType());
-	UE_LOG(LogTemp, Warning, TEXT(" - Response to ECC_PlayerCharacter: %d"), WeaponBox->GetCollisionResponseToChannel(ECC_PlayerCharacter));
-	UE_LOG(LogTemp, Warning, TEXT(" - Collision Profile: %s"), *WeaponBox->GetCollisionProfileName().ToString());
+			// Log Collision Info
+			UE_LOG(LogTemp, Warning, TEXT("📦 WeaponBox Setup"));
+			UE_LOG(LogTemp, Warning, TEXT(" - ObjectType: %d"), WeaponBox->GetCollisionObjectType());
+			UE_LOG(LogTemp, Warning, TEXT(" - Response to ECC_PlayerCharacter: %d"), WeaponBox->GetCollisionResponseToChannel(ECC_PlayerCharacter));
+			UE_LOG(LogTemp, Warning, TEXT(" - Collision Profile: %s"), *WeaponBox->GetCollisionProfileName().ToString());
 
-	// Attach Box to Mesh
-	if (WeaponMesh)
-	{
-		WeaponBox->AttachToComponent(
-			WeaponMesh,
-			FAttachmentTransformRules::KeepRelativeTransform,
-			FName("MeleeSocket")
-		);
-		WeaponBox->SetRelativeLocation(FVector::ZeroVector);
+			// Attach Box to Mesh
+			if (WeaponMesh)
+			{
+				WeaponBox->AttachToComponent(WeaponMesh, FAttachmentTransformRules::KeepRelativeTransform, FName("MeleeSocket"));
+				WeaponBox->SetRelativeLocation(FVector::ZeroVector);
 
-		UE_LOG(LogTemp, Warning, TEXT("🔗 Attached WeaponBox to WeaponMesh at MeleeSocket"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh is null — cannot attach WeaponBox"));
-	}
+				// UE_LOG(LogTemp, Warning, TEXT("🔗 Attached WeaponBox to WeaponMesh at MeleeSocket"));
+			}
+			/* else
+			{
+				UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh is null — cannot attach WeaponBox"));
+			} */
 
-	// Final Position Logs
-	UE_LOG(LogTemp, Warning, TEXT("📌 WeaponBox World Location: %s"), *WeaponBox->GetComponentLocation().ToString());
-	UE_LOG(LogTemp, Warning, TEXT("📌 WeaponBox Relative Location: %s"), *WeaponBox->GetRelativeLocation().ToString());
+			// Final Position Logs
+			// UE_LOG(LogTemp, Warning, TEXT("📌 WeaponBox World Location: %s"), *WeaponBox->GetComponentLocation().ToString());
+			// UE_LOG(LogTemp, Warning, TEXT("📌 WeaponBox Relative Location: %s"), *WeaponBox->GetRelativeLocation().ToString());
 
-	// Overlap Bindings
-	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AStormWeapons::OnBoxOverlap);
-	UE_LOG(LogTemp, Warning, TEXT("🔗 Overlap delegate bound: %d"), WeaponBox->OnComponentBeginOverlap.IsBound());
+			// Overlap Bindings
+			WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AStormWeapons::OnBoxOverlap);
+			// UE_LOG(LogTemp, Warning, TEXT("🔗 Overlap delegate bound: %d"), WeaponBox->OnComponentBeginOverlap.IsBound());
 
-	/* Debug Box (visual)
-	DrawDebugBox(
-		GetWorld(),
-		WeaponBox->GetComponentLocation(),
-		WeaponBox->GetScaledBoxExtent(),
-		WeaponBox->GetComponentQuat(),
-		DebugColor,
-		false,
-		5.0f,
-		0,
-		2.0f 
-	); */
+			/* Debug Box (visual)
+			DrawDebugBox(
+				GetWorld(),
+				WeaponBox->GetComponentLocation(),
+				WeaponBox->GetScaledBoxExtent(),
+				WeaponBox->GetComponentQuat(),
+				DebugColor,
+				false,
+				5.0f,
+				0,
+				2.0f 
+			); */
 
 
 	
-	// Attachment verification
-	if (WeaponBox->GetAttachParent() != WeaponMesh)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ WeaponBox is not attached to WeaponMesh!"));
+			/* Attachment verification
+			if (WeaponBox->GetAttachParent() != WeaponMesh)
+			{
+				UE_LOG(LogTemp, Error, TEXT("❌ WeaponBox is not attached to WeaponMesh!"));
+			}*/
+		}
 	}
 }
 
 void AStormWeapons::ClearDamagedActors()
 {
 	DamagedActors.Empty();
-	UE_LOG(LogTemp, Warning, TEXT("🧹 DamagedActors list cleared"));
+	// UE_LOG(LogTemp, Warning, TEXT("🧹 DamagedActors list cleared"));
 }
 
 void AStormWeapons::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -200,9 +198,9 @@ void AStormWeapons::Tick(float DeltaTime)
 }
 void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("🔥 OnBoxOverlap triggered by: %s"), *GetNameSafe(OtherActor));
+	// UE_LOG(LogTemp, Warning, TEXT("🔥 OnBoxOverlap triggered by: %s"), *GetNameSafe(OtherActor));
 
-	UE_LOG(LogTemp, Warning, TEXT("💥 OnBoxOverlap hit %s"), *GetNameSafe(OtherActor));
+	// UE_LOG(LogTemp, Warning, TEXT("💥 OnBoxOverlap hit %s"), *GetNameSafe(OtherActor));
 
 	// if (DamagedActors.Contains(OtherActor))
 	// {
@@ -214,14 +212,14 @@ void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	
 	//if (ActorIsSameType(OtherActor)) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("📦 Overlapped Actor: %s | Tags: %s"), 
+	/* UE_LOG(LogTemp, Warning, TEXT("📦 Overlapped Actor: %s | Tags: %s"), 
 	   *GetNameSafe(OtherActor),
-	   *FString::JoinBy(OtherActor->Tags, TEXT(", "), [](const FName& Name){ return Name.ToString(); }));
+	   *FString::JoinBy(OtherActor->Tags, TEXT(", "), [](const FName& Name){ return Name.ToString(); })); */
 
-	if (AFillainCharacter* HitChar = Cast<AFillainCharacter>(OtherActor))
+	/* if (AFillainCharacter* HitChar = Cast<AFillainCharacter>(OtherActor))
 	{
 		UE_LOG(LogTemp, Error, TEXT("💥 Enemy weapon hit PLAYER: %s"), *HitChar->GetName());
-	}
+	} */
 
 	if (OtherActor && OtherActor != GetOwner())
 	{
@@ -230,7 +228,7 @@ void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 
 		// DamagedActors.Add(OtherActor);
 
-		UE_LOG(LogTemp, Error, TEXT("💥 Enemy weapon hit PLAYER: %s"), *OtherActor->GetName());
+		// UE_LOG(LogTemp, Error, TEXT("💥 Enemy weapon hit PLAYER: %s"), *OtherActor->GetName());
 	
 		FHitResult BoxHit;
 		BoxTrace(BoxHit);
@@ -257,12 +255,12 @@ void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 					HitLocation
 				);
 
-				UE_LOG(LogTemp, Warning, TEXT("✅ Called Combat->ReceiveMeleeDamage() on %s"), *Player->GetName());
+				// UE_LOG(LogTemp, Warning, TEXT("✅ Called Combat->ReceiveMeleeDamage() on %s"), *Player->GetName());
 			}
-			else
+			/* else
 			{
 				UE_LOG(LogTemp, Error, TEXT("❌ FillainCharacter CombatComponent was null!"));
-			}
+			} */
 		}
 	}
 }
@@ -270,7 +268,7 @@ void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 void AStormWeapons::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
-	UE_LOG(LogTemp, Warning, TEXT("NotifyActorBeginOverlap with: %s"), *OtherActor->GetName());
+	// UE_LOG(LogTemp, Warning, TEXT("NotifyActorBeginOverlap with: %s"), *OtherActor->GetName());
 }
 
 bool AStormWeapons::ActorIsSameType(AActor* OtherActor)

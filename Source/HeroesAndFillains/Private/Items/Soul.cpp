@@ -42,5 +42,5 @@ int32 ASoul::GetSoulValue() const
 void ASoul::SetSoulValue(int32 Value)
 {
 	SoulValue = Value;
-	UE_LOG(LogTemp, Warning, TEXT("SoulValue set to %d"), SoulValue);
+	// UE_LOG(LogTemp, Warning, TEXT("SoulValue set to %d"), SoulValue);
 }

@@ -28,10 +28,10 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere)
-	float ShieldReplenishAmount = 100.f;
+	float ShieldFortifyingAmount = 100.f;
 
 	UPROPERTY(EditAnywhere)
-	float ShieldReplenishingTime = 5.f;
+	float ShieldFortifyingTime = 5.f;
 
 
 

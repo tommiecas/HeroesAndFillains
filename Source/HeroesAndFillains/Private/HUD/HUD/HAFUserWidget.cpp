@@ -3,8 +3,25 @@
 
 #include "HUD/HUD/HAFUserWidget.h"
 
-void UHAFUserWidget::SetWidgetController(UObject* InWidgetControlller)
+#include "HUD/WidgetControllers/OverlayWidgetController.h"
+
+void UHAFUserWidget::SetWidgetController(UOverlayWidgetController* InWidgetController)
 {
-	WidgetController = InWidgetControlller;
+	if (!InWidgetController) return;
+
+	WidgetController = InWidgetController;
 	WidgetControllerSet();
 }
+
+void UHAFUserWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	UE_LOG(LogTemp, Warning, TEXT("✅ UHAFUserWidget::NativeConstruct called on %s"), *GetName());
+
+	if (WidgetController) // Replace with your actual property
+	{
+		SetWidgetController(WidgetController);
+	}
+}
+

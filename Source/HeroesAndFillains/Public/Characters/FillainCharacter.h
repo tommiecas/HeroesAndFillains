@@ -19,6 +19,7 @@
 #include "Interfaces/PickupInterface.h"
 #include "FillainCharacter.generated.h"
 
+class UGameplayEffect;
 class AWeaponBase;
 class USpringArmComponent;
 class UCameraComponent;
@@ -66,10 +67,7 @@ public:
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void DirectionalHitReact(const FVector& ImpactPoint) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,class AController* EventInstigator, AActor* DamageCauser) override;
-	void SetHUDHealth();
-	void SetHUDShield();
-	void SetHUDStamina();
-	void SetHUDMajix();
+	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
 
@@ -107,17 +105,17 @@ public:
 	virtual void Destroyed() override;
 	void HideAttachedGrenade();
 	// void OnFillainDying(AFillainCharacter* InstigatorFillain, AFillainCharacter* DyingFillain, class AFillainPlayerController* InstigatorController);
-	void UpdateHUDHealth();
-	void UpdateHUDShield();
-	void UpdateHUDStamina();
-	void UpdateHUDMajix();
 	void UpdateHUDAmmo();
 	void SwitchWeapon(AWeaponBase* NewWeapon);
 	ARangedWeapon* EquippedWeaponIsARangedWeapon();
 	AMeleeWeapon* EquippedWeaponIsAMeleeWeapon();
 
+
 	bool WeaponIsUnclaimedFirearm(ARangedWeapon* Ranged);
 	bool WeaponIsUnclaimedMeleeWeapon(AMeleeWeapon* Melee);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsUsingGamepad() const;
 
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
@@ -176,6 +174,7 @@ public:
 	******************/
 	void PlayFireMontage(bool bAiming);
 	void PlayEliminatedMontage();
+	virtual void PlayHitReactMontage(const FName& SectionName) override;
 	void PlayReloadingMontage();
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
@@ -222,23 +221,24 @@ public:
 	void MulticastLostTheLead();
 
 	void SetTeamColor(ETeam Team);
-
+	
 	/****************** 
 	** Moving Around **
 	******************/ 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* MoveAction;
-
+	
 	void Move(const FInputActionValue& Value);
+	
 
 	/*******************
 	** Looking Around **
 	*******************/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* LookAction;
-
+	
 	void Look(const FInputActionValue& Value);
-
+	
 	/**********************
 	** Equipping Weapons **
 	**********************/
@@ -358,41 +358,29 @@ public:
 	** Player Stats **
 	*****************/
 
-	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
 	float Health = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
 
-	UFUNCTION()
-	void OnRep_Health(float LastHealth);
-
-	UPROPERTY(ReplicatedUsing = OnRep_Shield, VisibleAnywhere, Category = "Player Stats")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
 	float Shield = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxShield = 100.f;
 
-	UFUNCTION()
-	void OnRep_Shield(float LastShield);
-
-	UPROPERTY(ReplicatedUsing = OnRep_Stamina, VisibleAnywhere, Category = "Player Stats")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
 	float Stamina = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxStamina = 100.f;
 
-	UFUNCTION()
-	void OnRep_Stamina(float LastStamina);
-
-	UPROPERTY(ReplicatedUsing = OnRep_Majix, VisibleAnywhere, Category = "Player Stats")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
 	float Majix = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxMajix = 100.f;
-
-	UFUNCTION()
-	void OnRep_Majix(float LastMajix);
 	
 	FTimerHandle EliminationTimer;
 
@@ -400,6 +388,24 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float EliminationDelay = 3.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Effects")
+	TSubclassOf<UGameplayEffect> HealingEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Effects")
+	TSubclassOf<UGameplayEffect> ShieldFortifyingEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Effects")
+	TSubclassOf<UGameplayEffect> StaminaRechargingEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Effects")
+	TSubclassOf<UGameplayEffect> MajixSummoningEffect;
+
+	void Heal(float Magnitude);
+	void Fortify(float Magnitude);
+	void Recharge(float Magnitude);
+	void Summon(float Magnitude);
+
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))

@@ -3,13 +3,14 @@
 
 #include "HUD/FillainHUD.h"
 #include "GameFramework/PlayerController.h"
-#include "HUD/CharacterOverlay.h"
+#include "HUD/CharacterOverlayFixed.h"
 #include "HUD/Announcement.h"
 #include "HUD/EliminationAnnouncement.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Overlay.h"
+#include "HUD/CharacterOverlayFixed.h"
 #include "HUD/HUD/HAFUserWidget.h"
 #include "HUD/WidgetControllers/OverlayWidgetController.h"
 
@@ -64,36 +65,52 @@ void AFillainHUD::AddEliminationAnnouncement(FString Killer, FString Victim)
 	}
 }
 
+UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetControllerParams& Params)
+{
+	if (!OverlayWidgetController)
+	{
+		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
+		OverlayWidgetController->SetWidgetControllerParams(Params);
+		OverlayWidgetController->BindCallbacksToDependencies(); // ✅ Make sure this is called here
+	}
+	return OverlayWidgetController;
+}
+
 void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC,
 	UAttributeSet* AS)
 {
-	checkf(CharacterOverlayWidgetClass, TEXT("Character Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
+	if (bIsOverlayInitialized) return; // ✅ Prevent duplicate construction
+
+	bIsOverlayInitialized = true;
+
+	checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
 	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
-	
-	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), CharacterOverlayWidgetClass);
-	CharacterOverlayWidget = Cast<UCharacterOverlay>(Widget);
 
-	const FWidgetControllerParams WWidgetControllerParams (PC, PS, ASC, AS);
-
-	UOverlayWidgetController*  WidgetController = GetOverlayWidgetController(WWidgetControllerParams);
-
-	CharacterOverlayWidget->SetWidgetController (WidgetController);
-
-	WidgetController->BroadcastInitialValues();
-
-	Widget->AddToViewport();
-}
-
-UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
-{
-	if (OverlayWidgetController == nullptr)
+	if (!CharacterOverlayWidgetFixed)
 	{
-		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
-		OverlayWidgetController->SetWidgetControllerParams(WCParams);
+		UCharacterOverlayFixed* CharacterOverlayFixedWidget = CreateWidget<UCharacterOverlayFixed>(GetWorld(), CharacterOverlayWidgetFixedClass);
+		CharacterOverlayWidgetFixed = CharacterOverlayFixedWidget;
+		
+		UE_LOG(LogTemp, Warning, TEXT("✅ Creating Overlay Widget: %s"), *GetName());
 
-		return OverlayWidgetController;
+		CharacterOverlayWidgetFixed->AddToViewport(100); // High Z-order to ensure it's on top
+		CharacterOverlayWidgetFixed->SetVisibility(ESlateVisibility::Visible);
 	}
-	return OverlayWidgetController;
+
+	const FWidgetControllerParams WidgetControllerParams (PC, PS, ASC, AS);
+	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
+
+	if (WidgetController && CharacterOverlayWidgetFixed)
+	{
+		CharacterOverlayWidgetFixed->SetWidgetController(WidgetController);
+		WidgetController->BroadcastInitialValues();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ WidgetController or CharacterOverlayWidgetFixed is null! WidgetController: %s | Overlay: %s"),
+			WidgetController ? *WidgetController->GetName() : TEXT("nullptr"),
+			CharacterOverlayWidgetFixed ? *CharacterOverlayWidgetFixed->GetName() : TEXT("nullptr"));
+	}
 }
 
 void AFillainHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)
@@ -148,6 +165,7 @@ void AFillainHUD::DrawHUD()
 		}
 	}
 }
+
 void AFillainHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread/*, FLinearColor CrosshairsColor*/)
 {
 	const float TextureWidth = Texture->GetSizeX();

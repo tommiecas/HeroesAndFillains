@@ -10,34 +10,47 @@
 #include "AttributeSet.h"
 #include "AbilitySystemGlobals.h"
 #include "Characters/FillainCharacter.h"
+#include "Compression/lz4.h"
 #include "Enemies/EnemyBase.h"
 #include "HAFComponents/AttributeComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameFramework/Character.h"
+#include "GameplayEffectExtension.h"
+
+#include "HUD/HUD/ProgressBarBaseWidget.h"
+
 
 
 UHAFAttributeSet::UHAFAttributeSet()
 {
-	InitHealth(100.f);
-	InitShield(100.f);
-	InitStamina(100.f);
-	InitMajix(100.f);
-	InitMaxHealth(100.f);
-	InitMaxShield(100.f);
-	InitMaxStamina(100.f);
-	InitMaxMajix(100.f);
+	Health.SetBaseValue(100.f);
+	Health.SetCurrentValue(50.f);
+
+	MaxHealth.SetBaseValue(100.f);
+	MaxHealth.SetCurrentValue(100.f);
+
+	Shield.SetBaseValue(100.f);
+	Shield.SetCurrentValue(100.f);
+
+	MaxShield.SetBaseValue(100.f);
+	MaxShield.SetCurrentValue(100.f);
+
+	Stamina.SetBaseValue(100.f);
+	Stamina.SetCurrentValue(100.f);
+
+	MaxStamina.SetBaseValue(100.f);
+	MaxStamina.SetCurrentValue(100.f);
+
+	Majix.SetBaseValue(100.f);
+	Majix.SetCurrentValue(10.f);
+
+	MaxMajix.SetBaseValue(100.f);
+	MaxMajix.SetCurrentValue(100.f);
 }
 
 void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Health, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Shield, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxShield, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Majix, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxMajix, COND_None, REPNOTIFY_Always);
 
 }
 
@@ -47,42 +60,62 @@ void UHAFAttributeSet::SetAttributeFromComponent(FGameplayAttributeData& Attribu
 	const_cast<FGameplayAttributeData&>(Attribute).SetCurrentValue(Value);
 }
 
-void UHAFAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
+void UHAFAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Health, OldHealth);
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	if (Attribute == GetHealthAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxHealth.GetCurrentValue());
+	if (Attribute == GetMaxHealthAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxHealth.GetCurrentValue());
+	if (Attribute == GetShieldAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxShield.GetCurrentValue());
+	if (Attribute == GetMaxShieldAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxShield.GetCurrentValue());
+	if (Attribute == GetStaminaAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxStamina.GetCurrentValue());
+	if (Attribute == GetMaxStaminaAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxStamina.GetCurrentValue());
+	if (Attribute == GetMajixAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxMajix.GetCurrentValue());
+	if (Attribute == GetMaxMajixAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxMajix.GetCurrentValue());
 }
 
-void UHAFAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const
+void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxHealth, OldMaxHealth);
+	// Source = causer of the effect, Target = target of the effect (owner of this AS)
+	
+	Properties.EffectContextHandle = Data.EffectSpec.GetContext();
+	Properties.SourceASC = Properties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+
+	if (IsValid(Properties.SourceASC) && Properties.SourceASC->AbilityActorInfo.IsValid() && Properties.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+	{
+		Properties.SourceAvatarActor = Properties.SourceASC->AbilityActorInfo->AvatarActor.Get();
+		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
+		
+		if (Properties.SourceController == nullptr && Properties.SourceAvatarActor != nullptr)
+		{
+			if (const APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
+			{
+				Properties.SourceController = Pawn->GetController();
+			}
+		}
+		if (Properties.SourceController)
+		{
+			Properties.SourceCharacter = Cast<ACharacter>(Properties.SourceController->GetPawn());
+		}
+	}
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+		Properties.TargetCharacter = Cast<ACharacter>(Properties.TargetAvatarActor);
+		Properties.TargetASC = &Data.Target; 
+	}
 }
 
-void UHAFAttributeSet::OnRep_Shield(const FGameplayAttributeData& OldShield) const
+void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Shield, OldShield);
-}
+	Super::PostGameplayEffectExecute(Data);
 
-void UHAFAttributeSet::OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxShield, OldMaxShield);
-}
+	FEffectProperties Properties;
+	SetEffectProperties(Data, Properties);
 
-void UHAFAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Stamina, OldStamina);
-}
-
-void UHAFAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxStamina, OldMaxStamina);
-}
-
-void UHAFAttributeSet::OnRep_Majix(const FGameplayAttributeData& OldMajix) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Majix, OldMajix);
-}
-
-void UHAFAttributeSet::OnRep_MaxMajix(const FGameplayAttributeData& OldMaxMajix) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxMajix, OldMaxMajix);
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+	
+	}
 }

@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/WidgetComponent.h"
-#include "HealthBarWidgetComponent.generated.h"
+#include "EnemyHealthBarWidgetComponent.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API UHealthBarWidgetComponent : public UWidgetComponent
+class HEROESANDFILLAINS_API UEnemyHealthBarWidgetComponent : public UWidgetComponent
 {
 	GENERATED_BODY()
 
@@ -20,6 +20,6 @@ public:
 
 private:
 	UPROPERTY()
-	class UHealthBarWidget* HealthBarWidget;
+	class UEnemyHealthBarWidget* EnemyHealthBarWidget;
 	
 };

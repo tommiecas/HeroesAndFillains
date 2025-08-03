@@ -53,7 +53,9 @@ void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 
 void UAttributeComponent::CharactersReceiveMeleeDamage(float Damage)
 {
+
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
 }
 
 void UAttributeComponent::UseStamina(float StaminaCost)

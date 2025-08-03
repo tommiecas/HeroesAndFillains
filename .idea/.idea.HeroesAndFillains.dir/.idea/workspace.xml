@@ -8,376 +8,255 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="17f4fd26-433a-424d-bf11-a5c700b257e7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/EnemyHealthBarWidgetComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultGame.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultGame.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Assassin/Animation/Anim_Assassin_run.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Assassin/Animation/Anim_Assassin_run.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Assassin/Mesh/SKM_Assassin_Skin1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Assassin/Mesh/SKM_Assassin_Skin1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/GoodHitReactFromBack.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/GoodHitReactFromFront.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/GoodHitReactFromLeft.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/GoodHitReactFromRight.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/HitReactFromBack.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/HitReactFromLeft.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/HitReactFromRight.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/Maw J Laygo.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/jump attack.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/left turn 45.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant breathing idle.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant dying.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant flexing muscles.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant idle (2).fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant idle.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant jump attack.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant jumping (2).fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant jumping.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant left turn 45.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant punch.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant right turn 45 (2).fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant right turn 45.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant right turn 90.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant roaring.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant run.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant swiping.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AssetsOutsourced/Mixamo/Animations/Creature Pack-NO ROOT BONE/mutant walking.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blood/Effects/ParticleSystems/Gameplay/Player/P_body_bullet_impact.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blood/Effects/ParticleSystems/Gameplay/Player/P_body_bullet_impact.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Large.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Large.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Medium.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_FourPiece_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Large.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Large.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Medium.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_ThreePiece_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Large.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Large.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Medium.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_XtraLarge.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_TwoPiece_XtraLarge.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/ABP_FillainCharacterFinal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/AM_TheLastHitReactMontage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/Animations/AM_TheLastHitReactMontage.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Dungeon/Checkpoint/Checkpoint_low.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Materials/PP_Highlight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Materials/PP_Highlight.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/HealthCrystal/Materials/M_HealthCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/HealthCrystal/Materials/M_HealthCrystal.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Bottle/M_Bottle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Bottle/M_Bottle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Cork/M_Cork.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Cork/M_Cork.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Liquid/M_WhiteLiquid.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/Liquid/M_WhiteLiquid.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/SM_PotionBottle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/SM_PotionBottle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-2b.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-2c.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-2d.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-3b.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-3c.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-4b.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Breakables/BP_BreakablePottery_1-4c.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Characters/BP_FillainCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Characters/BP_FillainCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BP_EnemyBase.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BP_EnemyBaseFINAL.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/BP_EnemyBaseFINAL.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/ABP_GnarledBase.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/ABP_GnarledBase.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledBase.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledAnimations_MaleAndFemale/AM_AttackMontage_Gnarled.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledFemales/BP_GnarledFemale.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/ABP_GnarledMale.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/ABP_GnarledMale.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/BP_GnarledMale.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/BP_GnarledMale.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/GnarledMaleAnimations/jump_attack_Anim.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/GnarledMaleAnimations/mutant_run_Anim.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/GnarledMaleAnimations/mutant_run_Anim.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/GnarledMaleAnimations/mutant_walking_Anim.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/GnarledMaleAnimations/mutant_walking_Anim.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/ABP_TheStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/ABP_TheStorm.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/AM_AttackMontage_TheStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/AM_AttackMontage_TheStorm.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BP_GnarledMale.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledBase_Female.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledBase_Female.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledBase_Male.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledBase_Male.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/BP_GnarledMale.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/ABP_GnarledMale.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Gnarleds/GnarledMales/BP_GnarledMale.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/ABP_Khymeyrra_FromScratch.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/ABP_Khymeyrra_FromScratch.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/BP_Khymeyrra.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/BP_Khymeyrra.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/SKEL_Khymeyrra.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/SKEL_Khymeyrra.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/AM_AttackMontage_TheStorm.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/BP_TheStormBase.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/BP_TheStormBase.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SK_Assassin_Skeleton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SK_Assassin_Skeleton.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/BP_SandStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/BP_SandStorm.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/MeshesSkeletonsAndBlueprints/SKM_Assassin_SandStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/MeshesSkeletonsAndBlueprints/SKM_Assassin_SandStorm.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/SandStormAnimations/AM_DeathMontage_Storm.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/SandStormAnimations/Anim_Assassin_attack1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/SandStormAnimations/Anim_Assassin_attack1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/SandStormAnimations/Attack2_FINAL.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SandStorm/SandStormAnimations/Attack2_FINAL.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/ShadowStorm/BP_ShadowStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/ShadowStorm/BP_ShadowStorm.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SkyStorm/BP_SkyStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SkyStorm/BP_SkyStorm.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SoulStorm/BP_SoulStorm.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/SoulStorm/BP_SoulStorm.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_Sandsword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_Sandsword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_ShadowSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_ShadowSword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_SkyMace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_SkyMace.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_SoulSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/TheStorm/StormWeapons/BP_SoulSword.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlay.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlay.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_HealthBarWidget.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_Amethyst.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_CandelabraQuattro.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_CandelabraQuattro.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_CandelabraSolo.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_CandelabraTrio.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_Emerald.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_GoldCoin.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_RoseQuartz.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_Ruby.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_Sapphire.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_Topaz.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_TreasureBase.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_TreasureChest_full.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Textures/HealthIcon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Textures/HealthIcon.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Textures/ShieldIcon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Textures/ShieldIcon.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Input/IMC_FillainMappingContext.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Input/IMC_FillainMappingContext.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Input/IMC_HAFMappingContext.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Input/IMC_HAFMappingContext.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_EnemyHealthBarWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_EnemyHealthBarWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidget.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidgetDEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidgetWITHFILLAINHEALTHASPARENT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainMajixWidgetDEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidgetWITHNEWPARENTCLASS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldBarWidgetDEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldWidgetDEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainStaminaWIdgetDEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/BP_CandelabraQuattro.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_0-1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_0-2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_0-3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_1-0.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_1-1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_1-2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_1-3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_2-0.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_2-1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_2-2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_2-3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_3-0.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_3-1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_3-2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/LandscapeRegionSpawnVolumes/BP_LR_3-3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordBlue.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/SeizeTheSword/BP_SwordRed.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/UI/WBP_PickupGearWidget.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Bullet_Tracers_Fx/Maps/FiringRange.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Bullet_Tracers_Fx/Maps/FiringRange.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Effects/FallingPebbles/Niagara/NS_Pebbles.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CD.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_CU.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBD.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LBU.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LD.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_LU.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBD.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RBU.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RD.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AO_RU.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AimOffset_BS.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/AimOffsets/Idle_AimOffset_BS.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogBwdSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogBwdSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogFwdSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogFwdSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogLeftSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogLeftSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogRightSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/JogRightSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/Locomotion_Jog_1D_Blendspace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/Locomotion_Jog_1D_Blendspace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/Locomotion_TravelMode_1D_Blendspace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/Locomotion_TravelMode_1D_Blendspace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/SprintBwdSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/SprintBwdSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/SprintFwdSlopeLean.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Blendspaces/SprintFwdSlopeLean.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Bound.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Bound.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Cast.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Cast.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Death_A.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Death_A.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Death_B.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Death_B.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Loop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Loop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Throw.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Throw.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Throw_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/E_Ability_Throw_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_BangHead_T3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_BangHead_T3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Intro.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Intro.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Loop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Loop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Outro.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_CantCatchMe_Outro.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_Master_Haunted_T3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_Master_Haunted_T3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_Taunt_Howl_T1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Emote_Taunt_Howl_T1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HS_Idle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HS_Idle.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HS_Idle_Relaxed_A.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HS_Idle_Relaxed_A.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Back.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Back.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Front.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Front.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Left.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Left.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Right.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/HitReact_Right.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_NonAdditive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_NonAdditive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Relaxed_A.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Relaxed_A.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Relaxed_B.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Relaxed_B.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Left_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Left_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Left_90.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Left_90.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Right_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Right_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Right_90.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Turn_Right_90.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Zero_Pose.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Idle_Zero_Pose.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_CircleLeft.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_CircleLeft.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_CircleRight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_CircleRight.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Pivot_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Pivot_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_SlopeDown.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_SlopeDown.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_SlopeUp.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_SlopeUp.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Stop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Bwd_Stop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_CircleLeft.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_CircleLeft.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_CircleRight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_CircleRight.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Pivot_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Pivot_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Slope_Down.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Slope_Down.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Slope_Up.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Slope_Up.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Stop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Fwd_Stop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_CircleLeft.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_CircleLeft.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_CircleRight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_CircleRight.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Pivot_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Pivot_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_SlopeDownHill.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_SlopeDownHill.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_SlopeUpHill.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_SlopeUpHill.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Stop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Left_Stop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_CircleLeft.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_CircleLeft.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_CircleRight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_CircleRight.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Pivot_180.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Pivot_180.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_SlopeDown.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_SlopeDown.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_SlopeUp.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_SlopeUp.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Stop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jog_Right_Stop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Apex.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Apex.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Pad.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Pad.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_PreLand.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_PreLand.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Recovery.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Recovery.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Recovery_Additive.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Recovery_Additive.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Jump_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Knockback_Back.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Knockback_Back.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Knockback_Front.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Knockback_Front.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/LevelStart.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/LevelStart.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/LevelStart_Montage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/LevelStart_Montage.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_CC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_CC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_LC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_LC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_LCB.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_LCB.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_RC.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_RC.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_RCB.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Locomotion_AO_RCB.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Fast.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Fast.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Montage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Montage.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Recovery.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Recovery.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Slow.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Slow.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Slow_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_A_Slow_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_Air_Attack.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_Air_Attack.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_Air_Attack_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_Air_Attack_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Fast.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Fast.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Montage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Montage.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Recovery.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Recovery.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Slow.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Slow.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Slow_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_B_Slow_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Fast.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Fast.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Montage.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Montage.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Recovery.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Recovery.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Slow.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Slow.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Slow_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Melee_C_Slow_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Q_Intro_InPlace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Q_Intro_InPlace.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Q_Intro_Moving.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Q_Intro_Moving.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_60fps.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_60fps.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_60fps_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_60fps_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_Moving.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_Moving.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_Moving_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/RMB_Targeting_Moving_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_InPlace_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_InPlace_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Loop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Loop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Loop_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Loop_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Moving_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_Intro_Moving_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_MSA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/R_Ability_MSA.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Recall.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Recall.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Respawn.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Respawn.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Spin_Bwd2Fwd_CW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Spin_Bwd2Fwd_CW.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Spin_Bwd2Fwd_CWW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Spin_Bwd2Fwd_CWW.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Strafe_Left.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Strafe_Left.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Strafe_Right.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Strafe_Right.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_End.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_End.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_Loop.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_Loop.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_Start.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/Stunned_Start.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Bwd.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Bwd.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_CircleLeft.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_CircleLeft.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_CircleRight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_CircleRight.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_SlopeDown.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_SlopeDown.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_SlopeUp.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Fwd_SlopeUp.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Idle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Idle.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Left.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Left.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Right.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Right.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Transition_fromIlde.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Transition_fromIlde.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Turn_Left_90.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Turn_Left_90.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Turn_Right_90.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_Turn_Right_90.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_ZeroPose.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Animations/TravelMode_ZeroPose.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/KhaimeraPlayerCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/KhaimeraPlayerCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Khaimera_AnimBlueprint.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/Khaimera_AnimBlueprint.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Meshes/SK_Mannequin_UE5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Meshes/SK_Mannequin_UE5.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Blueprints/BP_RAY_Spawner.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Blueprints/BP_RAY_Spawner.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_CoinBurst.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_CoinBurst.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_Light.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_Light.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_PickupCricle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_PickupCricle.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_SimpleBurst.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_SimpleBurst.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_SimpleSprite.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/NE_SimpleSprite.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/Ne_Aura.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraEmitters/Ne_Aura.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/JumpPickupEffect.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_CoinBurst.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_CoinBurst.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_CoinBurst2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_CoinBurst2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Coin_Shower.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Coin_Shower.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Crown.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Energy_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Energy_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Energy_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Energy_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Healing_3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Magic_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Magic_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Magic_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Magic_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_4.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Pickup_5.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Fx/NiagaraSystems/NS_Shield_3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Levels/LVL_Showroom.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Levels/LVL_Showroom.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Aura_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Aura_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Coin_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Coin_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Fresnel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Fresnel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Ground_Showscene.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Ground_Showscene.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Scroll_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Scroll_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Shield_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/MI_Shield_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_AdditiveScrollNiagara.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_AdditiveScrollNiagara.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Ground.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Ground.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_Fresnel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_Fresnel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_MetalFX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_MetalFX.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_RadialBeam.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_Master_RadialBeam.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_sA_Aura.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/M_sA_Aura.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise01.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise01.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise02.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise02.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise04.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise04.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise06.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise06.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise07.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise07.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise08.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise08.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise09.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise09.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise11.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise11.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise12.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/Noise12.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Beam_01.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Beam_01.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseCloud_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseCloud_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseCloud_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseCloud_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseFurry.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_NoiseFurry.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Noise_DistortedCaustic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Noise_DistortedCaustic.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Ray_5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Ray_5.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Shield_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Materials/Textures/T_Shield_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Coin_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Coin_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Energy_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Energy_1.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence_2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Defence_3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Gem.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Gem.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Health.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Health.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Magic.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_Magic.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_ss.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Pickup_ss.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Plane.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/sA_PickupSet_1/Models/SM_Plane.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Maps/HaFGameStartupMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/HaFGameStartupMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Maps/ShooterEntry.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/ShooterEntry.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/AnimationTestMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ParagonKhaimera/Characters/Heroes/Khaimera/AnimationTestMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ParagonMinions/Characters/Global/White.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/UI/Menu/LoadingScreen_Mat.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/UI/MenuPlane.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/UI/WBP_LobbyWidget.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/CharacterParts/Character/UE5/BP_wood_monster_sample_01.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/CharacterParts/Character/UE5/BP_wood_monster_sample_01.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/CharacterParts/Maps/wood_monster_Overview.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/CharacterParts/Maps/wood_monster_Overview.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/CharacterParts/Meshes/SK_wood_giant_01_a.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/BS_MM_WalkRun.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/BS_MM_WalkRun.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Jump.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Jump.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Land.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Land.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Walk_Fwd.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Walk_Fwd.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Walk_InPlace.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Wood_Monster/DemoContent/Mannequins/Animations/ThirdPerson_retarget/MM_Walk_InPlace.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/9R/B1JU2JBCT5A1NG8LVR48HY.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/9R/B1JU2JBCT5A1NG8LVR48HY.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/CM/KGEN2X3Y04N29DP0UJ66IA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/CM/KGEN2X3Y04N29DP0UJ66IA.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/NK/7OGC8YVFR23JLYSYTD48MD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/0/NK/7OGC8YVFR23JLYSYTD48MD.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/CI/Z72WRSGG7NSQVT5G5IZ589.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/CI/Z72WRSGG7NSQVT5G5IZ589.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/IM/V1AO544RYCYD3WX408EMNI.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/IM/V1AO544RYCYD3WX408EMNI.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/T9/W5KJ8OQUHL3FTW09221I3E.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/T9/W5KJ8OQUHL3FTW09221I3E.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/XJ/3XY41ZSGNEH0X18UNLQFHE.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/1/XJ/3XY41ZSGNEH0X18UNLQFHE.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/01/1IB6UPL054867J49WF9PJL.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/01/1IB6UPL054867J49WF9PJL.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/B6/1DTURG4M12XWB61BN6XP8N.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/B6/1DTURG4M12XWB61BN6XP8N.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/BJ/36T63KGR78WMNKUQ7OSXIL.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/BJ/36T63KGR78WMNKUQ7OSXIL.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/EF/UCRY69Q51LIBMWSXCON6XX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/EF/UCRY69Q51LIBMWSXCON6XX.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/EK/39LYC4AP3N1MUT0AVECMP3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/EK/39LYC4AP3N1MUT0AVECMP3.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/OO/GKHUTMQ1QOVYU2V06DCBTW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/OO/GKHUTMQ1QOVYU2V06DCBTW.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/QO/9UD5DWXRWTX53P51LQ00IW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/QO/9UD5DWXRWTX53P51LQ00IW.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/UT/J14MLI7OHR3BIQFUJR66K6.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/UT/J14MLI7OHR3BIQFUJR66K6.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/VI/QYKZUYQ18O4VGXBPQCA6TQ.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/2/VI/QYKZUYQ18O4VGXBPQCA6TQ.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/8T/B2GFFKGDVU70UOU60SIDOZ.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/8T/B2GFFKGDVU70UOU60SIDOZ.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/K0/BTT3DO7IZ57ZUTAP9BS3XA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/K0/BTT3DO7IZ57ZUTAP9BS3XA.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/KW/IXSCRTUD5OXQ0GTGZPJLG9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/KW/IXSCRTUD5OXQ0GTGZPJLG9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/RO/RE5MO8FDMOULLZSIT1D7X9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/RO/RE5MO8FDMOULLZSIT1D7X9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/VN/DCMB7WNJVUEMXDQOOX0EBF.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/3/VN/DCMB7WNJVUEMXDQOOX0EBF.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/4/28/ACZ91EZS8F4LJ19TZL0O3C.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/4/28/ACZ91EZS8F4LJ19TZL0O3C.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/4/HD/4E74ETNN5KB1YFZ97Z62XE.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/4/HD/4E74ETNN5KB1YFZ97Z62XE.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/6W/HB653SXGN78VV8I3JP5Q9T.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/6W/HB653SXGN78VV8I3JP5Q9T.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/MA/DDRWLVOTTTTNZCCQ89CNA0.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/MA/DDRWLVOTTTTNZCCQ89CNA0.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/XX/PH3C707DS52PRCUPO4P6NO.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/5/XX/PH3C707DS52PRCUPO4P6NO.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/J7/9EJN2ZU0DEHRFZDY1QWW7R.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/J7/9EJN2ZU0DEHRFZDY1QWW7R.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/M1/MABFU1QPRN7VNR2PGT9PWM.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/M1/MABFU1QPRN7VNR2PGT9PWM.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/OD/3TE9OZC5OWQM82PXXSU79X.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/OD/3TE9OZC5OWQM82PXXSU79X.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/WA/GJ5NO80R00YW9UY8E0IDCM.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/6/WA/GJ5NO80R00YW9UY8E0IDCM.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/5S/Y3M6N5WDLLTLP2YGE96538.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/5S/Y3M6N5WDLLTLP2YGE96538.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/NH/K62T85HXIDBZNY01JQJX81.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/NH/K62T85HXIDBZNY01JQJX81.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/TS/KU5OP2RB7WJV9MC4SSCW5P.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/7/TS/KU5OP2RB7WJV9MC4SSCW5P.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/1Z/MKCCDFYX77RVZG09KL9NUI.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/1Z/MKCCDFYX77RVZG09KL9NUI.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/3Z/7GT2TD2TCAP7W4WUB2X5TQ.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/3Z/7GT2TD2TCAP7W4WUB2X5TQ.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/IS/7J7KH324KRCLRS7PRJPA3T.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/IS/7J7KH324KRCLRS7PRJPA3T.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/JU/7O5B85N4FGRC8DAHNT4CMI.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/JU/7O5B85N4FGRC8DAHNT4CMI.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/RE/AP45TCAN6PSLU03SALZHYP.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/RE/AP45TCAN6PSLU03SALZHYP.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/TB/GKB5FV3J5Y63VH6X53JPGK.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/8/TB/GKB5FV3J5Y63VH6X53JPGK.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/9/6Y/BA8ZS8K5I5M2EBMIP007CR.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/9/6Y/BA8ZS8K5I5M2EBMIP007CR.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/8N/GKATZTAJEJ7JJ46REPK5EK.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/8N/GKATZTAJEJ7JJ46REPK5EK.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/DZ/YT37GO5HOWOCBEXKDEHTU9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/DZ/YT37GO5HOWOCBEXKDEHTU9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/UC/CJUU6KAIHLFLYO9CNEYBMW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/A/UC/CJUU6KAIHLFLYO9CNEYBMW.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/C3/IHFD5YOH5WZ2KT4UUY4BPG.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/C3/IHFD5YOH5WZ2KT4UUY4BPG.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/D9/C81KMA4SZN0OHN5E06XW6Y.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/D9/C81KMA4SZN0OHN5E06XW6Y.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/KZ/CAWI3VYHVJIIVKP7WXHN2D.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/KZ/CAWI3VYHVJIIVKP7WXHN2D.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/ML/WBC8GTEKJXLWPHR1O0RIRM.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/ML/WBC8GTEKJXLWPHR1O0RIRM.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/QP/X7PB53O7P6CP94X7TFYWJ1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/B/QP/X7PB53O7P6CP94X7TFYWJ1.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/66/RTY2P6TU4A9DRD02PB87JY.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/66/RTY2P6TU4A9DRD02PB87JY.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/8Q/7XQ2F5N04MSYNUW1EF5LNK.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/8Q/7XQ2F5N04MSYNUW1EF5LNK.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/LM/2SID9RVABNUXBLKTL1CWB1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/LM/2SID9RVABNUXBLKTL1CWB1.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/MO/JXHBIZH5B7CEWTQTCS3ZCG.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/C/MO/JXHBIZH5B7CEWTQTCS3ZCG.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/EO/FY5399UDGG1QC1ILG28E60.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/EO/FY5399UDGG1QC1ILG28E60.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/FJ/5IKMF6W94TN7YWD53RC6Q7.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/FJ/5IKMF6W94TN7YWD53RC6Q7.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/HF/6GDQXCGIGJHTIRBKL1ZV34.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/HF/6GDQXCGIGJHTIRBKL1ZV34.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/LQ/CO7UO17YNSQFMFI8HAEVLV.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/D/LQ/CO7UO17YNSQFMFI8HAEVLV.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/E/36/YLWWA0FRRLAFC5U7O8X1VR.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/E/36/YLWWA0FRRLAFC5U7O8X1VR.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/E/O5/9T2FW9MZIK2J8ZWYSINYDA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/E/O5/9T2FW9MZIK2J8ZWYSINYDA.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/F/3E/H7KMY9V0EGU8TWKD7MDDZT.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/DarkRuins/F/3E/H7KMY9V0EGU8TWKD7MDDZT.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/6Z/6O3KP0WZ7OHO4Y364H13BB.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/6Z/6O3KP0WZ7OHO4Y364H13BB.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/BX/QZQ8R46IUMI34DHNAKG3V5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/BX/QZQ8R46IUMI34DHNAKG3V5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/DA/1PRNR56ZO76VVL5YI8YMNB.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/DA/1PRNR56ZO76VVL5YI8YMNB.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/HP/F0Y32LYU9DEHD92Z1Z0VV4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/HP/F0Y32LYU9DEHD92Z1Z0VV4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/JC/HYBI9FFTN3RSR6SLNWYNOJ.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/JC/HYBI9FFTN3RSR6SLNWYNOJ.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/YK/ERUE0FPXQGTWS26E3LW52M.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/YK/ERUE0FPXQGTWS26E3LW52M.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/Z1/V2JTVQTZIFVWXIO9Y7V7IW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/1/Z1/V2JTVQTZIFVWXIO9Y7V7IW.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/2/TG/7G0C023YES5EIS6UZLK84D.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/2/TG/7G0C023YES5EIS6UZLK84D.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/2/WM/BBKUMPSI4SKQ72VVPU62E2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/2/WM/BBKUMPSI4SKQ72VVPU62E2.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/3/WF/KORLQMBSMU0IRW66I132T9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/3/WF/KORLQMBSMU0IRW66I132T9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/4/3D/KFA26YSGDBUUZPIJR3G335.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/4/S4/HG458LXG1B8HTZQ3ID9PPO.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/4/S4/HG458LXG1B8HTZQ3ID9PPO.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/4/Y3/8QYVQK4Z3RM4VUV2B0RA3N.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/4/Y3/8QYVQK4Z3RM4VUV2B0RA3N.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/5/NB/JTOY94FN35X0EB877IA5C4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/5/NB/JTOY94FN35X0EB877IA5C4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/KG/HCC2JP4TNPRG0ZRPFNP8S6.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/KG/HCC2JP4TNPRG0ZRPFNP8S6.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/TB/BKCXRC4ITUWWXEHSN8IU5C.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/TB/BKCXRC4ITUWWXEHSN8IU5C.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/UX/IK7Q06QGQOKWPTSAUME8HW.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/6/UX/IK7Q06QGQOKWPTSAUME8HW.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/7/DW/CV7D020R8A671M23UM6T2H.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/7/DW/CV7D020R8A671M23UM6T2H.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/7/YB/YVOUS69JEPQT72L5Z2MJJ5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/7/YB/YVOUS69JEPQT72L5Z2MJJ5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/2T/X8OG8349HC2EONU7NY1I6L.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/2T/X8OG8349HC2EONU7NY1I6L.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/4R/ARX0JHPFRFGV420ZIBB8F3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/4R/ARX0JHPFRFGV420ZIBB8F3.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/QQ/DD2ORTST8G8ZO13ZPXU7DA.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/8/QQ/DD2ORTST8G8ZO13ZPXU7DA.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/9/LR/JEB5BB64AUXQ3898J4UO83.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/9/LR/JEB5BB64AUXQ3898J4UO83.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/A/14/MGZK99MBUV1H2IH2YN6BU5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/A/14/MGZK99MBUV1H2IH2YN6BU5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/27/6TZJOTGW6TWX3620087KDH.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/27/6TZJOTGW6TWX3620087KDH.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/7I/PZZDFWQ2S6UYB5WNWBKOF9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/7I/PZZDFWQ2S6UYB5WNWBKOF9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/F6/KOAEYZC5O3RAWF17Q1E9GS.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/F6/KOAEYZC5O3RAWF17Q1E9GS.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/IV/X3GR1TNOKPVZ51IHVNNL5V.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/IV/X3GR1TNOKPVZ51IHVNNL5V.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/PB/0DMTHGJW52OEPPKJFK8TZN.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/B/PB/0DMTHGJW52OEPPKJFK8TZN.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/2P/IIMF43DFKP6D7BNY84DIAY.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/2P/IIMF43DFKP6D7BNY84DIAY.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/6G/OM1B9MDN0JA40J4GX5I2K5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/6G/OM1B9MDN0JA40J4GX5I2K5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/CE/BY0XBJR1ODV1YJI5HQHUXP.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/C/CE/BY0XBJR1ODV1YJI5HQHUXP.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/A5/IKVKOFH8T3VQSBYVT7PS4R.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/A5/IKVKOFH8T3VQSBYVT7PS4R.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/P2/YL2Q9XSHVRUQGQR7ABB35J.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/D/P2/YL2Q9XSHVRUQGQR7ABB35J.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/E/30/5KVLJ1I2Z5XVJQ03FDCQCH.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/E/30/5KVLJ1I2Z5XVJQ03FDCQCH.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/22/0EX3R25BH838LH7BJDVUWX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/22/0EX3R25BH838LH7BJDVUWX.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4G/V3A91BBWQEYKQQK2RKHVIU.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4G/V3A91BBWQEYKQQK2RKHVIU.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4S/THD6GOQ92XIDM6LSA7221R.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4S/THD6GOQ92XIDM6LSA7221R.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4V/Z0EPOLHS1HOKCSPXK77SLX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/HaFBattleMap/F/4V/Z0EPOLHS1HOKCSPXK77SLX.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HeroesAndFillains.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.uproject" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HeroesAndFillains.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.uproject.DotSettings.user" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Resources/checksum" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Resources/checksum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/RiderLink.uplugin" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/RiderLink.uplugin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/RD.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/RD.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_core_cpp/src/main/reactive/base/IViewableMap.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_core_cpp/src/main/reactive/base/IViewableMap.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/RdCall.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/RdCall.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/RdSymmetricCall.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/RdSymmetricCall.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/WiredRdTaskImpl.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/task/WiredRdTaskImpl.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLogging/Private/RiderOutputDevice.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLogging/Private/RiderOutputDevice.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Breakables/BreakableActorBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Breakables/BreakableActorBase.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFEffectActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFEffectActor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/BaseCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/BaseCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/EnemyBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/EnemyBase.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Gnarled.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Gnarled.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Khymeyrra.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Khymeyrra.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/StormAssassin.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/StormAssassin.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/HaFGameMode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/HaFGameMode.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/BuffComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/BuffComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/LagCompensationComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/LagCompensationComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/CharacterOverlay.cpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/FillainHealthWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/FillainMajixWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/FillainShieldWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/FillainStaminaWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/HAFUserWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/HAFUserWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/ProgressBarBaseWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/ProgressBarBaseWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HealthBarWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/EnemyHealthBarWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HealthBarWidgetComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/HAFWidgetController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/HAFWidgetController.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/OverlayWidgetController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/OverlayWidgetController.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Item.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Item.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Treasure.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Treasure.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/Pickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/Pickup.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Soul.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Soul.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/ShieldPickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Pickups/ShieldPickup.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerController/FillainPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerController/FillainPlayerController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerState/HAFPlayerState.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerState/HAFPlayerState.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/MeleeWeapon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/MeleeWeapon.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/StormWeapons.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/StormWeapons.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/Projectile.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/Projectile.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/ProjectileRocket.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/ProjectileRocket.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/WeaponBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/WeaponBase.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Breakables/BreakableActorBase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Breakables/BreakableActorBase.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFEffectActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFEffectActor.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/BaseCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/BaseCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/EnemyBase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/EnemyBase.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/Gnarled.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/Gnarled.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/Khymeyrra.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/Khymeyrra.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/StormAssassin.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/StormAssassin.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/AttributeComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/AttributeComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/BuffComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/BuffComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/LagCompensationComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/LagCompensationComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlay.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlay.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlay.h" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Interfaces/HitInterface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Interfaces/HitInterface.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Items/Item.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Items/Item.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Items/Treasure.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Items/Treasure.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/Pickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/Pickup.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainHealthWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainMajixWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainShieldWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainStaminaWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/HAFUserWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/HAFUserWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/ProgressBarBaseWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/ProgressBarBaseWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HealthBarWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/EnemyHealthBarWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HealthBarWidgetComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/EnemyHealthBarWidgetComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/HAFWidgetController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/HAFWidgetController.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/OverlayWidgetController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/OverlayWidgetController.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/ShieldPickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Pickups/ShieldPickup.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerController/FillainPlayerController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerController/FillainPlayerController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerState/HAFPlayerState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerState/HAFPlayerState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/Projectile.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/Projectile.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/RangedWeapon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/RangedWeapon.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponBase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponBase.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -405,39 +284,12 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://24" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://1" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/ControlRig/Source/ControlRigEditor/Private/Sequencer/AnimLayers/AnimLayers.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/DeformerGraph/Source/OptimusEditor/Private/OptimusEditor.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/MLDeformer/MLDeformerFramework/Source/MLDeformerFramework/MLDeformerFramework.Build.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/ChaosVD/Source/ChaosVDBlueprint/Private/ChaosVDRuntimeBlueprintLibrary.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Developer/GitSourceControl/Source/GitSourceControl/Private/GitSourceControlModule.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Editor/ObjectMixer/ObjectMixer/Source/ObjectMixer/Private/Views/List/Modes/ObjectMixerOutlinerHierarchy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Enterprise/VariantManager/Source/VariantManager/Private/DisplayNodes/VariantManagerActorNode.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Experimental/ChaosModularVehicle/Source/ChaosModularVehicleEngine/Private/ChaosModularVehicle/ModularVehicleBaseComponent.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -445,11 +297,18 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/FX/Niagara/Shaders/Private/NiagaraDataInterfaceDebugDraw.ush" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/FX/Niagara/Shaders/Private/NiagaraDataInterfaceDebugDrawTemplate.ush" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/FX/Niagara/Source/Niagara/Private/NiagaraScript.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Interchange/Runtime/Source/FactoryNodes/Public/InterchangeSkeletalMeshFactoryNode.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Online/OnlineSubsystemNull/Source/Private/OnlineSubsystemNull.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/PCG/Source/PCG/Private/Data/PCGPrimitiveData.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/PCG/Source/PCG/Private/Elements/PCGRandomChoice.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/PCG/Source/PCG/Public/Data/PCGIntersectionData.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/PCG/Source/PCG/Public/Elements/PCGSpawnActor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Shaders/Shared/ThirdParty/AMD/ags_shader_intrinsics_dx11.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/HttpCacheStore.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/DerivedDataCache/Private/ZenCacheStore.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/GraphColor/Private/stack.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/GraphColor/Private/stack.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/HierarchicalLODUtilities/Public/HierarchicalLODUtilities.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/LogVisualizer/Private/SVisualLoggerTimeSlider.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/SourceControl/Public/SourceControlAssetDataCache.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/StandaloneRenderer/Private/Windows/D3D/SlateD3DRenderer.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -457,10 +316,14 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/TraceAnalysis/Public/Trace/Analyzer.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Developer/TraceInsights/Private/Insights/NetworkingProfiler/ViewModels/PacketContentViewDrawHelper.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/AnimGraph/Private/AnimGraphNode_PoseDriver.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/BlueprintGraph/Private/BlueprintBoundNodeSpawner.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/BlueprintGraph/Private/BlueprintNodeSpawner.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/BlueprintGraph/Private/K2Node_Variable.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/ConfigEditor/Private/ConfigEditorModule.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/ContentBrowser/Private/ContentBrowserMenuContexts.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/ContentBrowser/Private/SAssetView.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/ContentBrowser/Private/SContentBrowser.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/CurveEditor/Public/SCurveEditorPanel.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/CurveEditor/Public/Tree/CurveEditorTree.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/DataLayerEditor/Private/DataLayer/SDataLayerBrowser.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/DetailCustomizations/Private/DetailCustomizations.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -474,6 +337,7 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/MeshPaint/Public/MeshPaintSettings.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/PhysicsAssetEditor/Private/PhysicsAssetEditorEditMode.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/PropertyEditor/Private/StringPrefixTree.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/SequenceRecorder/Private/SequenceRecorder.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/SequenceRecorder/Private/SequenceRecorder.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/SequenceRecorder/Public/SequenceRecorderSettings.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/Sequencer/Private/SequencerEdMode.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -482,6 +346,7 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/UnrealEd/Private/Commandlets/DetectOrphanedLocalizedAssetsCommandlet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/UnrealEd/Private/Editor/ActorPositioning.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/UnrealEd/Public/DiffUtils.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/UnrealEd/Public/Kismet2/ComponentEditorUtils.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/VREditor/Private/VREditorActions.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Editor/VREditor/Private/VREditorInteractor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/AIModule/Private/AIController.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -491,8 +356,10 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/AIModule/Public/GameplayDebugger/GameplayDebuggerCategory_NavLocalGrid.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/AnimGraphRuntime/Private/AnimNodes/AnimNode_AimOffsetLookAt.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/AnimGraphRuntime/Private/BoneControllers/AnimNode_AnimDynamics.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/ApplicationCore/Private/Mac/MacCursor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/ApplicationCore/Public/Mac/MacCursor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/AudioMixer/Public/Quartz/AudioMixerClock.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/ClothingSystemRuntimeInterface/Public/ClothingAssetBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Core.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Private/Logging/StructuredLog.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Private/Misc/FeedbackContext.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -504,14 +371,19 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Containers/Map.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Delegates/DelegateInstancesImpl.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Math/Quat.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Math/TransformCalculus2D.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Microsoft/MinimalWindowsApi.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/Misc/MTAccessDetector.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/UObject/ScriptDelegates.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Core/Public/UObject/UnrealNames.inl" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Internal/UObject/CoreRedirects/PM-k.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Private/Serialization/UnversionedPropertySerialization.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Private/UObject/ScriptCore.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Private/UObject/UObjectBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectHandle.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectPtr.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/Package.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/D3D12RHI/Private/D3D12Submission.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/D3D12RHI/Private/D3D12Util.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -521,18 +393,22 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/Engine/HitResult.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/GameFramework/Character.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/GameFramework/Pawn.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/Kismet/GameplayStaticsTypes.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Character.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Components/SceneComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Distributions.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/EdGraph/EdGraphNode.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/GameplayStatics.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/KismetStringLibrary.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/PackageMapClient.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Pawn.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/PhysicsEngine/Experimental/ChaosDerivedDataUtil.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsSpring.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/PlayerController.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/StaticMeshRender.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartitionLevelHelper.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartitionLevelStreamingDynamic.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -544,12 +420,18 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/GeometryCore/Public/Intersection/ExactIntrTriangle3Triangle3.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/MeshConversion/Public/ToDynamicMesh.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Messaging/Private/Bridge/MessageBridge.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/MovieScene/Public/MovieSceneSequencePlaybackSettings.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/MovieSceneTracks/Private/Systems/MovieSceneSlomoSystem.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/MovieSceneTracks/Public/Tracks/MovieScenePropertyTrack.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Navmesh/Public/Detour/DetourCommon.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Net/Core/Public/Net/Core/Connection/NetConnectionFaultRecoveryBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessEyeAdaptation.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessTonemap.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Renderer/Private/VT/VirtualTexturePhysicalSpace.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/SlateCore/Private/Widgets/SWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/TypedElementFramework/Private/Elements/Framework/TypedElementRegistry.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/UserWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/UMG/Private/WidgetBlueprintGeneratedClass.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/Python3/Python3.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/Vorbis/Vorbis.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/libOpus/libOpus.build.cs" root0="FORCE_HIGHLIGHTING" />
@@ -558,20 +440,47 @@
     <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/countdownlatch/countdownlatch.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/spdlog/include/spdlog/fmt/bundled/format.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/spdlog/include/spdlog/sinks/dup_filter_sink.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/spdlog/include/spdlog/sinks/hourly_file_sink.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/spdlog/include/spdlog/tweakme.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAbilitySystemComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFEffectActor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/BaseCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/EnemyBase.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/HaFGameMode.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameMode/LobbyGameMode.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/GameStates/HAFGameState.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/CombatComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/HUD/HAFUserWidget.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/ItemInfoWidgetBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/HAFWidgetController.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Interfaces/EnemyInterface.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Item.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Items/Soul.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerController/FillainPlayerController.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/PlayerState/HAFPlayerState.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/MeleeWeapon.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Melee/StormWeapons.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/Ranged/RangedWeapon.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/Weapons/WeaponBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFEffectActor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/EnemyBase.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/CombatComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/HAFUserWidget.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/ItemInfoWidgetBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/HAFWidgetController.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Interfaces/EnemyInterface.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerController/FillainPlayerController.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/PlayerState/HAFPlayerState.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/MeleeWeapon.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Melee/StormWeapons.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/Ranged/RangedWeapon.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/Public/Weapons/WeaponBase.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -795,7 +704,19 @@
       <workItem from="1753584378315" duration="1554000" />
       <workItem from="1753586053708" duration="270000" />
       <workItem from="1753589421694" duration="15393000" />
-      <workItem from="1753645872311" duration="36271000" />
+      <workItem from="1753645872311" duration="49362000" />
+      <workItem from="1753771951573" duration="12314000" />
+      <workItem from="1753821987419" duration="35417000" />
+      <workItem from="1753945525979" duration="29367000" />
+      <workItem from="1754000268336" duration="17814000" />
+      <workItem from="1754020674301" duration="437000" />
+      <workItem from="1754021195543" duration="41241000" />
+      <workItem from="1754177000621" duration="1435000" />
+      <workItem from="1754178971000" duration="745000" />
+      <workItem from="1754179816018" duration="892000" />
+      <workItem from="1754202301595" duration="1797000" />
+      <workItem from="1754204560737" duration="2383000" />
+      <workItem from="1754208937357" duration="1047000" />
     </task>
     <task id="LOCAL-00001" summary="WIDGETS FINALLY WORK!!!!!!!!!">
       <option name="closed" value="true" />

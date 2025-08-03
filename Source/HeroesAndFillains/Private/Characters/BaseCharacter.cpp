@@ -17,8 +17,8 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAFComponents/AttributeComponent.h"
-#include "HUD/HealthBarWidget.h"
-#include "HUD/HealthBarWidgetComponent.h"
+#include "HUD/EnemyHealthBarWidget.h"
+#include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "AIController.h"
 #include "NavigationPath.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -67,7 +67,7 @@
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "GameFramework/Controller.h"
-
+#include "HUD/CharacterOverlayFixed.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -126,31 +126,10 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HAFAbilitySystemComponent && HAFAttributeSet && AttributeComponent)
-	{
-		ensure(HAFAttributeSet);  // ✅ Make sure it's valid
-
-		float InitialHealth = AttributeComponent->GetHealth();
-		float InitialMaxHealth = AttributeComponent->GetMaxHealth();
-		float InitialShield = AttributeComponent->GetShield();
-		float InitialMaxShield = AttributeComponent->GetMaxShield();
-		float InitialStamina = AttributeComponent->GetStamina();
-		float InitialMaxStamina = AttributeComponent->GetMaxStamina();
-		float InitialMajix = AttributeComponent->GetMajix();
-		float InitialMaxMajix = AttributeComponent->GetMaxMajix();
-
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health, InitialHealth);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxHealth);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health, InitialShield);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxShield);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health,  InitialStamina);;
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxStamina);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Majix, InitialMajix);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxMajix, InitialMaxMajix);
-	}
 	
 }
+
+
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
@@ -304,9 +283,15 @@ void ABaseCharacter::SpawnHitSpecialEffects(const FVector& ImpactPoint)
 
 void ABaseCharacter::HandleDamage(float DamageAmount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("📉 HandleDamage: %f"), DamageAmount);
+
 	if (AttributeComponent)
 	{
 		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AttributeComponent is NULL in HandleDamage"));
 	}
 }
 
@@ -467,8 +452,10 @@ void ABaseCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDam
 	CachedDamageType = DamageType;
 	CachedInstigatorController = InstigatorController;
 	CachedDamageCauser = DamageCauser;
-
+	struct FDamageEvent Event;
+	TakeDamage(CachedDamage, Event, CachedInstigatorController, CachedDamageCauser);
 }
+
 
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
@@ -476,7 +463,26 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	CachedDamageEvent = DamageEvent;
 	CachedEventInstigator = EventInstigator;
 	CachedDamageCauser = DamageCauser;	
-		
+
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->HealthProgressBar && FillainHUD->CharacterOverlayWidgetFixed->HealthTextBox)
+	{
+		if (AFillainCharacter* FillainPlayer = Cast<AFillainCharacter>(this))
+		{
+			float CurrentShield = FillainPlayer->GetHAFAttributeSet()->GetShield();
+			if (CurrentShield - CachedDamage > 0.f)
+			{
+				FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(CurrentShield - CachedDamage);
+			}
+			if (CurrentShield - CachedDamage <= 0.f)
+			{
+				float DamageToShield = CurrentShield;
+				FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(0.f);
+				float DamageToHealth = CachedDamage - DamageToShield;
+				FillainHUD->CharacterOverlayWidgetFixed->UpdateHealthBar(DamageToHealth);
+			}
+		}
+	}
 	HandleDamage(DamageAmount);
 	return DamageAmount;
 }

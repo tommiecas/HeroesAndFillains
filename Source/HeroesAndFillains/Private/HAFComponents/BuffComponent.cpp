@@ -2,6 +2,9 @@
 
 
 #include "HAFComponents/BuffComponent.h"
+
+#include "GameplayEffect.h"
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "Characters/FillainCHaracter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -19,11 +22,11 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 	AmountToHeal += HealAmount;
 }
 
-void UBuffComponent::ReplenishShield(float ShieldReplenishAmount, float ShieldReplenishingTime)
+void UBuffComponent::FortifyShield(float ShieldFortifyingAmount, float ShieldFortifyingTime)
 {
-	bAmIAlreadyReplenishingShield = true;
-	ReplenishingRate = ShieldReplenishAmount / ShieldReplenishingTime;
-	AmountOfShieldReplenished += ShieldReplenishAmount;
+	bAmIAlreadyFortifyingShield = true;
+	FortifyingRate = ShieldFortifyingAmount / ShieldFortifyingTime;
+	AmountOfShieldFortified += ShieldFortifyingAmount;
 }
 
 void UBuffComponent::Recharge(float StaminaRechargeAmount, float StaminaRechargeTime)
@@ -102,16 +105,24 @@ void UBuffComponent::ResetJump()
 	Character->GetCharacterMovement()->JumpZVelocity = InitialJumpVelocity;
 	MulticastJumpBuff(InitialJumpVelocity);
 }
+
 void UBuffComponent::HealRampUp(float DeltaTime)
 {
 	if (!bAmIAlreadyHealing || Character == nullptr || Character->IsEliminated()) return;
 
 	const float HealThisFrame = HealingRate * DeltaTime;
-	Character->SetHealth(FMath::Clamp(Character->GetHealth() + HealThisFrame, 0.f, Character -> GetMaxHealth()));
-	Character->UpdateHUDHealth();
+
+	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
+	{
+		const FGameplayAttribute HealthAttribute = Character->GetHAFAttributeSet()->GetHealthAttribute();
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+
+		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetHealthAttribute(), EGameplayModOp::Additive, HealThisFrame);
+	}
+
 	AmountToHeal -= HealThisFrame;
 
-	if (AmountToHeal <= 0.f || Character->GetHealth() >= Character->GetMaxHealth())
+	if (AmountToHeal <= 0.f || Character->GetHAFAttributeSet()->GetHealth() >= Character->GetHAFAttributeSet()->GetMaxHealth())
 	{
 		bAmIAlreadyHealing = false;
 		AmountToHeal = 0.f;
@@ -120,17 +131,24 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 
 void UBuffComponent::ShieldRampUp(float DeltaTime)
 {
-	if (!bAmIAlreadyReplenishingShield || Character == nullptr || Character->IsEliminated()) return;
+	if (!bAmIAlreadyFortifyingShield || Character == nullptr || Character->IsEliminated()) return;
 
-	const float ReplenishShieldThisFrame = ReplenishingRate * DeltaTime;
-	Character->SetShield(FMath::Clamp(Character->GetShield() + ReplenishShieldThisFrame, 0.f, Character->GetMaxShield()));
-	Character->UpdateHUDShield();
-	AmountOfShieldReplenished -= ReplenishShieldThisFrame;
+	const float FortifyThisFrame = FortifyingRate * DeltaTime;
 
-	if (AmountOfShieldReplenished<= 0.f || Character->GetShield() >= Character->GetMaxShield())
+	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
 	{
-		bAmIAlreadyReplenishingShield = false;
-		AmountOfShieldReplenished= 0.f;
+		const FGameplayAttribute ShieldAttribute = Character->GetHAFAttributeSet()->GetShieldAttribute();
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+
+		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetShieldAttribute(), EGameplayModOp::Additive, FortifyThisFrame);
+	}
+
+	AmountOfShieldFortified -= FortifyThisFrame;
+
+	if (AmountOfShieldFortified <= 0.f || Character->GetHAFAttributeSet()->GetShield() >= Character->GetHAFAttributeSet()->GetMaxShield())
+	{
+		bAmIAlreadyFortifyingShield = false;
+		AmountOfShieldFortified = 0.f;
 	}
 }
 
@@ -139,11 +157,20 @@ inline void UBuffComponent::StaminaRampUp(float DeltaTime)
 	if (!bAmIAlreadyRechargingStamina || Character == nullptr || Character->IsEliminated()) return;
 
 	const float RechargeThisFrame = RechargingRate * DeltaTime;
-	Character->SetStamina(FMath::Clamp(Character->GetStamina() + RechargeThisFrame, 0.f, Character -> GetMaxStamina()));
-	Character->UpdateHUDStamina();
+
+	// ✅ Use GAS to apply healing
+	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
+	{
+		const FGameplayAttribute StaminaAttribute = Character->GetHAFAttributeSet()->GetStaminaAttribute();
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+
+		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetStaminaAttribute(), EGameplayModOp::Additive, RechargeThisFrame);
+
+	}
+
 	AmountOfStaminaRecharged -= RechargeThisFrame;
 
-	if (AmountOfStaminaRecharged <= 0.f || Character->GetStamina() >= Character->GetMaxStamina())
+	if (AmountOfStaminaRecharged <= 0.f || Character->GetHAFAttributeSet()->GetStamina() >= Character->GetHAFAttributeSet()->GetMaxStamina())
 	{
 		bAmIAlreadyRechargingStamina = false;
 		AmountOfStaminaRecharged = 0.f;
@@ -152,14 +179,23 @@ inline void UBuffComponent::StaminaRampUp(float DeltaTime)
 
 inline void UBuffComponent::MajixRampUp(float DeltaTime)
 {
-	if (!bAmIAlreadySummoningMajix ||  Character == nullptr || Character->IsEliminated()) return;
+	if (!bAmIAlreadySummoningMajix || Character == nullptr || Character->IsEliminated()) return;
 
 	const float SummonThisFrame = SummoningRate * DeltaTime;
-	Character->SetMajix(FMath::Clamp(Character->GetMajix() + SummonThisFrame, 0.f, Character -> GetMaxMajix()));
-	Character->UpdateHUDMajix();
+
+	// ✅ Use GAS to apply healing
+	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
+	{
+		const FGameplayAttribute MajixAttribute = Character->GetHAFAttributeSet()->GetMajixAttribute();
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+
+		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetMajixAttribute(), EGameplayModOp::Additive, SummonThisFrame);
+
+	}
+
 	AmountOfMajixSummoned -= SummonThisFrame;
 
-	if (AmountOfMajixSummoned <= 0.f || Character->GetMajix() >= Character->GetMaxMajix())
+	if (AmountOfMajixSummoned <= 0.f || Character->GetHAFAttributeSet()->GetMajix() >= Character->GetHAFAttributeSet()->GetMaxMajix())
 	{
 		bAmIAlreadySummoningMajix = false;
 		AmountOfMajixSummoned = 0.f;
