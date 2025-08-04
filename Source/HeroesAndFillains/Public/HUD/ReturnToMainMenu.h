@@ -15,6 +15,8 @@ class HEROESANDFILLAINS_API UReturnToMainMenu : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UReturnToMainMenu(const FObjectInitializer& ObjectInitializer);
+
 	void MenuSetup();
 	void MenuTearDown();
 

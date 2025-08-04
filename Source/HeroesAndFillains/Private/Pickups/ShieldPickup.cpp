@@ -25,7 +25,7 @@ void AShieldPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		UBuffComponent* BuffComponent = FillainCharacter->GetBuffComponent();
 		if (BuffComponent)
 		{
-			BuffComponent->ReplenishShield(ShieldReplenishAmount, ShieldReplenishingTime);
+			BuffComponent->FortifyShield(ShieldReplenishAmount, ShieldReplenishingTime);
 		}
 	}
 	Destroy();

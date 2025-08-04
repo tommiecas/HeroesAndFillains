@@ -5,7 +5,7 @@
 #include "Enemies/Gnarled.h"
 
 #include "Components/CapsuleComponent.h"
-#include "HUD/HealthBarWidgetComponent.h"
+#include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/BoxComponent.h"
@@ -147,6 +147,3 @@ void AGnarled::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnable
 		RightFistDamagedActors.Empty();
 	}
 }
-
-
-

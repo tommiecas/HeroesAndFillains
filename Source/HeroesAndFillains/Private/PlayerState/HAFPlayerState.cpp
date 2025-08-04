@@ -105,9 +105,3 @@ void AHAFPlayerState::SetTeam(ETeam TeamToSet)
 void AHAFPlayerState::OnRep_Team()
 {
 }
-
-
-
-
-
-

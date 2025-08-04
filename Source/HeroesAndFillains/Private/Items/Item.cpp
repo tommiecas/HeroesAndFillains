@@ -58,13 +58,13 @@ void AItem::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!AreaSphere)
+	/* if (!AreaSphere)
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ AreaSphere is NULL in actor: %s, class: %s"),
 			*GetName(),
 			*GetClass()->GetName());
 		return;
-	}
+	}*/
 
 	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
 	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
@@ -180,4 +180,3 @@ void AItem::ShowPickupAndInfoWidgets(bool bShow)
 	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(bShow);
 	if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(bShow);
 }
-

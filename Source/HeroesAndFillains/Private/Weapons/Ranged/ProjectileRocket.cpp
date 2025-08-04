@@ -14,6 +14,8 @@
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "Weapons/Ranged/RocketMovementComponent.h"
+#include "NiagaraComponent.h"                    // For UNiagaraComponent
+#include "NiagaraSystemInstanceController.h"     // For UNiagaraSystemInstanceController and GetSystemInstanceController()
 
 AProjectileRocket::AProjectileRocket()
 {
@@ -51,9 +53,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	{
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstance())
+	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())
 	{
-		TrailSystemComponent->GetSystemInstance()->Deactivate();
+		TrailSystemComponent->Deactivate();
 	}
 	if (ProjectileLoopComponent && ProjectileLoopComponent->IsPlaying())
 	{

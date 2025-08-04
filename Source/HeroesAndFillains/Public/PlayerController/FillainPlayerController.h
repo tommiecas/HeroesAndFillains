@@ -10,11 +10,13 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
+class AEnemyBase;
 class UTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
 struct FInputActionValue;
 class AFillainCharacter;
+class IEnemyInterface;
 
 
 
@@ -29,11 +31,8 @@ class HEROESANDFILLAINS_API AFillainPlayerController : public APlayerController
 
 public:
 	AFillainPlayerController();
+	virtual void PlayerTick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void SetHUDHealth(float Health, float MaxHealth);
-	void SetHUDShield(float Shield, float MaxShield);
-	void SetHUDStamina(float Stamina, float MaxStamina);
-	void SetHUDMajix(float Majix, float MaxMajix);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDSoulsCount(int32 SoulsCount);
@@ -48,6 +47,12 @@ public:
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsHUDReady() const;
+
+	UFUNCTION(BlueprintCallable)
+	void CursorTrace();
 
 	void HideTeamScores();
 	void InitTeamScores();
@@ -105,6 +110,8 @@ public:
 
 	UPROPERTY()
 	class AHAFGameMode* GameMode;
+
+	
 
 private:
 	UPROPERTY(EditAnywhere, Category = HUD)
@@ -176,6 +183,10 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
+	
+	TScriptInterface<IEnemyInterface> LastActor;
+	TScriptInterface<IEnemyInterface> ThisActor;
+	
 	FString GetWeaponTypeDisplayName(EWeaponType TypeOfWeapon);
 
 	UPROPERTY()
@@ -218,7 +229,7 @@ private:
 	void OnRep_MatchState();
 
 	UPROPERTY()
-	class UCharacterOverlay* CharacterOverlay;
+	class UCharacterOverlayFixed* CharacterOverlayFixed;
 	bool bInitializeHealth = false;
 	bool bInitializeShield = false;
 	bool bInitializeStamina = false;

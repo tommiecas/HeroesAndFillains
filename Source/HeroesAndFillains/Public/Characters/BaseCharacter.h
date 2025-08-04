@@ -214,7 +214,7 @@ protected:
 	UAnimMontage* CurrentAttackMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
-	class UHealthBarWidgetComponent* HealthBarWidgetComponent;
+	class UEnemyHealthBarWidgetComponent* HealthBarWidgetComponent;
 
 	bool IsCharacterAlive();
 	bool bIsCharacterDead{false};

@@ -322,13 +322,3 @@ void ARangedWeapon::SetRangedWeaponInformationText(UWidgetComponent* RangedWidge
 		if (RangedWidget->Line5) RangedWidget->Line5->SetText(FText::FromString(RangedWeapon->RangedWeaponDamage));
 	}
 }
-
-
-
-
-
-
-
-
-
-

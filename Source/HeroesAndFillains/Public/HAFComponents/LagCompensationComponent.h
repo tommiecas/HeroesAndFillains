@@ -19,6 +19,12 @@ struct FBoxInformation
 
 	UPROPERTY()
 	FVector BoxExtent;
+
+	FBoxInformation()
+		: Location(FVector::ZeroVector)
+		, Rotation(FRotator::ZeroRotator)
+		, BoxExtent(FVector::ZeroVector)
+	{}
 };
 
 
@@ -35,6 +41,11 @@ struct FFramePackage
 
 	UPROPERTY()
 	AFillainCharacter* Character;
+
+	FFramePackage()
+		: Time(0.f)
+		, Character(nullptr)
+	{}
 };
 
 USTRUCT(BlueprintType)
@@ -47,6 +58,18 @@ struct FServerSideRewindResult
 
 	UPROPERTY()
 	bool bHeadShot;
+
+	FServerSideRewindResult()
+	   : bHitConfirmed(false)
+	   , bHeadShot(false)
+	{}
+
+	// Add constructor that takes two parameters
+	FServerSideRewindResult(bool bInHitConfirmed, bool bInHeadShot)
+		: bHitConfirmed(bInHitConfirmed)
+		, bHeadShot(bInHeadShot)
+	{}
+
 };
 
 USTRUCT(BlueprintType)
@@ -60,6 +83,10 @@ struct FShotgunServerSideRewindResult
 	UPROPERTY()
 	TMap<AFillainCharacter*, uint32> BodyShots;
 
+	FShotgunServerSideRewindResult()
+		: HeadShots()
+		, BodyShots()
+	{}
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

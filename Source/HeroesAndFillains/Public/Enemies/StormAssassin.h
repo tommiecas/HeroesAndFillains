@@ -9,7 +9,7 @@
 
 class UBoxComponent;
 
-UENUM(BlueprintType, Blueprintable)
+UENUM(BlueprintType, Blueprintable, meta = (ScriptName = "E_StormAssassin"))
 enum class EStormAssassin : uint8
 {
 	ESA_Sandstorm UMETA(DisplayName = "Sandstorm"),
@@ -23,7 +23,7 @@ enum class EStormAssassin : uint8
 /**
  * 
  */
-UCLASS()
+UCLASS(meta = (ScriptName = "U_StormAssassin"))
 class HEROESANDFILLAINS_API AStormAssassin : public AEnemyBase
 {
 	GENERATED_BODY()
@@ -31,7 +31,7 @@ class HEROESANDFILLAINS_API AStormAssassin : public AEnemyBase
 public:
 	AStormAssassin();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
+	virtual void AttackEnd();
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,7 +45,10 @@ protected:
 	virtual int32 PlayDeathMontage() override;
 
 	UFUNCTION(BlueprintCallable)
-	void OnFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnLeftFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable)
+	void OnRightFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	bool bCanDamage = true;;
 	
@@ -65,9 +68,6 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void DisableRightFoot();
-	
-	UFUNCTION(BlueprintCallable)
-	void ResetCanDamage();
 
 	UPROPERTY()
 	TArray<AActor*> RightFootDamagedActors;

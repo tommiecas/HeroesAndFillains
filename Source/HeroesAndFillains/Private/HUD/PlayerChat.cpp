@@ -20,9 +20,9 @@ void UPlayerChat::SetChatText(const FString& Text, const FString& PlayerName)
             {
                 ChatBoxWidget->ChatTextBlock->SetText(FText::FromString(Chat));
                 ChatBoxWidget->ChatTextBlock->SetAutoWrapText(true);
-                InputScrollBox->AddChild(ChatBoxWidget->ChatTextBlock); // This will add the TextBlock from WBP_ChatBox to the ScrollBox from top to bottom
+                InputScrollBox->AddChild(ChatBoxWidget->ChatTextBlock); // Adds from top to bottom
                 InputScrollBox->ScrollToEnd();
-                InputScrollBox->bAnimateWheelScrolling = true;
+                InputScrollBox->SetAnimateWheelScrolling(true); // ✅ modern, safe
             }
         }
     }

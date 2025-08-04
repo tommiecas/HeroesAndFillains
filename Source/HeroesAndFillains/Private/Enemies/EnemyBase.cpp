@@ -15,14 +15,13 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAFComponents/AttributeComponent.h"
-#include "HUD/HealthBarWidget.h"
-#include "HUD/HealthBarWidgetComponent.h"
+#include "HUD/EnemyHealthBarWidget.h"
+#include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "AIController.h"
 #include "NavigationPath.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Components/BoxComponent.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "Perception/PawnSensingComponent.h"
 #include "Weapons/WeaponBase.h"
 #include "HAFComponents/AttributeComponent.h"
 #include "HAFComponents/CombatComponent.h"
@@ -30,13 +29,16 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 
 
 AEnemyBase::AEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	SetRootComponent(SceneComponent);
 	
-	SetRootComponent(GetCapsuleComponent());
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
@@ -47,8 +49,8 @@ AEnemyBase::AEnemyBase()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
 
 	// Create the WidgetComponent
-	HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
-	HealthBarWidgetComponent->SetupAttachment(GetCapsuleComponent());
+	HealthBarWidgetComponent = CreateDefaultSubobject<UEnemyHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
+	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
 	HealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBarWidgetComponent->SetDrawSize(FVector2D(300.f, 25.f));
 
@@ -57,9 +59,18 @@ AEnemyBase::AEnemyBase()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
-	PawnSensing->SetPeripheralVisionAngle(45.f);
-	PawnSensing->SightRadius = 4000.f;
+	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+
+	SightConfig->SightRadius = 1500.f;
+	SightConfig->LoseSightRadius = 1600.f;
+	SightConfig->PeripheralVisionAngleDegrees = 90.f;
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+
+	AIPerceptionComponent->ConfigureSense(*SightConfig);
+	AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
 
 	GetMesh()->SetGenerateOverlapEvents(true);
 	GetMesh()->SetCollisionObjectType(ECC_Enemy);
@@ -75,6 +86,35 @@ AEnemyBase::AEnemyBase()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
+}
+
+void AEnemyBase::HighlightActor()
+{
+	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+	if (EquippedEnemyRangedWeapon)
+	{
+		EquippedEnemyRangedWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
+		EquippedEnemyRangedWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+	}
+	if (EquippedEnemyMeleeWeapon)
+	{
+		EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
+		EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+	}
+	if (EquippedEnemyWeapon)
+	{
+		EquippedEnemyWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
+		EquippedEnemyWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+	}
+}
+
+void AEnemyBase::UnHighlightActor()
+{
+	GetMesh()->SetRenderCustomDepth(false);
+	if (EquippedEnemyWeapon) EquippedEnemyWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
+	if (EquippedEnemyMeleeWeapon) EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
+	if (EquippedEnemyRangedWeapon) EquippedEnemyRangedWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
 }
 
 void AEnemyBase::Tick(float DeltaTime)
@@ -134,11 +174,22 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	}
 }
 
+void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
+{
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		APawn* Pawn = Cast<APawn>(Actor);
+		PawnSeen(Pawn);
+		UE_LOG(LogTemp, Warning, TEXT("Detected: %s"), *Actor->GetName());
+	}
+}
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemyBase::PawnSeen);
+
+	AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyBase::OnTargetDetected);
+
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
 }
@@ -496,26 +547,3 @@ void AEnemyBase::PawnSeen(APawn* SeenPawn)
 		EnemiesChaseTarget();
 	}
 }	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

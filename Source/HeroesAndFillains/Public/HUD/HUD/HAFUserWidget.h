@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "HAFUserWidget.generated.h"
 
+class UOverlayWidgetController;
 /**
  * 
  */
@@ -16,10 +17,12 @@ class HEROESANDFILLAINS_API UHAFUserWidget : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual void SetWidgetController(UObject* InWidgetControlller);
+	virtual void SetWidgetController(UOverlayWidgetController* InWidgetController);
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UObject> WidgetController;
+	UOverlayWidgetController* WidgetController;
+
+	virtual void NativeConstruct() override;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)

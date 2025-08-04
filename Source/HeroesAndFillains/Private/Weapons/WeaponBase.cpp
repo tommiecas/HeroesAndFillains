@@ -96,13 +96,7 @@ AWeaponBase::AWeaponBase()
 	HoverDecal->DecalSize = FVector(64.f, 128.f, 128.f); // Flat and wide
 	HoverDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f)); // Face it downward
 	HoverDecal->SetRelativeLocation(FVector(0.f, 0.f, -55.f)); // Slightly under rifle
-
-	// Assign a material (you need a simple glowing decal material)
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> DecalMat(TEXT("Material'/Game/Materials/M_GlowDecal.M_GlowDecal'"));
-	if (DecalMat.Succeeded())
-	{
-		HoverDecal->SetDecalMaterial(DecalMat.Object);
-	}
+	
 }
 
 void AWeaponBase::Tick(float DeltaTime)
@@ -151,6 +145,7 @@ void AWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(AWeaponBase, WeaponState);
+	DOREPLIFETIME(AWeaponBase, WeaponCategory);
 }
 
 void AWeaponBase::BeginPlay()
@@ -213,7 +208,7 @@ void AWeaponBase::BeginPlay()
     {
         ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
     }
-	UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
 	WeaponBox->SetRelativeRotation(FRotator::ZeroRotator); // or whatever it needs
 	WeaponBox->SetUsingAbsoluteRotation(true); // Will ignore parent rotation
 	SetHandsNeeded(this);
@@ -371,13 +366,13 @@ void AWeaponBase::EnableCustomDepth(bool bEnable)
 
 void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
-	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());
+	/* UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());
 
 	if (!WeaponMesh)
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh is null on %s"), *GetName());
 		return;
-	}
+	} 
 
 	if (!InParent)
 	{
@@ -385,16 +380,10 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 		return;
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());
-	if (!WeaponMesh)
-	{
-		return;
-	}
+	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());  */
+	if (!WeaponMesh) return;
 
-	if (!InParent)
-	{
-		return;
-	}
+	if (!InParent) return;
 	
 	// Get the socket transform before attachment for logging
 	USkeletalMeshComponent* ParentMesh = Cast<USkeletalMeshComponent>(InParent);
@@ -408,15 +397,15 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	}
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	AttachToComponent(InParent, AttachmentRules, InSocketName);
-
-	if (!WeaponMesh->IsAttachedTo(InParent))
+	
+	/* if (!WeaponMesh->IsAttachedTo(InParent))
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh not attached after Equip!"));
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("✅ WeaponMesh is attached to %s"), *InParent->GetName());
-	}
+	} */
 	
 	ItemState = EItemState::EIS_Equipped;
 	SetOwner(NewOwner);
@@ -429,7 +418,7 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(false);
 	if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(false);
 
-	UE_LOG(LogTemp, Warning, TEXT("✔️ Weapon::Equip called on %s, attaching to socket %s"), *GetName(), *InSocketName.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("✔️ Weapon::Equip called on %s, attaching to socket %s"), *GetName(), *InSocketName.ToString());
 
 	// Stop float/spin effects
 	bShouldHover = false;
@@ -452,8 +441,8 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	{
 		TraceParams.AddIgnoredActor(OwnerCharacter); // ✅ Ignore the wielder!
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Attaching %s to %s at socket %s"), *GetName(), *InParent->GetName(), *InSocketName.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("Post-Attach Location: %s"), *GetActorLocation().ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Attaching %s to %s at socket %s"), *GetName(), *InParent->GetName(), *InSocketName.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Post-Attach Location: %s"), *GetActorLocation().ToString());
 	SetEquippedWeaponState();
 }
 
@@ -707,4 +696,3 @@ void AWeaponBase::WeaponDropped()
 	FillainOwnerCharacter = nullptr;
 	FillainOwnerController = nullptr;
 }
-

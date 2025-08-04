@@ -3,16 +3,34 @@
 
 #include "Enemies/Khymeyrra.h"
 
+#include "Characters/FillainCharacter.h"
+#include "Components/BoxComponent.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
+
 
 AKhymeyrra::AKhymeyrra()
 {
 	PrimaryActorTick.bCanEverTick = true;
-}
 
-void AKhymeyrra::BeginPlay()
-{
-	Super::BeginPlay();
-	
+	RightAxeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightAxeCollision"));
+	RightAxeCollision->SetupAttachment(GetMesh(), FName("RightAxeSocket"));
+	RightAxeCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightAxeCollision->SetCollisionObjectType(ECC_EnemyWeaponBox); // e.g., Enemy
+	RightAxeCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	RightAxeCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); // PlayerCharacter
+	RightAxeCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); // Player Character's Weapon
+	RightAxeCollision->SetGenerateOverlapEvents(true);
+
+	LeftAxeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftAxeCollision"));
+	LeftAxeCollision->SetupAttachment(GetMesh(), FName("LeftAxeSocket"));
+	LeftAxeCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftAxeCollision->SetCollisionObjectType(ECC_EnemyWeaponBox); // e.g., Enemy
+	LeftAxeCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	LeftAxeCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); // PlayerCharacter
+	LeftAxeCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); // Player Character's Weapon
+	LeftAxeCollision->SetGenerateOverlapEvents(true);
+
+	EnemyDisplayName = TEXT("a vicious Khymeyrra");
 }
 
 void AKhymeyrra::Tick(float DeltaTime)
@@ -20,5 +38,121 @@ void AKhymeyrra::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AKhymeyrra::AttackEnd()
+{
+	Super::AttackEnd();
 
+	DisableLeftAxe();
+	DisableRightAxe();
+}
 
+void AKhymeyrra::BeginPlay()
+{
+	Super::BeginPlay();
+
+	RightAxeCollision->OnComponentBeginOverlap.AddDynamic(this, &AKhymeyrra::OnRightAxeOverlap);
+	LeftAxeCollision->OnComponentBeginOverlap.AddDynamic(this, &AKhymeyrra::OnLeftAxeOverlap);
+}
+
+int32 AKhymeyrra::PlayDeathMontage()
+{
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	TEnumAsByte<EDeathPose> Pose(Selection);;
+	if (Pose < EDeathPose::EDP_MAX)
+	{
+		DeathPose = Pose;
+	}
+	return Selection;
+}
+
+void AKhymeyrra::OnLeftAxeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
+	if (Player && bCanDamage && !LeftAxeDamagedActors.Contains(Player))
+	{
+		LeftAxeDamagedActors.Add(Player);
+		
+		if (const UDamageType* DamageTypeInstance = NewObject<UDamageType>(this, UDamageType::StaticClass()))
+		{
+			Player->ReceiveDamage(Player, AxeDamage, DamageTypeInstance, GetController(), this);
+		}
+		bCanDamage = false; // or timer reset, etc.
+	}
+	GetWorld()->GetTimerManager().SetTimer(
+		AxeDamageResetTimer,
+		this,
+		&AKhymeyrra::DisableRightAxe,
+		0.25f, // or however long the kick takes
+		false);
+}
+
+void AKhymeyrra::OnRightAxeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
+	if (Player && bCanDamage && !RightAxeDamagedActors.Contains(Player))
+	{
+		RightAxeDamagedActors.Add(Player);
+		
+		if (const UDamageType* DamageTypeInstance = NewObject<UDamageType>(this, UDamageType::StaticClass()))
+		{
+			Player->ReceiveDamage(Player, AxeDamage, DamageTypeInstance, GetController(), this);
+		}
+		bCanDamage = false; // or timer reset, etc.
+	}
+	GetWorld()->GetTimerManager().SetTimer(
+		AxeDamageResetTimer,
+		this,
+		&AKhymeyrra::DisableLeftAxe,
+		0.25f, // or however long the kick takes
+		false);
+}
+
+void AKhymeyrra::EnableLeftAxe()
+{
+	LeftAxeDamagedActors.Empty();
+	EnemyState = EEnemyState::EES_Attacking;
+	bCanDamage = true;
+	CanAttack();
+	StopAllMontages();
+	LeftAxeCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	LeftAxeCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	LeftAxeCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap); // PlayerCharacter
+	LeftAxeCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+	LeftAxeCollision->SetGenerateOverlapEvents(true);
+}
+
+void AKhymeyrra::DisableLeftAxe()
+{
+	LeftAxeCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftAxeCollision->SetGenerateOverlapEvents(false);
+	EnemyState = EEnemyState::EES_Patrolling;
+	bCanDamage = false;
+	StopAllMontages();
+	LeftAxeDamagedActors.Empty(); // ✅ Clear after swing ends
+}
+
+void AKhymeyrra::EnableRightAxe()
+{
+	RightAxeDamagedActors.Empty();
+	EnemyState = EEnemyState::EES_Attacking;
+	bCanDamage = true;
+	CanAttack();
+	StopAllMontages();
+	RightAxeCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	RightAxeCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	RightAxeCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap); // PlayerCharacter
+	RightAxeCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+	RightAxeCollision->SetGenerateOverlapEvents(true);
+}
+
+void AKhymeyrra::DisableRightAxe()
+{
+	RightAxeCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightAxeCollision->SetGenerateOverlapEvents(false);
+	bCanDamage = false;
+	EnemyState = EEnemyState::EES_Patrolling;
+	StopAllMontages();
+	RightAxeDamagedActors.Empty(); // ✅ Clear after swing ends
+}

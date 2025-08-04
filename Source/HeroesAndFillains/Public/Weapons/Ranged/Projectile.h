@@ -8,7 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class HEROESANDFILLAINS_API AProjectile : public AActor
 {
 	GENERATED_BODY()

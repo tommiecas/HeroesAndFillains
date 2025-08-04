@@ -18,6 +18,7 @@ class MULTIPLAYERSESSIONS_API UMenu : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UMenu(const FObjectInitializer& ObjectInitializer);
 	UFUNCTION(BlueprintCallable)
 	void MenuSetup(int32 NumberOfPublicConnections = 4, FString TypeOfMatch = FString(TEXT("BattleRoyale")), FString LobbyPath = FString(TEXT("/Game/Maps/HAFLobby")));
 

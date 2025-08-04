@@ -138,9 +138,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
-	if (EquippedMeleeWeapon) return;
-
-	
 	// Character->GetFillainHUD()->SetCrosshairsSpread(CrosshairVelocityFactor, CrosshairInAirFactor, CrosshairAimFactor, CrosshairShootingFactor);
 	if (Character == nullptr || Character->Controller == nullptr) return;
 
@@ -152,11 +149,31 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		{
 			if (EquippedRangedWeapon)
 			{
-				HUDPackage.CrosshairsCenter = EquippedRangedWeapon->CrosshairsCenter;
-				HUDPackage.CrosshairsLeft = EquippedRangedWeapon->CrosshairsLeft;
-				HUDPackage.CrosshairsRight = EquippedRangedWeapon->CrosshairsRight;
-				HUDPackage.CrosshairsBottom = EquippedRangedWeapon->CrosshairsBottom;
-				HUDPackage.CrosshairsTop = EquippedRangedWeapon->CrosshairsTop;
+				APlayerController* PC = Cast<APlayerController>(GetCharacter()->GetController());
+				if (PC)
+				{
+					PC->bEnableMouseOverEvents = false;         // Enable mouse over events
+					PC->bShowMouseCursor = false;               // (Optional) Show the mouse if you're using it
+				} 
+				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+			}
+			if (EquippedWeapon)
+			{
+				APlayerController* PC = Cast<APlayerController>(GetCharacter()->GetController());
+				if (PC)
+				{
+					PC->bEnableMouseOverEvents = false;         // Enable mouse over events
+					PC->bShowMouseCursor = false;               // (Optional) Show the mouse if you're using it
+				} 
+				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
 			}
 			else
 			{
@@ -207,8 +224,65 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			HUD->SetHUDPackage(HUDPackage);
 		}
 	}
-} 
+}
 
+void UCombatComponent::TraceForCrossHairTarget()
+{
+	constexpr float TraceDistance = 10000.0f; // 100 meters
+	FVector2D ViewportSize;
+	GEngine->GameViewport->GetViewportSize(ViewportSize);
+	FVector2D CrosshairPosition(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+
+	APlayerController* PC = Cast<APlayerController>(GetCharacter()->GetController());
+	if (PC)
+	{
+		FVector WorldLocation;
+		FVector WorldDirection;
+
+		FVector2D ScreenPosition = CrosshairPosition; // usually center of screen
+
+		bool bSuccess = PC->DeprojectScreenPositionToWorld(
+			ScreenPosition.X,
+			ScreenPosition.Y,
+			WorldLocation,
+			WorldDirection
+		);
+
+		if (bSuccess)
+		{
+			// Do your line trace here using WorldLocation and WorldDirection
+			FVector TraceStart = WorldLocation;
+			FVector TraceEnd = TraceStart + WorldDirection * TraceDistance;
+			FHitResult HitResult;
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(GetCharacter());
+
+			bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, Params);
+        
+			AEnemyBase* NewEnemy = nullptr;
+			if (bHit)
+			{
+				NewEnemy = Cast<AEnemyBase>(HitResult.GetActor());
+			}
+
+			// Highlighting logic
+			if (NewEnemy != HighlightedEnemy)
+			{
+				if (HighlightedEnemy)
+				{
+					HighlightedEnemy->UnHighlightActor(); // Replace with your unhighlight function
+				}
+
+				HighlightedEnemy = NewEnemy;
+
+				if (HighlightedEnemy)
+				{
+					HighlightedEnemy->HighlightActor(); // Replace with your highlight function
+				}
+			}
+		}
+	}
+}
 
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
@@ -441,23 +515,13 @@ void UCombatComponent::ReceiveMeleeDamage(
 	const FVector& HitLocation
 )
 {
-	if (!Character)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ ReceiveMeleeDamage failed: Character is null"));
-		return;
-	}
-
 	// Apply actual damage
 	float FinalDamage = Character->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	if (FinalDamage <= 0.f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("⚠️ No damage applied"));
 		return;
 	}
-
-	// Log and react
-	UE_LOG(LogTemp, Warning, TEXT("⚔️ %s took %.2f melee damage"), *Character->GetName(), FinalDamage);
-
+	
 	// Optional: cache for post-hit logic
 	Character->CachedDamageAmount = FinalDamage;
 	Character->CachedDamageEvent = DamageEvent;
@@ -466,14 +530,7 @@ void UCombatComponent::ReceiveMeleeDamage(
 
 	Character->DirectionalHitReact(HitLocation);
 
-	if (!Character->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ Character does NOT implement HitInterface!"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ Character implements HitInterface!"));
-	}
+	
 	
 	Character->GetHit_Implementation(HitLocation, DamageCauser);
 	
@@ -1191,7 +1248,7 @@ void UCombatComponent::OnRep_SecondaryWeapon()
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 {
-	FVector2D ViewportSize;
+	FVector2D ViewportSize = FVector2D::ZeroVector;
 	if (GEngine && GEngine->GameViewport)
 	{
 		GEngine->GameViewport->GetViewportSize(ViewportSize);

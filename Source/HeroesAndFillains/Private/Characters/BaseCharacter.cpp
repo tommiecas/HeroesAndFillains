@@ -17,12 +17,11 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAFComponents/AttributeComponent.h"
-#include "HUD/HealthBarWidget.h"
-#include "HUD/HealthBarWidgetComponent.h"
+#include "HUD/EnemyHealthBarWidget.h"
+#include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "AIController.h"
 #include "NavigationPath.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "Perception/PawnSensingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"  
 #include "Components/InputComponent.h"  
 #include "EnhancedInputSubsystems.h"  
@@ -121,6 +120,8 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABaseCharacter, MeleeAttackMontage)
 }
 
 void ABaseCharacter::BeginPlay()

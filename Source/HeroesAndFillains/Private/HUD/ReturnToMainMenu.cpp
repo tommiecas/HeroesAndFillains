@@ -8,11 +8,16 @@
 #include "GameFramework/GameModeBase.h"
 #include "Characters/FillainCharacter.h"
 
+UReturnToMainMenu::UReturnToMainMenu(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bIsFocusable = true; // ✅ Safe here
+}
+
 void UReturnToMainMenu::MenuSetup()
 {
 	AddToViewport();
 	SetVisibility(ESlateVisibility::Visible);
-	bIsFocusable = true;
 
 	UWorld* World = GetWorld();
 	if (World)

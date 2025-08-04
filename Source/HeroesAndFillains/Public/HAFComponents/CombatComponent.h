@@ -146,7 +146,15 @@ public:
 	void ResetRecentlyDamaged();
 	bool bRecentlyDamaged = false;
 	FTimerHandle RecentDamageHandle;
+	
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	void SetHUDCrosshairs(float DeltaTime);
+
+	void TraceForCrossHairTarget();
+
+	UPROPERTY()
+	AEnemyBase* HighlightedEnemy = nullptr;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -175,10 +183,6 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
-
-	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
-
-	void SetHUDCrosshairs(float DeltaTime);
 
 	UFUNCTION(Server, Reliable)
 	void ServerReloading();
@@ -359,7 +363,12 @@ private:
 	UPROPERTY()
 	AMeleeWeapon* TheSword;
 
-public:	
+public:
+	FORCEINLINE AFillainCharacter* GetCharacter() const { return Character; }
+	FORCEINLINE AFillainPlayerController* GetFillainPlayerController() const { return Controller; }
+	FORCEINLINE AEnemyBase* GetEnemy() const { return Enemy; }
+	FORCEINLINE AEnemyBase* GetHighlightedEnemy() const {return HighlightedEnemy; }
+	FORCEINLINE AFillainHUD* GetHUD() const { return HUD; }
 	FORCEINLINE bool IsAiming() const { return bAiming; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }	

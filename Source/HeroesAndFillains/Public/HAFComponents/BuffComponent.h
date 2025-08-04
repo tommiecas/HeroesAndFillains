@@ -16,7 +16,7 @@ public:
 	UBuffComponent();
 	friend class AFillainCharacter;
 	void Heal(float HealAmount, float HealingTime);
-	void ReplenishShield(float ShieldReplenishAmount, float ShieldReplenishingTime);
+	void FortifyShield(float ShieldFortifyingAmount, float ShieldFortifyingTime);
 	void Recharge(float StaminaRechargeAmount, float StaminaRechargeTime);
 	void Summon(float MajixSummonedAmount, float MajixSummonedTime);
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
@@ -55,9 +55,9 @@ private:
 	/***********************************
 	***   REPLENISHING SHIELD BUFF   ***
 	***********************************/
-	bool bAmIAlreadyReplenishingShield = false;
-	float ReplenishingRate = 0;
-	float AmountOfShieldReplenished = 0.f;
+	bool bAmIAlreadyFortifyingShield = false;
+	float FortifyingRate = 0;
+	float AmountOfShieldFortified= 0.f;
 
 	/***********************************
     ***   RECHARGING STAMINA  BUFF   ***
@@ -87,4 +87,3 @@ private:
 	float InitialJumpVelocity;
 		
 };
-
