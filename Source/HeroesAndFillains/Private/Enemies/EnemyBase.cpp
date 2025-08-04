@@ -38,7 +38,8 @@ AEnemyBase::AEnemyBase()
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	SetRootComponent(SceneComponent);
-	
+
+	GetCapsuleComponent()->SetupAttachment(GetRootComponent());
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
@@ -72,6 +73,7 @@ AEnemyBase::AEnemyBase()
 	AIPerceptionComponent->ConfigureSense(*SightConfig);
 	AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
 
+	GetMesh()->SetupAttachment(GetRootComponent());
 	GetMesh()->SetGenerateOverlapEvents(true);
 	GetMesh()->SetCollisionObjectType(ECC_Enemy);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
