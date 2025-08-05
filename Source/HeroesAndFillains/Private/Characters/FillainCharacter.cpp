@@ -91,6 +91,7 @@
 #include "HAFComponents/LagCompensationComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Enemies/EnemyBase.h"
@@ -376,14 +377,14 @@ void AFillainCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
-	ReceiveDamage(this, DamageAmount, UDamageType::StaticClass()->GetDefaultObject<UDamageType>(), EventInstigator, DamageCauser);
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
 	return DamageAmount;
-	
 }
 
-void AFillainCharacter::HandleDamage(float DamageAmount)
+void AFillainCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	Super::HandleDamage(DamageAmount);
+	Super::HandleDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
 void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -823,13 +824,6 @@ void AFillainCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	Combat->ActionState = EActionState::EAS_HitReaction;
-	FName SectionName;
-	PlayHitReactMontage(SectionName);
-	float Damage = 0.f;
-	ABaseCharacter* Base = Cast<ABaseCharacter>(Hitter);
-	struct FDamageEvent Event;
-	AWeaponBase* HitterWeapon = nullptr;
-	TakeDamage(Damage, Event, Base->GetController(), HitterWeapon);
 }
 
 void AFillainCharacter::PlayHitReactMontage(const FName& SectionName)
@@ -1249,26 +1243,26 @@ void AFillainCharacter::DetermineRolesOnPlayerDeath(AActor* DamagedPawn, AContro
 void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType,
 	AController* InstigatorController, AActor* DamageCauser)
 {
+	Super::ReceiveDamage(DamagedPawn, Damage, DamageType, InstigatorController, DamageCauser);
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	if (bIsEliminated || HAFGameMode == nullptr) return;
 
 	float DamageToHealth = Damage;
-	if (Shield > 0.f)
+	if (GetShield() > 0.f)
 	{
-		if (Shield >= Damage)
+		if (GetShield() >= Damage)
 		{
 			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
 			DamageToHealth = 0.f;
 		}
-		else
+		else if (GetShield() < Damage)
 		{
-			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
-			Shield = 0.f;
+			DamageToHealth = FMath::Clamp(GetHealth() - (Damage - GetShield()), 0.f, MaxHealth);
+			SetShield(0.f);
+			Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 		}
 	}
-
-	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
-
+	
 	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 	if (FillainHUD &&
 		FillainHUD->CharacterOverlayWidgetFixed &&
@@ -1277,7 +1271,7 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
 		FillainHUD->CharacterOverlayWidgetFixed->HealthTextBox &&
 		FillainHUD->CharacterOverlayWidgetFixed->ShieldTextBox)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(0.f);
+		FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(Shield);
 		FillainHUD->CharacterOverlayWidgetFixed->UpdateHealthBar(Health);
 	}
 	if (Health == 0.f)
@@ -2401,6 +2395,8 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	}
 	AHAFPlayerState* HAFPState = Cast<AHAFPlayerState>(PState);
 	HAFPState->GetAbilitySystemComponent()->InitAbilityActorInfo(HAFPState, this);
+	Cast<UHAFAbilitySystemComponent>(HAFPState->GetAbilitySystemComponent())->AbilityActorInfoSet();
+	
 	AbilitySystemComponent = HAFPState->GetAbilitySystemComponent();
 	AttributeSet = HAFPState->GetAttributeSet();
 

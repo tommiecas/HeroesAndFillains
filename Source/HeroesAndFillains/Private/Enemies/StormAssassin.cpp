@@ -15,7 +15,7 @@
 AStormAssassin::AStormAssassin()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	RightFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFootCollision"));
 	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFootSocket"));
 	RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
