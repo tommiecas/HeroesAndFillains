@@ -7,14 +7,33 @@
 #include "GameplayEffectTypes.h"
 #include "OverlayWidgetController.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, NewHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature, float, NewMaxHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShieldChangedSignature, float, NewShield);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxShieldChangedSignature, float, NewMaxShield);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChangedSignature, float, NewStamina);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChangedSignature, float, NewMaxStamina);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMajixChangedSignature, float, NewMajix);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxMajixChangedSignature, float, NewMaxMajix);
+class UAttributeComponent;
+class UCombatComponent;
+class UHAFUserWidget;
+class UHAFWidgetController;
+
+USTRUCT(BlueprintType)
+struct FUIWidgetRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag MessageTag = FGameplayTag();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Message = FText();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<class UHAFUserWidget> MessageWidget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UTexture2D* Image = nullptr;
+
+	
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
 
 /**
  * 
@@ -29,37 +48,56 @@ public:
 	virtual void BindCallbacksToDependencies() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnHealthChangedSignature OnHealthChanged;
+	FOnAttributeChangedSignature OnHealthChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxHealthChangedSignature OnMaxHealthChanged;
+	FOnAttributeChangedSignature OnShieldChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
+	FOnAttributeChangedSignature OnMaxShieldChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnShieldChangedSignature OnShieldChanged;
+	FOnAttributeChangedSignature OnStaminaChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
+	FOnAttributeChangedSignature OnMaxStaminaChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxShieldChangedSignature OnMaxShieldChanged;
-
+	FOnAttributeChangedSignature OnMajixChanged;
+	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnStaminaChangedSignature OnStaminaChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxStaminaChangedSignature OnMaxStaminaChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMajixChangedSignature OnMajixChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxMajixChangedSignature OnMaxMajixChanged;
-
+	FOnAttributeChangedSignature OnMaxMajixChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Messages")
+	FMessageWidgetRowSignature MessageWidgetRowDelegate;
+	
 protected:
-	void HealthChanged(const FOnAttributeChangeData& Data) const;
-	void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
-	void ShieldChanged(const FOnAttributeChangeData& Data) const;
-	void MaxShieldChanged(const FOnAttributeChangeData& Data) const;
-	void StaminaChanged(const FOnAttributeChangeData& Data) const;
-	void MaxStaminaChanged(const FOnAttributeChangeData& Data) const;
-	void MajixChanged(const FOnAttributeChangeData& Data) const;
-	void MaxMajixChanged(const FOnAttributeChangeData& Data) const;
+		template<typename T>
+		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
+	TObjectPtr<UDataTable> MessageWidgetDataTable;
 	
 };
+
+template <typename T>
+T* UOverlayWidgetController::GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
+{
+	if (!DataTable)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GetDataTableRowByTag: DataTable is null for tag: %s"), *Tag.ToString());
+		return nullptr;
+	}
+
+	const FName RowName = FName(Tag.ToString());
+	T* Row = DataTable->FindRow<T>(RowName, TEXT("GetDataTableRowByTag"), false);
+
+	if (!Row)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GetDataTableRowByTag: Row not found for tag: %s"), *Tag.ToString());
+	}
+	
+	return Row;
+}

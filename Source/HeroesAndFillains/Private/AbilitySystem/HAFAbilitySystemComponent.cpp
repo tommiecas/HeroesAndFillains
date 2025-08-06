@@ -13,10 +13,8 @@ void UHAFAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilityS
 {
 	FGameplayTagContainer TagContainer;
 	EffectSpec.GetAllAssetTags(TagContainer);
-	for (const FGameplayTag&  Tag : TagContainer)
-	{
-		// TODO: Broadcast tag to the widget controller
-		const FString Message = FString::Printf(TEXT("Gameplay Tag: %s"), *Tag.ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Blue, Message);
-	}
+
+	EffectAssetTags.Broadcast(TagContainer);
+	
+	
 }

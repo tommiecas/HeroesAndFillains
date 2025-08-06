@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "HAFAbilitySystemComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* Asset Tags */);
 /**
  * 
  */
@@ -16,6 +17,7 @@ class HEROESANDFILLAINS_API UHAFAbilitySystemComponent : public UAbilitySystemCo
 
 public:
 	void AbilityActorInfoSet();
+	FEffectAssetTags EffectAssetTags;
 
 protected:
 
