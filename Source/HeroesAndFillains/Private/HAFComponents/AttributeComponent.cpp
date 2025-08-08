@@ -3,8 +3,12 @@
 
 #include "HAFComponents/AttributeComponent.h"
 
+#include "AttributeSet.h"
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "Characters/FillainCharacter.h"
 #include "HUD/FillainHUD.h"
+#include "HUD/OverlayWidget.h"
+#include "HUD/HUD/FillainStaminaWidget.h"
 #include "PlayerController/FillainPlayerController.h"
 
 UAttributeComponent::UAttributeComponent()
@@ -55,7 +59,9 @@ void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 
-	Health = FMath::Clamp(Health - DamageAmount, 0.f, MaxHealth);
+	AFillainCharacter* Fillain = Cast<AFillainCharacter>(GetOwner());
+	UHAFAttributeSet* Attributes= Cast<UHAFAttributeSet>(Fillain->GetHAFAttributeSet());
+	Attributes->Health = FMath::Clamp(GetHealth() - DamageAmount, 0.f, Attributes->GetMaxHealth());
 	if (this->GetOwner()->IsA(AFillainCharacter::StaticClass()))
 	{
 		if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(this->GetOwner()))
@@ -69,4 +75,12 @@ void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struc
 void UAttributeComponent::UseStamina(float StaminaCost)
 {
 	Stamina = FMath::Clamp(Stamina - StaminaCost, 0.f, MaxStamina);
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (FillainHUD &&
+		FillainHUD->OverlayWidget &&
+		FillainHUD->OverlayWidget->FillainStaminaWidget &&
+		FillainHUD->OverlayWidget->FillainStaminaWidget->StaminaProgressBar)
+	{
+		FillainHUD->OverlayWidget->FillainStaminaWidget->UpdateStaminaBar(Stamina);
+	}
 }

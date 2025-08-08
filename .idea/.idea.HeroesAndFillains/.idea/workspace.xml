@@ -16,33 +16,28 @@
   <component name="ChangeListManager">
     <list default="true" id="f70301d7-95a2-4d9a-9a60-5a75c45f4eee" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultGameplayTags.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultGameplayTags.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/SM_PotionBottle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/Pickups/Potions/SM_PotionBottle.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/UI/Pickups/T_HealthCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Aura_UE_Version_5_3/Aura/Content/Assets/UI/Pickups/T_HealthCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_FortifyingEffect.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_HealingCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_HealingCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_HealingEffect.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_RechargingEffect.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GameplayEffects/GE_SummoningEffect.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixed.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixed.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixedMADEINFIVEPOINTSIX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixedMADEINFIVEPOINTSIX.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_HealingCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_HealingCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_MajixCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_MajixCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_ShieldCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_ShieldCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_StaminaCrystal.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Crystals/BP_StaminaCrystal.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_MajixPotio.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_MajixPotio.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_ShieldPotio.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_ShieldPotio.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_StaminaPotio.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_StaminaPotio.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixedMADEINFIVEPOINTSIX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainMajixWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainMajixWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidgetWITHNEWPARENTCLASS.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidgetWITHNEWPARENTCLASS.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainStaminaWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainStaminaWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_Overlay.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_Overlay.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/HeroesAndFillains.sln.DotSettings.user" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAbilitySystemComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAbilitySystemComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/OverlayWidgetController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/WidgetControllers/OverlayWidgetController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAbilitySystemComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAbilitySystemComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/CharacterOverlayFixed.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/CharacterOverlayFixed.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlayFixed.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlayFixed.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/ProgressBarBaseWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/ProgressBarBaseWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/OverlayWidgetController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/WidgetControllers/OverlayWidgetController.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainHealthWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainHealthWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainMajixWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainMajixWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainShieldWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainShieldWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainStaminaWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainStaminaWidget.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +63,6 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="mock:///AIAssistantSnippet.." root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -129,45 +123,7 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://14" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/ChaosVD/Source/ChaosVD/Private/ChaosVDParticleActor.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Developer/Concert/ConcertSync/ConcertSyncTest/Source/ConcertSyncTest/Private/Replication/Restore/RestoreContentPreexisting.spec.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Editor/ConsoleVariablesEditor/Source/ConsoleVariablesEditor/Private/ConsoleVariablesEditorStyle.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -367,21 +323,30 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Source/ThirdParty/Python3/Python3.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Developer/Concert/ConcertSync/ConcertSyncClient/Source/ConcertSyncClient/Private/ConcertClientWorkspace.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Developer/PlasticSourceControl/Source/PlasticSourceControl/Private/PlasticSourceControlProvider.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Experimental/EditorDataStorageFeatures/Source/TedsAssetData/Private/Widgets/AssetDataVirtualPathWidget.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Experimental/RemoteSession/Source/RemoteSession/Private/MessageHandler/RecordingMessageHandler.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/MetaHuman/MetaHumanSDK/Source/MetaHumanSDKEditor/Private/Import/MetaHumanImport.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/MetaHuman/MetaHumanSDK/Source/MetaHumanSDKEditor/Private/MetaHumanSDKEditor.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Mutable/Source/CustomizableObjectEditor/Private/MuCOE/SCustomizableObjectEditorViewport.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Online/OnlineSubsystemNull/Source/Private/OnlineSubsystemNull.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/AbilitySystemComponent.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Plugins/Runtime/ModelViewViewModel/Source/ModelViewViewModelEditor/Private/Customizations/MVVMWidgetContextMenuExtension.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Developer/TraceServices/Private/Model/PsymResolver.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Editor/StatusBar/Private/SStatusBar.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Editor/UnrealEd/Private/EditorEngine.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Private/Logging/StructuredLog.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Private/Windows/WindowsPlatformProcess.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/UObject/ScriptDelegates.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/CoreUObject/Private/Misc/RedirectCollector.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Engine/Classes/Engine/DataTable.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Engine/Classes/Engine/GameViewportClient.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Engine/Private/LODActor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Engine/Private/PhysicsField/PhysicsFieldComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/PreLoadScreen/Private/PreLoadSlateThreading.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/RenderCore/Private/MediaShaders.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/RenderCore/Public/ShaderPermutation.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/UMG/Private/UserWidget.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.6/Engine/Source/ThirdParty/GoogleTest/GoogleTest.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/include/atomic" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/HeroesAndFillains/HeroesAndFillains.Build.cs" root0="FORCE_HIGHLIGHTING" />
@@ -423,7 +388,7 @@
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="Toolset" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -434,23 +399,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "C/C++ Project.HeroesAndFillains.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "REALLY-FINAL-5.6-Conversion",
-    "ignore.virus.scanning.warn.message": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;C/C++ Project.HeroesAndFillains.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;REALLY-FINAL-5.6-Conversion&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C/C++ Project.HeroesAndFillains">
     <configuration name="HeroesAndFillains" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -664,7 +629,8 @@
       <workItem from="1754249213568" duration="503000" />
       <workItem from="1754260735523" duration="326000" />
       <workItem from="1754287015060" duration="5826000" />
-      <workItem from="1754414600514" duration="22616000" />
+      <workItem from="1754414600514" duration="39724000" />
+      <workItem from="1754506275069" duration="18722000" />
     </task>
     <task id="LOCAL-00001" summary="Refactored Weapons">
       <option name="closed" value="true" />
@@ -730,7 +696,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749509209427</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Trying the four Widgets of the APocalypse again">
+      <option name="closed" value="true" />
+      <created>1754463417756</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1754463417756</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -759,7 +733,8 @@
     <MESSAGE value="Widgets from Scratch" />
     <MESSAGE value="Fixed All Widgets and Weapons" />
     <MESSAGE value="All Weapons are fixed and FABRIK works great" />
-    <option name="LAST_COMMIT_MESSAGE" value="All Weapons are fixed and FABRIK works great" />
+    <MESSAGE value="Trying the four Widgets of the APocalypse again" />
+    <option name="LAST_COMMIT_MESSAGE" value="Trying the four Widgets of the APocalypse again" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -776,6 +751,181 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>135</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>134</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>132</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>87</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>88</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>105</line>
+          <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>106</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>108</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>109</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>110</line>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>111</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>112</line>
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>113</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>115</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>116</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>117</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>118</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>119</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>120</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>121</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>122</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>123</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>125</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>127</line>
+          <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>129</line>
+          <option name="timeStamp" value="42" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>130</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>89</line>
+          <option name="timeStamp" value="44" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>91</line>
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>92</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>94</line>
+          <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>95</line>
+          <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>96</line>
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>97</line>
+          <option name="timeStamp" value="50" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>99</line>
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp</url>
+          <line>101</line>
+          <option name="timeStamp" value="52" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

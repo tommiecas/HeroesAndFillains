@@ -98,6 +98,9 @@
 #include "GameFramework/InputDeviceSubsystem.h"
 #include "GameStates/HAFGameState.h"
 #include "HUD/CharacterOverlayFixed.h"
+#include "HUD/OverlayWidget.h"
+#include "HUD/HUD/FillainHealthWidget.h"
+#include "HUD/HUD/FillainShieldWidget.h"
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
 #include "Pickups/AmmoPickup.h"
@@ -1247,32 +1250,42 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	if (bIsEliminated || HAFGameMode == nullptr) return;
 
-	float DamageToHealth = Damage;
-	if (GetShield() > 0.f)
+	AFillainHUD* HUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (HUD &&
+		HUD->OverlayWidget &&
+		HUD->OverlayWidget->FillainShieldWidget &&
+		HUD->OverlayWidget->FillainHealthWidget &&
+		HUD->OverlayWidget->FillainShieldWidget->ShieldProgressBar &&
+		HUD->OverlayWidget->FillainHealthWidget->HealthProgressBar)
 	{
-		if (GetShield() >= Damage)
+		float DamageToHealth = Damage;
+		if (HAFAttributeSet->GetShield() > 0.f)
 		{
-			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
-			DamageToHealth = 0.f;
-		}
-		else if (GetShield() < Damage)
-		{
-			DamageToHealth = FMath::Clamp(GetHealth() - (Damage - GetShield()), 0.f, MaxHealth);
-			SetShield(0.f);
-			Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+			if (HAFAttributeSet->GetShield() >= Damage)
+			{
+				HAFAttributeSet->Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+				DamageToHealth = 0.f;
+			}
+			else if (HAFAttributeSet->GetShield() < Damage)
+			{
+				DamageToHealth = FMath::Clamp(GetHealth() - (Damage - GetShield()), 0.f, MaxHealth);
+				SetShield(0.f);
+				Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+				HUD->OverlayWidget->FillainHealthWidget->UpdateHealthBar(DamageToHealth);
+			}
 		}
 	}
-	
-	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-	if (FillainHUD &&
-		FillainHUD->CharacterOverlayWidgetFixed &&
-		FillainHUD->CharacterOverlayWidgetFixed->HealthProgressBar &&
-		FillainHUD->CharacterOverlayWidgetFixed->ShieldProgressBar &&
-		FillainHUD->CharacterOverlayWidgetFixed->HealthTextBox &&
-		FillainHUD->CharacterOverlayWidgetFixed->ShieldTextBox)
+
+	if (HUD &&
+		HUD->CharacterOverlayWidgetFixed &&
+		HUD->OverlayWidget &&
+		HUD->OverlayWidget->FillainHealthWidget &&
+		HUD->OverlayWidget->FillainHealthWidget->HealthProgressBar &&
+		HUD->OverlayWidget->FillainShieldWidget &&
+		HUD->OverlayWidget->FillainShieldWidget->ShieldProgressBar)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(Shield);
-		FillainHUD->CharacterOverlayWidgetFixed->UpdateHealthBar(Health);
+		HUD->OverlayWidget->FillainShieldWidget->UpdateShieldBar(Shield);
+		HUD->OverlayWidget->FillainHealthWidget->UpdateHealthBar(Health);
 	}
 	if (Health == 0.f)
 	{

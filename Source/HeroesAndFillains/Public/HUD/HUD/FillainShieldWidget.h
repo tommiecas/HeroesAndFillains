@@ -29,7 +29,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UProgressBar* ShieldProgressBar;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReaOnlye, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* ShieldTextBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -46,4 +46,8 @@ public:
 
 	bool bHasBoundDelegates = false;
 
+	FORCEINLINE UProgressBar* GetShieldProgressBar() const { return ShieldProgressBar; }
+	FORCEINLINE UTextBlock* GetShieldTextBox() const { return ShieldTextBox; }
+	FORCEINLINE UTextBlock* GetMaxShieldTextBox() const { return MaxShieldTextBox; }
+	FORCEINLINE UImage* GetShieldIconImage() const { return ShieldIconImage; }
 };

@@ -7,13 +7,19 @@
 #include "HUD/Announcement.h"
 #include "HUD/EliminationAnnouncement.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Characters/FillainCharacter.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Overlay.h"
+#include "HAFComponents/AttributeComponent.h"
 #include "HUD/CharacterOverlayFixed.h"
+#include "HUD/OverlayWidget.h"
 #include "HUD/HUD/HAFUserWidget.h"
 #include "HUD/WidgetControllers/OverlayWidgetController.h"
-
+#include "HUD/HUD/FillainHealthWIdget.h"
+#include "HUD/HUD/FillainShieldWidget.h"
+#include "HUD/HUD/FillainStaminaWidget.h"
+#include "HUD/HUD/FillainMajixWidget.h"
 
 void AFillainHUD::AddCharacterOverlayFixed()
 {
@@ -79,37 +85,61 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC,
 	UAttributeSet* AS)
 {
+	AFillainHUD* HUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 	if (bIsOverlayInitialized) return; // ✅ Prevent duplicate construction
-
-	bIsOverlayInitialized = true;
-
-	checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
-	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
-
-	if (!CharacterOverlayWidgetFixed)
+	if (!OverlayWidget && OverlayWidgetClass)
 	{
-		UCharacterOverlayFixed* CharacterOverlayFixedWidget = CreateWidget<UCharacterOverlayFixed>(GetWorld(), CharacterOverlayWidgetFixedClass);
-		CharacterOverlayWidgetFixed = CharacterOverlayFixedWidget;
-		
-		UE_LOG(LogTemp, Warning, TEXT("✅ Creating Overlay Widget: %s"), *GetName());
-
-		CharacterOverlayWidgetFixed->AddToViewport(100); // High Z-order to ensure it's on top
-		CharacterOverlayWidgetFixed->SetVisibility(ESlateVisibility::Visible);
+		OverlayWidget = CreateWidget<UOverlayWidget>(GetWorld(), OverlayWidgetClass);
+		if (OverlayWidget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("✅ Creating Overlay Widget: %s"), *GetName());
+			OverlayWidget->AddToViewport(100);
+			OverlayWidget->SetVisibility(ESlateVisibility::Visible);
+			bIsOverlayInitialized = true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("❌ Failed to create OverlayWidget from class %s"), *GetNameSafe(OverlayWidgetClass));
+		}
 	}
+	
+	ensureMsgf(OverlayWidgetClass, TEXT("OverlayWidgetClass not initialized — check BP_FillainHUD default values!"));
+	ensureMsgf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
 
+	if (HUD &&
+		HUD->OverlayWidget &&
+		HUD->OverlayWidget->FillainHealthWidget &&
+		HUD->OverlayWidget->FillainShieldWidget &&
+		HUD->OverlayWidget->FillainStaminaWidget &&
+		HUD->OverlayWidget->FillainMajixWidget)
+	{
+		AFillainCharacter* Fillain = Cast<AFillainCharacter>(GetOwner());
+		UFillainHealthWidget* WBPFillainHealthWidget = HUD->OverlayWidget->FillainHealthWidget;
+		WBPFillainHealthWidget->UpdateHealthBar(Fillain->AttributeComponent->GetMaxHealth());
+		UFillainShieldWidget* WBPFillainShieldWidget = HUD->OverlayWidget->FillainShieldWidget;
+		WBPFillainShieldWidget->UpdateShieldBar(Fillain->AttributeComponent->GetMaxShield());
+		UFillainStaminaWidget* WBPFillainStaminaWidget = HUD->OverlayWidget->FillainStaminaWidget;
+		WBPFillainStaminaWidget->UpdateStaminaBar(Fillain->AttributeComponent->GetMaxStamina());
+		UFillainMajixWidget* WBPFillainMajixWidget = HUD->OverlayWidget->FillainMajixWidget;
+		WBPFillainMajixWidget->UpdateMajixBar(Fillain->AttributeComponent->GetMaxMajix());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("OverlayWidget is null in InitializeOverlay"));
+	}
 	const FWidgetControllerParams WidgetControllerParams (PC, PS, ASC, AS);
 	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
 
-	if (WidgetController && CharacterOverlayWidgetFixed)
+	if (WidgetController && OverlayWidget)
 	{
-		CharacterOverlayWidgetFixed->SetWidgetController(WidgetController);
+		OverlayWidget->SetWidgetController(WidgetController);
 		WidgetController->BroadcastInitialValues();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ WidgetController or CharacterOverlayWidgetFixed is null! WidgetController: %s | Overlay: %s"),
 			WidgetController ? *WidgetController->GetName() : TEXT("nullptr"),
-			CharacterOverlayWidgetFixed ? *CharacterOverlayWidgetFixed->GetName() : TEXT("nullptr"));
+			OverlayWidget ? *OverlayWidget->GetName() : TEXT("nullptr"));
 	}
 }
 

@@ -8,23 +8,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="17f4fd26-433a-424d-bf11-a5c700b257e7" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/BP_KhymeyrraFINAL.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/Khymeyrra/BP_KhymeyrraFINAL.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.HeroesAndFillains/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/BP_FillainHUD.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixed.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixed.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Potions/BP_HealthPotion.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Treasure/BP_GoldCoin.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Items/Pickups/Treasure/BP_GoldCoin.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_CharacterOverlayFixedMADEINFIVEPOINTSIX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainHealthWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainMajixWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainMajixWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidgetWITHNEWPARENTCLASS.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainProgressBarBaseWidgetWITHNEWPARENTCLASS.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainShieldWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainStaminaWidget.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_FillainStaminaWidget.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_Overlay.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/HUD/WBP_Overlay.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/HAFWorkshop.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/BaseCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/BaseCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/AbilitySystem/HAFAttributeSet.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Characters/FillainCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/EnemyBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/EnemyBase.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Gnarled.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Gnarled.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Khymeyrra.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/Khymeyrra.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/StormAssassin.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/Enemies/StormAssassin.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HAFComponents/AttributeComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/BaseCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/BaseCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Characters/FillainCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/EnemyBase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/Enemies/EnemyBase.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/AttributeComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HAFComponents/AttributeComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/CharacterOverlayFixed.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/CharacterOverlayFixed.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Private/HUD/FillainHUD.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/AbilitySystem/HAFAttributeSet.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlayFixed.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/CharacterOverlayFixed.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/FillainHUD.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainHealthWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainHealthWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainMajixWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainMajixWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainShieldWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainShieldWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainStaminaWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/HeroesAndFillains/Public/HUD/HUD/FillainStaminaWidget.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +57,11 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Animation/MLDeformer/MLDeformerFramework/Source/MLDeformerFramework/MLDeformerFramework.Build.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/ChaosVD/Source/ChaosVDBlueprint/Private/ChaosVDRuntimeBlueprintLibrary.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.5/Engine/Plugins/Developer/PlasticSourceControl/Source/PlasticSourceControl/Private/PlasticSourceControlProvider.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -234,7 +246,7 @@
         <option name="CONFIGURATION" value="DebugGame Editor" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor-Win64-DebugGame.exe" />
+        <option name="EXECUTABLE_PATH" value="C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\Win64\UnrealEditor-Win64-DebugGame.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\HeroesAndFillains\HeroesAndFillains.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
         <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.6" />
@@ -425,6 +437,7 @@
       <workItem from="1754261087543" duration="9386000" />
       <workItem from="1754283110923" duration="3220000" />
       <workItem from="1754356004615" duration="336000" />
+      <workItem from="1754593699197" duration="3786000" />
     </task>
     <task id="LOCAL-00001" summary="WIDGETS FINALLY WORK!!!!!!!!!">
       <option name="closed" value="true" />

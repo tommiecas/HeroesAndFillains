@@ -26,10 +26,10 @@ public:
 	UFUNCTION()
 	void UpdateMaxHealthText(float NewMaxHealth);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 	class UProgressBar* HealthProgressBar;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReaOnlye, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* HealthTextBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -45,5 +45,11 @@ public:
 	float NumberedMaxHealth = 100.f;
 
 	bool bHasBoundDelegates = false;
+
+	FORCEINLINE UProgressBar* GetHealthProgressBar() const { return HealthProgressBar; }
+	FORCEINLINE UTextBlock* GetHealthTextBox() const { return HealthTextBox; }
+	FORCEINLINE UTextBlock* GetMaxHealthTextBox() const { return MaxHealthTextBox; }
+	FORCEINLINE UImage* GetHealthIconImage() const { return HealthIconImage; }
+
 
 };

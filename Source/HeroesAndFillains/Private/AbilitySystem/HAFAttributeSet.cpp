@@ -16,6 +16,11 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
+#include "HUD/OverlayWidget.h"
+#include "HUD/HUD/FillainHealthWidget.h"
+#include "HUD/HUD/FillainMajixWidget.h"
+#include "HUD/HUD/FillainShieldWidget.h"
+#include "HUD/HUD/FillainStaminaWidget.h"
 
 #include "HUD/HUD/ProgressBarBaseWidget.h"
 
@@ -114,20 +119,50 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	FEffectProperties Properties;
 	SetEffectProperties(Data, Properties);
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if ((FillainHUD) && (Data.EvaluatedData.Attribute == GetHealthAttribute()))
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+		if (FillainHUD &&
+			FillainHUD->OverlayWidget &&
+			FillainHUD->OverlayWidget->FillainHealthWidget &&
+			FillainHUD->OverlayWidget->FillainHealthWidget->HealthProgressBar)
+		{
+			FillainHUD->OverlayWidget->FillainHealthWidget->UpdateHealthBar(GetHealth());
+		}
+		if (Data.EvaluatedData.Attribute == GetMajixAttribute())
+		{
+			SetMajix(FMath::Clamp(GetMajix(), 0.f, GetMaxMajix()));
+			if (FillainHUD &&
+				FillainHUD->OverlayWidget &&
+				FillainHUD->OverlayWidget->FillainMajixWidget &&
+				FillainHUD->OverlayWidget->FillainMajixWidget->MajixProgressBar)
+			{
+				FillainHUD->OverlayWidget->FillainMajixWidget->UpdateMajixBar(GetMajix());
+			}
+		}
+		if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+		{
+			SetShield(FMath::Clamp(GetShield(), 0.f, GetMaxShield()));
+			if (FillainHUD &&
+				FillainHUD->OverlayWidget &&
+				FillainHUD->OverlayWidget->FillainShieldWidget &&
+				FillainHUD->OverlayWidget->FillainShieldWidget->ShieldProgressBar)
+			{
+				FillainHUD->OverlayWidget->FillainShieldWidget->UpdateShieldBar(GetShield());
+			}
+		}
+		if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+		{
+			SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
+			
+			if (FillainHUD &&
+				FillainHUD->OverlayWidget &&
+				FillainHUD->OverlayWidget->FillainStaminaWidget&&
+				FillainHUD->OverlayWidget->FillainStaminaWidget->StaminaProgressBar)
+			{
+				FillainHUD->OverlayWidget->FillainStaminaWidget->UpdateStaminaBar(GetStamina());
+			}
+		}
 	}
-	if (Data.EvaluatedData.Attribute == GetMajixAttribute())
-	{
-		SetMajix(FMath::Clamp(GetMajix(), 0.f, GetMaxMajix()));
-	}
-	if (Data.EvaluatedData.Attribute == GetShieldAttribute())
-	{
-		SetShield(FMath::Clamp(GetShield(), 0.f, GetMaxShield()));
-	}
-	if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
-	{
-		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
-	}
-}
+}	

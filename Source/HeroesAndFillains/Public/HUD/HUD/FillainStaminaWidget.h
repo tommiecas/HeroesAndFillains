@@ -29,7 +29,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UProgressBar* StaminaProgressBar;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReaOnlye, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* StaminaTextBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -45,5 +45,10 @@ public:
 	float NumberedMaxStamina = 100.f;
 
 	bool bHasBoundDelegates = false;
+
+	FORCEINLINE UProgressBar* GetStaminaProgressBar() const { return StaminaProgressBar; }
+	FORCEINLINE UTextBlock* GetStaminaTextBox() const { return StaminaTextBox; }
+	FORCEINLINE UTextBlock* GetMaxStaminaTextBox() const { return MaxStaminaTextBox; }
+	FORCEINLINE UImage* GetStaminaIconImage() const { return StaminaIconImage; }
 
 };

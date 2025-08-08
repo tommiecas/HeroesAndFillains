@@ -29,7 +29,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UProgressBar* MajixProgressBar;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReaOnlye, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* MajixTextBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -45,5 +45,11 @@ public:
 	float NumberedMaxMajix = 100.f;
 
 	bool bHasBoundDelegates = false;
+
+	FORCEINLINE UProgressBar* GetMajixProgressBar() const { return MajixProgressBar; }
+	FORCEINLINE UTextBlock* GetMajixTextBox() const { return MajixTextBox; }
+	FORCEINLINE UTextBlock* GetMaxMajixTextBox() const { return MaxMajixTextBox; }
+	FORCEINLINE UImage* GetMajixIconImage() const { return MajixIconImage; }
+
 
 };

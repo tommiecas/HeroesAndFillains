@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "FillainHUD.generated.h"
 
+class UOverlayWidget;
 class UCharacterOverlayFixed;
 class UCharacterOverlay;
 class UHAFUserWidget;
@@ -49,6 +50,12 @@ public:
 	UPROPERTY()
 	TObjectPtr<UCharacterOverlayFixed>  CharacterOverlayWidgetFixed;
 
+	UPROPERTY()
+	TObjectPtr<UOverlayWidget> OverlayWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStats")
+	TSubclassOf<class UOverlayWidget> OverlayWidgetClass;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStats")
 	TSubclassOf<class UCharacterOverlayFixed> CharacterOverlayWidgetFixedClass;
 
