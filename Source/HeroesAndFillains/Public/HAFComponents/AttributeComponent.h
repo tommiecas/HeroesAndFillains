@@ -16,7 +16,7 @@ class HEROESANDFILLAINS_API UAttributeComponent : public UActorComponent
 
 public:	
 	UAttributeComponent();
-	void CharactersReceiveMeleeDamage(float Damage);
+	void CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
 	void UseStamina(float StaminaCost);
 	void RegenStamina(float DeltaTime);
 

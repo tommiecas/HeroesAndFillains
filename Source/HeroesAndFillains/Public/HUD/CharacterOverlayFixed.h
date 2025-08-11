@@ -49,57 +49,14 @@ public:
 
   
    // Health
-   UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-   class UProgressBar* HealthProgressBar;
 
-
-   UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-   class UTextBlock* HealthTextBox;
-
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UTextBlock* MaxHealthTextBox;
-
-    UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UImage* HealthIconImage;
-	
     // Repeat for Shield
-    UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UProgressBar* ShieldProgressBar;
-
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UTextBlock* ShieldTextBox;
-
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UTextBlock* MaxShieldTextBox;
-	
-    UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UImage* ShieldIconImage;
+   
 	
     // Repeat for Stamina
-    UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UProgressBar* StaminaProgressBar;
-	
-    UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-    class UTextBlock* StaminaTextBox;
-
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UTextBlock* MaxStaminaTextBox;
-	
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UImage* StaminaIconImage;
-	
+  
 	// Repeat for Majix
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UProgressBar* MajixProgressBar;
-	
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UTextBlock* MajixTextBox;
 
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UTextBlock* MaxMajixTextBox;
-	
-	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
-	class UImage* MajixIconImage;
   
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ScoreAmount;

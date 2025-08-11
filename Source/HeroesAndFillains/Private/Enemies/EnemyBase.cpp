@@ -35,19 +35,15 @@
 AEnemyBase::AEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
-	SetRootComponent(SceneComponent);
 	
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
-	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
-
+	GetMesh()->SetupAttachment(RootComponent);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	GetMesh()->SetCollisionObjectType(ECC_Enemy);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
+	GetMesh()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Ignore);
+	
 	// Create the WidgetComponent
 	HealthBarWidgetComponent = CreateDefaultSubobject<UEnemyHealthBarWidgetComponent>(TEXT("HealthBarWidgetComponent"));
 	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
@@ -71,14 +67,7 @@ AEnemyBase::AEnemyBase()
 
 	AIPerceptionComponent->ConfigureSense(*SightConfig);
 	AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
-
-	GetMesh()->SetGenerateOverlapEvents(true);
-	GetMesh()->SetCollisionObjectType(ECC_Enemy);
-	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
-	GetMesh()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Ignore);
-
+	
 	DeadEnemySoulCount = AttributeComponent->GetSoulsGathered();
 
 	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
@@ -134,9 +123,7 @@ void AEnemyBase::Tick(float DeltaTime)
 float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
-	HandleDamage(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();
-
 	if (IsInsideAttackRadius())
 	{
 		EnemyState = EEnemyState::EES_Attacking;
@@ -145,7 +132,7 @@ float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 	{
 		EnemiesChaseTarget();
 	}
-
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	return DamageAmount;
 }
 
@@ -192,6 +179,15 @@ void AEnemyBase::BeginPlay()
 
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
+
+	InitializeAbilityActorInfo();
+}
+
+void AEnemyBase::InitializeAbilityActorInfo()
+{
+	if (AbilitySystemComponent) AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+
 }
 
 void AEnemyBase::SpawnSoul()
@@ -317,14 +313,10 @@ void AEnemyBase::AttackEnd()
 	CheckCombatTarget();
 }
 
-void AEnemyBase::HandleDamage(float DamageAmount)
+void AEnemyBase::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	Super::HandleDamage(DamageAmount);
-
-	if (AttributeComponent && HealthBarWidgetComponent)
-	{
-		HealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
-	}
+	Super::HandleDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	
 }
 
 void AEnemyBase::InitializeAbilitySystem()

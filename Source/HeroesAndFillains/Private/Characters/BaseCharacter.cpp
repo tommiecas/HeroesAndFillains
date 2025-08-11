@@ -72,48 +72,13 @@
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
-	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 
-	// Create root component
 	SetRootComponent(GetCapsuleComponent());
 
-	AActor* WeaponOwner = GetOwner();
-	if (IsValid(WeaponOwner) && WeaponOwner->ActorHasTag("FillainCharacter"))
-	{
-		GetCapsuleComponent()->SetCollisionObjectType(ECC_PlayerCharacter);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Enemy, ECollisionResponse::ECR_Overlap);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Overlap);
-		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
-	}
-	else if (IsValid(WeaponOwner) && WeaponOwner->ActorHasTag("Enemy"))
-	{
-		GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
-		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
-	}
-	else
-	{
-		GetCapsuleComponent()->SetCollisionObjectType(ECC_WorldStatic);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-
-
-	}
-
+	GetMesh()->SetupAttachment(RootComponent);
+	
+	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
+	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 }
 
@@ -127,7 +92,38 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (IsA(AFillainCharacter::StaticClass()) && this->ActorHasTag(TEXT("FillainCharacter")))
+	{
+		GetCapsuleComponent()->SetCollisionObjectType(ECC_PlayerCharacter);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Enemy, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
+	}
+	else if (IsA(AEnemyBase::StaticClass()) && this->ActorHasTag(TEXT("Enemy")))
+	{
+		GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	}
+	else
+	{
+		GetCapsuleComponent()->SetCollisionObjectType(ECC_WorldStatic);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+	}
 	if (HAFAbilitySystemComponent && HAFAttributeSet && AttributeComponent)
 	{
 		ensure(HAFAttributeSet);  // ✅ Make sure it's valid
@@ -150,6 +146,11 @@ void ABaseCharacter::BeginPlay()
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Majix, InitialMajix);
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxMajix, InitialMaxMajix);
 	}
+	
+}
+
+void ABaseCharacter::InitializeAbilityActorInfo()
+{
 	
 }
 
@@ -303,11 +304,11 @@ void ABaseCharacter::SpawnHitSpecialEffects(const FVector& ImpactPoint)
 	}
 }
 
-void ABaseCharacter::HandleDamage(float DamageAmount)
+void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 	if (AttributeComponent)
 	{
-		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount);
+		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 }
 
@@ -478,7 +479,7 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	CachedEventInstigator = EventInstigator;
 	CachedDamageCauser = DamageCauser;	
 		
-	HandleDamage(DamageAmount);
+	HandleDamage(CachedDamageAmount, CachedDamageEvent, CachedEventInstigator, CachedDamageCauser);
 	return DamageAmount;
 }
 

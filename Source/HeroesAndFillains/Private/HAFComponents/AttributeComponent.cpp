@@ -3,6 +3,7 @@
 
 #include "HAFComponents/AttributeComponent.h"
 
+#include "Characters/FillainCharacter.h"
 #include "HUD/FillainHUD.h"
 #include "PlayerController/FillainPlayerController.h"
 
@@ -51,11 +52,18 @@ void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 }
 
 
-void UAttributeComponent::CharactersReceiveMeleeDamage(float Damage)
+void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-
+	Health = FMath::Clamp(Health - DamageAmount, 0.f, MaxHealth);
+	if (this->GetOwner()->IsA(AFillainCharacter::StaticClass()))
+	{
+		if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(this->GetOwner()))
+		{
+			UDamageType* DamageType = Cast<UDamageType>(DamageEvent.DamageTypeClass);
+			FillainCharacter->ReceiveDamage(GetOwner(), DamageAmount, DamageType, EventInstigator, DamageCauser);
+		}
+	}
 }
 
 void UAttributeComponent::UseStamina(float StaminaCost)

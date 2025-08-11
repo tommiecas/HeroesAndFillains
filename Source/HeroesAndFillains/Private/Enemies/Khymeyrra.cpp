@@ -5,13 +5,14 @@
 
 #include "Characters/FillainCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 
 
 AKhymeyrra::AKhymeyrra()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	RightAxeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightAxeCollision"));
 	RightAxeCollision->SetupAttachment(GetMesh(), FName("RightAxeSocket"));
 	RightAxeCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -52,6 +53,15 @@ void AKhymeyrra::BeginPlay()
 
 	RightAxeCollision->OnComponentBeginOverlap.AddDynamic(this, &AKhymeyrra::OnRightAxeOverlap);
 	LeftAxeCollision->OnComponentBeginOverlap.AddDynamic(this, &AKhymeyrra::OnLeftAxeOverlap);
+
+	FTransform RootBone = GetMesh()->GetSocketTransform(FName("root"), RTS_World);
+	UE_LOG(LogTemp, Warning, TEXT("Root bone location: %s, scale: %s"), 
+		*RootBone.GetLocation().ToString(), 
+		*RootBone.GetScale3D().ToString());
+
+	UE_LOG(LogTemp, Warning, TEXT("Mesh location: %s, scale: %s"),
+	*GetMesh()->GetComponentLocation().ToString(),
+	*GetMesh()->GetComponentScale().ToString());
 }
 
 int32 AKhymeyrra::PlayDeathMontage()

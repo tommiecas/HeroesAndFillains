@@ -25,7 +25,9 @@ public:
 	virtual void SetProgressBarPercent(float Percent, UProgressBar* ProgressBar);
 	
 	virtual void SetWidgetController(UOverlayWidgetController* InWidgetController) override;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	UOverlayWidgetController* OverlayWidgetController;
 protected:
 	virtual void NativeConstruct() override;
 

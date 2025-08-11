@@ -40,7 +40,7 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
     virtual void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void HandleDamage(float DamageAmount);
+	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
 	virtual void ReceiveDamage(AActor* DamagedPawn, float DamageAmount, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
 	
 	UFUNCTION(BlueprintCallable)
@@ -143,6 +143,9 @@ public:
 	UPROPERTY()
 	AActor* CachedCauser;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* CoreComponent;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	class  AWeaponBase* EquippedWeapon;
 
@@ -208,6 +211,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void InitializeAbilityActorInfo();
 	void StopMontage(UAnimMontage* Montage);
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")

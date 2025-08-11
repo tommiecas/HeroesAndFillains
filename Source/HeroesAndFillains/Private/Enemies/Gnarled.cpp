@@ -16,7 +16,7 @@
 AGnarled::AGnarled()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	RightFistCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFistCollision"));
 	RightFistCollision->SetupAttachment(GetMesh(), FName("RightFistSocket"));
 	RightFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
