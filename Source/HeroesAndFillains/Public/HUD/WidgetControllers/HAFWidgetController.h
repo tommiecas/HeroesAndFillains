@@ -34,7 +34,7 @@ struct FWidgetControllerParams
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class HEROESANDFILLAINS_API UHAFWidgetController : public UObject
 {
 	GENERATED_BODY()
@@ -42,6 +42,7 @@ class HEROESANDFILLAINS_API UHAFWidgetController : public UObject
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetWidgetControllerParams(const FWidgetControllerParams& WCParams);
+
 	virtual void BroadcastInitialValues();
 	virtual void BindCallbacksToDependencies();
 

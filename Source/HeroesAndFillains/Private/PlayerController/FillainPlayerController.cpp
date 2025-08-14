@@ -243,12 +243,10 @@ void AFillainPlayerController::BeginPlay()
 	FillainHUD = Cast<AFillainHUD>(GetHUD());
 	ServerCheckMatchState();
 
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (Subsystem)
 	{
-		if (Subsystem)
-		{
-			Subsystem->AddMappingContext(FillainMappingContext, 0);
-		}
+		Subsystem->AddMappingContext(FillainMappingContext, 0);
 	}
 
 	bShowMouseCursor = true;

@@ -7,12 +7,11 @@
 #include "FillainHUD.generated.h"
 
 class UCharacterOverlayFixed;
-class UCharacterOverlay;
 class UHAFUserWidget;
 class UAttributeSet;
 class UAbilitySystemComponent;
 struct FWidgetControllerParams;
-class UOverlayWidgetController;;
+class UOverlayWidgetController;
 
 USTRUCT(BlueprintType)
 struct FHUDPackage
@@ -44,12 +43,17 @@ public:
 	void AddEliminationAnnouncement(FString Killer, FString Victim);
 	void InitializeOverlay (APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
 
+	UPROPERTY()
+	TObjectPtr<UHAFUserWidget> OverlayWidget;
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
 
 	UPROPERTY()
 	TObjectPtr<UCharacterOverlayFixed>  CharacterOverlayWidgetFixed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStats")
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UHAFUserWidget> OverlayWidgetClass;
+	
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCharacterOverlayFixed> CharacterOverlayWidgetFixedClass;
 
 	UPROPERTY(EditAnywhere, Category = "Announcements")

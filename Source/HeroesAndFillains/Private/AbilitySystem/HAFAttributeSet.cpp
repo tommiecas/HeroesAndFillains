@@ -17,35 +17,23 @@
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
 
-#include "HUD/HUD/ProgressBarBaseWidget.h"
+
 
 
 
 UHAFAttributeSet::UHAFAttributeSet()
 {
-	Health.SetBaseValue(100.f);
-	Health.SetCurrentValue(50.f);
+	InitHealth(50.f);
+	InitMaxHealth(100.f);
 
-	MaxHealth.SetBaseValue(100.f);
-	MaxHealth.SetCurrentValue(100.f);
+	InitShield(75.f);
+	InitMaxShield(100.f);
 
-	Shield.SetBaseValue(100.f);
-	Shield.SetCurrentValue(100.f);
+	InitStamina(20.f);
+	InitMaxStamina(100.f);
 
-	MaxShield.SetBaseValue(100.f);
-	MaxShield.SetCurrentValue(100.f);
-
-	Stamina.SetBaseValue(100.f);
-	Stamina.SetCurrentValue(100.f);
-
-	MaxStamina.SetBaseValue(100.f);
-	MaxStamina.SetCurrentValue(100.f);
-
-	Majix.SetBaseValue(100.f);
-	Majix.SetCurrentValue(10.f);
-
-	MaxMajix.SetBaseValue(100.f);
-	MaxMajix.SetCurrentValue(100.f);
+	InitMajix(10.f);
+	InitMaxMajix(100.f);
 }
 
 void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

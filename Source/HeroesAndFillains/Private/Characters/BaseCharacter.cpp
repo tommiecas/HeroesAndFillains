@@ -126,28 +126,32 @@ void ABaseCharacter::BeginPlay()
 	}
 	if (HAFAbilitySystemComponent && HAFAttributeSet && AttributeComponent)
 	{
-		ensure(HAFAttributeSet);  // ✅ Make sure it's valid
+		ensure(HAFAttributeSet);
 
-		float InitialHealth = AttributeComponent->GetHealth();
-		float InitialMaxHealth = AttributeComponent->GetMaxHealth();
-		float InitialShield = AttributeComponent->GetShield();
-		float InitialMaxShield = AttributeComponent->GetMaxShield();
-		float InitialStamina = AttributeComponent->GetStamina();
-		float InitialMaxStamina = AttributeComponent->GetMaxStamina();
-		float InitialMajix = AttributeComponent->GetMajix();
-		float InitialMaxMajix = AttributeComponent->GetMaxMajix();
+		const float InitialHealth = AttributeComponent->GetHealth();
+		const float InitialMaxHealth = AttributeComponent->GetMaxHealth();
+		const float InitialShield = AttributeComponent->GetShield();
+		const float InitialMaxShield = AttributeComponent->GetMaxShield();
+		const float InitialStamina = AttributeComponent->GetStamina();
+		const float InitialMaxStamina = AttributeComponent->GetMaxStamina();
+		const float InitialMajix = AttributeComponent->GetMajix();
+		const float InitialMaxMajix = AttributeComponent->GetMaxMajix();
 
+		// Correctly map component attributes into the AttributeSet
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health, InitialHealth);
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxHealth);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health, InitialShield);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxShield);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health,  InitialStamina);;
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxStamina);
+
+		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Shield, InitialShield);
+		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxShield, InitialMaxShield);
+
+		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Stamina, InitialStamina);
+		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxStamina, InitialMaxStamina);
+
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Majix, InitialMajix);
 		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxMajix, InitialMaxMajix);
 	}
-	
 }
+
 
 void ABaseCharacter::InitializeAbilityActorInfo()
 {

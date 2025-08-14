@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "251.26927.1632",
+  "VersionName": "2025.1.5",
   "FriendlyName": "RiderLink",
   "Description": "Plugin for establishing IPC connection with JetBrains Rider IDE",
   "Category": "Programming",

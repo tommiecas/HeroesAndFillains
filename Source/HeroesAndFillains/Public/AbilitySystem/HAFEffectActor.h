@@ -33,7 +33,7 @@ class HEROESANDFILLAINS_API AHAFEffectActor : public AActor
 	
 public:	
 	AHAFEffectActor();
-
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -77,7 +77,8 @@ protected:
 
 private:
 
-public:	
+public:
+	FORCEINLINE float GetActorLevel() const { return ActorLevel; }
 
 
 };

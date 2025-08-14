@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HUD/WidgetControllers/HAFWidgetController.h"
 #include "GameplayEffectTypes.h"
+#include "AbilitySystem/HAFEffectActor.h"
 #include "OverlayWidgetController.generated.h"
 
 class UAttributeComponent;
@@ -21,7 +22,16 @@ struct FUIWidgetRow : public FTableRowBase
 	FGameplayTag MessageTag = FGameplayTag();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FText Message = FText();
+	FText Message_A = FText();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<AHAFEffectActor> EffectActorClass = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Level = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Message_B = FText();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<class UHAFUserWidget> MessageWidget = nullptr;
@@ -32,7 +42,15 @@ struct FUIWidgetRow : public FTableRowBase
 	
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature, float, NewMaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShieldChangedSignature, float, NewShield);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxShieldChangedSignature, float, NewMaxShield);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChangedSignature, float, NewStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChangedSignature, float, NewMaxStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMajixChangedSignature, float, NewMajix);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxMajixChangedSignature, float, NewMaxMajix);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
 
 /**
@@ -48,56 +66,54 @@ public:
 	virtual void BindCallbacksToDependencies() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnHealthChanged;
+	FOnHealthChangedSignature OnHealthChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnMaxHealthChanged;
+	FOnMaxHealthChangedSignature OnMaxHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnShieldChanged;
+	FOnShieldChangedSignature OnShieldChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnMaxShieldChanged;
+	FOnMaxShieldChangedSignature OnMaxShieldChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnStaminaChanged;
+	FOnStaminaChangedSignature OnStaminaChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnMaxStaminaChanged;
+	FOnMaxStaminaChangedSignature OnMaxStaminaChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnMajixChanged;
+	FOnMajixChangedSignature OnMajixChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnAttributeChangedSignature OnMaxMajixChanged;
+	FOnMaxMajixChangedSignature OnMaxMajixChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
 	
 protected:
-		template<typename T>
-		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
+	
+	void HealthChanged(const FOnAttributeChangeData& Data) const;
+	void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
+	void ShieldChanged(const FOnAttributeChangeData& Data) const;
+	void MaxShieldChanged(const FOnAttributeChangeData& Data) const;
+	void StaminaChanged(const FOnAttributeChangeData& Data) const;
+	void MaxStaminaChanged(const FOnAttributeChangeData& Data) const;
+	void MajixChanged(const FOnAttributeChangeData& Data) const;
+	void MaxMajixChanged(const FOnAttributeChangeData& Data) const;
+
+	
+		template<typename T>
+		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
+	
 	
 };
 
 template <typename T>
 T* UOverlayWidgetController::GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
 {
-	if (!DataTable)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GetDataTableRowByTag: DataTable is null for tag: %s"), *Tag.ToString());
-		return nullptr;
-	}
-
-	const FName RowName = FName(Tag.ToString());
-	T* Row = DataTable->FindRow<T>(RowName, TEXT("GetDataTableRowByTag"), false);
-
-	if (!Row)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GetDataTableRowByTag: Row not found for tag: %s"), *Tag.ToString());
-	}
-	
-	return Row;
+	return DataTable->FindRow<T>(Tag.GetTagName(), TEXT(""));;
 }

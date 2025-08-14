@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "HUD/OverheadWidget.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
@@ -360,7 +361,7 @@ public:
 	/*****************
 	** Player Stats **
 	*****************/
-
+/*
 	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
 	float Health = 100.f;
 
@@ -383,7 +384,7 @@ public:
 	float Majix = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxMajix = 100.f;
+	float MaxMajix = 100.f;*/
 	
 	FTimerHandle EliminationTimer;
 
@@ -409,6 +410,8 @@ public:
 	void Recharge(float Magnitude);
 	void Summon(float Magnitude);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Stats")
+	UHAFAttributeSet* HAFAttributes;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -678,14 +681,14 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
-	FORCEINLINE float GetHealth() const { return Health; }
+	/*FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }	
 	FORCEINLINE float GetShield() const { return Shield; }
 	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
 	FORCEINLINE float GetMaxStamina() const { return MaxStamina; }
 	FORCEINLINE float GetMajix() const { return Majix; }
-	FORCEINLINE float GetMaxMajix() const { return MaxMajix; }
+	FORCEINLINE float GetMaxMajix() const { return MaxMajix; }*/
 	EActionState GetActionState() const;
 	EWeaponState GetWeaponState() const;
 	AHAFPlayerState* GetHAFPlayerState() const { return HAFPlayerState; }
@@ -695,10 +698,10 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadingMontage() const { return ReloadingMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() const { return Buff; }
-	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
-	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
-	FORCEINLINE void SetStamina(float Amount) { Stamina = Amount; }
-	FORCEINLINE void SetMajix(float Amount) { Majix = Amount; }
+	FORCEINLINE void SetHealth(const float Amount) const { HAFAttributes->Health = Amount; }
+	FORCEINLINE void SetShield(const float Amount) const { HAFAttributes->Shield = Amount; }
+	FORCEINLINE void SetStamina(const float Amount) const { HAFAttributes->Stamina = Amount; }
+	FORCEINLINE void SetMajix(const float Amount) const { HAFAttributes->Majix = Amount; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	ETeam GetTeam();

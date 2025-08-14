@@ -11,7 +11,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Overlay.h"
 #include "HUD/CharacterOverlayFixed.h"
-#include "HUD/HUD/HAFUserWidget.h"
+#include "HUD/Widgets/HAFUserWidget.h"
 #include "HUD/WidgetControllers/OverlayWidgetController.h"
 
 
@@ -72,6 +72,7 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetControllerParams(Params);
 		OverlayWidgetController->BindCallbacksToDependencies(); // ✅ Make sure this is called here
+		return OverlayWidgetController;
 	}
 	return OverlayWidgetController;
 }
@@ -79,38 +80,23 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC,
 	UAttributeSet* AS)
 {
-	if (bIsOverlayInitialized) return; // ✅ Prevent duplicate construction
-
-	bIsOverlayInitialized = true;
-
-	checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
+	checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
 	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
+	checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Fixed Class not initialized. Please fill out  BP_FillainHUD."));
 
-	if (!CharacterOverlayWidgetFixed)
-	{
-		UCharacterOverlayFixed* CharacterOverlayFixedWidget = CreateWidget<UCharacterOverlayFixed>(GetWorld(), CharacterOverlayWidgetFixedClass);
-		CharacterOverlayWidgetFixed = CharacterOverlayFixedWidget;
-		
-		UE_LOG(LogTemp, Warning, TEXT("✅ Creating Overlay Widget: %s"), *GetName());
-
-		CharacterOverlayWidgetFixed->AddToViewport(100); // High Z-order to ensure it's on top
-		CharacterOverlayWidgetFixed->SetVisibility(ESlateVisibility::Visible);
-	}
-
+	UCharacterOverlayFixed* CharacterOverlayWidget = CreateWidget<UCharacterOverlayFixed>(GetWorld(), CharacterOverlayWidgetFixedClass);
+	CharacterOverlayWidget->AddToViewport();
+	
+	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), OverlayWidgetClass);
+	OverlayWidget = Cast<UHAFUserWidget>(Widget);
+	
 	const FWidgetControllerParams WidgetControllerParams (PC, PS, ASC, AS);
 	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
 
-	if (WidgetController && CharacterOverlayWidgetFixed)
-	{
-		CharacterOverlayWidgetFixed->SetWidgetController(WidgetController);
-		WidgetController->BroadcastInitialValues();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ WidgetController or CharacterOverlayWidgetFixed is null! WidgetController: %s | Overlay: %s"),
-			WidgetController ? *WidgetController->GetName() : TEXT("nullptr"),
-			CharacterOverlayWidgetFixed ? *CharacterOverlayWidgetFixed->GetName() : TEXT("nullptr"));
-	}
+	OverlayWidget->SetWidgetController(WidgetController);
+	WidgetController->BroadcastInitialValues();
+
+	Widget->AddToViewport();
 }
 
 void AFillainHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)

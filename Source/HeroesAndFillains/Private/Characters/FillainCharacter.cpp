@@ -306,7 +306,7 @@ void AFillainCharacter::BeginPlay()
 
 	Tags.Add(FName("FillainCharacter"));
 
-	UHAFAttributeSet* HAFAttributes = GetHAFAttributeSet();
+	HAFAttributes = GetHAFAttributeSet();
 
 	TArray<UUserWidget*> AllWidgets;
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), AllWidgets, UUserWidget::StaticClass(), false);
@@ -1244,37 +1244,36 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
 	AController* InstigatorController, AActor* DamageCauser)
 {
 	Super::ReceiveDamage(DamagedPawn, Damage, DamageType, InstigatorController, DamageCauser);
+
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	if (bIsEliminated || HAFGameMode == nullptr) return;
 
-	float DamageToHealth = Damage;
-	if (GetShield() > 0.f)
+	// Use the AttributeComponent safely
+	UAttributeComponent* AC = AttributeComponent;
+	if (!IsValid(AC))
 	{
-		if (GetShield() >= Damage)
-		{
-			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
-			DamageToHealth = 0.f;
-		}
-		else if (GetShield() < Damage)
-		{
-			DamageToHealth = FMath::Clamp(GetHealth() - (Damage - GetShield()), 0.f, MaxHealth);
-			SetShield(0.f);
-			Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
-		}
+		UE_LOG(LogTemp, Error, TEXT("AttributeComponent is null on %s"), *GetName());
+		return;
 	}
-	
-	AFillainHUD* FillainHUD = Cast<AFillainHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-	if (FillainHUD &&
-		FillainHUD->CharacterOverlayWidgetFixed &&
-		FillainHUD->CharacterOverlayWidgetFixed->HealthProgressBar &&
-		FillainHUD->CharacterOverlayWidgetFixed->ShieldProgressBar &&
-		FillainHUD->CharacterOverlayWidgetFixed->HealthTextBox &&
-		FillainHUD->CharacterOverlayWidgetFixed->ShieldTextBox)
-	{
-		FillainHUD->CharacterOverlayWidgetFixed->UpdateShieldBar(Shield);
-		FillainHUD->CharacterOverlayWidgetFixed->UpdateHealthBar(Health);
-	}
-	if (Health == 0.f)
+
+	// Correct shield/health damage application:
+	// 1) Apply to shield first
+	const float ShieldBefore = AC->GetShield();
+	const float DamageToShield = FMath::Min(ShieldBefore, Damage);
+	const float OverflowDamage = Damage - DamageToShield;
+
+	AC->SetShield(FMath::Clamp(ShieldBefore - Damage, 0.f, AC->GetMaxShield()));
+
+	// 2) Apply overflow to health
+	AC->SetHealth(FMath::Clamp(AC->GetHealth() - OverflowDamage, 0.f, AC->GetMaxHealth()));
+
+	// If you need HUD access, guard it:
+	// APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	// AFillainHUD* FillainHUD = PC ? Cast<AFillainHUD>(PC->GetHUD()) : nullptr;
+	// if (FillainHUD && FillainHUD->OverlayWidget) { /* update overlay as needed */ }
+
+	// Handle elimination purely based on health (don't gate on HUD availability)
+	if (AC->GetHealth() <= 0.f)
 	{
 		if (HAFGameMode)
 		{
@@ -2384,24 +2383,20 @@ void AFillainCharacter::ResetCachedDamageParameters()
 
 void AFillainCharacter::InitializeAbilityActorInfo()
 {
-	APlayerState* PState = Cast<APlayerState>(GetPlayerState()); 
-	AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(GetController());
-	if (!PState && FillainController)
+	AHAFPlayerState* FillainPlayerState = GetPlayerState<AHAFPlayerState>();
+	check(FillainPlayerState);
+	FillainPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FillainPlayerState, this);
+	Cast<UHAFAbilitySystemComponent>(FillainPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
+	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
+	AttributeSet = FillainPlayerState->GetAttributeSet();
+
+	if (AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(GetController()))
 	{
-		if (FillainController)
+		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(FillainController->GetHUD()))
 		{
-			PState = FillainController->GetHAFPlayerState();
+			FillainHUD->InitializeOverlay(FillainController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
-	AHAFPlayerState* HAFPState = Cast<AHAFPlayerState>(PState);
-	HAFPState->GetAbilitySystemComponent()->InitAbilityActorInfo(HAFPState, this);
-	Cast<UHAFAbilitySystemComponent>(HAFPState->GetAbilitySystemComponent())->AbilityActorInfoSet();
-	
-	AbilitySystemComponent = HAFPState->GetAbilitySystemComponent();
-	AttributeSet = HAFPState->GetAttributeSet();
-
-	UE_LOG(LogTemp, Warning, TEXT("🎯 ASC in Character: %s | AttributeSet: %s"),
-	*GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
 }
 
 void AFillainCharacter::OnRep_PlayerState()

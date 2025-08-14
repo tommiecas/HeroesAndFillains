@@ -26,7 +26,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 	UFUNCTION()
-	void OnFistOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	virtual void OnFistOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	bool bCanDamage = true;;
 	
@@ -36,19 +36,19 @@ protected:
 	FTimerHandle FistDamageResetTimer;
 
 	UFUNCTION(BlueprintCallable)
-	void EnableLeftFist();
+	virtual void EnableLeftFist();
 	
 	UFUNCTION(BlueprintCallable)
-	void DisableLeftFist();
+	virtual void DisableLeftFist();
 
 	UFUNCTION(BlueprintCallable)
-	void EnableRightFist();
+	virtual void EnableRightFist();
 	
 	UFUNCTION(BlueprintCallable)
-	void DisableRightFist();
+	virtual void DisableRightFist();
 	
 	UFUNCTION(BlueprintCallable)
-	void ResetCanDamage();
+	virtual void ResetCanDamage();
 
 	UPROPERTY()
 	TArray<AActor*> RightFistDamagedActors;
@@ -66,8 +66,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gender")
 	bool bIsGnarledMale = true;
-
-private:
+	
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	UBoxComponent* RightFistCollision;
 

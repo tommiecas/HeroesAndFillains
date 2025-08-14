@@ -89,4 +89,5 @@ void AHAFEffectActor::OnEndOverlap(AActor* TargetActor)
 			ActiveEffectHandles.FindAndRemoveChecked(Handle);
 		}
 	}
+	Destroy();
 }
