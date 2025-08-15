@@ -42,14 +42,7 @@ struct FUIWidgetRow : public FTableRowBase
 	
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, NewHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature, float, NewMaxHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShieldChangedSignature, float, NewShield);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxShieldChangedSignature, float, NewMaxShield);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChangedSignature, float, NewStamina);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChangedSignature, float, NewMaxStamina);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMajixChangedSignature, float, NewMajix);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxMajixChangedSignature, float, NewMaxMajix);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
 
@@ -66,28 +59,28 @@ public:
 	virtual void BindCallbacksToDependencies() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnHealthChangedSignature OnHealthChanged;
+	FOnAttributeChangedSignature OnHealthChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxHealthChangedSignature OnMaxHealthChanged;
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnShieldChangedSignature OnShieldChanged;
+	FOnAttributeChangedSignature OnShieldChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxShieldChangedSignature OnMaxShieldChanged;
+	FOnAttributeChangedSignature OnMaxShieldChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnStaminaChangedSignature OnStaminaChanged;
+	FOnAttributeChangedSignature OnStaminaChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxStaminaChangedSignature OnMaxStaminaChanged;
+	FOnAttributeChangedSignature OnMaxStaminaChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMajixChangedSignature OnMajixChanged;
+	FOnAttributeChangedSignature OnMajixChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
-	FOnMaxMajixChangedSignature OnMaxMajixChanged;
+	FOnAttributeChangedSignature OnMaxMajixChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
@@ -95,16 +88,6 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
-	
-	void HealthChanged(const FOnAttributeChangeData& Data) const;
-	void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
-	void ShieldChanged(const FOnAttributeChangeData& Data) const;
-	void MaxShieldChanged(const FOnAttributeChangeData& Data) const;
-	void StaminaChanged(const FOnAttributeChangeData& Data) const;
-	void MaxStaminaChanged(const FOnAttributeChangeData& Data) const;
-	void MajixChanged(const FOnAttributeChangeData& Data) const;
-	void MaxMajixChanged(const FOnAttributeChangeData& Data) const;
-
 	
 		template<typename T>
 		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);

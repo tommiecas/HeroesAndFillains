@@ -26,29 +26,61 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::HealthChanged);
+		HAFAttributeSet->GetHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnHealthChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxHealthAttribute()).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
+		HAFAttributeSet->GetMaxHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxHealthChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-	HAFAttributeSet->GetShieldAttribute()).AddUObject(this, &UOverlayWidgetController::ShieldChanged);
+		HAFAttributeSet->GetShieldAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnShieldChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxShieldAttribute()).AddUObject(this, &UOverlayWidgetController::MaxShieldChanged);
+		HAFAttributeSet->GetMaxShieldAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxShieldChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-	HAFAttributeSet->GetStaminaAttribute()).AddUObject(this, &UOverlayWidgetController::StaminaChanged);
+		HAFAttributeSet->GetStaminaAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnStaminaChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &UOverlayWidgetController::MaxStaminaChanged);
+		HAFAttributeSet->GetMaxStaminaAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxStaminaChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-	HAFAttributeSet->GetMajixAttribute()).AddUObject(this, &UOverlayWidgetController::MajixChanged);
+		HAFAttributeSet->GetMajixAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMajixChanged.Broadcast(Data.NewValue);
+			});
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxMajixAttribute()).AddUObject(this, &UOverlayWidgetController::MaxMajixChanged);
-
+		HAFAttributeSet->GetMaxMajixAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxMajixChanged.Broadcast(Data.NewValue);
+			});
+	
 	Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
 		[this] (const FGameplayTagContainer& AssetTags)
 		{
@@ -65,43 +97,3 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	);
 }
 
-void UOverlayWidgetController::HealthChanged(const FOnAttributeChangeData& Data) const
-{
-	OnHealthChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MaxHealthChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxHealthChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::ShieldChanged(const FOnAttributeChangeData& Data) const
-{
-	OnShieldChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MaxShieldChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxShieldChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::StaminaChanged(const FOnAttributeChangeData& Data) const
-{
-	OnStaminaChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MaxStaminaChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxStaminaChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MajixChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMajixChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MaxMajixChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxMajixChanged.Broadcast(Data.NewValue);
-}
-			
