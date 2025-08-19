@@ -12,6 +12,10 @@ class UAttributeComponent;
 class UCombatComponent;
 class UHAFUserWidget;
 class UHAFWidgetController;
+class UDataTable;
+class UAbilitySystemComponent;
+class AHAFEffectActor;
+struct FUIWidgetRow;
 
 USTRUCT(BlueprintType)
 struct FUIWidgetRow : public FTableRowBase
@@ -19,29 +23,26 @@ struct FUIWidgetRow : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTag MessageTag = FGameplayTag();
+	FGameplayTag MessageTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FText Message_A = FText();
+	FText Message_A;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Message_B;
+
+	// If you want to reference a class/type (OK in DataTables):
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AHAFEffectActor> EffectActorClass = nullptr;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Level = 1.f;
 
+	// Your message widget class (OK in DataTables)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FText Message_B = FText();
+	TSubclassOf<UHAFUserWidget> MessageWidget = nullptr;
 
+	// Prefer soft object ref for assets (hard refs are usually fine too, but soft is safer)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<class UHAFUserWidget> MessageWidget = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UTexture2D* Image = nullptr;
-
-	
+	TSoftObjectPtr<UTexture2D> Image;
 };
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
@@ -57,6 +58,14 @@ class HEROESANDFILLAINS_API UOverlayWidgetController : public UHAFWidgetControll
 public:
 	virtual void BroadcastInitialValues() override;
 	virtual void BindCallbacksToDependencies() override;
+
+	// NEW: remember the last row tag we broadcast
+	UPROPERTY(BlueprintReadOnly, Category="UI|Messages")
+	FGameplayTag LastRowTag;
+
+	// NEW: allows the overlay to "pull" the last message after it binds
+	UFUNCTION(BlueprintCallable, Category="UI|Messages")
+	void ReplayLastMessage();
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Attributes")
 	FOnAttributeChangedSignature OnHealthChanged;
@@ -84,7 +93,19 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
-	
+
+	UPROPERTY(BlueprintReadOnly, Category="UI|Messages")
+	int32 LastEffectActorLevel = 1;
+
+	FORCEINLINE INT32 GetLastEffectActorLevel() const { return LastEffectActorLevel; }
+
+	UPROPERTY() FGameplayTag LastBroadcastTag;
+	UPROPERTY() double LastBroadcastTime = 0.0;
+protected:
+	UFUNCTION() // required for AddUObject binding
+	void OnGEAddedToSelf(UAbilitySystemComponent* TargetASC,
+						 const FGameplayEffectSpec& SpecApplied,
+						 FActiveGameplayEffectHandle ActiveHandle);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;

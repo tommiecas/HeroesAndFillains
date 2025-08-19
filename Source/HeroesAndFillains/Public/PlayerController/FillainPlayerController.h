@@ -63,7 +63,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual float GetServerTime(); // Synced with server World clock
 	virtual void ReceivedPlayer() override;
+	void InitOverlayIfNeeded();
+	
+	virtual void OnRep_PlayerState() override;
 
+	UPROPERTY()
+	bool bOverlayInitialized = false;
+	
 	float MatchTimeElapsedTime = 0.f;
 	bool bIsMatchCountdownVisible = true;
 	FLinearColor MatchCountdownColor;
@@ -230,10 +236,6 @@ private:
 
 	UPROPERTY()
 	class UCharacterOverlayFixed* CharacterOverlayFixed;
-	bool bInitializeHealth = false;
-	bool bInitializeShield = false;
-	bool bInitializeStamina = false;
-	bool bInitializeMajix = false;
 	bool bInitializeScore = false;
 	bool bInitializeSouls = false;
 	bool bInitializeGold = false;
@@ -242,19 +244,12 @@ private:
 	bool bInitializeWeaponAmmo = false;
 	bool bInitializeCarriedAmmo = false;
 
-	float HUDHealth;
-	float HUDMaxHealth;
+	
 	float HUDScore;
 	int32 HUDDefeats;
 	int32 HUDGrenades;
-	float HUDShield;
-	float HUDMaxShield;
 	float HUDCarriedAmmo;
 	float HUDWeaponAmmo;
-	float HUDStamina;
-	float HUDMaxStamina;
-	float HUDMajix;
-	float HUDMaxMajix;
 	int32 HUDSouls;
 	int32 HUDGold;
 

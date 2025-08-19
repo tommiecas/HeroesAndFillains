@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerState/HAFPlayerState.h"
 
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
@@ -9,25 +8,26 @@
 #include "PlayerController/FillainPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
-
 AHAFPlayerState::AHAFPlayerState()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	check(AbilitySystemComponent);
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-
 	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
-	
+	check(AttributeSet);
+
 	SetNetUpdateFrequency(100.f);
 }
 
 void AHAFPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
 	DOREPLIFETIME(AHAFPlayerState, Defeats);
 	DOREPLIFETIME(AHAFPlayerState, Team);
-
+	DOREPLIFETIME(AHAFPlayerState, Level);
 }
 
 void AHAFPlayerState::AddToScore(float ScoreAmount)
@@ -67,6 +67,7 @@ UAbilitySystemComponent* AHAFPlayerState::GetAbilitySystemComponent() const
 void AHAFPlayerState::AddToDefeats(int32 DefeatsAmount)
 {
 	Defeats += DefeatsAmount;
+
 	Character = Character == nullptr ? Cast<AFillainCharacter>(GetPawn()) : Character;
 	if (Character)
 	{
@@ -91,12 +92,16 @@ void AHAFPlayerState::OnRep_Defeats()
 	}
 }
 
+void AHAFPlayerState::OnRep_Level(int32 OldLevel)
+{
+	
+}
+
 void AHAFPlayerState::SetTeam(ETeam TeamToSet)
 {
 	Team = TeamToSet;
 
-	AFillainCharacter* BCharacter = Cast <AFillainCharacter>(GetPawn());
-	if (BCharacter)
+	if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
 	{
 		BCharacter->SetTeamColor(Team);
 	}
@@ -104,4 +109,8 @@ void AHAFPlayerState::SetTeam(ETeam TeamToSet)
 
 void AHAFPlayerState::OnRep_Team()
 {
+	if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
+	{
+		BCharacter->SetTeamColor(Team);
+	}
 }

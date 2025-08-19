@@ -7,6 +7,7 @@
 #include "GameplayEffectTypes.h"
 #include "HAFEffectActor.generated.h"
 
+class UHAFUserWidget;
 class UAbilitySystemComponent;
 struct FActiveGameplayEffectHandle;
 class UGameplayEffect;
@@ -33,7 +34,10 @@ class HEROESANDFILLAINS_API AHAFEffectActor : public AActor
 	
 public:	
 	AHAFEffectActor();
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UHAFUserWidget* OverlayWidget;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -70,15 +74,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Gameplay Effects")
 	TSubclassOf<UGameplayEffect> InfiniteGameplayEffectClass;
 
-	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveEffectHandles;
+	UPROPERTY()
+	TMap<FActiveGameplayEffectHandle, TWeakObjectPtr<UAbilitySystemComponent>> ActiveEffectHandles;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Gameplay Effects")
-	float ActorLevel = 1.f;
+	int32 ActorLevel = 1;
+
+
 
 private:
 
 public:
-	FORCEINLINE float GetActorLevel() const { return ActorLevel; }
+	FORCEINLINE int32 GetActorLevel() const { return ActorLevel; }
 
 
 };

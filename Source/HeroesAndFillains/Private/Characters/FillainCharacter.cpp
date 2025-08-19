@@ -909,6 +909,14 @@ void AFillainCharacter::AddGoldAcquiredToTotalGold(class ATreasure* Treasure)
 	}
 }
 
+int32 AFillainCharacter::GetPlayerLevel()
+{
+	const AHAFPlayerState* State = GetPlayerState<AHAFPlayerState>();
+	check(State);
+	return State->GetPlayerLevel();
+	
+}
+
 void AFillainCharacter::Jump()
 {
 	if (bDisableGameplay) return;
@@ -1129,14 +1137,28 @@ bool AFillainCharacter::IsOccupied()
 	return Combat->ActionState != EActionState::EAS_Unoccupied;
 }
 
-bool AFillainCharacter::HasEnoughStamina()
+bool AFillainCharacter::HasEnoughStamina(const float Cost) const
 {
-	return AttributeComponent && AttributeComponent->GetStamina() > AttributeComponent->GetDodgeCost();
-}
+	if (!AbilitySystemComponent) return false;
+
+	const float Stamina =
+		AbilitySystemComponent->GetNumericAttribute(UHAFAttributeSet::GetStaminaAttribute());
+	return Stamina >= Cost;}
 
 void AFillainCharacter::Dodge()
 {
-	if (IsOccupied() || !HasEnoughStamina()) return;
+	if (!AbilitySystemComponent) return;
+
+	if (!bASCReady || !AbilitySystemComponent) return;
+	if (!HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
+
+	// Either use cached pointer (after InitASC ran on this machine)…
+	const UHAFAttributeSet* AS = HAFAttributeSet ? HAFAttributeSet
+												 : AbilitySystemComponent->GetSet<UHAFAttributeSet>();
+	if (!AS) { UE_LOG(LogTemp, Warning, TEXT("AttributeSet null in Dodge")); return; }
+
+	const float Stamina = AS->GetStamina();  // now safe
+	if (IsOccupied() || !HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
 
 	PlayDodgeMontage();
 	Combat->ActionState = EActionState::EAS_Dodging;
@@ -2380,6 +2402,23 @@ void AFillainCharacter::ResetCachedDamageParameters()
 	CachedInstigatorController = nullptr;
 	CachedCauser = nullptr;
 }
+void AFillainCharacter::InitASC()
+{
+	if (!AbilitySystemComponent) return;
+
+	AbilitySystemComponent->InitAbilityActorInfo(GetPlayerState<AHAFPlayerState>(), this);
+
+	// Cache set for fast, safe access (UE 5.5.4)
+	if (AbilitySystemComponent)
+	{
+		const UHAFAttributeSet* AsConst = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
+		HAFAS = const_cast<UHAFAttributeSet*>(AsConst); // caching; we won’t mutate
+	}
+	else
+	{
+		HAFAS = nullptr;
+	}
+}
 
 void AFillainCharacter::InitializeAbilityActorInfo()
 {
@@ -2390,40 +2429,58 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
 	AttributeSet = FillainPlayerState->GetAttributeSet();
 
-	if (AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(GetController()))
-	{
-		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(FillainController->GetHUD()))
-		{
-			FillainHUD->InitializeOverlay(FillainController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
-		}
-	}
+	
+	InitializeDefaultAttributes();
 }
 
 void AFillainCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	ShowPlayerName();
+
+	InitASC();
 	InitializeAbilityActorInfo();
+	bASCReady = (AbilitySystemComponent != nullptr);
+	if (AttributeComponent) { AttributeComponent->CachedASC = AbilitySystemComponent; }
+	if (AbilitySystemComponent)
+	{
+		const UHAFAttributeSet* AsConst = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
+		HAFAS = const_cast<UHAFAttributeSet*>(AsConst); // just caching; we won’t mutate
+	}
+	else
+	{
+		HAFAS = nullptr;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("[Client] ASC ready=%d Stamina=%f"),
+	bASCReady,
+	AbilitySystemComponent
+		? AbilitySystemComponent->GetNumericAttribute(UHAFAttributeSet::GetStaminaAttribute())
+		: -1.f);
 }
 
 void AFillainCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	// Ensure FillainPlayerController is initialized
 
-	if (AFillainPlayerController* NewFillainController = Cast<AFillainPlayerController>(NewController))
+	// Input mapping (okay on listen server, ignored on dedicated)
+	if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(NewController))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(NewFillainController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(HAFMappingContext, 0);
 		}
-		
-		ShowPlayerName();
-
-		// Init Ability Actor Info for the server
-		InitializeAbilityActorInfo();
 	}
+
+	InitASC();
+	InitializeAbilityActorInfo();   // ASC->InitAbilityActorInfo(PS, this)
+	bASCReady = (AbilitySystemComponent != nullptr);
+	if (AttributeComponent) { AttributeComponent->CachedASC = AbilitySystemComponent; }
+	const UHAFAttributeSet* Tmp = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
+	HAFAS = const_cast<UHAFAttributeSet*>(Tmp);
+	ApplyStartupEffects();          // Primary -> Secondary -> Vital
 }
+
+	
 
  /******************************************************\
 | **   The following were also added for challenges.  ** |

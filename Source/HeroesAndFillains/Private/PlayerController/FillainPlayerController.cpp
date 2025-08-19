@@ -243,11 +243,7 @@ void AFillainPlayerController::BeginPlay()
 	FillainHUD = Cast<AFillainHUD>(GetHUD());
 	ServerCheckMatchState();
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	if (Subsystem)
-	{
-		Subsystem->AddMappingContext(FillainMappingContext, 0);
-	}
+	
 
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
@@ -437,38 +433,6 @@ void AFillainPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	if (FillainHUD && MatchState == MatchState::WaitingToStart)
 	{
 		FillainHUD->AddAnnouncement();
-	}
-}
-
-void AFillainPlayerController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-	// Ensure HUD is valid
-	/* FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	if (!FillainHUD)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ FillainHUD is null in OnPossess"));
-		return;
-	}
-
-	// Optional sanity check
-	if (!FillainHUD->CharacterOverlayWidgetFixedClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ CharacterOverlayWidgetFixedClass is null on FillainHUD"));
-		return;
-	}*/
-
-	if (AFillainHUD* FillainDisplay = Cast<AFillainHUD>(GetHUD()))
-	{
-		if (!FillainDisplay->bIsOverlayInitialized)
-		{
-			if (AFillainCharacter* PlayerCharacter = Cast<AFillainCharacter>(InPawn))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("🧩 OnPossess->InitializeOverlay() for the Controller: %s | Character: %s"), *GetName(), GetPawn() != nullptr ? *GetPawn()->GetName() : TEXT("None"));
-				FillainDisplay->InitializeOverlay(this, PlayerCharacter->GetPlayerState(), PlayerCharacter->GetAbilitySystemComponent(), PlayerCharacter->GetAttributeSet());
-			}
-		}	
 	}
 }
 
@@ -1164,6 +1128,41 @@ void AFillainPlayerController::InitializeHUDEliminationMessage(AFillainPlayerCon
 	if (KillerPlayerController && VictimPlayerController)
 	{
 		UpdateEliminationMessageForPvP(KillerPlayerController, VictimPlayerController);
+	}
+}
+
+void AFillainPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	InitOverlayIfNeeded();
+}
+void AFillainPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	InitOverlayIfNeeded(); // covers timing where Pawn arrives after PS
+}
+
+void AFillainPlayerController::InitOverlayIfNeeded()
+{
+	if (!IsLocalController() || bOverlayInitialized) return;
+
+	AFillainCharacter* Char = Cast<AFillainCharacter>(GetPawn());
+	if (!Char) { GetWorldTimerManager().SetTimerForNextTick(this, &AFillainPlayerController::InitOverlayIfNeeded); return; }
+
+	// Ensure ASC is initialized on the client
+	Char->InitASC();
+	Char->InitializeAbilityActorInfo();
+
+	if (AFillainHUD* HUD = Cast<AFillainHUD>(GetHUD()))
+	{
+		HUD->InitializeOverlay(
+		this,
+		GetPlayerState<APlayerState>(),
+		Char->GetAbilitySystemComponent(),
+		Char->GetAttributeSet() // your UHAFAttributeSet*
+		);
+		bOverlayInitialized = true;
 	}
 }
 	

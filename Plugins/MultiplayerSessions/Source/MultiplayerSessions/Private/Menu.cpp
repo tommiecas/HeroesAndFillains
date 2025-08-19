@@ -10,7 +10,7 @@
 UMenu::UMenu(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	bIsFocusable = true; // ✅ Safe here
+	SetIsFocusable(true); // ✅ Safe here
 }
 
 void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FString LobbyPath)

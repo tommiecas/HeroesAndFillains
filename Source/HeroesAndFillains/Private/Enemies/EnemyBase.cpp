@@ -106,6 +106,11 @@ void AEnemyBase::UnHighlightActor()
 	if (EquippedEnemyRangedWeapon) EquippedEnemyRangedWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
 }
 
+int32 AEnemyBase::GetPlayerLevel()
+{
+	return Level;
+}
+
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

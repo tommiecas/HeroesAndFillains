@@ -124,32 +124,6 @@ void ABaseCharacter::BeginPlay()
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 	}
-	if (HAFAbilitySystemComponent && HAFAttributeSet && AttributeComponent)
-	{
-		ensure(HAFAttributeSet);
-
-		const float InitialHealth = AttributeComponent->GetHealth();
-		const float InitialMaxHealth = AttributeComponent->GetMaxHealth();
-		const float InitialShield = AttributeComponent->GetShield();
-		const float InitialMaxShield = AttributeComponent->GetMaxShield();
-		const float InitialStamina = AttributeComponent->GetStamina();
-		const float InitialMaxStamina = AttributeComponent->GetMaxStamina();
-		const float InitialMajix = AttributeComponent->GetMajix();
-		const float InitialMaxMajix = AttributeComponent->GetMaxMajix();
-
-		// Correctly map component attributes into the AttributeSet
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Health, InitialHealth);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxHealth, InitialMaxHealth);
-
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Shield, InitialShield);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxShield, InitialMaxShield);
-
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Stamina, InitialStamina);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxStamina, InitialMaxStamina);
-
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->Majix, InitialMajix);
-		HAFAttributeSet->SetAttributeFromComponent(HAFAttributeSet->MaxMajix, InitialMaxMajix);
-	}
 }
 
 
@@ -419,6 +393,51 @@ bool ABaseCharacter::CanAttack()
 bool ABaseCharacter::IsCharacterAlive()
 {
 	return AttributeComponent && AttributeComponent->IsCharacterAlive();
+}
+
+void ABaseCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const
+{
+	check(IsValid(GetAbilitySystemComponent()));
+	check(GameplayEffectClass);
+	FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	ContextHandle.AddSourceObject(this);
+	const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
+	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), GetAbilitySystemComponent());
+}
+
+void ABaseCharacter::ApplyStartupEffects()
+{
+	if (!HasAuthority() || !AbilitySystemComponent) return;
+
+	auto ApplyGE = [this](TSubclassOf<UGameplayEffect> GEClass)
+	{
+		if (!GEClass) return;
+		FGameplayEffectContextHandle Ctx = AbilitySystemComponent->MakeEffectContext();
+		Ctx.AddSourceObject(this);
+		FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(GEClass, /*Level*/ 1.f, Ctx);
+		if (Spec.IsValid())
+		{
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	};
+	ApplyGE(DefaultPrimaryAttributes);
+	ApplyGE(DefaultSecondaryAttributes); // <-- where your Max* (e.g., MaxHealth) usually gets set
+	ApplyGE(DefaultVitalAttributes);
+}
+
+void ABaseCharacter::InitializeDefaultAttributes() const
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
+	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+	const auto MaxAttr = UHAFAttributeSet::GetMaxHealthAttribute();
+	UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
+		   AbilitySystemComponent->GetNumericAttribute(MaxAttr));
+
+	if (const auto* HAF = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAF->GetMaxHealth());
+	}
+	ApplyEffectToSelf((DefaultVitalAttributes), 1.f);
 }
 
 void ABaseCharacter::DisableMeshCollision()

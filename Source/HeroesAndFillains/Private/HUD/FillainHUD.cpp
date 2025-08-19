@@ -2,17 +2,21 @@
 
 
 #include "HUD/FillainHUD.h"
+
+#include "AbilitySystem/HAFAttributeSet.h"
 #include "GameFramework/PlayerController.h"
 #include "HUD/CharacterOverlayFixed.h"
 #include "HUD/Announcement.h"
 #include "HUD/EliminationAnnouncement.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Characters/BaseCharacter.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Overlay.h"
 #include "HUD/CharacterOverlayFixed.h"
 #include "HUD/Widgets/HAFUserWidget.h"
 #include "HUD/WidgetControllers/OverlayWidgetController.h"
+#include "PlayerState/HAFPlayerState.h"
 
 
 void AFillainHUD::AddCharacterOverlayFixed()
@@ -71,33 +75,59 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 	{
 		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetControllerParams(Params);
-		OverlayWidgetController->BindCallbacksToDependencies(); // ✅ Make sure this is called here
 		return OverlayWidgetController;
 	}
 	return OverlayWidgetController;
 }
 
-void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC,
-	UAttributeSet* AS)
+void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
 {
-	checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not initialized. Please fill out  BP_FillainHUD."));
-	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not initialized. Please fill out  BP_FillainHUD."));
-	checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Fixed Class not initialized. Please fill out  BP_FillainHUD."));
+		checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not set on BP_FillainHUD"));
+		checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not set on BP_FillainHUD"));
+		checkf(CharacterOverlayWidgetFixedClass, TEXT("Character Overlay Widget Fixed Class not set on BP_FillainHUD"));
 
-	UCharacterOverlayFixed* CharacterOverlayWidget = CreateWidget<UCharacterOverlayFixed>(GetWorld(), CharacterOverlayWidgetFixedClass);
-	CharacterOverlayWidget->AddToViewport();
-	
-	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), OverlayWidgetClass);
-	OverlayWidget = Cast<UHAFUserWidget>(Widget);
-	
-	const FWidgetControllerParams WidgetControllerParams (PC, PS, ASC, AS);
-	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
+		// Build controller and bind to GAS (once)
+		if (!OverlayWidgetController)
+		{
+			ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwningPawn());
+			const FWidgetControllerParams Params(GetOwningPlayerController(), GetOwningPlayerController()->GetPlayerState<AHAFPlayerState>(), Character->GetAbilitySystemComponent(), Character->GetAttributeSet());
+			OverlayWidgetController = GetOverlayWidgetController(Params);
+			OverlayWidgetController->BindCallbacksToDependencies();
+		}
 
-	OverlayWidget->SetWidgetController(WidgetController);
-	WidgetController->BroadcastInitialValues();
+		// Create fixed overlay (with owning player) if you need it
+		if (!CharacterOverlayWidgetFixed)
+		{
+			CharacterOverlayWidgetFixed =
+				CreateWidget<UCharacterOverlayFixed>(GetOwningPlayerController(), CharacterOverlayWidgetFixedClass);
+			if (CharacterOverlayWidgetFixed)
+			{
+				CharacterOverlayWidgetFixed->AddToViewport();
+			}
+		}
 
-	Widget->AddToViewport();
-}
+		// Create the main overlay (with owning player)
+		if (!OverlayWidget)
+		{
+			OverlayWidget = Cast<UHAFUserWidget>(CreateWidget<UUserWidget>(GetOwningPlayerController(), OverlayWidgetClass));
+			if (!OverlayWidget) return; // wrong class assigned in BP?
+		}
+
+		// Let the widget bind to controller delegates (your BP runs here)
+		OverlayWidget->SetWidgetController(OverlayWidgetController);
+
+		// Push initial values (now the widget will receive them)
+		OverlayWidgetController->BroadcastInitialValues();
+
+		// Finally show it
+		if (!OverlayWidget->IsInViewport())
+		{
+			OverlayWidget->AddToViewport();
+		}
+
+		// Safety: make sure it’s visible
+		OverlayWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
 
 void AFillainHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)
 {

@@ -7,8 +7,10 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterface.h"
 #include "AbilitySystemInterface.h"
+#include "Interfaces/CombatInterface.h"
 #include "BaseCharacter.generated.h"
 
+class UGameplayEffect;
 class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
 class UAbilitySystemComponent;
@@ -28,7 +30,7 @@ enum EDeathPose
 	EDP_MAX UMETA(DisplayName = "DefaultMAX")
 };
 UCLASS()
-class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface
+class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -222,6 +224,22 @@ protected:
 
 	bool IsCharacterAlive();
 	bool bIsCharacterDead{false};
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+	void ApplyStartupEffects();
+
+
+	void InitializeDefaultAttributes() const;
+
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 
 private:
 

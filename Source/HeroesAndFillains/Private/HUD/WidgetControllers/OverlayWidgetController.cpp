@@ -5,7 +5,67 @@
 
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "HUD/Widgets/HAFUserWidget.h"
+#include "GameplayTagContainer.h"
+#include "HUD/WidgetControllers/OverlayWidgetController.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"            // FGameplayEffectSpec, UGameplayEffect
+#include "GameplayEffectTypes.h"       // FActiveGameplayEffectHandle
+#include "Engine/DataTable.h"          // UDataTable
+#include "AbilitySystem/HAFEffectActor.h"            // AHAFEffectActor (for SourceObject cast)
 
+void UOverlayWidgetController::OnGEAddedToSelf(UAbilitySystemComponent* /*TargetASC*/,
+                                               const FGameplayEffectSpec& SpecApplied,
+                                               FActiveGameplayEffectHandle /*ActiveHandle*/)
+{
+		const UObject* SourceObj = SpecApplied.GetContext().GetSourceObject();
+		const AHAFEffectActor* EffectActor = Cast<AHAFEffectActor>(SourceObj);
+		LastEffectActorLevel = EffectActor ? EffectActor->GetActorLevel() : 0;
+
+		const FGameplayTagContainer* AssetTags =
+			SpecApplied.Def ? &SpecApplied.Def->GetAssetTags() : nullptr;
+		if (!AssetTags) return;
+
+		const FGameplayTag MessageRoot = FGameplayTag::RequestGameplayTag(TEXT("Message"));
+
+		FGameplayTag RowTag;
+		for (const FGameplayTag& Tag : *AssetTags)
+		{
+			if (Tag.MatchesTag(MessageRoot))
+			{
+				RowTag = Tag;
+				break;
+			}
+		}
+		if (!RowTag.IsValid()) return;
+
+		// Remember last tag for replay
+		LastRowTag = RowTag;
+
+		if (const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, RowTag))
+		{
+			// Optional guard: only broadcast if the row has a widget class set
+			if (Row->MessageWidget) 
+			{
+				MessageWidgetRowDelegate.Broadcast(*Row);
+			}
+		}
+	}
+
+	// NEW: simple replay that only fires if we have a valid tag and a valid row + widget class
+	void UOverlayWidgetController::ReplayLastMessage()
+	{
+		if (!LastRowTag.IsValid() || !MessageWidgetDataTable) return;
+
+		if (const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, LastRowTag))
+		{
+			if (Row->MessageWidget)
+			{
+				MessageWidgetRowDelegate.Broadcast(*Row);
+			}
+		}
+	}
+	
 void UOverlayWidgetController::BroadcastInitialValues()
 {
 	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
@@ -31,6 +91,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnHealthChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnHealthChanged"));
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetMaxHealthAttribute()).AddLambda(
@@ -38,6 +99,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnMaxHealthChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMaxHealthChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetShieldAttribute()).AddLambda(
@@ -45,6 +108,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnShieldChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnShieldChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetMaxShieldAttribute()).AddLambda(
@@ -52,6 +117,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnMaxShieldChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMaxShieldChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetStaminaAttribute()).AddLambda(
@@ -59,6 +126,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnStaminaChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnStaminaChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetMaxStaminaAttribute()).AddLambda(
@@ -66,6 +135,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnMaxStaminaChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMaxStaminaChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetMajixAttribute()).AddLambda(
@@ -73,6 +144,8 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnMajixChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMajixChanged"));
+
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetMaxMajixAttribute()).AddLambda(
@@ -80,6 +153,10 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			{
 				OnMaxMajixChanged.Broadcast(Data.NewValue);
 			});
+	UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMaxMajixChanged"));
+
+	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf
+	.AddUObject(this, &UOverlayWidgetController::OnGEAddedToSelf);
 	
 	Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
 		[this] (const FGameplayTagContainer& AssetTags)
@@ -95,5 +172,10 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			}	
 		}
 	);
+	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf
+	.AddUObject(this, &UOverlayWidgetController::OnGEAddedToSelf);
+
+	UE_LOG(LogTemp, Warning, TEXT("[WC] Bound AddedDelegate on ASC=%s"),
+		   *GetNameSafe(AbilitySystemComponent));
 }
 

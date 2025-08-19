@@ -1,79 +1,91 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "PlayerController/FillainPlayerController.h"
-#include "AbilitySystemBlueprintLibrary.h"
-#include "AbilitySystemComponent.h"
-#include "AttributeSet.h"
 #include "AbilitySystemGlobals.h"
-#include "Characters/FillainCharacter.h"
-#include "Compression/lz4.h"
-#include "Enemies/EnemyBase.h"
-#include "HAFComponents/AttributeComponent.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
-
-
-
-
 
 UHAFAttributeSet::UHAFAttributeSet()
 {
 	InitHealth(50.f);
-	InitMaxHealth(100.f);
-
 	InitShield(75.f);
-	InitMaxShield(100.f);
-
 	InitStamina(20.f);
-	InitMaxStamina(100.f);
-
 	InitMajix(10.f);
-	InitMaxMajix(100.f);
 }
 
 void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Strength, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Intelligence, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Resilience, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Vigor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Dexterity, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Marksmanship, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Wisdom, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Charisma, COND_None, REPNOTIFY_Always);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Armor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ArmorPenetration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, BlockChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, CriticalHitChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, CriticalHitDamage, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, CriticalHitResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Agility, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Flexibility, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Purity, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Corruptibility, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DarkMajixProficiency, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Intuition, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Vision, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Charm, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, HealthRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ShieldRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, StaminaRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MajixRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxShield, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxMajix, COND_None, REPNOTIFY_Always);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Shield, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Majix, COND_None, REPNOTIFY_Always);
 }
 
 void UHAFAttributeSet::SetAttributeFromComponent(FGameplayAttributeData& Attribute, float Value)
 {
-	const_cast<FGameplayAttributeData&>(Attribute).SetBaseValue(Value);
-	const_cast<FGameplayAttributeData&>(Attribute).SetCurrentValue(Value);
+	Attribute.SetBaseValue(Value);
+	Attribute.SetCurrentValue(Value);
 }
 
 void UHAFAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
-
-	if (Attribute == GetHealthAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxHealth.GetCurrentValue());
-	if (Attribute == GetMaxHealthAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxHealth.GetCurrentValue());
-	if (Attribute == GetShieldAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxShield.GetCurrentValue());
-	if (Attribute == GetMaxShieldAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxShield.GetCurrentValue());
-	if (Attribute == GetStaminaAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxStamina.GetCurrentValue());
-	if (Attribute == GetMaxStaminaAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxStamina.GetCurrentValue());
-	if (Attribute == GetMajixAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxMajix.GetCurrentValue());
-	if (Attribute == GetMaxMajixAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, MaxMajix.GetCurrentValue());
+	
+	if (Attribute == GetHealthAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
+	if (Attribute == GetShieldAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, GetMaxShield());
+	if (Attribute == GetStaminaAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
+	if (Attribute == GetMajixAttribute()) NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMajix());
 }
 
 void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const
 {
-	// Source = causer of the effect, Target = target of the effect (owner of this AS)
-	
 	Properties.EffectContextHandle = Data.EffectSpec.GetContext();
+
 	Properties.SourceASC = Properties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+	if (Properties.SourceASC == nullptr)
+	{
+		Properties.SourceASC = Properties.EffectContextHandle.GetInstigatorAbilitySystemComponent();
+	}
 
 	if (IsValid(Properties.SourceASC) && Properties.SourceASC->AbilityActorInfo.IsValid() && Properties.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
 		Properties.SourceAvatarActor = Properties.SourceASC->AbilityActorInfo->AvatarActor.Get();
 		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
-		
+
 		if (Properties.SourceController == nullptr && Properties.SourceAvatarActor != nullptr)
 		{
 			if (const APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
@@ -86,12 +98,13 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 			Properties.SourceCharacter = Cast<ACharacter>(Properties.SourceController->GetPawn());
 		}
 	}
-	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+
+	Properties.TargetASC = GetOwningAbilitySystemComponent();
+	if (IsValid(Properties.TargetASC) && Properties.TargetASC->AbilityActorInfo.IsValid() && Properties.TargetASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
-		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
-		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+		Properties.TargetAvatarActor = Properties.TargetASC->AbilityActorInfo->AvatarActor.Get();
+		Properties.TargetController = Properties.TargetASC->AbilityActorInfo->PlayerController.Get();
 		Properties.TargetCharacter = Cast<ACharacter>(Properties.TargetAvatarActor);
-		Properties.TargetASC = &Data.Target; 
 	}
 }
 
@@ -118,4 +131,174 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
 	}
+}
+
+void UHAFAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Strength, OldStrength);
+}
+
+void UHAFAttributeSet::OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Intelligence, OldIntelligence);
+}
+
+void UHAFAttributeSet::OnRep_Resilience(const FGameplayAttributeData& OldResilience) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Resilience, OldResilience);
+}
+
+void UHAFAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Vigor, OldVigor);
+}
+
+void UHAFAttributeSet::OnRep_Dexterity(const FGameplayAttributeData& OldDexterity) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Dexterity, OldDexterity);
+}
+
+void UHAFAttributeSet::OnRep_Marksmanship(const FGameplayAttributeData& OldMarksmanship) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Marksmanship, OldMarksmanship);
+}
+
+void UHAFAttributeSet::OnRep_Wisdom(const FGameplayAttributeData& OldWisdom) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Wisdom, OldWisdom);
+}
+
+void UHAFAttributeSet::OnRep_Charisma(const FGameplayAttributeData& OldCharisma) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Charisma, OldCharisma);
+}
+
+void UHAFAttributeSet::OnRep_Armor(const FGameplayAttributeData& OldArmor) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Armor, OldArmor);
+}
+
+void UHAFAttributeSet::OnRep_ArmorPenetration(const FGameplayAttributeData& OldArmorPenetration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ArmorPenetration, OldArmorPenetration);
+}
+
+void UHAFAttributeSet::OnRep_BlockChance(const FGameplayAttributeData& OldBlockChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, BlockChance, OldBlockChance);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitChance(const FGameplayAttributeData& OldCriticalHitChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitChance, OldCriticalHitChance);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitDamage(const FGameplayAttributeData& OldCriticalHitDamage) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitDamage, OldCriticalHitDamage);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitResistance(const FGameplayAttributeData& OldCriticalHitResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitResistance, OldCriticalHitResistance);
+}
+
+void UHAFAttributeSet::OnRep_Agility(const FGameplayAttributeData& OldAgility) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Agility, OldAgility);
+}
+
+void UHAFAttributeSet::OnRep_Flexibility(const FGameplayAttributeData& OldFlexibility) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Flexibility, OldFlexibility);
+}
+
+void UHAFAttributeSet::OnRep_Purity(const FGameplayAttributeData& OldPurity) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Purity, OldPurity);
+}
+
+void UHAFAttributeSet::OnRep_Corruptibility(const FGameplayAttributeData& OldCorruptibility) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Corruptibility, OldCorruptibility);
+}
+
+void UHAFAttributeSet::OnRep_DarkMajixProficiency(const FGameplayAttributeData& OldDarkMajixProficiency) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, DarkMajixProficiency, OldDarkMajixProficiency);
+}
+
+void UHAFAttributeSet::OnRep_Intuition(const FGameplayAttributeData& OldIntuition) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Intuition, OldIntuition);
+}
+
+void UHAFAttributeSet::OnRep_Vision(const FGameplayAttributeData& OldVision) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Vision, OldVision);
+}
+
+void UHAFAttributeSet::OnRep_Charm(const FGameplayAttributeData& OldCharm) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Charm, OldCharm);
+}
+
+void UHAFAttributeSet::OnRep_HealthRegeneration(const FGameplayAttributeData& OldHealthRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, HealthRegeneration, OldHealthRegeneration);
+}
+
+void UHAFAttributeSet::OnRep_ShieldRegeneration(const FGameplayAttributeData& OldShieldRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ShieldRegeneration, OldShieldRegeneration);
+}
+
+void UHAFAttributeSet::OnRep_StaminaRegeneration(const FGameplayAttributeData& OldStaminaRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, StaminaRegeneration, OldStaminaRegeneration);
+}
+
+void UHAFAttributeSet::OnRep_MajixRegeneration(const FGameplayAttributeData& OldMajixRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MajixRegeneration, OldMajixRegeneration);
+}
+
+void UHAFAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxHealth, OldMaxHealth);
+}
+
+void UHAFAttributeSet::OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxShield, OldMaxShield);
+}
+
+void UHAFAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxStamina, OldMaxStamina);
+}
+
+void UHAFAttributeSet::OnRep_MaxMajix(const FGameplayAttributeData& OldMaxMajix) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxMajix, OldMaxMajix);
+}
+
+void UHAFAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Health, OldHealth);
+}
+
+void UHAFAttributeSet::OnRep_Shield(const FGameplayAttributeData& OldShield) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Shield, OldShield);
+}
+
+void UHAFAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Stamina, OldStamina);
+}
+
+void UHAFAttributeSet::OnRep_Majix(const FGameplayAttributeData& OldMajix) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Majix, OldMajix);
 }

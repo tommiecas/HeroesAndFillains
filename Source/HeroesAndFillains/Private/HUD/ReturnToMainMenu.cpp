@@ -11,7 +11,7 @@
 UReturnToMainMenu::UReturnToMainMenu(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	bIsFocusable = true; // ✅ Safe here
+	SetIsFocusable(true); // ✅ Safe here
 }
 
 void UReturnToMainMenu::MenuSetup()

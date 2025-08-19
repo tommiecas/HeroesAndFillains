@@ -37,9 +37,20 @@ class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter, public IEnemyInt
 
 public:
 	AEnemyBase();
+
+	/******************************
+	****    Enemy Interface    ****
+	******************************/
+	
 	virtual auto HighlightActor() -> void override;
 	virtual void UnHighlightActor() override;
 
+	/*******************************
+	****    Combat Interface    ****
+	*******************************/
+
+	virtual int32 GetPlayerLevel() override;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "UI")
 	bool bHighlighted = false;
 	
@@ -90,6 +101,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UAIPerceptionComponent* AIPerceptionComponent;
 
+	UPROPERTY()
 	UAISenseConfig_Sight* SightConfig;
 
 	UFUNCTION()
@@ -188,7 +200,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
 	float PatrolWaitMax = 10.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+	int32 Level = 1;
 private:
+	
 
 public:
 	FORCEINLINE FString GetEnemyDisplayName() const { return EnemyDisplayName; }

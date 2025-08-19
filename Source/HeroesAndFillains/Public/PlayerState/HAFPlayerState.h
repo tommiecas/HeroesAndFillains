@@ -4,17 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemInterface.h"
 #include "Characters/FillainCharacter.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "HAFPlayerState.generated.h"
 
-
 class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
-/**
- * 
- */
+
 UCLASS()
 class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -22,13 +20,23 @@ class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbili
 
 public:
 	AHAFPlayerState();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Score() override;
+
+	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	UAttributeSet* GetAttributeSet() const { return AttributeSet; };
-	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const { return HAFAbilitySystemComponent; };
-	UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; };
-	
+
+	// Convenience getters
+	UFUNCTION(BlueprintCallable)
+	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const { return AbilitySystemComponent; }
+	UFUNCTION(BlueprintCallable)
+	UHAFAttributeSet* GetHAFAttributeSet() const { return AttributeSet; }
+
+	// Legacy base-class getters if you still use them
+	UFUNCTION(BlueprintCallable)
+	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+
 	/*
 	** Replication Notifies
 	*/
@@ -38,32 +46,32 @@ public:
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
-	UPROPERTY()
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-
-	UPROPERTY()
-	TObjectPtr<UAttributeSet> AttributeSet;
-
-	UPROPERTY()
-	TObjectPtr<UHAFAttributeSet> HAFAttributeSet;
-
-	UPROPERTY()
-	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent;
-
 protected:
+	// Strongly-typed, initialized in constructor
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UHAFAbilitySystemComponent> AbilitySystemComponent = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UHAFAttributeSet> AttributeSet = nullptr;
 
 private:
-	UPROPERTY(meta = (AllowPrvateAccess = "true"))
-	class AFillainCharacter* Character;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Level)
+	int32 Level = 1;
+
+	UFUNCTION()
+	void OnRep_Level(int32 OldLevel);
 	
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
-	class AFillainPlayerController* Controller;
+	class AFillainCharacter* Character = nullptr;
 
-	UPROPERTY(ReplicatedUsing = OnRep_Defeats);
-	int32 Defeats;
+	UPROPERTY(meta = (AllowPrivateAccess = "true"))
+	class AFillainPlayerController* Controller = nullptr;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
+	int32 Defeats = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Team)
-	ETeam Team = ETeam::ET_NoTeam;;
+	ETeam Team = ETeam::ET_NoTeam;
 
 	UFUNCTION()
 	void OnRep_Team();
@@ -73,5 +81,5 @@ public:
 	FORCEINLINE AFillainPlayerController* GetFillainPlayerController() const { return Controller; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
 	void SetTeam(ETeam TeamToSet);
-
+	FORCEINLINE int32 GetPlayerLevel() const { return Level; }
 };

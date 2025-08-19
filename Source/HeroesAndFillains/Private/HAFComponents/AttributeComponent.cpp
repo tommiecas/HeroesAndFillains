@@ -8,7 +8,7 @@
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
+	AttributeSet = nullptr; 
 	SoulsGathered = 0;
 	GoldAcquired = 0; // Ensure we start from a defined value
 }
@@ -16,21 +16,21 @@ UAttributeComponent::UAttributeComponent()
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
+}
 
-	// Initialize to sane defaults if not already set by editor/blueprint
-	if (MaxHealth > 0.f && (Health <= 0.f || Health > MaxHealth))
+float UAttributeComponent::GetStamina() const
+{
+	if (const UAbilitySystemComponent* ASC = CachedASC.Get())
 	{
-		Health = MaxHealth;
+		return ASC->GetNumericAttribute(UHAFAttributeSet::GetStaminaAttribute());
 	}
-	if (MaxStamina > 0.f && (Stamina <= 0.f || Stamina > MaxStamina))
-	{
-		Stamina = MaxStamina;
-	}
+	return 0.f;
 }
 
 void UAttributeComponent::RegenStamina(float DeltaTime)
 {
-	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
+	AttributeSet->SetStamina(FMath::Clamp(AttributeSet->GetStamina() + StaminaRegenRate * DeltaTime, 0.f, AttributeSet->GetMaxStamina()));
 }
 
 void UAttributeComponent::UpdateTotalSouls(int32 NumberOfSouls)
@@ -64,7 +64,7 @@ void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 
 void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	Health = FMath::Clamp(Health - DamageAmount, 0.f, MaxHealth);
+	AttributeSet->SetHealth(FMath::Clamp(AttributeSet->GetHealth() - DamageAmount, 0.f, AttributeSet->GetMaxHealth()));
 
 	// Only proceed if owner is our expected character type
 	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(GetOwner()))
@@ -88,5 +88,5 @@ void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struc
 
 void UAttributeComponent::UseStamina(float StaminaCost)
 {
-	Stamina = FMath::Clamp(Stamina - StaminaCost, 0.f, MaxStamina);
+	AttributeSet->SetStamina(FMath::Clamp(AttributeSet->GetStamina() - StaminaCost, 0.f, AttributeSet->GetMaxStamina()));
 }

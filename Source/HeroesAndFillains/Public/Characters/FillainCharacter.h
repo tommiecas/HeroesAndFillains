@@ -54,6 +54,7 @@ enum class EBattlePrepped : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageWidget, float, Level);
 
 UCLASS()
 class HEROESANDFILLAINS_API AFillainCharacter : public ABaseCharacter, public IInteractWithCrosshairsInterface, public IPickupInterface
@@ -71,7 +72,17 @@ public:
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
+	void InitASC();
 
+	UPROPERTY()
+	UHAFAttributeSet* HAFAS = nullptr;
+
+	
+	/*******************************
+	****    Combat Interface    ****
+	*******************************/
+
+	virtual int32 GetPlayerLevel() override;
 
 	// virtual void Restart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -147,8 +158,6 @@ public:
 	****    HAF COMPONENTS    *****
 	******************************/
 	
-	
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UBuffComponent* Buff;
 
@@ -158,6 +167,8 @@ public:
 	void CacheDamageParameters(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
 	void ResetCachedDamageParameters();
 
+	UPROPERTY(BlueprintAssignable, Category="UI|Events")
+	FOnMessageWidget OnMessageWidget;
 	/************
 	** Jumping **
 	************/
@@ -352,39 +363,8 @@ public:
 
     virtual void MeleeAttack() override;
 	bool IsOccupied();
-	bool HasEnoughStamina();
+	bool HasEnoughStamina(const float Cost) const;
 	void Dodge();
-
-	
-
-
-	/*****************
-	** Player Stats **
-	*****************/
-/*
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
-	float Health = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxHealth = 100.f;
-
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
-	float Shield = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxShield = 100.f;
-
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
-	float Stamina = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxStamina = 100.f;
-
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats")
-	float Majix = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	float MaxMajix = 100.f;*/
 	
 	FTimerHandle EliminationTimer;
 
@@ -412,6 +392,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Stats")
 	UHAFAttributeSet* HAFAttributes;
+
+	UPROPERTY() bool bASCReady = false;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -698,16 +680,15 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadingMontage() const { return ReloadingMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() const { return Buff; }
-	FORCEINLINE void SetHealth(const float Amount) const { HAFAttributes->Health = Amount; }
-	FORCEINLINE void SetShield(const float Amount) const { HAFAttributes->Shield = Amount; }
-	FORCEINLINE void SetStamina(const float Amount) const { HAFAttributes->Stamina = Amount; }
-	FORCEINLINE void SetMajix(const float Amount) const { HAFAttributes->Majix = Amount; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	ETeam GetTeam();
 	FORCEINLINE AItem* GetOverlappingItem() const { return OverlappingItem; }
 	FORCEINLINE AWeaponBase* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	FORCEINLINE AController* GetCachedEventInstigator() const { return CachedEventInstigator; }
-
+	FORCEINLINE void SetHealth(const float Amount) const { if (HAFAttributes) HAFAttributes->SetHealth(Amount); }
+	FORCEINLINE void SetShield(const float Amount) const { if (HAFAttributes) HAFAttributes->SetShield(Amount); }
+	FORCEINLINE void SetStamina(const float Amount) const { if (HAFAttributes) HAFAttributes->SetStamina(Amount); }
+	FORCEINLINE void SetMajix(const float Amount) const { if (HAFAttributes) HAFAttributes->SetMajix(Amount); }
 
 };
