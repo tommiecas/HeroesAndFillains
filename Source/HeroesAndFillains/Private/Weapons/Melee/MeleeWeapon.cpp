@@ -3,24 +3,19 @@
 
 #include "Weapons/Melee/MeleeWeapon.h"
 
-#include "NiagaraComponent.h"
 #include "Characters/FillainCharacter.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/ItemInfoWidgetBase.h"
-#include "HUD/PickupWidgetComponent.h"
-#include "Net/UnrealNetwork.h"
 #include "Weapons/WeaponBase.h"
-#include "HUD/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponTypes.h"
-#include "Weapons/Melee/ChaosSword.h"
 #include "Components/BoxComponent.h"
-#include "Components/SphereComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
-#include "Kismet/GameplayStatics.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "Enemies/EnemyBase.h"
+#include "DrawDebugHelpers.h"
+#include "HAFComponents/CombatComponent.h" // if you want to pull from there
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
@@ -28,6 +23,7 @@ AMeleeWeapon::AMeleeWeapon()
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
 	WeaponBox->SetupAttachment(WeaponMesh, TEXT("RootSocket"));
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	WeaponBox->SetBoxExtent(FVector(10.f, 50.f, 50.f)); // exaggerate to test
@@ -133,26 +129,29 @@ void AMeleeWeapon::OnEquippedSecondary()
 
 void AMeleeWeapon::BeginAttack()
 {
-	// UE_LOG(LogTemp, Warning, TEXT("BeginAttack — Tracing Started. Time: %f"), GetWorld()->GetTimeSeconds());
 	bIsTracing = true;
-
 	IgnoreActors.Empty();
 
-	/* for (AActor* Ignored : IgnoreActors)
+	// Cache Vision pad from the owner (server does the authoritative traces)
+	CachedVisionPadCM = 0.f;
+	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
-	} */
-	
+		// If you implemented CurrentHitAssistPaddingCM on the combat component:
+		if (FC->Combat)
+		{
+			// Optionally: FC->Combat->ServerCacheHitAssistPadding(); // if you RPC’d earlier
+			CachedVisionPadCM = FC->Combat->CurrentHitAssistPaddingCM; // replicated
+		}
+		else
+		{
+			// Fallback: compute directly
+			CachedVisionPadCM = FC->GetHitAssistPaddingCM();
+		}
+	}
+
 	LastTraceLocationTip  = TracePointTip->GetComponentLocation();
 	LastTraceLocationMid  = TracePointMid->GetComponentLocation();
 	LastTraceLocationHilt = TracePointHilt->GetComponentLocation();
-
-	IgnoreActors.Empty();
-	/* for (AActor* Ignored : IgnoreActors)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🛑 Ignoring: %s"), *Ignored->GetName());
-	} */
-	// UE_LOG(LogTemp, Warning, TEXT("🗡 Melee Trace Started"));
 }
 
 void AMeleeWeapon::ImplementLineTraceGetHit(FHitResult Hit)
@@ -175,63 +174,74 @@ void AMeleeWeapon::ImplementLineTraceGetHit(FHitResult Hit)
 
 void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint)
 {
-	FVector CurrentLocation = TracePoint->GetComponentLocation();
-	FHitResult Hit;
+	 const FVector CurrentLocation = TracePoint->GetComponentLocation();
 
-	TArray<AActor*> ActorsToIgnore = { this, GetOwner() };
+    TArray<AActor*> ActorsToIgnore = { this, GetOwner() };
+    for (AActor* Actor : IgnoreActors)
+    {
+        ActorsToIgnore.AddUnique(Actor);
+    }
 
-	for (AActor* Actor : IgnoreActors)
-	{
-		ActorsToIgnore.AddUnique(Actor);
-	}
+    // Radius = base blade thickness + Vision pad
+    const float TraceRadius = FMath::Clamp(BaseTraceRadiusCM + CachedVisionPadCM, 0.f, 30.f);
 
-	bool bHit = UKismetSystemLibrary::LineTraceSingle(
-		this,
-		LastLocation,
-		CurrentLocation,
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		Hit,
-		true
-	);
-	AActor* HitActor = Hit.GetActor(); // or whatever you're using
-	
-	/* if (HitActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("HitActor Name: %s"), *HitActor->GetName());
-	} */
-	
-	if (Hit.GetActor())
-	{
-		if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
-		{
-			HitBase->CachedDamageAmount = MeleeDamage;
-			HitBase->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
-			HitBase->CachedEventInstigator = GetInstigator()->GetController();
-			HitBase->CachedDamageCauser = this;
+    // Use the same trace channel you already used (TraceTypeQuery1).
+    // If that channel hits world AND characters, consider switching this to “ForObjects” and only include Pawns.
+    TArray<FHitResult> Hits;
+    const bool bHitAny = UKismetSystemLibrary::SphereTraceMulti(
+        this,
+        LastLocation,
+        CurrentLocation,
+        TraceRadius,
+        ETraceTypeQuery::TraceTypeQuery1,
+        /*bTraceComplex=*/ false,
+        ActorsToIgnore,
+        EDrawDebugTrace::None,
+        Hits,
+        /*bIgnoreSelf=*/ true
+    );
 
-			HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
-		}
-		if (HitActor->GetInstigator() == GetInstigator())
-		{
-			return;
-		}
+    if (bHitAny)
+    {
+        for (const FHitResult& Hit : Hits)
+        {
+            AActor* HitActor = Hit.GetActor();
+            if (!HitActor) continue;
 
-		/* UE_LOG(LogTemp, Warning, TEXT("🎯 Melee hit %s | Instigator: %s | Owner: %s"),
-		*GetNameSafe(HitActor),
-		*GetNameSafe(GetInstigator()),
-		*GetNameSafe(GetOwner())); */
-		
-		ImplementLineTraceGetHit(Hit);
-		IgnoreActors.AddUnique(Hit.GetActor());
+            // Skip self/owner just in case
+            if (HitActor == this || HitActor == GetOwner()) continue;
 
-		CreateFields(Hit.ImpactPoint);
+            // Don’t multi-hit same actor this swing
+            if (IgnoreActors.Contains(HitActor)) continue;
 
-		
-		// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 10, FColor::Red, false, 0.1f, 0, 10.f);
-	}
+            // Only process characters (avoid world clutter)
+            if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
+            {
+                HitBase->CachedDamageAmount      = MeleeDamage;
+                HitBase->CachedDamageEvent       = FDamageEvent(UDamageType::StaticClass());
+                HitBase->CachedEventInstigator   = GetInstigator()->GetController();
+                HitBase->CachedDamageCauser      = this;
+
+                HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
+                ImplementLineTraceGetHit(Hit); // your extra handling is fine
+
+                IgnoreActors.AddUnique(HitActor);
+                CreateFields(Hit.ImpactPoint);
+            }
+        }
+    }
+
+#if !(UE_BUILD_SHIPPING)
+    // Visualize the Vision-assisted sweep for debugging
+    const FVector Mid = (LastLocation + CurrentLocation) * 0.5f;
+    const FVector Delta = CurrentLocation - LastLocation;
+    const float HalfLen = Delta.Size() * 0.5f;
+    const FQuat Rot = FRotationMatrix::MakeFromZ(Delta.GetSafeNormal()).ToQuat();
+    DrawDebugCapsule(GetWorld(), Mid, HalfLen, TraceRadius, Rot, FColor::Cyan, false, 0.05f, 0, 0.75f);
+#endif
+
+    // Advance
+    LastLocation = CurrentLocation;
 }
 
 void AMeleeWeapon::TickAttackTrace()

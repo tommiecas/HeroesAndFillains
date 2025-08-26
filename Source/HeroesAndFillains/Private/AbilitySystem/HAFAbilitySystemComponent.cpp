@@ -3,9 +3,13 @@
 
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 
+#include "HAFGameplayTags.h"
+
 void UHAFAbilitySystemComponent::AbilityActorInfoSet()
 {
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UHAFAbilitySystemComponent::EffectApplied);
+
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
 }
 
 void UHAFAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent,

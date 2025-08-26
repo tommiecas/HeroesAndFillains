@@ -13,6 +13,7 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+
 USTRUCT()
 struct FEffectProperties
 {
@@ -47,6 +48,10 @@ struct FEffectProperties
 	ACharacter* TargetCharacter = nullptr;
 };
 
+//typedef TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
+
+template<class T>
+using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateUserPolicy>::FFuncPtr;
 /**
  * 
  */
@@ -61,6 +66,8 @@ public:
 	void SetAttributeFromComponent(FGameplayAttributeData& Attribute, float AttributeValue);
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 
 	/*********************************
 	****    PRIMARY ATTRIBUTES    ****
@@ -210,6 +217,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Majix, Category = "Vital Attributes")
 	FGameplayAttributeData Majix;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Majix);
+
+	/***********************************
+	****    INVISIBLE ATTRIBUTES    ****
+	***********************************/
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DexterityAgilityFlexibility, Category = "Invisible Attributes")
+	FGameplayAttributeData DexterityAgilityFlexibility;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, DexterityAgilityFlexibility);
 	
 	UFUNCTION()
 	void OnRep_Strength(const FGameplayAttributeData& OldStrength) const;
@@ -312,6 +327,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_Majix(const FGameplayAttributeData& OldMajix) const;
+
+	UFUNCTION()
+	void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldDexterityAgilityFlexibility) const;
 
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const;

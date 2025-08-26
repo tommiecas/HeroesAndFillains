@@ -43,32 +43,32 @@ public:
 	float StaminaRegenRate = 8.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Actor Attributes")
-	UHAFAttributeSet* AttributeSet;
+	UHAFAttributeSet* FillAttSet;
 
 public:
-	FORCEINLINE bool IsCharacterAlive() const { return AttributeSet->GetHealth() > 0.f; }
-	FORCEINLINE float GetHealth() const { return AttributeSet->GetHealth(); }
-	FORCEINLINE float GetMaxHealth() const { return AttributeSet->GetMaxHealth(); }
-	FORCEINLINE void SetHealth(float NewHealth) const{ AttributeSet->SetHealth(NewHealth); }
-	FORCEINLINE void SetMaxHealth(float NewMaxHealth) const { AttributeSet->SetMaxHealth(NewMaxHealth); }
+	FORCEINLINE bool IsCharacterAlive() const { return FillAttSet->GetHealth() > 0.f; }
+	FORCEINLINE float GetHealth() const { return FillAttSet->GetHealth(); }
+	FORCEINLINE float GetMaxHealth() const { return FillAttSet->GetMaxHealth(); }
+	FORCEINLINE void SetHealth(float NewHealth) const{ FillAttSet->SetHealth(NewHealth); }
+	FORCEINLINE void SetMaxHealth(float NewMaxHealth) const { FillAttSet->SetMaxHealth(NewMaxHealth); }
 
-	FORCEINLINE float GetShield() const { return AttributeSet->GetShield(); }
-	FORCEINLINE float GetMaxShield() const { return AttributeSet->GetMaxShield(); }
-	FORCEINLINE float GetShieldPercent() const { return AttributeSet->GetShield() / AttributeSet->GetMaxShield(); }
-	FORCEINLINE void SetShield(const float NewShield) const { AttributeSet->SetShield(NewShield); }
-	FORCEINLINE void SetMaxShield(const float NewMaxShield) const { AttributeSet->SetMaxShield(NewMaxShield); }
+	FORCEINLINE float GetShield() const { return FillAttSet->GetShield(); }
+	FORCEINLINE float GetMaxShield() const { return FillAttSet->GetMaxShield(); }
+	FORCEINLINE float GetShieldPercent() const { return FillAttSet->GetShield() / FillAttSet->GetMaxShield(); }
+	FORCEINLINE void SetShield(const float NewShield) const { FillAttSet->SetShield(NewShield); }
+	FORCEINLINE void SetMaxShield(const float NewMaxShield) const { FillAttSet->SetMaxShield(NewMaxShield); }
 
 	float GetStamina() const; 
-	FORCEINLINE float GetMaxStamina() const { return AttributeSet->GetMaxStamina(); }
-	FORCEINLINE float GetStaminaPercent() const { return AttributeSet->GetStamina() / AttributeSet->GetMaxStamina(); }
-	FORCEINLINE void SetStamina(const float NewStamina) const { AttributeSet->SetStamina(NewStamina); }
-	FORCEINLINE void SetMaxStamina(const float NewMaxStamina) const { AttributeSet->SetMaxStamina(NewMaxStamina); }
+	FORCEINLINE float GetMaxStamina() const { return FillAttSet->GetMaxStamina(); }
+	FORCEINLINE float GetStaminaPercent() const { return FillAttSet->GetStamina() / FillAttSet->GetMaxStamina(); }
+	FORCEINLINE void SetStamina(const float NewStamina) const { FillAttSet->SetStamina(NewStamina); }
+	FORCEINLINE void SetMaxStamina(const float NewMaxStamina) const { FillAttSet->SetMaxStamina(NewMaxStamina); }
 
-	FORCEINLINE float GetMajix() const  { return AttributeSet->GetMajix(); }
-	FORCEINLINE float GetMaxMajix() const { return AttributeSet->GetMaxMajix(); }
-	FORCEINLINE float GetMajixPercent() const { return AttributeSet->GetMajix() / AttributeSet->GetMaxMajix(); }
-	FORCEINLINE void SetMajix(const float NewMajix) const { AttributeSet->SetMajix(NewMajix); }
-	FORCEINLINE void SetMaxMajix(const float NewMaxMajix) const { AttributeSet->SetMaxMajix(NewMaxMajix); }
+	FORCEINLINE float GetMajix() const  { return FillAttSet->GetMajix(); }
+	FORCEINLINE float GetMaxMajix() const { return FillAttSet->GetMaxMajix(); }
+	FORCEINLINE float GetMajixPercent() const { return FillAttSet->GetMajix() / FillAttSet->GetMaxMajix(); }
+	FORCEINLINE void SetMajix(const float NewMajix) const { FillAttSet->SetMajix(NewMajix); }
+	FORCEINLINE void SetMaxMajix(const float NewMaxMajix) const { FillAttSet->SetMaxMajix(NewMaxMajix); }
 	
 	FORCEINLINE float GetStaminaRegenRate() const { return StaminaRegenRate; }
 	FORCEINLINE void SetStaminaRegenRate(float NewStaminaRegenRate) { StaminaRegenRate = NewStaminaRegenRate; }

@@ -19,6 +19,7 @@
 #include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "AIController.h"
 #include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Components/BoxComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -29,9 +30,12 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Weapons/Ranged/RangedWeapon.h"
+#include "NavigationSystem.h"
 
-
+static FGameplayTag TAG_State_Charmed = FGameplayTag::RequestGameplayTag(FName("State.Charmed"));
+static FGameplayTag TAG_State_Fleeing = FGameplayTag::RequestGameplayTag(FName("State.Fleeing"));
 AEnemyBase::AEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -75,6 +79,9 @@ AEnemyBase::AEnemyBase()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
+
+	TeamId = FGenericTeamId(0);
+
 }
 
 void AEnemyBase::HighlightActor()
@@ -125,6 +132,101 @@ void AEnemyBase::Tick(float DeltaTime)
 	}
 }
 
+
+void AEnemyBase::TriggerCharm(AActor* InPlayerActor)
+{
+    if (bIsCharmed || bIsFleeing) return;
+    CachedPlayer = InPlayerActor;
+
+    bIsCharmed = true;
+    AddStateTag(TAG_State_Charmed);
+
+    // Flip to player's ally team so AISense/attitude treats 'Enemy' team as hostile instead.
+    SetGenericTeamId(/*PlayerAlly*/ 1);
+
+    // Nudge BT
+    if (AAIController* AIC = Cast<AAIController>(GetController()))
+    {
+        if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
+        {
+            BB->SetValueAsBool(TEXT("IsCharmed"), true);
+            BB->SetValueAsObject(TEXT("PlayerActor"), CachedPlayer);
+        }
+    }
+}
+
+FGenericTeamId AEnemyBase::GetGenericTeamId() const
+{
+	return TeamId;
+}
+
+void AEnemyBase::BeginFlee()
+{
+    if (bIsFleeing) return;
+
+    bIsCharmed = false;
+    RemoveStateTag(TAG_State_Charmed);
+
+    bIsFleeing = true;
+    AddStateTag(TAG_State_Fleeing);
+
+    // Optionally reduce friction to help “slide” off ledges
+    GetCharacterMovement()->GroundFriction = 0.5f;
+
+    if (AAIController* AIC = Cast<AAIController>(GetController()))
+    {
+        if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
+        {
+            BB->SetValueAsBool(TEXT("IsCharmed"), false);
+            BB->SetValueAsBool(TEXT("IsFleeing"), true);
+        }
+    }
+
+    DoNextFleeHop();
+}
+
+void AEnemyBase::DoNextFleeHop()
+{
+    if (!CachedPlayer) return;
+    const FVector Me = GetActorLocation();
+    const FVector Player = CachedPlayer->GetActorLocation();
+    const FVector AwayDir = (Me - Player).GetSafeNormal();
+    const FVector RawDest = Me + AwayDir * FleeHopDistance;
+
+    // Try to project on navmesh to keep moving until a drop is found
+    FNavLocation Projected;
+    if (const UNavigationSystemV1* Nav = UNavigationSystemV1::GetCurrent(GetWorld()))
+    {
+        if (Nav->ProjectPointToNavigation(RawDest, Projected))
+        {
+            if (AAIController* AIC = Cast<AAIController>(GetController()))
+            {
+                if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
+                {
+                    BB->SetValueAsVector(TEXT("RunDestination"), Projected.Location);
+                }
+                AIC->MoveToLocation(Projected.Location, /*AcceptanceRadius=*/50.f);
+            }
+        }
+        else
+        {
+            // No navmesh further away — just run straight and likely fall
+            AddMovementInput(AwayDir, 1.0f);
+        }
+    }
+}
+
+void AEnemyBase::AddStateTag(const FGameplayTag& Tag)
+{
+    // If you have an ASC, add the loose tag or apply a small GE that grants it.
+    // If not using GAS, you can ignore this and rely on bIsCharmed/bIsFleeing.
+}
+
+void AEnemyBase::RemoveStateTag(const FGameplayTag& Tag)
+{
+    // Mirror of AddStateTag
+}
+
 float AEnemyBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
@@ -156,6 +258,15 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	if (!IsEnemyDead()) ShowHealthBarWidgetComponent();
 	ClearPatrolTimer();
 	ClearAttackTimer();
+
+	static const FName FillainTag("FillainCharacter");
+	if (bIsCharmed)
+	{
+		if (Hitter && Hitter->ActorHasTag(FillainTag))
+		{
+			return; // refuse to fire/strike
+		}
+	}
 	
 	StopMontage(CurrentAttackMontage);
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);

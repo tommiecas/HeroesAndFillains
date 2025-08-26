@@ -8,8 +8,10 @@
 #include "Interfaces/HitInterface.h"
 #include "AbilitySystemInterface.h"
 #include "Interfaces/CombatInterface.h"
+#include "Interfaces/CapsuleInterface.h"
 #include "BaseCharacter.generated.h"
 
+struct FGameplayAttribute;
 class UGameplayEffect;
 class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
@@ -30,7 +32,7 @@ enum EDeathPose
 	EDP_MAX UMETA(DisplayName = "DefaultMAX")
 };
 UCLASS()
-class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface
+class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface, public ICapsuleInterface
 {
 	GENERATED_BODY()
 
@@ -208,8 +210,10 @@ public:
 	virtual UAttributeSet* GetAttributeSet() const { return AttributeSet; };
 	virtual UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; };
 
+	void MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator);
 
-
+	void LogSecondaries_Client() const;
+	void LogSecondaries_Server() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -234,6 +238,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultInvisibleAttributes;
+
 	void ApplyStartupEffects();
 
 
@@ -244,6 +251,10 @@ protected:
 private:
 
 public:
+	static float SafeGetNumeric(const UAbilitySystemComponent* ASC,
+							const UHAFAttributeSet* AS,
+							const FGameplayAttribute& Attr);
+	static float SafeGet(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS, const FGameplayAttribute& Attr);
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	
 

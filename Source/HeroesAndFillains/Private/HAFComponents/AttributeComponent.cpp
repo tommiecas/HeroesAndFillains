@@ -8,7 +8,7 @@
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	AttributeSet = nullptr; 
+	FillAttSet = nullptr; 
 	SoulsGathered = 0;
 	GoldAcquired = 0; // Ensure we start from a defined value
 }
@@ -30,7 +30,12 @@ float UAttributeComponent::GetStamina() const
 
 void UAttributeComponent::RegenStamina(float DeltaTime)
 {
-	AttributeSet->SetStamina(FMath::Clamp(AttributeSet->GetStamina() + StaminaRegenRate * DeltaTime, 0.f, AttributeSet->GetMaxStamina()));
+	if (AFillainCharacter* Fillain = Cast<AFillainCharacter>(GetOwner()))
+	{
+		FillAttSet = Cast<UHAFAttributeSet>(Fillain->GetAttributeSet());
+		FillAttSet->SetStamina(FMath::Clamp(FillAttSet->GetStamina() + StaminaRegenRate * DeltaTime, 0.f, FillAttSet->GetMaxStamina()));		
+	}
+
 }
 
 void UAttributeComponent::UpdateTotalSouls(int32 NumberOfSouls)
@@ -64,7 +69,7 @@ void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 
 void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	AttributeSet->SetHealth(FMath::Clamp(AttributeSet->GetHealth() - DamageAmount, 0.f, AttributeSet->GetMaxHealth()));
+	FillAttSet->SetHealth(FMath::Clamp(FillAttSet->GetHealth() - DamageAmount, 0.f, FillAttSet->GetMaxHealth()));
 
 	// Only proceed if owner is our expected character type
 	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(GetOwner()))
@@ -88,5 +93,29 @@ void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struc
 
 void UAttributeComponent::UseStamina(float StaminaCost)
 {
-	AttributeSet->SetStamina(FMath::Clamp(AttributeSet->GetStamina() - StaminaCost, 0.f, AttributeSet->GetMaxStamina()));
+	if (ABaseCharacter* Char = Cast<ABaseCharacter>(GetOwner()))
+	{
+		if (!Char->AbilitySystemComponent || !Char->HAFAttributeSet)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UseStamina: ASC or AttributeSet not ready"));
+			return;
+		}
+
+		const float MaxSta = Char->GetHAFAttributeSet()->GetMaxStamina(); // inline getter is fine now
+		const float CurSta = Char->GetHAFAttributeSet()->GetStamina();
+
+		if (!FMath::IsFinite(MaxSta) || !FMath::IsFinite(CurSta))
+		{
+			UE_LOG(LogTemp, Error, TEXT("UseStamina: Non-finite values (Cur:%f Max:%f)"), CurSta, MaxSta);
+			return;
+		}
+
+		if (CurSta < StaminaCost) return;
+
+		// Apply a GE to modify Stamina, or write directly if you’re not using GEs:
+		// Avoid direct writes if you’re in full GAS; prefer gameplay effects.
+		// ...
+		
+		FillAttSet->SetStamina(FMath::Clamp(FillAttSet->GetStamina() - StaminaCost, 0.f, FillAttSet->GetMaxStamina()));
+	}
 }

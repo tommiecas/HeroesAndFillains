@@ -12,14 +12,14 @@
 #include "GameplayEffect.h"            // FGameplayEffectSpec, UGameplayEffect
 #include "GameplayEffectTypes.h"       // FActiveGameplayEffectHandle
 #include "Engine/DataTable.h"          // UDataTable
-#include "AbilitySystem/HAFEffectActor.h"            // AHAFEffectActor (for SourceObject cast)
+#include "Items/CustomDesignedPCPickupItem.h"            // ACustomDesignedPCPickupItem (for SourceObject cast)
 
 void UOverlayWidgetController::OnGEAddedToSelf(UAbilitySystemComponent* /*TargetASC*/,
                                                const FGameplayEffectSpec& SpecApplied,
                                                FActiveGameplayEffectHandle /*ActiveHandle*/)
 {
 		const UObject* SourceObj = SpecApplied.GetContext().GetSourceObject();
-		const AHAFEffectActor* EffectActor = Cast<AHAFEffectActor>(SourceObj);
+		const ACustomDesignedPCPickupItem* EffectActor = Cast<ACustomDesignedPCPickupItem>(SourceObj);
 		LastEffectActorLevel = EffectActor ? EffectActor->GetActorLevel() : 0;
 
 		const FGameplayTagContainer* AssetTags =

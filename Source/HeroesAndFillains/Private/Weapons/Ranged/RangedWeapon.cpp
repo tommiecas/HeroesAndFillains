@@ -26,7 +26,64 @@
 ARangedWeapon::ARangedWeapon()
 	: Super()
 {
-	
+	// Initialize the WeaponAmmoMap
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_AssaultRifle,    EAmmoType::EAT_ARAmmo);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_RocketLauncher,  EAmmoType::EAT_Rockets);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_Pistol,          EAmmoType::EAT_Bullets);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_SubmachineGun,   EAmmoType::EAT_Magazines);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_Shotgun,         EAmmoType::EAT_Shells);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_GrenadeLauncher, EAmmoType::EAT_LaunchedGrenades);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_SniperRifle,     EAmmoType::EAT_SniperAmmo);
+}
+
+TMap<ERangedType, EAmmoType> ARangedWeapon::RangedWeaponAmmoMap;
+
+void ARangedWeapon::BuildWeaponAmmoMapIfNeeded()
+{
+	if (RangedWeaponAmmoMap.Num() > 0) return;
+
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_AssaultRifle,    EAmmoType::EAT_ARAmmo);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_RocketLauncher,  EAmmoType::EAT_Rockets);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_Pistol,          EAmmoType::EAT_Bullets);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_SubmachineGun,   EAmmoType::EAT_Magazines);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_Shotgun,         EAmmoType::EAT_Shells);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_GrenadeLauncher, EAmmoType::EAT_LaunchedGrenades);
+	RangedWeaponAmmoMap.Add(ERangedType::ERT_SniperRifle,     EAmmoType::EAT_SniperAmmo);
+}
+
+const TMap<ERangedType, EAmmoType>& ARangedWeapon::GetWeaponAmmoMap()
+{
+	BuildWeaponAmmoMapIfNeeded();
+	return RangedWeaponAmmoMap;
+}
+
+bool ARangedWeapon::TryGetRangedTypeForAmmo(EAmmoType Ammo, ERangedType& OutRangedType)
+{
+	BuildWeaponAmmoMapIfNeeded();
+
+	for (const TPair<ERangedType, EAmmoType>& Pair : RangedWeaponAmmoMap)
+	{
+		if (Pair.Value == Ammo)
+		{
+			OutRangedType = Pair.Key;
+			return true;
+		}
+	}
+	return false;
+}
+
+ERangedType GetWeaponForAmmo(EAmmoType AmmoType, const TMap<ERangedType, EAmmoType>& RangedWeaponAmmoMap)
+{
+	for (const TPair<ERangedType, EAmmoType>& Pair : RangedWeaponAmmoMap)
+	{
+		if (Pair.Value == AmmoType)
+		{
+			return Pair.Key; // Found the weapon that uses this ammo
+		}
+	}
+
+	// Default fallback if not found
+	return ERangedType::ERT_None; // Or a special "None" enum if you add one
 }
 
 void ARangedWeapon::SetEquippedRangedWeaponState()

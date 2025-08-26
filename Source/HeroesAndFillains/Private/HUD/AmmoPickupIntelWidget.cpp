@@ -120,8 +120,8 @@ FString UAmmoPickupIntelWidget::GetPickupTypeDisplayName(ERangedType RangedWeapo
 					return FString("Rockets");
 				case EAmmoType::EAT_Bullets:
 					return FString("Bullets");
-				case EAmmoType::EAT_Magazine:
-					return FString("Magazine");
+				case EAmmoType::EAT_Magazines:
+					return FString("Magazines");
 				case EAmmoType::EAT_Shells:
 					return FString("Shells");
 				case EAmmoType::EAT_SniperAmmo:

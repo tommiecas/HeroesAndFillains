@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/Item.h"
+#include "Items/PrePackagedPCPickupItem.h"
 #include "Soul.generated.h"
 
 class AEnemyBase;
@@ -11,7 +11,7 @@ class AEnemyBase;
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API ASoul : public AItem
+class HEROESANDFILLAINS_API ASoul : public APrePackagedPCPickupItem
 {
 	GENERATED_BODY()
 

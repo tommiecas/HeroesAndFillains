@@ -19,6 +19,22 @@ enum class EFireType : uint8
 	EFT_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+UENUM(BlueprintType)
+enum class EAmmoType : uint8
+{
+	EAT_None UMETA(DisplayName = "None"),
+
+	EAT_ARAmmo UMETA(DisplayName = "ARAmmo"),
+	EAT_Rockets UMETA(DisplayName = "Rockets"),
+	EAT_Bullets UMETA(DisplayName = "Bullets"),
+	EAT_Magazines UMETA(DisplayName = "Magazines"),
+	EAT_Shells UMETA(DisplayName = "Shells"),
+	EAT_SniperAmmo UMETA(DisplayName = "SniperAmmo"),
+	EAT_LaunchedGrenades UMETA(DisplayName = "Grenades"),
+	
+	EAT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
 UCLASS()
 class HEROESANDFILLAINS_API ARangedWeapon : public AWeaponBase
 {
@@ -33,6 +49,8 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
+	UPROPERTY()
+	EAmmoType AmmoType = EAmmoType::EAT_None;
 	
 	void AddAmmo(int32 AmmoToAdd);
 	FVector TraceEndWithScatter(const FVector& HitTarget);
@@ -103,6 +121,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EFireType FireType;
 
+	// Your forward map: Weapon -> Ammo
+	static const TMap<ERangedType, EAmmoType>& GetWeaponAmmoMap();
+	
+	// Reverse lookup: Ammo -> Weapon (returns false if not found)
+	static bool TryGetRangedTypeForAmmo(EAmmoType Ammo, ERangedType& OutRangedType);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -134,6 +157,9 @@ protected:
 	
 	
 private:
+	static TMap<ERangedType, EAmmoType> RangedWeaponAmmoMap;
+	static void BuildWeaponAmmoMapIfNeeded();
+	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	ERangedType RangedTypeOfWeapon = ERangedType::ERT_None;
 	
@@ -172,6 +198,7 @@ public:
 	bool IsRangedWeaponEmpty();
 	bool IsRangedWeaponFull();
 	FORCEINLINE ERangedType GetRangedType() const { return RangedTypeOfWeapon; }
+	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	FORCEINLINE UItemInfoWidgetBase* GetItemInfoWidget() const { return ItemInfoWidget; }

@@ -10,6 +10,8 @@
 #include "Items/Soul.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "GenericTeamAgentInterface.h"
+#include "GameplayTagContainer.h"
 #include "EnemyBase.generated.h"
 
 class ARangedWeapon;
@@ -31,7 +33,7 @@ enum class EEnemyState : uint8
 };
 
 UCLASS()
-class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter, public IEnemyInterface
+class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter, public IEnemyInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -50,7 +52,7 @@ public:
 	*******************************/
 
 	virtual int32 GetPlayerLevel() override;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "UI")
 	bool bHighlighted = false;
 	
@@ -106,6 +108,48 @@ public:
 
 	UFUNCTION()
 	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
+
+	UFUNCTION(BlueprintCallable)
+	void TriggerCharm(AActor* InPlayerActor);
+	
+	// IGenericTeamAgentInterface
+	virtual FGenericTeamId GetGenericTeamId() const override; // declaration only
+	virtual void SetGenericTeamId(const FGenericTeamId& InTeamId) override { TeamId = InTeamId; }
+
+	// Called by BT Service when no enemy remains or player dead
+	UFUNCTION(BlueprintCallable)
+	void BeginFlee();
+
+	// Accessors the BT will use:
+	bool IsCharmed() const { return bIsCharmed; }
+	bool IsFleeing() const { return bIsFleeing; }
+	AActor* GetCachedPlayer() const { return CachedPlayer; }
+
+	// Recompute next hop after reaching last hop
+	void DoNextFleeHop();
+	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsCharmed = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsFleeing = false;
+
+	UPROPERTY()
+	AActor* CachedPlayer = nullptr;
+
+	// Team ids: 0 = Enemy (default), 1 = PlayerAlly (charmed)
+	FGenericTeamId TeamId = FGenericTeamId(0);
+
+	// How far to run each hop while fleeing
+	UPROPERTY(EditDefaultsOnly, Category="Charm")
+	float FleeHopDistance = 5000.f;
+
+	
+
+	// Helper: apply/remove GAS tags if you’re on GAS
+	void AddStateTag(const FGameplayTag& Tag);
+	void RemoveStateTag(const FGameplayTag& Tag);
 
 protected:
 	virtual void BeginPlay() override;

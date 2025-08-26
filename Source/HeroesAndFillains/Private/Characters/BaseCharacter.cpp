@@ -35,6 +35,8 @@
 #include "HAFComponents/BuffComponent.h"  
 #include "Components/CapsuleComponent.h"  
 #include <Kismet/KismetMathLibrary.h>  
+
+#include "K2Node_CallFunction.h"
 #include "Characters/FillainAnimInstance.h"  
 #include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"  
@@ -66,7 +68,13 @@
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "GameFramework/Controller.h"
-
+#include "ModifiedMagnitudeCalculations/MMC_Agility.h"
+#include "ModifiedMagnitudeCalculations/MMC_DexterityAgilityFlexibility.h"
+#include "ModifiedMagnitudeCalculations/MMC_Intuition.h"
+#include "ModifiedMagnitudeCalculations/MMC_MaxHealth.h"
+#include "ModifiedMagnitudeCalculations/MMC_MaxMajix.h"
+#include "ModifiedMagnitudeCalculations/MMC_MaxShield.h"
+#include "ModifiedMagnitudeCalculations/MMC_MaxStamina.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -96,14 +104,14 @@ void ABaseCharacter::BeginPlay()
 	if (IsA(AFillainCharacter::StaticClass()) && this->ActorHasTag(TEXT("FillainCharacter")))
 	{
 		GetCapsuleComponent()->SetCollisionObjectType(ECC_PlayerCharacter);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Enemy, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);	
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pickupable, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Treasure, ECollisionResponse::ECR_Overlap);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Area, ECollisionResponse::ECR_Overlap);
 		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
 	}
 	else if (IsA(AEnemyBase::StaticClass()) && this->ActorHasTag(TEXT("Enemy")))
 	{
@@ -116,14 +124,7 @@ void ABaseCharacter::BeginPlay()
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
 		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	}
-	else
-	{
-		GetCapsuleComponent()->SetCollisionObjectType(ECC_WorldStatic);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-	}
+	else return;
 }
 
 
@@ -288,6 +289,31 @@ void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const&
 	{
 		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
+	AActor* InstigatorActor = Cast<AActor>(EventInstigator);
+	MaybeTriggerCharm(this, InstigatorActor);
+}
+
+void ABaseCharacter::MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator)
+{
+	if (!DamagedActor || DamageInstigator)
+	{
+		const float CurrentCharm = GetHAFAttributeSet()->GetCharm();
+		const float CharmPct = CurrentCharm / 100.f;
+		if (CharmPct <= 0.f) return;
+		
+		const float Roll = FMath::FRandRange(0.f, 100.f);
+		if (Roll <= CharmPct)
+		{
+			if (AEnemyBase* Enemy = Cast<AEnemyBase>(this))
+			{
+				Enemy->TriggerCharm(DamageInstigator);
+			}
+			else if (AFillainCharacter* Fillain = Cast<AFillainCharacter>(this))
+			{
+				Enemy->TriggerCharm(DamageInstigator);
+			}
+		}
+	}
 }
 
 void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& SectionName)
@@ -405,6 +431,17 @@ void ABaseCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffe
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), GetAbilitySystemComponent());
 }
 
+float ABaseCharacter::SafeGetNumeric(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS,
+	const FGameplayAttribute& Attr)
+{
+	return (ASC && AS) ? ASC->GetNumericAttribute(Attr) : NAN;
+}
+
+float ABaseCharacter::SafeGet(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS, const FGameplayAttribute& Attr)
+{
+    return (ASC && AS) ? ASC->GetNumericAttribute(Attr) : NAN;
+}
+
 void ABaseCharacter::ApplyStartupEffects()
 {
 	if (!HasAuthority() || !AbilitySystemComponent) return;
@@ -423,23 +460,183 @@ void ABaseCharacter::ApplyStartupEffects()
 	ApplyGE(DefaultPrimaryAttributes);
 	ApplyGE(DefaultSecondaryAttributes); // <-- where your Max* (e.g., MaxHealth) usually gets set
 	ApplyGE(DefaultVitalAttributes);
+	ApplyGE(DefaultInvisibleAttributes);
+	if (HasAuthority() && AttributeSet)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SERVER] After ApplyStartupEffects: Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f MaxHealth=%f MaxShield=%f MaxStamina=%f MaxMajix=%f"),
+			HAFAttributeSet->GetArmor(),
+			HAFAttributeSet->GetArmorPenetration(),
+			HAFAttributeSet->GetBlockChance(),
+			HAFAttributeSet->GetCriticalHitChance(),
+			HAFAttributeSet->GetCriticalHitDamage(),
+			HAFAttributeSet->GetCriticalHitResistance(),
+			HAFAttributeSet->GetAgility(),
+			HAFAttributeSet->GetFlexibility(),
+			HAFAttributeSet->GetPurity(),
+			HAFAttributeSet->GetCorruptibility(),
+			HAFAttributeSet->GetIntuition(),
+			HAFAttributeSet->GetVision(),
+			HAFAttributeSet->GetCharm(),
+			HAFAttributeSet->GetHealthRegeneration(),
+			HAFAttributeSet->GetShieldRegeneration(),
+			HAFAttributeSet->GetStaminaRegeneration(),
+			HAFAttributeSet->GetMajixRegeneration(),
+			HAFAttributeSet->GetMaxHealth(),
+			HAFAttributeSet->GetMaxShield(),
+			HAFAttributeSet->GetMaxStamina(),
+			HAFAttributeSet->GetMaxMajix());
+			
+	}
 }
 
 void ABaseCharacter::InitializeDefaultAttributes() const
 {
-	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
-	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
-	const auto MaxAttr = UHAFAttributeSet::GetMaxHealthAttribute();
-	UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
+	if (!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC is NULL in InitializeDefaultAttributes"));
+		return;
+	}
+
+	if (!HAFAttributeSet)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is NULL in InitializeDefaultAttributes (called too early?)"));
+		return;
+	}
+
+	if (HasAuthority())
+	{
+		ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
+		ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+		const auto MaxAttr = UHAFAttributeSet::GetMaxHealthAttribute();
+		UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
 		   AbilitySystemComponent->GetNumericAttribute(MaxAttr));
 
-	if (const auto* HAF = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAF->GetMaxHealth());
+		if (const auto* HAF = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAF->GetMaxHealth());
+		}
+		ApplyEffectToSelf((DefaultVitalAttributes), 1.f);
+		ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
+		if (!AbilitySystemComponent)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ASC is NULL in InitializeDefaultAttributes"));
+			return;
+		}
+
+		if (!HAFAttributeSet)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is NULL in InitializeDefaultAttributes (called too early?)"));
+			return;
+		}
+
+		if (HasAuthority())
+		{
+			ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
+			ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
+		}
+
+		// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
+		UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
+			"Armor=%.3f ArmorPenetration=%.3f BlockChance=%.3f CriticalHitChance=%.3f CriticalHitDamage=%.3f CriticalHitResistance=%.3f "
+			"Agility=%.3f Flexibility=%.3f Purity=%.3f Corruptibility=%.3f Intuition=%.3f Vision=%.3f Charm=%.3f "
+			"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
+			"MaxHealth=%.3f MaxShield=%.3f MaxStamina=%.3f MaxMajix=%.3f"),
+			HasAuthority(),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorPenetrationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetBlockChanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitChanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitDamageAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitResistanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetAgilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetFlexibilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetPurityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCorruptibilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetIntuitionAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetVisionAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCharmAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetHealthRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetShieldRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetStaminaRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMajixRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxHealthAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxShieldAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxStaminaAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxMajixAttribute())
+		);
+		LogSecondaries_Server();
 	}
-	ApplyEffectToSelf((DefaultVitalAttributes), 1.f);
 }
 
+void ABaseCharacter::LogSecondaries_Server() const
+{
+    const UAbilitySystemComponent* ASC = AbilitySystemComponent;
+    const UHAFAttributeSet* AS = HAFAttributeSet;
+
+    UE_LOG(LogTemp, Warning, TEXT("[SERVER] After InitializeDefaultAttributes: "
+        "Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f "
+        "Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f "
+        "HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f "
+        "MaxHealth=%f MaxShield=%f MaxStamina=%f MaxMajix=%f"),
+        SafeGetNumeric(ASC, AS, AS->GetArmorAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetArmorPenetrationAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetBlockChanceAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetCriticalHitChanceAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetCriticalHitDamageAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetCriticalHitResistanceAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetAgilityAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetFlexibilityAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetPurityAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetCorruptibilityAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetIntuitionAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetVisionAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetCharmAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetHealthRegenerationAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetShieldRegenerationAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetStaminaRegenerationAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetMajixRegenerationAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetMaxHealthAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetMaxShieldAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetMaxStaminaAttribute()),
+        SafeGetNumeric(ASC, AS, AS->GetMaxMajixAttribute())
+    );
+}
+
+void ABaseCharacter::LogSecondaries_Client() const
+{
+	if (!IsLocallyControlled()) return;
+
+	if (AbilitySystemComponent && HAFAttributeSet)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] On Widget Init: "
+		"Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f "
+		"Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f "
+		"HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f "
+		"MaxHealth=%f MaxShield=%f MaxStamina=%f MaxMajix=%f"),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorPenetrationAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetBlockChanceAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitChanceAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitDamageAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitResistanceAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetAgilityAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetFlexibilityAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetPurityAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCorruptibilityAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetIntuitionAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetVisionAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCharmAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetHealthRegenerationAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetShieldRegenerationAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetStaminaRegenerationAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMajixRegenerationAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxHealthAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxShieldAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxStaminaAttribute()),
+		SafeGetNumeric(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxMajixAttribute())
+	);
+	}
+}
 void ABaseCharacter::DisableMeshCollision()
 {
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);;

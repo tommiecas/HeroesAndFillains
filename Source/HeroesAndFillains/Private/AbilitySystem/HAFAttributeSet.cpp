@@ -4,13 +4,54 @@
 #include "AbilitySystemGlobals.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
+#include "HAFGameplayTags.h"
 
 UHAFAttributeSet::UHAFAttributeSet()
 {
-	InitHealth(50.f);
-	InitShield(75.f);
-	InitStamina(20.f);
-	InitMajix(10.f);
+	InitStrength(10.f);
+	InitIntelligence(17.f);
+	InitResilience(12.f);
+	InitVigor(10.f);
+	InitDexterity(15.f);
+	InitMarksmanship(12.f);
+	InitWisdom(9.f);
+	InitCharisma(13.f);
+
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+
+	
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, GetStrengthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, GetIntelligenceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience, GetResilienceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor, GetVigorAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Dexterity, GetDexterityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Marksmanship, GetMarksmanshipAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Wisdom, GetWisdomAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Charisma, GetCharismaAttribute);
+
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Armor, GetArmorAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, GetArmorPenetrationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_BlockChance, GetBlockChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitChance, GetCriticalHitChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitDamage, GetCriticalHitDamageAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitResistance, GetCriticalHitResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Agility, GetAgilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Flexibility, GetFlexibilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Purity, GetPurityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Corruptibility, GetCorruptibilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Intuition, GetIntuitionAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Vision, GetVisionAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Charm, GetCharmAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_HealthRegeneration, GetHealthRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ShieldRegeneration, GetShieldRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_StaminaRegeneration, GetStaminaRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MajixRegeneration, GetMajixRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxShield, GetMaxShieldAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina, GetMaxStaminaAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMajix, GetMaxMajixAttribute);
+
+	TagsToAttributes.Add(GameplayTags.Attributes_Invisible_DexterityAgilityFlexibility, GetDexterityAgilityFlexibilityAttribute);
 }
 
 void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -53,6 +94,8 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Shield, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Majix, COND_None, REPNOTIFY_Always);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, COND_None, REPNOTIFY_Always);
 }
 
 void UHAFAttributeSet::SetAttributeFromComponent(FGameplayAttributeData& Attribute, float Value)
@@ -176,6 +219,9 @@ void UHAFAttributeSet::OnRep_Charisma(const FGameplayAttributeData& OldCharisma)
 void UHAFAttributeSet::OnRep_Armor(const FGameplayAttributeData& OldArmor) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Armor, OldArmor);
+	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_Armor fired: Old=%.2f New=%.2f"),
+		static_cast<double>(OldArmor.GetCurrentValue()),
+		static_cast<double>(Armor.GetCurrentValue()));
 }
 
 void UHAFAttributeSet::OnRep_ArmorPenetration(const FGameplayAttributeData& OldArmorPenetration) const
@@ -301,4 +347,10 @@ void UHAFAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina) c
 void UHAFAttributeSet::OnRep_Majix(const FGameplayAttributeData& OldMajix) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Majix, OldMajix);
+}
+
+void UHAFAttributeSet::OnRep_DexterityAgilityFlexibility(
+	const FGameplayAttributeData& OldDexterityAgilityFlexibility) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, OldDexterityAgilityFlexibility);
 }

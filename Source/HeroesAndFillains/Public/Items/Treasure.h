@@ -3,15 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PCPickupBaseItem.h"
 #include "Interfaces/PickupInterface.h"
-#include "Items/Item.h"
+#include "Items/PrePackagedPCPickupItem.h"
 #include "Treasure.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class HEROESANDFILLAINS_API ATreasure : public AItem
+class HEROESANDFILLAINS_API ATreasure : public APrePackagedPCPickupItem
 {
 	GENERATED_BODY()
 

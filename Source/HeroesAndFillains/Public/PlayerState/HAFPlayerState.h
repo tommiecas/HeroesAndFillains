@@ -29,13 +29,13 @@ public:
 
 	// Convenience getters
 	UFUNCTION(BlueprintCallable)
-	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const { return AbilitySystemComponent; }
+	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const { return HAFAbilitySystemComponent; }
 	UFUNCTION(BlueprintCallable)
-	UHAFAttributeSet* GetHAFAttributeSet() const { return AttributeSet; }
+	UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; }
 
 	// Legacy base-class getters if you still use them
 	UFUNCTION(BlueprintCallable)
-	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	UAttributeSet* GetAttributeSet() const { return HAFAttributeSet; }
 
 	/*
 	** Replication Notifies
@@ -49,10 +49,10 @@ public:
 protected:
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UHAFAbilitySystemComponent> AbilitySystemComponent = nullptr;
+	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UHAFAttributeSet> AttributeSet = nullptr;
+	TObjectPtr<UHAFAttributeSet> HAFAttributeSet = nullptr;
 
 private:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Level)

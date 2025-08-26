@@ -9,6 +9,7 @@
 #include "Weapons/WeaponTypes.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Melee/MeleeWeapon.h"
+#include "Net/UnrealNetwork.h"
 
 #include "CombatComponent.generated.h"
 
@@ -59,6 +60,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool AreMeshesValid(AWeaponBase* Weapon) const;
+
+	UPROPERTY(Replicated)
+	float CurrentHitAssistPaddingCM = 0.f;
+
+	// Call at attack start (melee, firing, casting)
+	UFUNCTION(Server, Reliable)
+	void Server_CacheHitAssistPadding();
 	
 	void FireButtonPressed(bool bPressed);
 

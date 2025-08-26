@@ -6,6 +6,8 @@
 #include "GameFramework/HUD.h"
 #include "FillainHUD.generated.h"
 
+class UAttributeMenuWidgetController;
+class UDebugButton;
 class UCharacterOverlayFixed;
 class UHAFUserWidget;
 class UAttributeSet;
@@ -46,6 +48,7 @@ public:
 	UPROPERTY()
 	TObjectPtr<UHAFUserWidget> OverlayWidget;
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
+	UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams);
 
 	UPROPERTY()
 	TObjectPtr<UCharacterOverlayFixed>  CharacterOverlayWidgetFixed;
@@ -70,6 +73,7 @@ public:
 
 	UPROPERTY()
 	bool bIsOverlayInitialized = false;
+
 	
 protected:
 	
@@ -97,7 +101,11 @@ private:
 	UPROPERTY()
 	TArray<UEliminationAnnouncement*> EliminationMessages;
 
-	
+	UPROPERTY()
+	TObjectPtr<UAttributeMenuWidgetController> AttributeMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 	

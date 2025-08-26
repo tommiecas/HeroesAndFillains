@@ -6,7 +6,7 @@
 #include "Weapons/WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
-#include "Items/Item.h"
+#include "Items/PrePackagedPCPickupItem.h"
 #include "WeaponBase.generated.h"
 
 class UItemInfoWidgetBase;
@@ -43,7 +43,7 @@ enum class EWeaponState : uint8
 };
 
 UCLASS(Blueprintable)
-class HEROESANDFILLAINS_API AWeaponBase : public AItem
+class HEROESANDFILLAINS_API AWeaponBase : public APCPickupBaseItem
 {
 	GENERATED_BODY()
 	
@@ -61,15 +61,30 @@ public:
 
 	UFUNCTION()
 	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
+
+	virtual void OnSphereOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+	virtual void OnSphereEndOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Unclaimed;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class USphereComponent* AreaSphere;
+	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponCategory, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponCategory WeaponCategory = EWeaponCategory::EWC_NothingButYourFists;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
+	EWeaponType WeaponType = EWeaponType::EWT_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
+	EMeleeType MeleeType = EMeleeType::EMT_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
+	ERangedType RangedType = ERangedType::ERT_None;
 
 	UPROPERTY()
 	FTimerHandle VisualEffectsTimerHandle;
@@ -139,21 +154,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	FVector InitialMeshScale = FVector(1.0f);
-
-	
-    	virtual void OnSphereOverlap(
-    		UPrimitiveComponent* OverlappedComponent, 
-    		AActor* OtherActor,
-    		UPrimitiveComponent* OtherComp,
-    		int32 OtherBodyIndex,
-    		bool bFromSweep, 
-    		const FHitResult& SweepResult);
-	
-    	virtual void OnSphereEndOverlap(
-    		UPrimitiveComponent* OverlappedComponent,
-    		AActor* OtherActor,
-    		UPrimitiveComponent* OtherComp,
-    		int32 OtherBodyIndex);
 	
 	template<typename T>
 	static T Avg(T First, T Second);
@@ -189,9 +189,9 @@ private:
 
 public:
 	void SetWeaponState(EWeaponState State);
-	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }

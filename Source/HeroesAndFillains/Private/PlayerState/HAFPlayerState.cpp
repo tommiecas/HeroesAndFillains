@@ -10,13 +10,15 @@
 
 AHAFPlayerState::AHAFPlayerState()
 {
-	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	check(AbilitySystemComponent);
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	HAFAbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("ASC"));
+	HAFAbilitySystemComponent->SetIsReplicated(true);
+	HAFAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
-	check(AttributeSet);
+	HAFAttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("HAFAttributeSet")); // <- key line
+
+	// (optional) quick sanity logs
+	UE_LOG(LogTemp, Warning, TEXT("[PS::Ctor] ASC=%s AS=%s"),
+		*GetNameSafe(HAFAbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
 
 	SetNetUpdateFrequency(100.f);
 }
@@ -61,7 +63,7 @@ void AHAFPlayerState::OnRep_Score()
 
 UAbilitySystemComponent* AHAFPlayerState::GetAbilitySystemComponent() const
 {
-	return AbilitySystemComponent;
+	return HAFAbilitySystemComponent;
 }
 
 void AHAFPlayerState::AddToDefeats(int32 DefeatsAmount)

@@ -31,6 +31,7 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 
 	BaseWalkSpeed = 800.f;
 	AimWalkSpeed = 600.f;
@@ -62,6 +63,8 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, ActionState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
 	DOREPLIFETIME(UCombatComponent, bWieldingTheSword);
+	DOREPLIFETIME(UCombatComponent, CurrentHitAssistPaddingCM);
+
 }
 
 bool UCombatComponent::AreMeshesValid(AWeaponBase* Weapon) const
@@ -284,8 +287,19 @@ void UCombatComponent::TraceForCrossHairTarget()
 	}
 }
 
+void UCombatComponent::Server_CacheHitAssistPadding_Implementation()
+{
+	if (AFillainCharacter* OwnerChar = Cast<AFillainCharacter>(GetOwner()))
+	{
+		CurrentHitAssistPaddingCM = OwnerChar->GetHitAssistPaddingCM();
+		UE_LOG(LogTemp, Verbose, TEXT("[Assist] Cached Vision pad = %.1f cm"), CurrentHitAssistPaddingCM);
+	}
+}
+
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
+	if (GetOwnerRole() == ROLE_Authority) Server_CacheHitAssistPadding();
+	else Server_CacheHitAssistPadding(); // RPC to server
 	if (FightingStyle != EFightingStyle::EFS_Ranged || FightingStyle != EFightingStyle::EFS_Melee) return;
 	if (FightingStyle == EFightingStyle::EFS_Ranged)
 	{
@@ -321,6 +335,8 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
+	if (GetOwnerRole() == ROLE_Authority) Server_CacheHitAssistPadding();
+	else Server_CacheHitAssistPadding();
 	if (EquippedWeapon == nullptr) return;
 	if (Character && ActionState == EActionState::EAS_Reloading && RangedType == ERangedType::ERT_Shotgun)
 	{
@@ -339,42 +355,40 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 void UCombatComponent::Fire()
 {
 	if (FightingStyle != EFightingStyle::EFS_Ranged) return;
+	if (CanFire())
 	{
-		// UE_LOG(LogTemp, Warning, TEXT("CombatComponent::Fire() called"));
-
-		if (CanFire())
+		if (GetOwnerRole() == ROLE_Authority) Server_CacheHitAssistPadding();
+		else Server_CacheHitAssistPadding();
+		// UE_LOG(LogTemp, Warning, TEXT("CanFire() == true"));
+		bCanGunFire = false;
+		if (EquippedRangedWeapon)
 		{
-			// UE_LOG(LogTemp, Warning, TEXT("CanFire() == true"));
-			bCanGunFire = false;
-			if (EquippedRangedWeapon)
-			{
-				// UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
-				//	*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
+			// UE_LOG(LogTemp, Warning, TEXT("EquippedRangedWeapon: %s, FireType: %d"),
+			//	*EquippedRangedWeapon->GetName(), (int32)EquippedRangedWeapon->FireType);
 
-				CrosshairShootingFactor = 0.75f;
+			CrosshairShootingFactor = 0.75f;
 
-				switch (EquippedRangedWeapon->FireType)
-				{
-				case EFireType::EFT_Projectile:
-					// UE_LOG(LogTemp, Warning, TEXT("Calling FireProjectileWeapon()"));
-					FireProjectileWeapon();
-					break;
-				case EFireType::EFT_HitScan:
-					// UE_LOG(LogTemp, Warning, TEXT("Calling FireHitScanWeapon()"));
-					FireHitScanWeapon();
-					break;
-				case EFireType::EFT_Shotgun:
-					// UE_LOG(LogTemp, Warning, TEXT("Calling FireShotgun()"));
-					FireShotgun();
-					break;
-				}
-			}	
-			else
+			switch (EquippedRangedWeapon->FireType)
 			{
-				// UE_LOG(LogTemp, Warning, TEXT("CanFire() == false"));
+			case EFireType::EFT_Projectile:
+				// UE_LOG(LogTemp, Warning, TEXT("Calling FireProjectileWeapon()"));
+				FireProjectileWeapon();
+				break;
+			case EFireType::EFT_HitScan:
+				// UE_LOG(LogTemp, Warning, TEXT("Calling FireHitScanWeapon()"));
+				FireHitScanWeapon();
+				break;
+			case EFireType::EFT_Shotgun:
+				// UE_LOG(LogTemp, Warning, TEXT("Calling FireShotgun()"));
+				FireShotgun();
+				break;
 			}
-			StartFireTimer();
+		}		
+		else
+		{
+			// UE_LOG(LogTemp, Warning, TEXT("CanFire() == false"));
 		}
+		StartFireTimer();
 	}
 }
 

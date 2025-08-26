@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Items/Item.h"
+#include "Items/PrePackagedPCPickupItem.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/FillainCharacter.h"
@@ -19,42 +19,49 @@
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "Interfaces/PickupInterface.h"
 
-AItem::AItem()
+APrePackagedPCPickupItem::APrePackagedPCPickupItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	SetReplicateMovement(true);
+	
+	PrimaryActorTick.bCanEverTick = false;
 
-	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	SetRootComponent(ItemMesh);
-
+	ItemMesh   = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PP_ItemMesh"));
+	ItemMesh->SetupAttachment(RootComponent);
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	ItemMesh->SetGenerateOverlapEvents(false);
+	ItemMesh->SetUsingAbsoluteLocation(false);
+	ItemMesh->SetUsingAbsoluteRotation(false);
+	ItemMesh->SetUsingAbsoluteScale(false);
+	ItemMesh->SetRelativeTransform(FTransform::Identity);
+	
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemEffect"));
+	ItemEffect->SetupAttachment(RootComponent, TEXT("EffectSocket"));   // <-- use SetupAttachment
+	ItemEffect->SetRelativeTransform(FTransform::Identity);
+	ItemEffect->bAutoActivate = true;
+	ItemEffect->SetUsingAbsoluteLocation(false);
+	ItemEffect->SetUsingAbsoluteRotation(false);
+	ItemEffect->SetUsingAbsoluteScale(false);
 	
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
-	AreaSphere->SetSphereRadius(200.f);
+	AreaSphere->SetSphereRadius(125.f, true);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AreaSphere->SetCollisionObjectType(ECC_WorldDynamic); // Or your custom PCWeaponBox
+	AreaSphere->SetCollisionObjectType(ECC_Pickupable); // Or your custom PCWeaponBox
 	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
 	AreaSphere->SetGenerateOverlapEvents(true);
 	AreaSphere->AddLocalOffset(FVector(0.f, 0.f, 85.f));
-
 	AreaSphere->SetHiddenInGame(true);
 	AreaSphere->ShapeColor = FColor::Green;
+	AreaSphere->SetCanEverAffectNavigation(false);
 
-	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemEffect"));
-	ItemEffect->SetupAttachment(RootComponent);
-	ItemEffect->SetHiddenInGame(false);
-	ItemEffect->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
-	ItemEffect->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
-	ItemEffect->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-	ItemEffect->SetVisibility(true);
+	AreaShape  = AreaSphere; // base will wire HiddenTreasure to this
 }
 
-void AItem::BeginPlay()
+void APrePackagedPCPickupItem::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -66,11 +73,11 @@ void AItem::BeginPlay()
 		return;
 	}*/
 
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
-	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnSphereOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnSphereEndOverlap);
 }
 
-void AItem::PostInitializeComponents()
+void APrePackagedPCPickupItem::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
@@ -82,7 +89,7 @@ void AItem::PostInitializeComponents()
 	}
 }
 
-void AItem::EnableCustomDepth(bool bEnable)
+void APrePackagedPCPickupItem::EnableCustomDepth(bool bEnable)
 {
 	if (ItemMesh)
 	{
@@ -94,38 +101,26 @@ void AItem::EnableCustomDepth(bool bEnable)
 	}
 }
 
-float AItem::TransformedSin()
+void APrePackagedPCPickupItem::ApplyPickupEffect_Implementation(class AFillainCharacter* PlayerChar)
 {
-	return Amplitude * FMath::Sin(RunningTime * TimeConstant);
+	if (!PlayerChar || !EffectToApply) return;
+	if (auto* ASC = PlayerChar->FindComponentByClass<UAbilitySystemComponent>())
+	{
+		ASC->ApplyGameplayEffectToSelf(EffectToApply->GetDefaultObject<UGameplayEffect>(), 1.f, ASC->MakeEffectContext());
+	}
+	if (ItemEffect) ItemEffect->Activate(true);
 }
 
-float AItem::TransformedCos()
-{
-	return Amplitude * FMath::Cos(RunningTime * TimeConstant);
-}
-
-void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void APrePackagedPCPickupItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
 	
-	// Prevent equippable weapons already in use from being set as overlapping
-	if (IsA(AWeaponBase::StaticClass()))
-	{
-		AWeaponBase* Weapon = Cast<AWeaponBase>(this);
-		if (Weapon && Weapon->ItemState == EItemState::EIS_Equipped) return;
-
-		// Set OverlappingWeapon (and implicitly OverlappingItem if you wish)
-		PickupInterface->SetOverlappingWeapon(Weapon);
-	}
-	else
-	{
 		// Set OverlappingItem for non-weapon item types
 		PickupInterface->SetOverlappingItem(this);
-	}
 }
 
-void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void APrePackagedPCPickupItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
 	if (!PickupInterface) return;
@@ -139,7 +134,7 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	PickupInterface->SetOverlappingItem(nullptr);
 }
 
-void AItem::SpawnPickupSystem()
+void APrePackagedPCPickupItem::SpawnPickupSystem()
 {
 	if (PickupEffect)
 	{
@@ -151,7 +146,7 @@ void AItem::SpawnPickupSystem()
 	}
 }
 
-void AItem::SpawnPickupSound()
+void APrePackagedPCPickupItem::SpawnPickupSound()
 {
 	if (PickupSound)
 	{
@@ -163,7 +158,7 @@ void AItem::SpawnPickupSound()
 	}
 }
 
-void AItem::Tick(float DeltaTime)
+void APrePackagedPCPickupItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	RunningTime += DeltaTime;
@@ -175,8 +170,9 @@ void AItem::Tick(float DeltaTime)
 	
 }
 
-void AItem::ShowPickupAndInfoWidgets(bool bShow)
+void APrePackagedPCPickupItem::ShowPickupAndInfoWidgets(bool bShow)
 {
 	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(bShow);
 	if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(bShow);
 }
+

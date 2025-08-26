@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "HUD/WidgetControllers/HAFWidgetController.h"
 #include "GameplayEffectTypes.h"
-#include "AbilitySystem/HAFEffectActor.h"
+#include "Items/CustomDesignedPCPickupItem.h"
 #include "OverlayWidgetController.generated.h"
 
 class UAttributeComponent;
@@ -14,7 +14,7 @@ class UHAFUserWidget;
 class UHAFWidgetController;
 class UDataTable;
 class UAbilitySystemComponent;
-class AHAFEffectActor;
+class ACustomDesignedPCPickupItem;
 struct FUIWidgetRow;
 
 USTRUCT(BlueprintType)
@@ -33,7 +33,7 @@ struct FUIWidgetRow : public FTableRowBase
 
 	// If you want to reference a class/type (OK in DataTables):
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<AHAFEffectActor> EffectActorClass = nullptr;
+	TSubclassOf<ACustomDesignedPCPickupItem> EffectActorClass = nullptr;
 
 	// Your message widget class (OK in DataTables)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

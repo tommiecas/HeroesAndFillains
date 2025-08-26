@@ -8,8 +8,6 @@
 #include "EnhancedInputSubsystems.h"  
 #include "EnhancedInputComponent.h"  
 #include "Components/WidgetComponent.h"  
-#include "GameFramework/PlayerState.h"  
-#include "HUD/OverheadWidget.h"  
 #include "Net/UnrealNetwork.h"  
 #include "Weapons/WeaponBase.h"
 #include "HAFComponents/CombatComponent.h"  
@@ -17,7 +15,6 @@
 #include "Components/CapsuleComponent.h"  
 #include <Kismet/KismetMathLibrary.h>  
 #include "Characters/FillainAnimInstance.h"  
-#include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 #include "PlayerController/FillainPlayerController.h"  
 #include "GameMode/HAFGameMode.h"  
@@ -27,9 +24,6 @@
 #include "Particles/ParticleSystemComponent.h"  
 #include "PlayerState/HAFPlayerState.h"  
 #include "Weapons/WeaponTypes.h"  
-#include "Weapons/WeaponTypes.h"
-#include "GameMode/LobbyGameMode.h"  
-#include "Weapons/Ranged/Projectile.h"
 #include "Components/BoxComponent.h"  
 #include "HAFComponents/LagCompensationComponent.h"  
 #include "NiagaraComponent.h"  
@@ -42,82 +36,45 @@
 #include "Pickups/AmmoPickup.h"
 #include "Components/StaticMeshComponent.h"
 #include "HAFComponents/AttributeComponent.h"
-#include "HUD/CharacterOverlayFixed.h"
 #include "Items/Treasure.h"
 #include "Items/Soul.h"
 #include "AbilitySystemComponent.h"
-#include "EnhancedPlayerInput.h"
 #include "InputCoreTypes.h"
 #include "InputActionValue.h"
 #include "InputTriggers.h"
-#include "InputAction.h"
-#include "EnhancedInputSubsystems.h"
 #include "CommonInputSubsystem.h"
 #include "CommonInputTypeEnum.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
-
-
-#include "Characters/FillainCharacter.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/InputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
-#include "Components/WidgetComponent.h"
-#include "GameFramework/PlayerState.h"
-#include "HUD/OverheadWidget.h"
-#include "Net/UnrealNetwork.h"
-#include "HAFComponents/CombatComponent.h"
-#include "HAFComponents/BuffComponent.h"
-#include "Components/CapsuleComponent.h"
-#include <Kismet/KismetMathLibrary.h>
-
-#include "IPersonaPreviewScene.h"
-#include "NavigationSystem.h"
-#include "Characters/FillainAnimInstance.h"
-#include "HeroesAndFillains/HeroesAndFillains.h"
-#include "PlayerController/FillainPlayerController.h"
-#include "GameMode/HAFGameMode.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "TimerManager.h"
-#include "Kismet/GameplayStatics.h"
-#include "Sound/SoundCue.h"
-#include "Particles/ParticleSystemComponent.h"
-#include "PlayerState/HAFPlayerState.h"
-#include "Weapons/WeaponTypes.h"
-#include "GameMode/LobbyGameMode.h"
-#include "Components/BoxComponent.h"
-#include "HAFComponents/LagCompensationComponent.h"
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Enemies/EnemyBase.h"
-#include "GameFramework/InputDeviceSubsystem.h"
-#include "GameStates/HAFGameState.h"
-#include "HUD/CharacterOverlayFixed.h"
-#include "Items/Soul.h"
-#include "Items/Treasure.h"
-#include "Pickups/AmmoPickup.h"
 #include "Pickups/HealthPickup.h"
 #include "Pickups/MajixPickup.h"
 #include "Pickups/ShieldPickup.h"
 #include "Pickups/StaminaPickup.h"
-#include "PlayerStart/TeamPlayerStart.h"
-#include "Weapons/Ranged/RangedWeapon.h"
+#include "HAFComponents/HiddenTreasureComponent.h"
+#include "HAFComponents/HiddenTreasureScannerComponent.h"
 
 
 AFillainCharacter::AFillainCharacter()
 {
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	SetRootComponent(GetCapsuleComponent());
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);	
-	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Overlap);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_PlayerCharacter);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);	
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pickupable, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Treasure, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Area, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	
 	
 	PrimaryActorTick.bCanEverTick = true;
 	// SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -150,10 +107,10 @@ AFillainCharacter::AFillainCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 	
 	GetMesh()->SetGenerateOverlapEvents(true);
-	GetMesh()->SetCollisionObjectType(ECC_PlayerCharacter);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	GetMesh()->SetCollisionObjectType(ECC_Mesh);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Overlap);
 	
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	SetNetUpdateFrequency(100.f);
@@ -255,7 +212,22 @@ AFillainCharacter::AFillainCharacter()
 
 void AFillainCharacter::BeginPlay()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay A"));
 	Super::BeginPlay();
+	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay B"));
+	
+	InitFillainCharacterCapsuleBaselinesIfNeeded(); 
+
+	if (CameraBoom)
+	{
+		CameraBoom->bDoCollisionTest = false;   // prevents retraction
+		CameraBoom->TargetArmLength  = 300.f;   // your usual 3P distance
+	}
+	bUseControllerRotationYaw = false;
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->bOrientRotationToMovement = true;
+	}
 
 	bIsCharacterDead = false;
 
@@ -306,15 +278,92 @@ void AFillainCharacter::BeginPlay()
 
 	Tags.Add(FName("FillainCharacter"));
 
+	Tags.Add(FName("Fillain"));
+
 	HAFAttributes = GetHAFAttributeSet();
 
 	TArray<UUserWidget*> AllWidgets;
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), AllWidgets, UUserWidget::StaticClass(), false);
 
-	for (UUserWidget* Widget : AllWidgets)
+	UCapsuleComponent* Cap = GetCapsuleComponent();
+	check(Cap && GetMesh());
+	StandingUnscaledHalfHeight = Cap->GetUnscaledCapsuleHalfHeight();
+	StandingUnscaledRadius     = Cap->GetUnscaledCapsuleRadius();
+	StandingScaledHalfHeight   = Cap->GetScaledCapsuleHalfHeight();
+	StandingMeshRelZ           = GetMesh()->GetRelativeLocation().Z;
+
+	// Get ASC
+	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
+	
+	// Initial sync to whatever values we start with
+	RequestFillainCharacterCapsuleUpdate();
+		
+	if (ASC && HAFAttributeSet)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("📦 Widget in Viewport: %s | Outer: %s"), *Widget->GetName(), *Widget->GetOuter()->GetName());
+		// Bind to Intuition changes
+		ASC->GetGameplayAttributeValueChangeDelegate(HAFAttributeSet->GetIntuitionAttribute())
+		.AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			const float IntuitionFraction = Data.NewValue; // fraction (0.25 = +25%)
+
+			// Apply to any HiddenTreasureComponent attached directly to this actor
+			for (auto* HT : TInlineComponentArray<UHiddenTreasureComponent*>(this, true))
+			{
+				HT->ApplyIntuitionScale(IntuitionFraction);
+			}
+		});
 	}
+}
+
+void AFillainCharacter::RequestFillainCharacterCapsuleUpdate()
+{
+    // Schedule once for next tick so Agi/Flex updates caused by Dex settle first
+    if (!GetWorld()) return;
+    if (!GetWorldTimerManager().IsTimerActive(FillainCharacterCapsuleUpdateTimer))
+    {
+        GetWorldTimerManager().SetTimer(FillainCharacterCapsuleUpdateTimer, this,
+            &AFillainCharacter::ApplyFillainCharacterCapsuleFromCurrentStats, 0.0f, false);
+    }
+
+	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay C (binding attrs)"));
+	BindHiddenTreasureCapsuleHooksOnce();
+	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay D (done)"));
+}
+
+void AFillainCharacter::ApplyFillainCharacterCapsuleFromCurrentStats()
+{
+    if (!ASC) return;
+
+    // Read *current* attributes (Agi/Flex already reflect any Dex change)
+    const float Agility     = ASC->GetNumericAttribute(UHAFAttributeSet::GetAgilityAttribute());
+    const float Flexibility = ASC->GetNumericAttribute(UHAFAttributeSet::GetFlexibilityAttribute());
+
+    const float AgiPct  = FMath::Clamp(Agility,     0.f, 100.f) * 0.01f;
+    const float FlexPct = FMath::Clamp(Flexibility, 0.f, 100.f) * 0.01f;
+
+    // Same formula you used in the MMC, but applied safely here:
+    float TargetUnscaledHalf   = StandingUnscaledHalfHeight * (1.f - AgiPct);
+    float TargetUnscaledRadius = StandingUnscaledRadius     * (1.f - FlexPct);
+
+    // Clamp to sane mins so we never go too small
+    TargetUnscaledHalf   = FMath::Clamp(TargetUnscaledHalf,   StandingUnscaledHalfHeight * 0.50f, StandingUnscaledHalfHeight);
+    TargetUnscaledRadius = FMath::Clamp(TargetUnscaledRadius, StandingUnscaledRadius     * 0.60f, StandingUnscaledRadius);
+
+    // Optional tiny change filter
+    if (FMath::IsNearlyEqual(TargetUnscaledHalf,   LastAppliedHalf,   0.1f) &&
+        FMath::IsNearlyEqual(TargetUnscaledRadius, LastAppliedRadius, 0.1f))
+    {
+        return;
+    }
+
+    ApplyFillainCharacterCapsuleSize_FeetPlanted(TargetUnscaledHalf, TargetUnscaledRadius);
+    LastAppliedHalf   = TargetUnscaledHalf;
+    LastAppliedRadius = TargetUnscaledRadius;
+}
+
+void AFillainCharacter::RestoreStandingFillainCharacterCapsule()
+{
+	ApplyFillainCharacterCapsuleSize_FeetPlanted(StandingUnscaledHalfHeight, StandingUnscaledRadius);
 }
 
 void AFillainCharacter::Tick(float DeltaTime)
@@ -542,16 +591,16 @@ void AFillainCharacter::Heal(float Magnitude)
 {
 	if (!HealingEffect || !this) return;
 
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	UAbilitySystemComponent* AbSysComp = GetAbilitySystemComponent();
+	if (!AbSysComp) return;
 
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(HealingEffect, 1.0f, Context);
+	FGameplayEffectContextHandle Context = AbSysComp->MakeEffectContext();
+	FGameplayEffectSpecHandle SpecHandle = AbSysComp->MakeOutgoingSpec(HealingEffect, 1.0f, Context);
 
 	if (SpecHandle.IsValid())
 	{
 		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Healing")), Magnitude);
-		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		AbSysComp->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
 
@@ -559,16 +608,16 @@ void AFillainCharacter::Fortify(float Magnitude)
 {
 	if (!ShieldFortifyingEffect || !this) return;
 
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	UAbilitySystemComponent* AbSyCo = GetAbilitySystemComponent();
+	if (!AbSyCo) return;
 
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(ShieldFortifyingEffect, 1.0f, Context);
+	FGameplayEffectContextHandle Context = AbSyCo->MakeEffectContext();
+	FGameplayEffectSpecHandle SpecHandle = AbSyCo->MakeOutgoingSpec(ShieldFortifyingEffect, 1.0f, Context);
 
 	if (SpecHandle.IsValid())
 	{
 		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Shield")), Magnitude);
-		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		AbSyCo->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
 
@@ -576,16 +625,16 @@ void AFillainCharacter::Recharge(float Magnitude)
 {
 	if (!StaminaRechargingEffect || !this) return;
 
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	UAbilitySystemComponent* ASComp = GetAbilitySystemComponent();
+	if (!ASComp) return;
 
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(StaminaRechargingEffect, 1.0f, Context);
+	FGameplayEffectContextHandle Context = ASComp->MakeEffectContext();
+	FGameplayEffectSpecHandle SpecHandle = ASComp->MakeOutgoingSpec(StaminaRechargingEffect, 1.0f, Context);
 
 	if (SpecHandle.IsValid())
 	{
 		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Stamina")), Magnitude);
-		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		ASComp->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
 
@@ -593,16 +642,16 @@ void AFillainCharacter::Summon(float Magnitude)
 {
 	if (!MajixSummoningEffect || !this) return;
 
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	UAbilitySystemComponent* ASysC = GetAbilitySystemComponent();
+	if (!ASysC) return;
 
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(MajixSummoningEffect, 1.0f, Context);
+	FGameplayEffectContextHandle Context = ASysC->MakeEffectContext();
+	FGameplayEffectSpecHandle SpecHandle = ASysC->MakeOutgoingSpec(MajixSummoningEffect, 1.0f, Context);
 
 	if (SpecHandle.IsValid())
 	{
 		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Majix")), Magnitude);
-		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		ASysC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
 
@@ -915,6 +964,28 @@ int32 AFillainCharacter::GetPlayerLevel()
 	check(State);
 	return State->GetPlayerLevel();
 	
+}
+
+double AFillainCharacter::GetCharacterCapsuleHeight()
+{
+	return GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+}
+
+double AFillainCharacter::GetCharacterCapsuleRadius()
+{
+	return GetCapsuleComponent()->GetScaledCapsuleRadius();
+}
+
+void AFillainCharacter::SetCharacterCapsuleHeight(double Height)
+{
+	float Percent = Height / 100.f;
+	GetCapsuleComponent()->SetCapsuleHalfHeight(GetCharacterCapsuleHeight() - (Percent * GetCharacterCapsuleHeight()));
+}
+
+void AFillainCharacter::SetCharacterCapsuleRadius(double Radius)
+{
+	float Percent = Radius / 100.f;
+	GetCapsuleComponent()->SetCapsuleRadius(GetCharacterCapsuleRadius() - (Percent * GetCharacterCapsuleRadius()));
 }
 
 void AFillainCharacter::Jump()
@@ -1444,27 +1515,27 @@ void AFillainCharacter::EquipButtonPressed()
 		return;
 	}
 
-	AWeaponBase* WeaponToEquip = Cast<AWeaponBase>(OverlappingWeapon ? OverlappingWeapon : OverlappingItem);
-	if (IsValid(WeaponToEquip))
+	if (ARangedWeapon* RangedWeaponToEquip = Cast<ARangedWeapon>(OverlappingWeapon))
 	{
-		ServerEquipButtonPressed(WeaponToEquip);
+		ServerEquipButtonPressed(RangedWeaponToEquip);
 		SetOverlappingItem(nullptr);
 		SetOverlappingWeapon(nullptr);
+		if (!IsValid(RangedWeaponToEquip))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("❌ No valid weapon to equip"));
+			return;
+		}
+
+		// ✅ Send to server
+		ServerEquipButtonPressed(OverlappingWeapon);
+
+		// ✅ Clean up local overlap (Dark Souls style)
+		SetOverlappingItem(nullptr);
+		SetOverlappingWeapon(nullptr);
+
+		UE_LOG(LogTemp, Warning, TEXT("✅ Cleared overlapping references after successful equip"));
 	}
-	if (!IsValid(WeaponToEquip))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("❌ No valid weapon to equip"));
-		return;
-	}
-
-	// ✅ Send to server
-	ServerEquipButtonPressed(OverlappingWeapon);
-
-	// ✅ Clean up local overlap (Dark Souls style)
-	SetOverlappingItem(nullptr);
-	SetOverlappingWeapon(nullptr);
-
-	UE_LOG(LogTemp, Warning, TEXT("✅ Cleared overlapping references after successful equip"));
+	else return;
 }
 
 void AFillainCharacter::ToggleArmingAndDisarming()
@@ -1877,6 +1948,149 @@ void AFillainCharacter::HitReactEnd()
 	Combat->ActionState = EActionState::EAS_Unoccupied;
 }
 
+float AFillainCharacter::GetHitAssistPaddingCM()
+{
+	const UAbilitySystemComponent* AbilitySC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
+	if (!AbilitySC) return 0.f;
+
+	const float VisionPct  = AbilitySC->GetNumericAttribute(UHAFAttributeSet::GetVisionAttribute()); // 0..100
+	const float VisionFrac = FMath::Clamp(VisionPct * 0.01f, 0.f, 1.f);
+
+	// 0..15 cm (~0..6 inches). Tweak to taste.
+	return FMath::Lerp(0.f, 15.f, VisionFrac);
+}
+
+void AFillainCharacter::BindHiddenTreasureCapsuleHooksOnce()
+{
+	if (bAttrHooksBound || !ASC) return;
+
+	ASC->GetGameplayAttributeValueChangeDelegate(UHAFAttributeSet::GetIntuitionAttribute())
+		.AddUObject(this, &AFillainCharacter::OnIntuitionChanged);
+
+	bAttrHooksBound = true;
+
+	if (UWorld* W = GetWorld())
+	{
+		W->GetTimerManager().SetTimerForNextTick(
+			FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				if (!IsValid(this) || !ASC) return;
+				OnIntuitionChanged(FOnAttributeChangeData{});
+			}));
+	}
+}
+
+void AFillainCharacter::BindFillainCharacterCapsuleHooksOnce()
+{
+	if (bFillainCharacterCapsuleHooksBound) return;
+
+	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
+	HAFAttributeSet = GetHAFAttributeSet(); // (whichever getter you use)
+
+	if (!ASC || !HAFAttributeSet) return;
+
+	// Bind to all three stats — your original idea is good
+	ASC->GetGameplayAttributeValueChangeDelegate(UHAFAttributeSet::GetAgilityAttribute())
+		.AddUObject(this, &AFillainCharacter::OnFillainCharacterCapsuleScaleDriverChanged);
+
+	ASC->GetGameplayAttributeValueChangeDelegate(UHAFAttributeSet::GetFlexibilityAttribute())
+		.AddUObject(this, &AFillainCharacter::OnFillainCharacterCapsuleScaleDriverChanged);
+
+	ASC->GetGameplayAttributeValueChangeDelegate(UHAFAttributeSet::GetDexterityAttribute())
+		.AddUObject(this, &AFillainCharacter::OnFillainCharacterCapsuleScaleDriverChanged);
+
+	// Kick an initial sync on whichever side we’re on
+	OnFillainCharacterCapsuleScaleDriverChanged(FOnAttributeChangeData{});
+
+	bFillainCharacterCapsuleHooksBound = true;
+	// after BindFillainCharacterCapsuleHooksOnce() succeeds:
+	if (HasAuthority() && !bDidInitialFillainCharacterCapsuleApply)
+	{
+		bDidInitialFillainCharacterCapsuleApply = true;
+		// Give movement a frame to finish placing you
+		GetWorldTimerManager().SetTimerForNextTick(this, &AFillainCharacter::Server_ApplyFillainCharacterCapsuleFromStats);
+	}
+}
+
+	void AFillainCharacter::OnFillainCharacterCapsuleScaleDriverChanged(const FOnAttributeChangeData& Data)
+	{
+		Server_ApplyFillainCharacterCapsuleFromStats();
+	}
+
+bool AFillainCharacter::InitFillainCharacterCapsuleBaselinesIfNeeded()
+{
+	if (bFillainCharacterCapsuleBaselinesInit) return true;
+
+	UCapsuleComponent* Cap = GetCapsuleComponent();
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	if (!Cap || !SkeletalMesh) return false;
+
+	StandingUnscaledHalfHeight = FMath::Max(Cap->GetUnscaledCapsuleHalfHeight(), 1.f);
+	StandingUnscaledRadius     = FMath::Max(Cap->GetUnscaledCapsuleRadius(),     1.f);
+	StandingScaledHalfHeight   = FMath::Max(Cap->GetScaledCapsuleHalfHeight(),   1.f);
+	StandingMeshRelZ           = SkeletalMesh->GetRelativeLocation().Z;
+
+	bFillainCharacterCapsuleBaselinesInit = (StandingUnscaledHalfHeight > 1.f && StandingUnscaledRadius > 1.f);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Capsule] Baselines init: R=%.1f HH=%.1f (ScaledHH=%.1f)"),
+		StandingUnscaledRadius, StandingUnscaledHalfHeight, StandingScaledHalfHeight);
+
+	return bFillainCharacterCapsuleBaselinesInit;
+}
+
+void AFillainCharacter::OnIntuitionChanged(const FOnAttributeChangeData& Data)
+{
+	const float Pct  = ASC->GetNumericAttribute(UHAFAttributeSet::GetIntuitionAttribute());
+	const float Frac = FMath::Clamp(Pct * 0.01f, 0.f, 1.f);
+
+	for (auto* Scanner : TInlineComponentArray<UHiddenTreasureScannerComponent*>(this, true))
+	{
+		Scanner->SetIntuitionFraction(Frac);
+	}
+}
+
+void AFillainCharacter::OnVisionChanged(const FOnAttributeChangeData& Data)
+{
+}
+
+void AFillainCharacter::Server_ApplyFillainCharacterCapsuleFromStats_Implementation()
+	{
+		if (!ASC) return;
+
+		const float Agility     = ASC->GetNumericAttribute(UHAFAttributeSet::GetAgilityAttribute());
+		const float Flexibility = ASC->GetNumericAttribute(UHAFAttributeSet::GetFlexibilityAttribute());
+
+		const float AgiPct  = FMath::Clamp(Agility,     0.f, 100.f) * 0.01f;
+		const float FlexPct = FMath::Clamp(Flexibility, 0.f, 100.f) * 0.01f;
+
+		float TargetUnscaledHalf   = StandingUnscaledHalfHeight * (1.f - AgiPct);
+		float TargetUnscaledRadius = StandingUnscaledRadius     * (1.f - FlexPct);
+
+		// Same clamps you already had
+		TargetUnscaledHalf   = FMath::Clamp(TargetUnscaledHalf,   StandingUnscaledHalfHeight * 0.50f, StandingUnscaledHalfHeight);
+		TargetUnscaledRadius = FMath::Clamp(TargetUnscaledRadius, StandingUnscaledRadius     * 0.60f, StandingUnscaledRadius);
+
+		// Apply on the server (collision truth)
+		ApplyFillainCharacterCapsuleSize_FeetPlanted(TargetUnscaledHalf, TargetUnscaledRadius);
+
+		// Multicast so clients snap visually
+		Multicast_ApplyFillainCharacterCapsuleSize(TargetUnscaledHalf, TargetUnscaledRadius);
+
+		// Helpful logging
+		UE_LOG(LogTemp, Warning, TEXT("[Capsule] Agi=%.1f Flex=%.1f => R=%.1f HH=%.1f"),
+			Agility, Flexibility, TargetUnscaledRadius, TargetUnscaledHalf);
+	}
+
+	void AFillainCharacter::Multicast_ApplyFillainCharacterCapsuleSize_Implementation(float TargetUnscaledHalf, float TargetUnscaledRadius)
+	{
+		// Server already applied; clients mirror it
+		if (!HasAuthority())
+		{
+			ApplyFillainCharacterCapsuleSize_FeetPlanted(TargetUnscaledHalf, TargetUnscaledRadius);
+		}
+	}
+
 bool AFillainCharacter::PlayerHasSword()
 {
 	return Combat && Combat->bWieldingTheSword;
@@ -2136,6 +2350,7 @@ void AFillainCharacter::UpdateHUDAmmo()
 		FillainPlayerController->SetHUDWeaponAmmo(Combat->EquippedRangedWeapon->GetAmmo());
 	}
 }
+
 void AFillainCharacter::PollInit()
 {
 	if (HAFPlayerState == nullptr)
@@ -2173,12 +2388,8 @@ void AFillainCharacter::StartDissolve()
 	}
 }
 
-void AFillainCharacter::SetOverlappingItem(AItem* Item)
+void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
 {
-	if (AWeaponBase* Weapon = Cast<AWeaponBase>(Item))
-	{
-		SetOverlappingWeapon(Weapon);
-	}
 	if (ATreasure* Treasure = Cast<ATreasure>(Item))
 	{
 		AddGoldAcquiredToTotalGold(Treasure);
@@ -2189,48 +2400,48 @@ void AFillainCharacter::SetOverlappingItem(AItem* Item)
 	}
 	if (AHealthPickup* HealthPickup = Cast<AHealthPickup>(Item))
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		if (UAbilitySystemComponent* AbilitySC = GetAbilitySystemComponent())
 		{
-			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(HealingEffect, 1.0f, ASC->MakeEffectContext());
+			FGameplayEffectSpecHandle SpecHandle = AbilitySC->MakeOutgoingSpec(HealingEffect, 1.0f, AbilitySC->MakeEffectContext());
 			if (SpecHandle.IsValid())
 			{
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				AbilitySC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			}
 		}
 		Destroy();
 	}
 	if (AShieldPickup* ShieldPickup = Cast<AShieldPickup>(Item))
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		if (UAbilitySystemComponent* ASComponent = GetAbilitySystemComponent())
 		{
-			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(ShieldFortifyingEffect, 1.0f, ASC->MakeEffectContext());
+			FGameplayEffectSpecHandle SpecHandle = ASComponent->MakeOutgoingSpec(ShieldFortifyingEffect, 1.0f, ASComponent->MakeEffectContext());
 			if (SpecHandle.IsValid())
 			{
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				ASComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			}
 		}
 		Destroy();
 	}
 	if (AStaminaPickup* StaminaPickup = Cast<AStaminaPickup>(Item))
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		if (UAbilitySystemComponent* AbilitySComponent = GetAbilitySystemComponent())
 		{
-			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(StaminaRechargingEffect, 1.0f, ASC->MakeEffectContext());
+			FGameplayEffectSpecHandle SpecHandle = AbilitySComponent->MakeOutgoingSpec(StaminaRechargingEffect, 1.0f, AbilitySComponent->MakeEffectContext());
 			if (SpecHandle.IsValid())
 			{
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				AbilitySComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			}
 		}
 		Destroy();
 	}
 	if (AMajixPickup* MajixPickup = Cast<AMajixPickup>(Item))
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		if (UAbilitySystemComponent* AbilitySystemC = GetAbilitySystemComponent())
 		{
-			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(MajixSummoningEffect, 1.0f, ASC->MakeEffectContext());
+			FGameplayEffectSpecHandle SpecHandle = AbilitySystemC->MakeOutgoingSpec(MajixSummoningEffect, 1.0f, AbilitySystemC->MakeEffectContext());
 			if (SpecHandle.IsValid())
 			{
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				AbilitySystemC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			}
 		}
 		Destroy();
@@ -2270,7 +2481,7 @@ void AFillainCharacter::OnRep_OverlappingWeapon(AWeaponBase* LastWeapon)
 	}
 }
 
-void AFillainCharacter::OnRep_OverlappingItem(AItem* LastItem)
+void AFillainCharacter::OnRep_OverlappingItem(APrePackagedPCPickupItem* LastItem)
 {
 	if (OverlappingItem)
 	{
@@ -2352,15 +2563,9 @@ void AFillainCharacter::SwitchWeapon(AWeaponBase* NewWeapon)
 	}
 }
 
-AItem* AFillainCharacter::GetItemThatOverlaps(AItem* ItemThatOverlaps)
+APrePackagedPCPickupItem* AFillainCharacter::GetItemThatOverlaps(APrePackagedPCPickupItem* ItemThatOverlaps)
 {
-	AWeaponBase* WeaponThatOverlaps = Cast<AWeaponBase>(ItemThatOverlaps);
 	AAmmoPickup* PickupThatOverlaps = Cast<AAmmoPickup>(ItemThatOverlaps);
-	if (WeaponThatOverlaps == nullptr && PickupThatOverlaps == nullptr) return nullptr;
-	if (WeaponThatOverlaps)
-	{
-		GetWeaponThatOverlaps(WeaponThatOverlaps);
-	}
 	if (PickupThatOverlaps)
 	{
 		GetPickupThatOverlaps(PickupThatOverlaps);
@@ -2436,31 +2641,26 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 void AFillainCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	InitFillainCharacterCapsuleBaselinesIfNeeded();
+	AHAFPlayerState* PS = GetPlayerState<AHAFPlayerState>();
+	if (!PS) return;
 
-	InitASC();
-	InitializeAbilityActorInfo();
-	bASCReady = (AbilitySystemComponent != nullptr);
-	if (AttributeComponent) { AttributeComponent->CachedASC = AbilitySystemComponent; }
-	if (AbilitySystemComponent)
-	{
-		const UHAFAttributeSet* AsConst = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
-		HAFAS = const_cast<UHAFAttributeSet*>(AsConst); // just caching; we won’t mutate
-	}
-	else
-	{
-		HAFAS = nullptr;
-	}
-	UE_LOG(LogTemp, Warning, TEXT("[Client] ASC ready=%d Stamina=%f"),
-	bASCReady,
-	AbilitySystemComponent
-		? AbilitySystemComponent->GetNumericAttribute(UHAFAttributeSet::GetStaminaAttribute())
-		: -1.f);
+	AbilitySystemComponent = PS->GetAbilitySystemComponent();
+	HAFAttributeSet        = PS->GetHAFAttributeSet();
+
+	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Character::OnRep_PlayerState] ASC=%s AS=%s"),
+		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
+
+	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
+	BindHiddenTreasureCapsuleHooksOnce();
 }
 
 void AFillainCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
+	InitFillainCharacterCapsuleBaselinesIfNeeded();
 	// Input mapping (okay on listen server, ignored on dedicated)
 	if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(NewController))
 	{
@@ -2471,16 +2671,135 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 		}
 	}
 
-	InitASC();
-	InitializeAbilityActorInfo();   // ASC->InitAbilityActorInfo(PS, this)
-	bASCReady = (AbilitySystemComponent != nullptr);
-	if (AttributeComponent) { AttributeComponent->CachedASC = AbilitySystemComponent; }
-	const UHAFAttributeSet* Tmp = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
-	HAFAS = const_cast<UHAFAttributeSet*>(Tmp);
-	ApplyStartupEffects();          // Primary -> Secondary -> Vital
+	AHAFPlayerState* PS = GetPlayerState<AHAFPlayerState>();
+	check(PS);
+
+	// Use the PS-owned ASC & AttributeSet (don’t call GetSet here)
+	AbilitySystemComponent = PS->GetAbilitySystemComponent();
+	HAFAttributeSet        = PS->GetHAFAttributeSet();
+
+	// Owner = PlayerState, Avatar = Character
+	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+	// Apply your init GameplayEffects on the SERVER
+	if (HasAuthority())
+	{
+		ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
+		ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
+		ApplyEffectToSelf(DefaultVitalAttributes, 1);
+		ApplyEffectToSelf(DefaultInvisibleAttributes, 1);
+	}
+
+	// Optional: quick pointer sanity
+	UE_LOG(LogTemp, Warning, TEXT("[Character::PossessedBy] ASC=%s AS=%s"),
+		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
+
+	// Safe “post-init” log (no direct FGameplayAttributeData deref)
+	auto SafeGet=[&](const FGameplayAttribute& A){return AbilitySystemComponent->GetNumericAttribute(A);};
+	UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
+		HasAuthority(),
+		SafeGet(HAFAttributeSet->GetMaxHealthAttribute()),
+		SafeGet(HAFAttributeSet->GetArmorAttribute()),
+		SafeGet(HAFAttributeSet->GetCriticalHitChanceAttribute()));
+
+	// Ensure ASC is initialized (common place you do InitAbilityActorInfo)
+	BindFillainCharacterCapsuleHooksOnce();        // server bind
+	Server_ApplyFillainCharacterCapsuleFromStats(); // apply once on the server
+	BindHiddenTreasureCapsuleHooksOnce();
 }
 
-	
+void AFillainCharacter::ApplyFillainCharacterCapsuleSize_FeetPlanted(float TargetUnscaledHalf, float TargetUnscaledRadius)
+{
+	UCapsuleComponent* Cap = GetCapsuleComponent();
+    USkeletalMeshComponent* Skeletal = GetMesh();
+    if (!Cap || !Skeletal) return;
+
+    // Ensure baselines are valid
+    InitFillainCharacterCapsuleBaselinesIfNeeded();
+
+    // Work on local copies (avoid re-declaring params)
+    float Half   = TargetUnscaledHalf;
+    float Radius = TargetUnscaledRadius;
+
+    // Clamp vs. design limits
+    const float MinHalf   = StandingUnscaledHalfHeight * 0.50f;
+    const float MinRadius = StandingUnscaledRadius     * 0.60f;
+    Half   = FMath::Clamp(Half,   MinHalf,   StandingUnscaledHalfHeight);
+    Radius = FMath::Clamp(Radius, MinRadius, StandingUnscaledRadius);
+
+    // Absolute safety floor (never feed tiny numbers to the capsule)
+    Half   = FMath::Max(Half,   2.f);
+    Radius = FMath::Max(Radius, 2.f);
+
+    // BEFORE
+    const float OldScaledHalf = Cap->GetScaledCapsuleHalfHeight();
+
+    // Apply new size (only recompute overlaps after first-time init)
+    Cap->SetCapsuleSize(Radius, Half, /*bUpdateOverlaps=*/ bFillainCharacterCapsuleInitialized);
+
+    // AFTER
+    const float NewScaledHalf = Cap->GetScaledCapsuleHalfHeight();
+
+    UWorld* World = GetWorld();
+    if (!bFillainCharacterCapsuleInitialized && World)
+    {
+        // First-time: sweep a capsule down to floor and teleport center so bottom sits on floor
+        const FVector Up(0,0,1);
+        const FVector Start = GetActorLocation() + Up * 20.f;
+        const FVector End   = Start - Up * 4000.f;
+
+        FHitResult Hit;
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(CapsuleSnapSweep), false, this);
+        FCollisionShape Shape = FCollisionShape::MakeCapsule(Radius, Half);
+
+        // Use the channel that your ground responds to; try ECC_WorldStatic first
+        const ECollisionChannel FloorChannel = ECC_WorldStatic;
+
+        const bool bHit = World->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, FloorChannel, Shape, Params);
+
+        const float PrevBottomZ = GetActorLocation().Z - OldScaledHalf;
+        float FloorZ = -FLT_MAX;
+        if (bHit && Hit.bBlockingHit)
+        {
+            const float ImpactBottomZ = Hit.Location.Z - NewScaledHalf;
+            FloorZ = Hit.bStartPenetrating ? ImpactBottomZ + Hit.PenetrationDepth : ImpactBottomZ;
+        }
+
+        const float TargetBottomZ = (FloorZ > -FLT_MAX) ? FMath::Max(PrevBottomZ, FloorZ) : PrevBottomZ;
+        FVector NewLoc = GetActorLocation();
+        NewLoc.Z = TargetBottomZ + NewScaledHalf;
+        SetActorLocation(NewLoc, /*bSweep=*/false, /*OutHit=*/nullptr, ETeleportType::TeleportPhysics);
+
+        bFillainCharacterCapsuleInitialized = true;
+    }
+    else
+    {
+        // Subsequent resizes: keep feet planted with a swept vertical offset
+        const float DeltaZ = (NewScaledHalf - OldScaledHalf);
+        if (FMath::Abs(DeltaZ) > KINDA_SMALL_NUMBER)
+        {
+            AddActorWorldOffset(FVector(0,0,DeltaZ), /*bSweep=*/true);
+        }
+    }
+
+    // Re-seat mesh from standing baseline
+    FVector Rel = Skeletal->GetRelativeLocation();
+    Rel.Z = StandingMeshRelZ + (StandingScaledHalfHeight - NewScaledHalf) + FeetToRootZOffset;
+    Skeletal->SetRelativeLocation(Rel, false, nullptr, ETeleportType::ResetPhysics);
+
+    // Refresh movement
+    if (UCharacterMovementComponent* Move = GetCharacterMovement())
+    {
+        Move->bForceNextFloorCheck = true;
+        if (Move->MovementMode == MOVE_None)
+        {
+            Move->SetMovementMode(MOVE_Walking);
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("[CapsuleApply] R=%.2f HH=%.2f NewScaledHalf=%.2f"),
+        Radius, Half, NewScaledHalf);
+}
 
  /******************************************************\
 | **   The following were also added for challenges.  ** |

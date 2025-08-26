@@ -18,6 +18,9 @@
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Interfaces/PickupInterface.h"
+#include "Interfaces/CapsuleInterface.h"
+#include "AbilitySystemComponent.h" // <-- for FOnAttributeChangeData
+#include "GameplayEffectTypes.h"
 #include "FillainCharacter.generated.h"
 
 class UGameplayEffect;
@@ -28,6 +31,7 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 struct FInputActionInstance;
+struct FOnAttributeChangeData;
 class UWidgetComponent;
 class UCombatComponent;
 class UAnimMontage;
@@ -42,6 +46,7 @@ class AHAFPlayerState;
 class ALobbyGameMode;
 class AProjectileFinal;
 class UBoxComponent;
+class UHAFAttributeSet;
 
 UENUM(BlueprintType)
 enum class EBattlePrepped : uint8
@@ -55,6 +60,7 @@ enum class EBattlePrepped : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageWidget, float, Level);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInvisibleAttributeChangedSignature, float, NewValue);
 
 UCLASS()
 class HEROESANDFILLAINS_API AFillainCharacter : public ABaseCharacter, public IInteractWithCrosshairsInterface, public IPickupInterface
@@ -84,6 +90,15 @@ public:
 
 	virtual int32 GetPlayerLevel() override;
 
+	/********************************
+	****    Capsule Interface    ****
+	********************************/
+
+	virtual double GetCharacterCapsuleHeight() override;
+	virtual double GetCharacterCapsuleRadius() override;
+	virtual void SetCharacterCapsuleHeight(double Height) override;
+	virtual void SetCharacterCapsuleRadius(double Radius) override;
+	
 	// virtual void Restart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void EquipOneHandedRangedWeapon(AWeaponBase* Weapon);
@@ -395,6 +410,20 @@ public:
 
 	UPROPERTY() bool bASCReady = false;
 
+	/***************************************
+	****	  INTUITION-BASED           ****
+	****    "CAPSULE" ADJUSTMENT        ****
+	***************************************/
+
+	UPROPERTY(Transient)
+	bool bAttrHooksBound = false;
+	
+	/***************************************
+	****    ENEMY CAPSULE ADJUSTMENT    ****
+	***************************************/
+
+	float GetHitAssistPaddingCM();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* HAFMappingContext;
@@ -490,6 +519,65 @@ protected:
 	void HitReactEnd();
 
 private:
+	/******************************************
+	****    TREASURE CAPSULE ADJUSTMENT    ****
+	******************************************/
+	
+	UFUNCTION()
+	void BindHiddenTreasureCapsuleHooksOnce();
+
+	/*****************************************
+	****    FILLAIN CAPSULE ADJUSTMENT    ****
+	*****************************************/
+	
+	UFUNCTION()
+	void BindFillainCharacterCapsuleHooksOnce();
+
+	void OnFillainCharacterCapsuleScaleDriverChanged(const FOnAttributeChangeData& Data);
+
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyFillainCharacterCapsuleFromStats();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ApplyFillainCharacterCapsuleSize(float TargetUnscaledHalf, float TargetUnscaledRadius);
+
+	bool bFillainCharacterCapsuleHooksBound = false;
+	bool bDidInitialFillainCharacterCapsuleApply = false;
+	bool bFillainCharacterCapsuleInitialized = false;
+	bool bFillainCharacterCapsuleBaselinesInit = false;
+	bool InitFillainCharacterCapsuleBaselinesIfNeeded();
+
+	// Exact signature the delegate expects:
+	void OnIntuitionChanged    (const FOnAttributeChangeData& Data);
+	void OnVisionChanged(const FOnAttributeChangeData& Data);
+	
+	// GAS
+	UPROPERTY() class UAbilitySystemComponent* ASC = nullptr;
+
+	// Baselines (set in BeginPlay)
+	float StandingUnscaledHalfHeight = 0.f;
+	float StandingUnscaledRadius     = 0.f;
+	float StandingScaledHalfHeight   = 0.f;
+	float StandingMeshRelZ           = 0.f;
+
+	// Optional mesh correction if your skeleton root isn't at the soles
+	UPROPERTY(EditAnywhere, Category="Capsule")
+	float FeetToRootZOffset = 0.f;
+
+	// === Update coalescing (so Agi/Flex/Dex firing together calls us once) ===
+	FTimerHandle FillainCharacterCapsuleUpdateTimer;
+	void RequestFillainCharacterCapsuleUpdate();             // queue for next tick
+	void ApplyFillainCharacterCapsuleFromCurrentStats();     // reads attributes and calls ApplyCapsuleSize_FeetPlanted
+
+	// (Optional) tiny change filter so we don't spam tiny resizes
+	float LastAppliedHalf   = -1.f;
+	float LastAppliedRadius = -1.f;
+	
+	// You already have this from earlier:
+	void ApplyFillainCharacterCapsuleSize_FeetPlanted(float TargetUnscaledHalf, float TargetUnscaledRadius);
+
+	void RestoreStandingFillainCharacterCapsule();
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
 
@@ -500,13 +588,13 @@ private:
 	class UWidgetComponent* OverheadWidget;
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingItem)
-	class AItem* OverlappingItem;
+	class APrePackagedPCPickupItem* OverlappingItem;
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeaponBase* OverlappingWeapon;
 
 	UFUNCTION()
-	void OnRep_OverlappingItem(AItem* LastItem);
+	void OnRep_OverlappingItem(APrePackagedPCPickupItem* LastItem);
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
@@ -645,7 +733,7 @@ private:
 	TSubclassOf<AWeaponBase> DefaultWeaponClass;
 
 public:
-	virtual void SetOverlappingItem(AItem* Item) override;
+	virtual void SetOverlappingItem(APrePackagedPCPickupItem* Item) override;
 	virtual void SetOverlappingWeapon(AWeaponBase* Weapon) override;
 	bool IsWeaponEquipped();
 	bool IsAiming();
@@ -653,7 +741,7 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AItem* GetItemThatOverlaps(AItem* ItemThatOverlaps);
+	APrePackagedPCPickupItem* GetItemThatOverlaps(APrePackagedPCPickupItem* ItemThatOverlaps);
 	AWeaponBase* GetWeaponThatOverlaps(AWeaponBase* WeaponThatOverlaps);
 	class AAmmoPickup* GetPickupThatOverlaps(class AAmmoPickup* PickupThatOverlaps);
 	AWeaponBase* GetEquippedWeapon();
@@ -683,7 +771,7 @@ public:
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	ETeam GetTeam();
-	FORCEINLINE AItem* GetOverlappingItem() const { return OverlappingItem; }
+	FORCEINLINE APrePackagedPCPickupItem* GetOverlappingItem() const { return OverlappingItem; }
 	FORCEINLINE AWeaponBase* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	FORCEINLINE AController* GetCachedEventInstigator() const { return CachedEventInstigator; }
 	FORCEINLINE void SetHealth(const float Amount) const { if (HAFAttributes) HAFAttributes->SetHealth(Amount); }

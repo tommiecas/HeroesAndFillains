@@ -31,7 +31,6 @@ AWeaponBase::AWeaponBase()
 	: Super() 
 {
 	PrimaryActorTick.bCanEverTick = false;
-	
 	// ✅ Then create and attach the mesh
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(RootComponent);
@@ -425,13 +424,7 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	bShouldFloatSpin = false;
 
 	// Clean up collision
-	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	if (ItemMesh)
-	{
-		ItemMesh->SetVisibility(false, true); // hide it and all children
-	}
 	
 	AActor* OwnerCharacter = GetOwner(); // Typically set on equip
 

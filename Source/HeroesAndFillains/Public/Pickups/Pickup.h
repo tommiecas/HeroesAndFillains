@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Items/Item.h"
+#include "Items/PrePackagedPCPickupItem.h"
 #include "Pickup.generated.h"
 
 
 UCLASS()
-class HEROESANDFILLAINS_API APickup : public AItem
+class HEROESANDFILLAINS_API APickup : public APrePackagedPCPickupItem
 {
 	GENERATED_BODY()
 	

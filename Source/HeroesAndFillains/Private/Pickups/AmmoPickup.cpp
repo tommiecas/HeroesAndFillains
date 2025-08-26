@@ -29,7 +29,19 @@ void AAmmoPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		UCombatComponent* Combat = FillainCharacter->GetCombatComponent();
 		if (Combat)
 		{
-			Combat->PickupAmmo(RangedType, AmountOfAmmoInside);
+			const EAmmoType Ammo = RangedWeapon->GetAmmoType();
+
+			ERangedType RangedType;
+			if (ARangedWeapon::TryGetRangedTypeForAmmo(Ammo, RangedType))
+			{
+				Combat->PickupAmmo(RangedType, AmountOfAmmoInside);
+				// Destroy or hide pickup, play SFX/VFX, etc.
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("No RangedType found for ammo %s"),
+					*UEnum::GetValueAsString(Ammo));
+			}
 		}
 	}
 	Destroy();

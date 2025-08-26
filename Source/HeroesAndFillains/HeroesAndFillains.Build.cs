@@ -10,7 +10,7 @@ public class HeroesAndFillains : ModuleRules
 		
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiplayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam", "SlateCore", "UMG", "Landscape", "GeometryCollectionEngine", "AIModule", "GameplayAbilities", "CommonInput", "CommonUI", });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "MotionWarping", "GameplayTags", "GameplayTasks", });
+		PrivateDependencyModuleNames.AddRange(new string[] { "MotionWarping", "GameplayTags", "GameplayTasks", "NavigationSystem", "AIModule"});
 
 		PublicIncludePaths.AddRange(new string[] { "HeroesAndFillains/Public" });
 		PrivateIncludePaths.AddRange(new string[] { "HeroesAndFillains/Private"  });

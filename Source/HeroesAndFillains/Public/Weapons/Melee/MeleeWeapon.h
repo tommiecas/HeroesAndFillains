@@ -83,6 +83,18 @@ protected:
 	
 	
 private:
+	/******************************
+	****    VISION-IMPACTED    ****
+	****    ENEMY "CAPSULE"    ****
+	****      ADJUSTMENT       ****
+	******************************/
+	
+	UPROPERTY(EditDefaultsOnly, Category="Melee|Assist")
+	float BaseTraceRadiusCM = 4.f;      // your “real” blade thickness
+
+	UPROPERTY(Transient)
+	float CachedVisionPadCM = 0.f;
+	
 	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
 	float MeleeDamage;
 

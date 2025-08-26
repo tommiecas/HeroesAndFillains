@@ -5,24 +5,11 @@
 #include "CoreMinimal.h"
 #include "Weapons/WeaponTypes.h"
 #include "Pickups/Pickup.h"
+#include "Weapons/Ranged/RangedWeapon.h"
 #include "AmmoPickup.generated.h"
 
-UENUM(BlueprintType)
-enum class EAmmoType : uint8
-{
-	EAT_None UMETA(DisplayName = "None"),
 
-	EAT_ARAmmo UMETA(DisplayName = "ARAmmo"),
-	EAT_Rockets UMETA(DisplayName = "Rockets"),
-	EAT_Bullets UMETA(DisplayName = "Bullets"),
-	EAT_Magazine UMETA(DisplayName = "Magazine"),
-	EAT_Shells UMETA(DisplayName = "Shells"),
-	EAT_SniperAmmo UMETA(DisplayName = "SniperAmmo"),
-	EAT_LaunchedGrenades UMETA(DisplayName = "Grenades"),
-	
-	EAT_MAX UMETA(DisplayName = "DefaultMAX")
-};
-
+class ARangedWeapon;
 class UPickupGearWidget;
 
 /**
@@ -62,9 +49,9 @@ public:
 	int32 AmountOfAmmoInside = 30;
 	
 	virtual void Tick(float DeltaTime) override;
-	
-	UPROPERTY(EditAnywhere, Category = "Pickup Properties")
-	EAmmoType AmmoType = EAmmoType::EAT_None;
+
+	UPROPERTY()
+	ARangedWeapon* RangedWeapon;
 
 	
 	
@@ -75,5 +62,5 @@ private:
 	
 
 public:
-	FORCEINLINE EAmmoType GetAmmoPickupType() const { return AmmoType; }
+	FORCEINLINE EAmmoType GetAmmoPickupType() const { return RangedWeapon->GetAmmoType(); }
 };
