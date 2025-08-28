@@ -71,6 +71,12 @@ public:
 	AFillainCharacter();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	void FixSelfCameraCollision();
+
+	UFUNCTION()
+	void Debug_ProbeSpringArmBlocker();
+
+	void RestoreThirdPersonCameraSafe();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void DirectionalHitReact(const FVector& ImpactPoint) override;
@@ -80,6 +86,54 @@ public:
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
 	void InitASC();
 
+	FTimerHandle CamWatchdogTimer;
+
+	bool IsCameraWeird(FString& OutWhy) const;
+	void CamWatchdogTick();
+	void StartCamWatchdog(float DurationSec = 2.0f, float TickSec = 0.05f);
+	void FixCameraIfWeird(const TCHAR* Tag);
+
+	UFUNCTION()
+	void ResetCameraRig();
+
+	UFUNCTION(Client, Reliable)
+	void Client_PostEquipCameraFix();
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnEquipped();
+
+	UFUNCTION(Client, Reliable)
+	void Client_SafeViewAfterEquip();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ForceFollowCamera();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ClearCameraEffects();
+	
+	
+
+	FTimerHandle CamFixCooldownHandle;
+	bool bCamFixCooldown = false;
+	
+	UFUNCTION() void CamWatchdogCooldownOff();
+
+	UFUNCTION(Client, Reliable)
+	void Client_NukeScreenOverlays();
+	
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float DefaultArmLength = 300.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	FVector DefaultTargetOffset = FVector(0.f, 0.f, 60.f);
+	
+	// Prevent re-entrancy / double-trigger
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Equip")
+	bool bEquipInProgress = false;
+
+	UFUNCTION(Server, Reliable)
+	void ServerEquipWeapon(class AWeaponBase* WeaponToEquip);
+	
 	UPROPERTY()
 	UHAFAttributeSet* HAFAS = nullptr;
 
@@ -519,6 +573,15 @@ protected:
 	void HitReactEnd();
 
 private:
+	UPROPERTY(VisibleInstanceOnly, Category="Camera")
+	bool bSelfOccluded = false;            // tracks current hide state
+
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float CameraSelfOcclusionThreshold = 160.f; // tweakable
+
+	UFUNCTION()
+	void HideCharacterIfCameraClose();
+	
 	/******************************************
 	****    TREASURE CAPSULE ADJUSTMENT    ****
 	******************************************/
@@ -584,6 +647,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class UCameraComponent* FollowCamera;
 
+	UPROPERTY(EditDefaultsOnly, Category="Camera") float DefaultFOV = 90.f;
+	UPROPERTY(EditDefaultsOnly, Category="Camera") float MinFOV = 60.f;   // safe floor
+	UPROPERTY(EditDefaultsOnly, Category="Camera") float MaxFOV = 110.f;  // optional
+	bool bFOVLock = false;
+	float FOVLockTimeLeft = 0.f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
@@ -610,6 +679,23 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed(AWeaponBase* Weapon);
+
+	UFUNCTION(Client, Reliable)
+	void Client_DisableAllWorldPPV();
+
+
+
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float SelfOcclEnter = 160.f;   // enter hide below this
+
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float SelfOcclExit  = 240.f;   // leave hide above this
+
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float SelfOcclMinHold = 0.25f; // seconds to hold state before allowing a switch
+
+	UPROPERTY(VisibleInstanceOnly, Category="Camera")
+	float SelfOcclStateTime = 0.f; // internal timer
 
 	float AO_Yaw;
 	float InterpAO_Yaw;
@@ -642,9 +728,7 @@ private:
 
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
 	UAnimMontage* ArmDisarmMontage;
-
-	void HideCharacterIfCameraClose();
-
+	
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 

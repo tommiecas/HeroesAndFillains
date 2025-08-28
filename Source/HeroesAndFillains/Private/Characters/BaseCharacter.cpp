@@ -65,6 +65,7 @@
 #include "Characters/FillainFinalAnimInstance.h"
 #include "Animation/AnimInstance.h"
 #include "MotionWarpingComponent.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "GameFramework/Controller.h"
@@ -127,7 +128,11 @@ void ABaseCharacter::BeginPlay()
 	else return;
 }
 
-
+FVector ABaseCharacter::GetCombatSocketLocation()
+{
+	check(GetMesh());
+	return GetMesh()->GetSocketLocation(WeaponTipSocketName);
+}
 void ABaseCharacter::InitializeAbilityActorInfo()
 {
 	
@@ -707,7 +712,14 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
-	
+
+void ABaseCharacter::AddCharacterAbilities()
+{
+	UHAFAbilitySystemComponent* HAFASC = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
+	if (!HasAuthority()) return;
+
+	HAFASC->AddCharacterAbilities(StartupAbilities);
+}
 
 /*	// Small delay before playing actual section (prevents same-frame section override issues)
 	FTimerHandle PlayHitReactHandle;

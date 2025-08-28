@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
 #include "Weapons/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
@@ -10,6 +11,7 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
+class UHAFInputConfig;
 class AEnemyBase;
 class UTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
@@ -17,6 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHig
 struct FInputActionValue;
 class AFillainCharacter;
 class IEnemyInterface;
+class UHAFAbilitySystemComponent;
 
 
 
@@ -53,6 +56,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void CursorTrace();
+
+	UPROPERTY()
+	FHitResult CursorHit;
+
+	
 
 	void HideTeamScores();
 	void InitTeamScores();
@@ -189,6 +197,17 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UHAFInputConfig> InputConfig;
+
+	UPROPERTY()
+	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent;
+
+	UHAFAbilitySystemComponent* GetASC();
+
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
+	void AbilityInputTagHeld(FGameplayTag InputTag);
 	
 	TScriptInterface<IEnemyInterface> LastActor;
 	TScriptInterface<IEnemyInterface> ThisActor;

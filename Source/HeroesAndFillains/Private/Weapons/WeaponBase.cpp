@@ -33,7 +33,7 @@ AWeaponBase::AWeaponBase()
 	PrimaryActorTick.bCanEverTick = false;
 	// ✅ Then create and attach the mesh
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(RootComponent);
+	SetRootComponent(WeaponMesh);
 	
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
@@ -47,6 +47,14 @@ AWeaponBase::AWeaponBase()
 	WeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
 	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
 
+	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
+	AreaSphere->SetupAttachment(RootComponent);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	AreaSphere->SetCollisionObjectType(ECC_Pickupable);
+	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+	AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
 	PickupGearWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponent"));
 	PickupGearWidgetComponent->SetupAttachment(RootComponent);
 	PickupGearWidgetComponent->SetVisibility(false);
@@ -207,11 +215,11 @@ void AWeaponBase::BeginPlay()
     {
         ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
     }
-	// UE_LOG(LogTemp, Warning, TEXT("WeaponBox Rotation at BeginPlay: %s"), *WeaponBox->GetComponentRotation().ToString());
-	WeaponBox->SetRelativeRotation(FRotator::ZeroRotator); // or whatever it needs
-	WeaponBox->SetUsingAbsoluteRotation(true); // Will ignore parent rotation
-	SetHandsNeeded(this);
+
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeaponBase::OnSphereOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeaponBase::OnSphereEndOverlap);
 }
+
 
 void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 								 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -249,6 +257,16 @@ void AWeaponBase::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 			PickupGearWidgetInstanceA->PlayAnimation(PickupGearWidgetInstanceA->FadeInAnimation);
 		}
 	}
+	AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(OtherActor);
+	if (FillainCharacter)
+	{
+		FillainCharacter->SetOverlappingWeapon(this);
+	}
+
+	if (IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor))
+	{
+		PickupInterface->SetOverlappingWeapon(this);
+	}
 }
 
 void AWeaponBase::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -279,6 +297,11 @@ void AWeaponBase::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 		}
 	}	
 	ShowPickupAndInfoWidgets(false);
+
+	if (IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor))
+	{
+		PickupInterface->SetOverlappingItem(nullptr);
+	}
 }
 
 void AWeaponBase::OnRep_WeaponState()
@@ -317,13 +340,13 @@ void AWeaponBase::AttachMeshToSocket(USceneComponent* InParent, FName InSocketNa
 
 void AWeaponBase::SetHandsNeeded(AWeaponBase* WeaponBase)
 {
-	if (WeaponBase->WeaponType == EWeaponType::EWT_RocketLauncher || WeaponBase->WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponBase->WeaponType == EWeaponType::EWT_SniperRifle || WeaponBase->WeaponType == EWeaponType::EWT_Shotgun || WeaponBase->WeaponType == EWeaponType::EWT_ChaosSword)
+	if (WeaponType == EWeaponType::EWT_RocketLauncher || WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponType == EWeaponType::EWT_SniperRifle || WeaponType == EWeaponType::EWT_Shotgun || WeaponType == EWeaponType::EWT_ChaosSword)
 	{
-		WeaponBase->HandsNeeded = EHandsNeeded::EHN_TwoHandedWeapon;
+		HandsNeeded = EHandsNeeded::EHN_TwoHandedWeapon;
 	}
-	if (WeaponBase->WeaponType == EWeaponType::EWT_AssaultRifle || WeaponBase->WeaponType == EWeaponType::EWT_SubmachineGun || WeaponBase->WeaponType == EWeaponType::EWT_Pistol || WeaponBase->WeaponType == EWeaponType::EWT_RubySword || WeaponBase->WeaponType == EWeaponType:: EWT_SapphireSword || WeaponBase->WeaponType == EWeaponType:: EWT_SandSword || WeaponBase->WeaponType == EWeaponType:: EWT_SoulSword || WeaponBase->WeaponType == EWeaponType:: EWT_ShadowSword || WeaponBase->WeaponType == EWeaponType:: EWT_SkyMace)
+	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword || WeaponType == EWeaponType:: EWT_SandSword || WeaponType == EWeaponType:: EWT_SoulSword || WeaponType == EWeaponType:: EWT_ShadowSword || WeaponType == EWeaponType:: EWT_SkyMace)
 	{
-		WeaponBase->HandsNeeded = EHandsNeeded::EHN_OneHandedWeapon;
+		HandsNeeded = EHandsNeeded::EHN_OneHandedWeapon;
 	}
 }
 
@@ -380,38 +403,22 @@ void AWeaponBase::Equip(USceneComponent* InParent, FName InSocketName, AActor* N
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("✅ AWeaponBase::Equip called for %s"), *GetName());  */
-	if (!WeaponMesh) return;
+	if (!WeaponMesh || !InParent) return;
 
-	if (!InParent) return;
-	
-	// Get the socket transform before attachment for logging
+	// Attach the weapon MESH to the character’s mesh socket
 	USkeletalMeshComponent* ParentMesh = Cast<USkeletalMeshComponent>(InParent);
-	if (ParentMesh)
-	{
-		FTransform SocketTransform = ParentMesh->GetSocketTransform(InSocketName);
-		// UE_LOG(LogTemp, Warning, TEXT("Socket '%s' transform before attachment - Location: %s, Rotation: %s"),
-		//	*InSocketName.ToString(),
-		//	*SocketTransform.GetLocation().ToString(),
-		//	*SocketTransform.GetRotation().Rotator().ToString());
-	}
-	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-	AttachToComponent(InParent, AttachmentRules, InSocketName);
 	
-	/* if (!WeaponMesh->IsAttachedTo(InParent))
-	{
-		UE_LOG(LogTemp, Error, TEXT("❌ WeaponMesh not attached after Equip!"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ WeaponMesh is attached to %s"), *InParent->GetName());
-	} */
-	
+
 	ItemState = EItemState::EIS_Equipped;
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
-	AttachMeshToSocket(InParent, InSocketName);
 	PlayEquipSound();
 	DisableSphereCollision();
+	SetHandsNeeded(this);
+	SetEquippedWeaponState();
+	if (HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) OnEquippedOneHanded();
+	if (HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) OnEquippedTwoHanded();
+	SetOneOrTwoHandedWeapon(this);
 	DeactivateEmbers();
 	// Hide widgets
 	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(false);

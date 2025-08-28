@@ -26,6 +26,7 @@
 #include "Weapons/WeaponBase.h"
 #include "Weapons/WeaponTypes.h"
 #include "Enemies/EnemyBase.h"
+#include "HeroesAndFillains/DebugMacros.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -115,6 +116,14 @@ void UCombatComponent::BeginPlay()
 		{
 			InitializeCarriedAmmo();
 		} 
+	}
+	// UCombatComponent ctor or BeginPlay()
+	DefaultFOV = 90.f;
+	CurrentFOV = DefaultFOV;
+
+	if (Character && Character->GetFollowCamera())
+	{
+		Character->GetFollowCamera()->SetFieldOfView(DefaultFOV);
 	}
 }
 
@@ -568,9 +577,13 @@ void UCombatComponent::ResetRecentlyDamaged()
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("Equipping weapon: %s\nCall Stack:\n%s"), 
-		//   *WeaponToEquip->GetName(), 
-		  // *FFrame::GetScriptCallstack());
+	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
+    {
+        FC->StartCamWatchdog(2.0f, 0.05f);
+    }
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
+
 	if (!WeaponToEquip || !Character) return;
 
 	if (CurrentlyEquippedWeapon == WeaponToEquip)
@@ -583,8 +596,13 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 	
 	DropEquippedWeapon();
 	EquippedWeapon = WeaponToEquip;
-	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
+
+	USkeletalMeshComponent* CharMesh = Character ? Character->GetMesh() : nullptr;
+	const FName EquipSocket = FName(TEXT("RightHandSocket")); // or whatever you actually use
+
+	if (AWeaponBase* RangedEquipped = Cast<AWeaponBase>(EquippedWeapon))
 	{
+		RangedEquipped->Equip(CharMesh, EquipSocket, GetOwner(), GetCharacter());
 		EquippedRangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Ranged;
 		EquippedRangedWeapon->SetEquippedRangedWeaponState();
@@ -599,29 +617,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		EquippedRangedWeapon->ShowPickupAndInfoWidgets(false);
 		EquippedRangedWeapon->bIsEquipped = true;
 	}
-	else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
-	{
-		EquippedMeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon);
-		if (!EquippedMeleeWeapon)
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ EquippedWeapon cast to AMeleeWeapon failed! Weapon was: %s"),
-				EquippedWeapon ? *EquippedWeapon->GetName() : TEXT("nullptr"));
-			return; // Prevent the crash
-		}
-		FightingStyle = EFightingStyle::EFS_Melee;
-		EquippedMeleeWeapon->SetEquippedWeaponState();
-		SetHandsForWeapons(EquippedMeleeWeapon);
-		EquippedMeleeWeapon->ItemState = EItemState::EIS_Equipped;
-		EquippedMeleeWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(EquippedMeleeWeapon);
-		bWieldingTheSword = true; // ✅ Add this!
-		EquippedMeleeWeapon->ShowPickupAndInfoWidgets(false);
-		EquippedMeleeWeapon->bIsEquipped = true;
-		Character->BattlePrepped = EBattlePrepped::EBP_Armed;
-		
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
+	Character->StartCamWatchdog(2.0f);
 }
 
 void UCombatComponent::UpdateCarriedAmmo()
@@ -677,6 +673,8 @@ void UCombatComponent::SwapWeapons()
 
 void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
 	if (WeaponToEquip == nullptr) return;
 	DropEquippedWeapon();
 	FightingStyle = EFightingStyle::EFS_Unequipped;
@@ -1206,6 +1204,16 @@ void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
+	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
+	{
+		FC->StartCamWatchdog(2.0f, 0.05f);
+	}
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
+	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
+	{
+		FC->StartCamWatchdog(2.0f, 0.05f);   // <— add this too
+	}
 	if (EquippedWeapon && Character)
 	{
 		EquippedWeapon->SetEquippedWeaponState();
@@ -1215,6 +1223,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		PlayWeaponEquipSound(EquippedWeapon);
 		SetFightingStyle();
 	}
+	Character->StartCamWatchdog(2.f);
 }
 
 void UCombatComponent::OnRep_EquippedMeleeWeapon()
@@ -1232,6 +1241,9 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 
 void UCombatComponent::OnRep_EquippedRangedWeapon()
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
+
 	if (EquippedRangedWeapon && Character)
 	{
 		FightingStyle = EFightingStyle::EFS_Ranged;
@@ -1248,6 +1260,7 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedRangedWeapon);
 	}
+	Character->StartCamWatchdog(2.f);
 }
 
 void UCombatComponent::OnRep_SecondaryWeapon()
@@ -1310,20 +1323,22 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 
 void UCombatComponent::InterpFOV(float DeltaTime)
 {
-	if (EquippedRangedWeapon == nullptr) return;
+	if (!EquippedRangedWeapon || !Character || !Character->GetFollowCamera()) return;
 
-	if (bAiming)
-	{
-		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedRangedWeapon->GetZoomedFOV(), DeltaTime, EquippedRangedWeapon->GetZoomInterpSpeed());
-	}
-	else
-	{
-		CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
-	}
-	if (Character && Character->GetFollowCamera())
-	{
-		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
-	}
+	const float MinFOV = 45.f;
+	const float MaxFOV = 120.f;
+
+	const float TargetFOV = FMath::Clamp(
+		bAiming ? EquippedRangedWeapon->GetZoomedFOV() : DefaultFOV,
+		MinFOV, MaxFOV);
+
+	const float Speed = bAiming ? EquippedRangedWeapon->GetZoomInterpSpeed() : ZoomInterpSpeed;
+
+	// Clamp input & output so a bad default can’t nuke the camera
+	CurrentFOV = FMath::Clamp(CurrentFOV, MinFOV, MaxFOV);
+	CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, Speed);
+
+	Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)

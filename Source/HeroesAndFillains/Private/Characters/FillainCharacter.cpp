@@ -59,6 +59,91 @@
 #include "Pickups/StaminaPickup.h"
 #include "HAFComponents/HiddenTreasureComponent.h"
 #include "HAFComponents/HiddenTreasureScannerComponent.h"
+#include "HeroesAndFillains/DebugMacros.h"
+#include "Input/HAFInputComponent.h"
+#include "Misc/OutputDevice.h"
+#include "Misc/AssertionMacros.h"
+#include "HAL/PlatformStackWalk.h"
+#include "Logging/LogMacros.h"
+#include "HAL/PlatformStackWalk.h"
+#include "Components/CapsuleComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Misc/AssertionMacros.h"        // FDebug::DumpStackTraceToLog
+#include "Misc/EngineVersionComparison.h"
+#include "HAL/PlatformStackWalk.h"
+#include "Logging/LogMacros.h"
+#include "Camera/CameraComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/LightComponent.h"
+#include "Components/PostProcessComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/LightComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/WidgetComponent.h"
+#include "NiagaraComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
+#include "EngineUtils.h"
+#include "Engine/PostProcessVolume.h"
+
+void AFillainCharacter::Client_DisableAllWorldPPV_Implementation()
+{
+	int32 Count = 0;
+
+	for (TActorIterator<APostProcessVolume> It(GetWorld()); It; ++It)
+	{
+		APostProcessVolume* V = *It;
+		if (!IsValid(V)) continue;
+
+		// Hard-disable this volume
+		V->bUnbound     = false;
+		V->BlendWeight  = 0.f;
+		V->Priority     = -9999.f;              // keep it out of blends
+		V->Settings     = FPostProcessSettings(); // reset to defaults
+
+		++Count;
+		UE_LOG(LogTemp, Warning, TEXT("[PPV-Off] Disabled %s (in level: %s)"),
+			   *GetNameSafe(V), *GetNameSafe(V->GetLevel()));
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[PPV-Off] Disabled %d PostProcessVolumes"), Count);
+}
+
+void AFillainCharacter::Client_ClearCameraEffects_Implementation()
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		// Turn OFF any PlayerController fade overlay (color must be FColor)
+		PC->ClientSetCameraFade(
+			/*bEnable=*/false,
+			FColor(0,0,0,255),       // ← use FColor, not FLinearColor
+			FVector2D(0.f, 0.f),
+			/*FadeTime=*/0.f,
+			/*bFadeAudio=*/false,
+			/*bHoldWhenFinished=*/false
+		);
+
+		if (PC->PlayerCameraManager)
+		{
+			// Stop legacy/new camera shakes
+			PC->PlayerCameraManager->StopAllCameraShakes(/*bImmediately=*/true);
+
+			// Remove any lens effects (can look like solid tints/flares)
+			PC->PlayerCameraManager->ClearCameraLensEffects();
+
+			// (Optional, if available in your build) force fade alpha to 0 instantly:
+			// PC->PlayerCameraManager->StartCameraFade(1.f, 0.f, 0.f, FLinearColor::Black, false, false);
+		}
+	}
+}
 
 
 AFillainCharacter::AFillainCharacter()
@@ -86,7 +171,7 @@ AFillainCharacter::AFillainCharacter()
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
-	CameraBoom->TargetArmLength = 300.f;
+	CameraBoom->TargetArmLength = 450.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -122,6 +207,9 @@ AFillainCharacter::AFillainCharacter()
 	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
 	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	bSelfOccluded = false;
+	CameraSelfOcclusionThreshold = 160.f;
+	
 	/***********************************************
 	****    Hit boxes for server-side rewind    ****
 	***********************************************/
@@ -210,6 +298,80 @@ AFillainCharacter::AFillainCharacter()
 	}
 }
 
+void AFillainCharacter::FixSelfCameraCollision()
+{
+	// Your pawn should never block the camera probe
+	if (UCapsuleComponent* Cap = GetCapsuleComponent())
+		Cap->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	if (USkeletalMeshComponent* SkelMesh = GetMesh())
+		SkelMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore); // covers backpack bone
+
+	// Any other primitives on the pawn (quads/widgets/etc.)
+	TArray<UPrimitiveComponent*> Prims;
+	GetComponents<UPrimitiveComponent>(Prims);              // <— correct API
+	for (UPrimitiveComponent* P : Prims)
+		if (P) P->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	if (CameraBoom)
+		CameraBoom->ProbeChannel = ECC_Camera;
+}
+
+void AFillainCharacter::Debug_ProbeSpringArmBlocker()
+{
+	if (!CameraBoom || !FollowCamera) return;
+
+	const FVector Pivot   = CameraBoom->GetComponentLocation();
+	const FRotator Rot    = CameraBoom->GetComponentRotation();
+	const FVector Desired = Pivot - Rot.Vector() * CameraBoom->TargetArmLength;
+
+	const float Target = CameraBoom->TargetArmLength;
+	const float Actual = (FollowCamera->GetComponentLocation() - Pivot).Size();
+
+	UE_LOG(LogTemp, Warning, TEXT("[ArmDbg] Target=%.1f  Actual=%.1f  ProbeSize=%.1f  Channel=%d"),
+		Target, Actual, CameraBoom->ProbeSize, (int32)CameraBoom->ProbeChannel);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(ArmDbg), /*bTraceComplex=*/false, this);
+	// Do NOT ignore anything; we want to catch the culprit (even if attached to us)
+	bool bHit = GetWorld()->SweepSingleByChannel(
+	Hit, Pivot, Desired, FQuat::Identity,
+		CameraBoom->ProbeChannel,
+		FCollisionShape::MakeSphere(CameraBoom->ProbeSize),
+		Params);
+
+	if (bHit && Hit.bBlockingHit)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ArmDbg] BLOCKED by Actor=%s  Comp=%s  Profile=%s  Dist=%.1f"),
+			*GetNameSafe(Hit.GetActor()),
+			*GetNameSafe(Hit.GetComponent()),
+			Hit.Component.IsValid() ? *Hit.Component->GetCollisionProfileName().ToString() : TEXT("None"),
+			Hit.Distance);
+
+		// Uncomment for a visible line in PIE:
+		// DrawDebugLine(GetWorld(), Pivot, Hit.ImpactPoint, FColor::Red, false, 2.f, 0, 1.f);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ArmDbg] No blocker found (Actual may be reduced by other code)."));
+	}	
+}
+
+void AFillainCharacter::Client_OnEquipped_Implementation()
+{
+
+	bEquipInProgress = false;
+	if (FollowCamera)
+	{
+		FollowCamera->SetFieldOfView(DefaultFOV);
+		bFOVLock = true;
+		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
+	}
+	// after the weapon attaches, owning client
+	Combat->CurrentFOV = Combat->DefaultFOV;
+	GetFollowCamera()->SetFieldOfView(Combat->DefaultFOV);
+}
+
 void AFillainCharacter::BeginPlay()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay A"));
@@ -229,6 +391,8 @@ void AFillainCharacter::BeginPlay()
 		Move->bOrientRotationToMovement = true;
 	}
 
+	FixSelfCameraCollision();
+	
 	bIsCharacterDead = false;
 
 	Combat = FindComponentByClass<UCombatComponent>();
@@ -313,6 +477,106 @@ void AFillainCharacter::BeginPlay()
 			}
 		});
 	}
+}
+
+bool AFillainCharacter::IsCameraWeird(FString& OutWhy) const
+{
+    if (!FollowCamera || !CameraBoom || !GetCapsuleComponent()) return false;
+
+    const float CapZ  = GetCapsuleComponent()->GetComponentLocation().Z;
+    const float CamZ  = FollowCamera->GetComponentLocation().Z;
+    const float dZ    = CamZ - CapZ;
+
+    if (FollowCamera->GetAttachParent() != CameraBoom) { OutWhy = TEXT("Camera parent != CameraBoom"); return true; }
+    if (dZ < -40.f)                                     { OutWhy = FString::Printf(TEXT("Camera below capsule ΔZ=%.1f"), dZ); return true; }
+    if (CameraBoom->TargetArmLength < 10.f)             { OutWhy = FString::Printf(TEXT("Arm collapsed=%.1f"), CameraBoom->TargetArmLength); return true; }
+
+	static float PrevArm = -1.f;
+	static USceneComponent* PrevParent = nullptr;
+
+	const bool bParentChanged  = PrevParent && FollowCamera->GetAttachParent() != PrevParent;
+	const bool bArmSuddenDrop  = PrevArm >= 0.f && (PrevArm - CameraBoom->TargetArmLength) >= 100.f;
+	const bool bFirstPersonish = CameraBoom->TargetArmLength <= 5.f;
+
+	PrevArm = CameraBoom->TargetArmLength;
+	PrevParent = FollowCamera->GetAttachParent();
+
+	if (bParentChanged)      { OutWhy = TEXT("Camera parent CHANGED this tick"); return true; }
+	if (bArmSuddenDrop)      { OutWhy = FString::Printf(TEXT("Arm sudden drop to %.1f"), CameraBoom->TargetArmLength); return true; }
+	if (bFirstPersonish)     { OutWhy = FString::Printf(TEXT("Arm ~0 (FP) %.1f"), CameraBoom->TargetArmLength); return true; }
+	
+    return false;
+}
+
+void AFillainCharacter::CamWatchdogTick()
+{
+	if (!IsValid(this) || IsPendingKillPending()) return;
+	if (!IsValid(GetWorld()) || !IsLocallyControlled()) return;
+
+	const UCapsuleComponent* Cap = GetCapsuleComponent();
+	if (!IsValid(Cap) || !IsValid(CameraBoom) || !IsValid(FollowCamera)) return;
+	if (bCamFixCooldown) return;
+
+	const float CapZ   = Cap->GetComponentLocation().Z;
+	const float CamZ   = FollowCamera->GetComponentLocation().Z;
+	const float DeltaZ = CamZ - CapZ;                 // <— define it here
+
+	if (DeltaZ < -50.f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("⚠️ CamWatchdog: Camera below capsule ΔZ=%.1f — resetting"), DeltaZ);
+		Client_NukeScreenOverlays();
+		ResetCameraRig();
+		bEquipInProgress = false;
+
+		// throttle to avoid immediate re-trigger while transforms settle
+		bCamFixCooldown = true;
+		GetWorldTimerManager().SetTimer(CamFixCooldownHandle, this, &AFillainCharacter::CamWatchdogCooldownOff, 0.25f, false);
+	}
+}
+
+void AFillainCharacter::StartCamWatchdog(float DurationSec, float TickSec)
+{
+    GetWorldTimerManager().SetTimer(CamWatchdogTimer, this, &AFillainCharacter::CamWatchdogTick, TickSec, true);
+
+    FTimerHandle StopHandle;
+    GetWorldTimerManager().SetTimer(StopHandle, [this]()
+    {
+        GetWorldTimerManager().ClearTimer(CamWatchdogTimer);
+    }, DurationSec, false);
+}
+
+void AFillainCharacter::FixCameraIfWeird(const TCHAR* Tag)
+{
+	// no delay, no logging; just fix it now
+	ResetCameraRig();
+}
+
+void AFillainCharacter::RestoreThirdPersonCameraSafe()
+{
+	if (!CameraBoom || !FollowCamera) return;
+
+	// Temporarily disable collision so the boom can't push us into the floor mid-attach
+	const bool bPrevCollision = CameraBoom->bDoCollisionTest;
+	CameraBoom->bDoCollisionTest = false;
+
+	// Make sure the camera is parented to the boom (not the weapon or mesh)
+	FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale, USpringArmComponent::SocketName);
+
+	// Restore a sane default
+	CameraBoom->TargetArmLength = FMath::Max(CameraBoom->TargetArmLength, 250.f);
+	CameraBoom->SetRelativeLocation(FVector::ZeroVector);
+	CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);
+	CameraBoom->bUsePawnControlRotation = true;
+
+	// Ensure pawn uses controller yaw (typical 3P setup)
+	if (APawn* P = Cast<APawn>(this)) { P->bUseControllerRotationYaw = false; }
+
+	// Re-enable boom collision next tick (prevents immediate shove underground)
+	GetWorldTimerManager().SetTimerForNextTick([this, bPrevCollision]()
+	{
+		if (CameraBoom) { CameraBoom->bDoCollisionTest = bPrevCollision; }
+	});
 }
 
 void AFillainCharacter::RequestFillainCharacterCapsuleUpdate()
@@ -400,6 +664,21 @@ void AFillainCharacter::Tick(float DeltaTime)
 	if (!GetFillainPlayerController()) return;
 	if (IsUsingGamepad()) Combat->TraceForCrossHairTarget(); else GetFillainPlayerController()->CursorTrace();
 	
+	if (IsLocallyControlled()) HideCharacterIfCameraClose();
+
+	if (IsLocallyControlled() && bFOVLock && FollowCamera)
+	{
+		FOVLockTimeLeft -= DeltaTime;
+
+		const float FOV = FollowCamera->FieldOfView;
+		if (FOV < MinFOV || FOV > MaxFOV)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[FOVGuard] Corrected FOV %.1f -> %.1f"), FOV, DefaultFOV);
+			FollowCamera->SetFieldOfView(DefaultFOV);
+		}
+
+		if (FOVLockTimeLeft <= 0.f) bFOVLock = false;
+	}
 }
 
 void AFillainCharacter::NotifyHit(
@@ -916,21 +1195,21 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	if (UHAFInputComponent* HAFInputComponent = CastChecked<UHAFInputComponent>(PlayerInputComponent))
 
 	{
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Move);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Look);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Jump);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AFillainCharacter::EquipButtonPressed);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AFillainCharacter::CrouchButtonPressed);
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AFillainCharacter::AimButtonPressed);
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AFillainCharacter::AimButtonReleased);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AFillainCharacter::AttackButtonPressed);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AFillainCharacter::AttackButtonReleased);
-		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
-		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Dodge);
+		HAFInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Move);
+		HAFInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Look);
+		HAFInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AFillainCharacter::Jump);
+		HAFInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AFillainCharacter::EquipButtonPressed);
+		HAFInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AFillainCharacter::CrouchButtonPressed);
+		HAFInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AFillainCharacter::AimButtonPressed);
+		HAFInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AFillainCharacter::AimButtonReleased);
+		HAFInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AFillainCharacter::AttackButtonPressed);
+		HAFInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AFillainCharacter::AttackButtonReleased);
+		HAFInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AFillainCharacter::ReloadButtonPressed);
+		HAFInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &AFillainCharacter::GrenadeButtonPressed);
+		HAFInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Dodge);
 	}
 }
 
@@ -1501,7 +1780,9 @@ void AFillainCharacter::Look(const FInputActionValue& Value)
 
 void AFillainCharacter::EquipButtonPressed()
 {
-	UE_LOG(LogTemp, Error, TEXT("🎯 EquipButtonPressed() triggered"));
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
 
 	if (CharactersMeleeWeapon)
 	{
@@ -1533,9 +1814,30 @@ void AFillainCharacter::EquipButtonPressed()
 		SetOverlappingItem(nullptr);
 		SetOverlappingWeapon(nullptr);
 
-		UE_LOG(LogTemp, Warning, TEXT("✅ Cleared overlapping references after successful equip"));
+		if (bEquipInProgress) return;
+
+		// Snapshot the weapon NOW
+		AWeaponBase* LocalWeapon = OverlappingWeapon;
+		UE_LOG(LogEquipTrace, Warning, TEXT("[%s] EquipButtonPressed | Snapshot Weapon=%s"),
+			*GetName(), LocalWeapon ? *LocalWeapon->GetName() : TEXT("None"));
+
+		if (!LocalWeapon) return;
+
+		bEquipInProgress = true; // debounce immediately
+		ServerEquipWeapon(LocalWeapon); // pass the pointer, don't re-read OverlappingWeapon later
+		if (FollowCamera)
+		{
+			FollowCamera->SetFieldOfView(DefaultFOV);
+			bFOVLock = true;
+			FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
+		}
 	}
 	else return;
+}
+
+void AFillainCharacter::ServerEquipWeapon_Implementation(AWeaponBase* WeaponToEquip)
+{
+
 }
 
 void AFillainCharacter::ToggleArmingAndDisarming()
@@ -1561,6 +1863,9 @@ void AFillainCharacter::ToggleArmingAndDisarming()
 
 void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Weapon)
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
 	if (!Combat || !Weapon) return;
 
 	if (Combat->ActionState == EActionState::EAS_EquippingWeapon)
@@ -1572,10 +1877,67 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	// Disarm/arm toggle
 	if (EquippedWeapon && EquippedWeapon->ItemState == EItemState::EIS_Equipped)
 	{
-		// Arm/disarm logic (as you already have it)...
-		// This is good — no major changes needed here
+		ToggleArmingAndDisarming();
 		return;
 	}
+	UE_LOG(LogEquipTrace, Warning, TEXT("[%s] ServerEquipWeapon | WeaponToEquip=%s"),
+			*GetName(), OverlappingWeapon ? *OverlappingWeapon->GetName() : TEXT("None"));
+
+	if (!OverlappingWeapon || !IsValid(OverlappingWeapon)) { bEquipInProgress = false; return; }
+
+	// Do the equip work (attach, set owner, set Combat refs, play montage, etc.)
+	Combat->EquipWeapon(OverlappingWeapon);
+	Weapon = OverlappingWeapon;
+	Client_OnEquipped();
+	FixSelfCameraCollision();
+
+	
+
+	// After the weapon is attached/owned:
+	{
+		// 1) Lights (HoverLight / flare lights)
+		TArray<ULightComponent*> Lights;
+		Weapon->GetComponents(Lights);
+		for (ULightComponent* L : Lights)
+		{
+			if (!L) continue;
+			L->SetVisibility(false, true);
+			L->SetIntensity(0.f);
+		}
+
+		// 2) Niagara / Cascade FX (muzzle flash, glows)
+		TArray<UNiagaraComponent*> NComps;
+		Weapon->GetComponents(NComps);
+		for (UNiagaraComponent* N : NComps)
+		{
+			if (!N) continue;
+			N->Deactivate();
+			N->SetAutoActivate(false);
+		}
+
+		// 3) Decals / 3D widgets used for pickup prompts
+		TArray<UDecalComponent*> Decals;
+		Weapon->GetComponents(Decals);
+		for (UDecalComponent* D : Decals)
+		{
+			if (!D) continue;
+			D->SetVisibility(false, true);
+		}
+
+		// (Optional) If you have a specific HoverLight pointer, just disable/destroy it:
+		// if (WeaponToEquip->HoverLight) WeaponToEquip->HoverLight->DestroyComponent();
+	}
+	
+	// Now that we’re done, clear overlaps on the server
+	OverlappingItem = nullptr;
+	OverlappingWeapon = nullptr;
+
+	// Option A: clear on montage end via delegate
+	// Option B: clear now and reset the flag
+	bEquipInProgress = false;
+
+	UE_LOG(LogTemp, Warning, TEXT("✅ Cleared overlapping references after successful equip"));
+	Client_PostEquipCameraFix();
 
 	// Actual equip logic
 	if (Weapon->IsA(ARangedWeapon::StaticClass()))
@@ -1601,7 +1963,6 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 			Melee->WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 			Melee->WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
 		}
-		ToggleArmingAndDisarming();
 	}
 
 	if (Weapon && Weapon->ItemState == EItemState::EIS_Equipped)
@@ -1612,11 +1973,14 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	{
 		UE_LOG(LogTemp, Warning, TEXT("❌ Weapon not marked equipped after Equip call"));
 	}
+	StartCamWatchdog(2.0f);
 }
 
 
 void AFillainCharacter::EquipWeapon(AWeaponBase* Weapon)
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	if (!Weapon) return;
 
 	UE_LOG(LogTemp, Warning, TEXT("AFillainCharacter::EquipWeapon() called for: %s"), *Weapon->GetName());
@@ -1647,11 +2011,220 @@ void AFillainCharacter::EquipWeapon(AWeaponBase* Weapon)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("⚠️ Unknown weapon type or hands needed — cannot equip: %s"), *Weapon->GetName());
 	}
+	if (FollowCamera && CameraBoom)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Before Equip -> Camera Location: %s | Boom Length: %f | AttachedTo: %s"),
+			*FollowCamera->GetComponentLocation().ToString(),
+			CameraBoom->TargetArmLength,
+			*FollowCamera->GetAttachParent()->GetName());
+	}
+
+	// ⚡ Your existing equip logic here
+	// (Attach weapon, set state, play montage, etc.)
+
+	if (FollowCamera && CameraBoom)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("After Equip -> Camera Location: %s | Boom Length: %f | AttachedTo: %s"),
+			*FollowCamera->GetComponentLocation().ToString(),
+			CameraBoom->TargetArmLength,
+			*FollowCamera->GetAttachParent()->GetName());
+	}
+	if (FollowCamera)
+	{
+		FollowCamera->SetFieldOfView(DefaultFOV);
+		bFOVLock = true;
+		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
+	}
+}
+
+void AFillainCharacter::ResetCameraRig()
+{
+	// 1) Ensure hierarchy: Camera attached to SpringArm, SpringArm to Root
+	if (CameraBoom->GetAttachParent() != GetRootComponent())
+	{
+		CameraBoom->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		CameraBoom->SetRelativeLocation(FVector::ZeroVector);
+		CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);
+		CameraBoom->SetRelativeScale3D(FVector::OneVector);
+	}
+
+	if (FollowCamera->GetAttachParent() != CameraBoom)
+	{
+		FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+										USpringArmComponent::SocketName);
+		FollowCamera->SetRelativeLocation(FVector::ZeroVector);
+		FollowCamera->SetRelativeRotation(FRotator::ZeroRotator);
+	}
+
+	// 2) Restore spring arm safety settings
+	CameraBoom->TargetArmLength = FMath::Max(50.f, DefaultArmLength); // never negative/zero
+	CameraBoom->SocketOffset    = FVector::ZeroVector;
+	CameraBoom->TargetOffset    = DefaultTargetOffset;
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bDoCollisionTest = true;     // keep sweep to avoid world clipping
+	CameraBoom->bEnableCameraLag = false;    // optional: disable to avoid late-frame dips
+
+	// 3) Camera flags
+	FollowCamera->bUsePawnControlRotation = false;
+
+	// 4) Nuke any stray world transforms (if something set world loc directly)
+	FollowCamera->SetWorldTransform(CameraBoom->GetSocketTransform(USpringArmComponent::SocketName));
+
+	// Breadcrumb
+	UE_LOG(LogTemp, Warning, TEXT("[ResetCameraRig] Parent=%s Arm=%.1f CamZ=%.1f CapZ=%.1f"),
+		   *GetNameSafe(CameraBoom->GetAttachParent()), CameraBoom->TargetArmLength,
+		   FollowCamera->GetComponentLocation().Z, GetCapsuleComponent()->GetComponentLocation().Z);
+}
+
+void AFillainCharacter::Client_SafeViewAfterEquip_Implementation()
+{
+	// 0) Kill any legacy timers on this actor (including that [PostEquip+600ms] one)
+    GetWorldTimerManager().ClearAllTimersForObject(this);
+
+    // 1) Make the boom/camera immune to self-collision & exposure flicker
+    if (CameraBoom) CameraBoom->bDoCollisionTest = false;
+
+    if (FollowCamera)
+    {
+        FollowCamera->PostProcessSettings = FPostProcessSettings(); // reset PP
+        auto& PPS = FollowCamera->PostProcessSettings;
+        PPS.bOverride_AutoExposureMinBrightness = true;
+        PPS.bOverride_AutoExposureMaxBrightness = true;
+        PPS.AutoExposureMinBrightness = 1.0f;
+        PPS.AutoExposureMaxBrightness = 1.0f;
+    }
+
+    // 2) Hide my own mesh/weapon for the owning player only
+    if (USkeletalMeshComponent* SMC = GetMesh())
+        SMC->SetOwnerNoSee(true);
+
+    if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+        Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(true);
+
+    // 3) Mute weapon visuals that can full-screen you (lights/FX/widgets/decals)
+    if (Combat && Combat->EquippedWeapon)
+    {
+        AActor* W = Combat->EquippedWeapon;
+
+        TArray<ULightComponent*> Lights;       W->GetComponents(Lights);
+        for (ULightComponent* L : Lights) if (L) { L->SetVisibility(false, true); L->SetIntensity(0.f); }
+
+        TArray<UNiagaraComponent*> NFX;        W->GetComponents(NFX);
+        for (UNiagaraComponent* N : NFX) if (N) { N->Deactivate(); N->SetAutoActivate(false); }
+
+        TArray<UWidgetComponent*> Widgets;     W->GetComponents(Widgets);
+        for (UWidgetComponent* WC : Widgets) if (WC) { WC->SetVisibility(false, true); WC->SetHiddenInGame(true, true); }
+
+        TArray<UDecalComponent*> Decals;       W->GetComponents(Decals);
+        for (UDecalComponent* D : Decals) if (D) { D->SetVisibility(false, true); }
+    }
+
+    // 4) Also hide any 3D widgets attached to the character
+    {
+        TArray<UWidgetComponent*> MyWidgets; GetComponents(MyWidgets);
+        for (UWidgetComponent* WC : MyWidgets) if (WC) { WC->SetVisibility(false, true); WC->SetHiddenInGame(true, true); }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("[SafeView] Applied: boom collision OFF, PP reset, owner meshes hidden, weapon lights/FX/widgets OFF."));
+}
+
+void AFillainCharacter::Client_ForceFollowCamera_Implementation()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	// 1) Deactivate ALL camera components on self
+	{
+		TArray<UCameraComponent*> Cams;
+		GetComponents<UCameraComponent>(Cams);
+		for (UCameraComponent* C : Cams) if (C) C->Deactivate();
+	}
+
+	// 2) Deactivate ALL camera components on attached actors (weapon, etc.)
+	{
+		TArray<AActor*> Attached;
+		GetAttachedActors(Attached, /*bIncludeFromChildActors=*/true, /*bIncludeSocketNames=*/true);
+		for (AActor* A : Attached)
+		{
+			if (!A) continue;
+			TArray<UCameraComponent*> Cams;
+			A->GetComponents<UCameraComponent>(Cams);
+			for (UCameraComponent* C : Cams) if (C) C->Deactivate();
+		}
+	}
+
+	// 3) Activate the one true camera and set view target to THIS pawn
+	if (FollowCamera) FollowCamera->Activate(true);
+	PC->AutoManageActiveCameraTarget(this);
+	PC->SetViewTarget(this); // no blend
+
+	// 4) Prove what’s actually being used
+	const FVector PCM = (PC->PlayerCameraManager) ? PC->PlayerCameraManager->GetCameraLocation() : FVector::ZeroVector;
+	const FVector FCam = FollowCamera ? FollowCamera->GetComponentLocation() : FVector::ZeroVector;
+
+	UE_LOG(LogTemp, Warning, TEXT("[CamForce] VT=%s  PCM=%s  FollowCam=%s  Match=%d"),
+		*GetNameSafe(PC->PlayerCameraManager ? PC->PlayerCameraManager->GetViewTarget() : nullptr),
+		*PCM.ToCompactString(), *FCam.ToCompactString(),
+		(FVector::Dist(PCM, FCam) < 2.f) ? 1 : 0);
+}
+
+void AFillainCharacter::CamWatchdogCooldownOff()
+{
+	bCamFixCooldown = false;
+	GetWorldTimerManager().ClearTimer(CamFixCooldownHandle);
+	UE_LOG(LogTemp, Verbose, TEXT("[CamWatchdog] Cooldown off"));
+}
+
+void AFillainCharacter::Client_NukeScreenOverlays_Implementation()
+{
+	auto KillPPOnActor = [](AActor* A)
+	{
+		if (!A) return;
+
+		// 1) Disable any PostProcessComponents (common on weapons/scopes/VFX)
+		TArray<UPostProcessComponent*> PPCs;
+		A->GetComponents<UPostProcessComponent>(PPCs);
+		for (UPostProcessComponent* PPC : PPCs)
+		{
+			if (!PPC) continue;
+			PPC->bEnabled = false;
+			PPC->bUnbound = false;
+			PPC->Settings.WeightedBlendables.Array.Reset();
+			UE_LOG(LogTemp, Warning, TEXT("[NukePP] Disabled PostProcessComponent on %s"), *GetNameSafe(A));
+		}
+
+		// 2) Clear camera PostProcessSettings (in case the weapon wrote into your FollowCamera)
+		TArray<UCameraComponent*> Cams;
+		A->GetComponents<UCameraComponent>(Cams);
+		for (UCameraComponent* Cam : Cams)
+		{
+			if (!Cam) continue;
+			Cam->PostProcessSettings = FPostProcessSettings(); // reset to defaults
+			UE_LOG(LogTemp, Warning, TEXT("[NukePP] Cleared PostProcessSettings on camera %s (%s)"),
+				   *GetNameSafe(Cam), *GetNameSafe(A));
+		}
+	};
+
+	// Self
+	KillPPOnActor(this);
+
+	// Everything attached (includes the newly equipped weapon)
+	TArray<AActor*> Attached;
+	GetAttachedActors(Attached, /*bIncludeFromChildActors=*/true, /*bIncludeSocketNames=*/true);
+	for (AActor* A : Attached) { KillPPOnActor(A); }
+}
+
+void AFillainCharacter::Client_PostEquipCameraFix_Implementation()
+{
+	// If your attach/montage completes next tick, a tiny delay avoids racing transforms.
+	GetWorldTimerManager().SetTimerForNextTick(this, &AFillainCharacter::ResetCameraRig);
 }
 
 void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* Weapon)
 {
-	UE_LOG(LogTemp, Warning, TEXT("✅ Equipping %s, Current ActionState: %d"), *Weapon->GetName(), (int32)Combat->ActionState);
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+
 	if (Weapon->IsA(ARangedWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
 		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
@@ -1675,7 +2248,10 @@ void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* Weapon)
 
 void AFillainCharacter::EquipTwoHandedRangedWeapon(AWeaponBase* Weapon)
 {
-	UE_LOG(LogTemp, Warning, TEXT("✅ Equipping %s, Current ActionState: %d"), *Weapon->GetName(), (int32)Combat->ActionState);
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
+	
 	if (Weapon->IsA(ARangedWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
 		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
@@ -1700,7 +2276,10 @@ void AFillainCharacter::EquipTwoHandedRangedWeapon(AWeaponBase* Weapon)
 
 void AFillainCharacter::EquipOneHandedMeleeWeapon(AWeaponBase* Weapon)
 {
-	UE_LOG(LogTemp, Warning, TEXT("✅ Equipping %s, Current ActionState: %d"), *Weapon->GetName(), (int32)Combat->ActionState);
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
+	
 	if (Weapon->IsA(AMeleeWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
 		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
@@ -1726,8 +2305,10 @@ void AFillainCharacter::EquipOneHandedMeleeWeapon(AWeaponBase* Weapon)
 
 void AFillainCharacter::EquipTwoHandedMeleeWeapon(AWeaponBase* Weapon)
 {
-	UE_LOG(LogTemp, Warning, TEXT("👉 Entering EquipTwoHandedMeleeWeapon"));
-	UE_LOG(LogTemp, Warning, TEXT("✅ Equipping %s, Current ActionState: %d"), *Weapon->GetName(), (int32)Combat->ActionState);
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
+	
 	if (Weapon->IsA(AMeleeWeapon::StaticClass())&& Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
 		if (Weapon->IsA(AMeleeWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
@@ -1773,13 +2354,32 @@ bool AFillainCharacter::IfPlayerAlreadyEquippedAnyWeapon()
 
 ARangedWeapon* AFillainCharacter::EquippedWeaponIsARangedWeapon()
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	UE_LOG(LogTemp, Warning, TEXT("CamParent=%s Arm=%.1f CamZ=%.1f CapZ=%.1f"),
+	*GetNameSafe(FollowCamera ? FollowCamera->GetAttachParent() : nullptr),
+	CameraBoom ? CameraBoom->TargetArmLength : -1.f,
+	FollowCamera ? FollowCamera->GetComponentLocation().Z : -1.f,
+	GetCapsuleComponent() ? GetCapsuleComponent()->GetComponentLocation().Z : -1.f);
+	if (FollowCamera)
+	{
+		FollowCamera->SetFieldOfView(DefaultFOV);
+		bFOVLock = true;
+		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
+	}
 	ARangedWeapon* Ranged = Cast<ARangedWeapon>(EquippedWeapon);
+	StartCamWatchdog(2.0f);
 	if (Ranged == nullptr) return nullptr;
 	else return Ranged;
+
+
 }
 
 AMeleeWeapon* AFillainCharacter::EquippedWeaponIsAMeleeWeapon()
 {
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
 	AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
 	if (Melee == nullptr) return nullptr;
 	else return Melee;
@@ -2099,11 +2699,7 @@ bool AFillainCharacter::PlayerHasSword()
 void AFillainCharacter::CrouchButtonPressed()
 {
 	if (bDisableGameplay) return;
-	if (bIsCrouched)
-	{
-		UnCrouch();
-	}
-	else
+	if (!bIsCrouched)
 	{
 		Crouch();
 	}
@@ -2321,23 +2917,39 @@ void AFillainCharacter::TurnInPlace(float DeltaTime)
 
 void AFillainCharacter::HideCharacterIfCameraClose()
 {
-	if (!IsLocallyControlled()) return;
-	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
+	if (!IsLocallyControlled() || !CameraBoom || !FollowCamera || !GetMesh()) return;
+
+	const float Actual =
+		(FollowCamera->GetComponentLocation() - CameraBoom->GetComponentLocation()).Size();
+
+	// Decide desired state using hysteresis
+	const float EnterT = FMath::Min(SelfOcclEnter, SelfOcclExit);
+	const float ExitT  = FMath::Max(SelfOcclEnter, SelfOcclExit);
+
+	const bool bDesiredOccluded = bSelfOccluded
+		? (Actual < ExitT)      // stay occluded until we're comfortably past ExitT
+		: (Actual < EnterT);    // only enter when we cross the lower band
+
+	// Accumulate time in current state; only allow switch after hold time
+	SelfOcclStateTime += GetWorld()->GetDeltaSeconds();
+	if (bDesiredOccluded != bSelfOccluded && SelfOcclStateTime >= SelfOcclMinHold)
 	{
-		GetMesh()->SetVisibility(false);
+		bSelfOccluded = bDesiredOccluded;
+		SelfOcclStateTime = 0.f;
+
+		// When occluded: stop boom collision + hide for owner
+		CameraBoom->bDoCollisionTest = !bSelfOccluded;
+		GetMesh()->SetOwnerNoSee(bSelfOccluded);
+
 		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
 		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[SelfOccl] SWITCH  Actual=%.1f  Occluded=%d  BoomCollide=%d"),
+			   Actual, bSelfOccluded, (int32)CameraBoom->bDoCollisionTest);
 	}
-	else
-	{
-		GetMesh()->SetVisibility(true);
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
-		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
-		}
-	}
+	// else: hold current state; no spammy toggles
 }
 
 void AFillainCharacter::UpdateHUDAmmo()
@@ -2638,25 +3250,6 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	InitializeDefaultAttributes();
 }
 
-void AFillainCharacter::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
-	InitFillainCharacterCapsuleBaselinesIfNeeded();
-	AHAFPlayerState* PS = GetPlayerState<AHAFPlayerState>();
-	if (!PS) return;
-
-	AbilitySystemComponent = PS->GetAbilitySystemComponent();
-	HAFAttributeSet        = PS->GetHAFAttributeSet();
-
-	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
-
-	UE_LOG(LogTemp, Warning, TEXT("[Character::OnRep_PlayerState] ASC=%s AS=%s"),
-		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
-
-	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
-	BindHiddenTreasureCapsuleHooksOnce();
-}
-
 void AFillainCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -2680,6 +3273,7 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 
 	// Owner = PlayerState, Avatar = Character
 	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+	AddCharacterAbilities();
 
 	// Apply your init GameplayEffects on the SERVER
 	if (HasAuthority())
@@ -2705,6 +3299,26 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 	// Ensure ASC is initialized (common place you do InitAbilityActorInfo)
 	BindFillainCharacterCapsuleHooksOnce();        // server bind
 	Server_ApplyFillainCharacterCapsuleFromStats(); // apply once on the server
+	BindHiddenTreasureCapsuleHooksOnce();
+}
+
+
+void AFillainCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	InitFillainCharacterCapsuleBaselinesIfNeeded();
+	AHAFPlayerState* PS = GetPlayerState<AHAFPlayerState>();
+	if (!PS) return;
+
+	AbilitySystemComponent = PS->GetAbilitySystemComponent();
+	HAFAttributeSet        = PS->GetHAFAttributeSet();
+
+	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Character::OnRep_PlayerState] ASC=%s AS=%s"),
+		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
+
+	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
 	BindHiddenTreasureCapsuleHooksOnce();
 }
 

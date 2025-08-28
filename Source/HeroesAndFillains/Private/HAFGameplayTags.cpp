@@ -8,6 +8,13 @@ FHAFGameplayTags FHAFGameplayTags::GameplayTags;
 
 void FHAFGameplayTags::InitializeNativeGameplayTags()
 {
+
+	/*********************************
+	**********************************
+	****    PRIMARY ATTRIBUTES    ****
+	**********************************
+	*********************************/
+	
 	GameplayTags.Attributes_Primary_Strength = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Primary.Strength"),
 		FString("Increases Physical Damage")
@@ -53,6 +60,13 @@ void FHAFGameplayTags::InitializeNativeGameplayTags()
 		FString("Increases Likability and Reputation... even with your Enemies!")
 		);
 
+
+	/***********************************
+	************************************
+	****    SECONDARY ATTRIBUTES    ****
+	************************************
+	***********************************/
+	
 	GameplayTags.Attributes_Secondary_Armor = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Secondary.Armor"),
 		FString("Reduces Damage Taken, and Improves Block Chance")
@@ -158,10 +172,52 @@ FName("Attributes.Secondary.MaxMajix"),
 FString("Increases the Amount of Majix Obtainable")
 );
 
+
+	/***********************************
+	************************************
+	****    INVISIBLE ATTRIBUTES    ****
+	************************************
+	***********************************/
+	
 	GameplayTags.Attributes_Invisible_DexterityAgilityFlexibility = UGameplayTagsManager::Get().AddNativeGameplayTag(
 FName("Attributes.Invisible.DexterityAgilityFlexibility"),
 FString("How the Sausage Gets Made...Go Away")
 );
+
+	/*************************
+	**************************
+	****    INPUT TAGS    ****
+	**************************
+	*************************/
 	
+	GameplayTags.InputTag_LeftMouseButtonOrGamepadShoulder = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.LeftMouseButtonOrGamepadShoulder"),
+		FString("Input Tag for the Left Mouse Button or Gamepad Shoulder... whatever that is.")
+		);
+	
+	GameplayTags.InputTag_RightMouseButtonOrGamepadShoulder = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.RightMouseButtonOrGamepadShoulder"),
+		FString("Input Tag for the Right Mouse Button Or Gamepad Shoulder... When did mice get buttons?!")
+		);
+
+	GameplayTags.InputTag_1OrDPadUp = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.1OrDPadUp"),
+		FString("Input Tag for the 1 Key or D-Pad Up... 1 Key... do they mean The One Key?")
+		);
+
+	GameplayTags.InputTag_2OrDPadDown = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.2OrDPadDown"),
+		FString("Input Tag for the 2 Button or D-Pad Down. Shouldn't it be plural? Two buttons...?") 
+		);
+
+	GameplayTags.InputTag_3OrDPadLeft = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.3OrDPadLeft"),
+		FString("Input Tag for the 3 Button or Deepad left. He left? Huh... good riddance then.") 
+		);
+
+	GameplayTags.InputTag_4OrDPadRight = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.4OrDPadRight"),
+		FString("Input Tag for the 4 Button or D-Pad Right. What does 'four-the-for' mean anyway?") 
+		);
 
 }

@@ -18,3 +18,8 @@
 		DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, -1.f, 0, 1.f); \
 		DrawDebugPoint(GetWorld(), EndLocation, 15.f, FColor::Red, false, -1.f); \
 	}
+
+#pragma once
+DECLARE_LOG_CATEGORY_EXTERN(LogEquipTrace, Log, All);
+#define EQTRACE() UE_LOG(LogEquipTrace, Warning, TEXT("[%s] %s"), *GetNameSafe(this), *FString(__FUNCTION__))
+#define EQTRACE_MSG(Format, ...) UE_LOG(LogEquipTrace, Warning, TEXT("[%s] %s | " Format), *GetNameSafe(this), *FString(__FUNCTION__), ##__VA_ARGS__)

@@ -48,6 +48,14 @@ public:
 	FGameplayTag Attributes_Secondary_MaxMajix;
 
 	FGameplayTag Attributes_Invisible_DexterityAgilityFlexibility;
+
+	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
+	FGameplayTag InputTag_RightMouseButtonOrGamepadShoulder;
+	FGameplayTag InputTag_1OrDPadUp;
+	FGameplayTag InputTag_2OrDPadDown;
+	FGameplayTag InputTag_3OrDPadLeft;
+	FGameplayTag InputTag_4OrDPadRight;
+
 protected:
 
 private:

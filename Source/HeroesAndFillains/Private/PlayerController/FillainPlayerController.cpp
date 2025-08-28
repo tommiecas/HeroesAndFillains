@@ -2,6 +2,8 @@
 
 
 #include "PlayerController/FillainPlayerController.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "HUD/FillainHUD.h"
 #include "HUD/CharacterOverlayFixed.h"
 #include "Components/ProgressBar.h"
@@ -37,6 +39,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "HUD/ReturnToMainMenu.h"
 #include "HUD/PlayerChat.h"
@@ -47,6 +50,7 @@
 #include "HAFComponents/AttributeComponent.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
 #include "HUD/CharacterOverlayFixed.h"
+#include "Input/HAFInputComponent.h"
 
 #include "Items/Soul.h"
 #include "Weapons/Ranged/RangedWeapon.h"
@@ -74,54 +78,16 @@ void AFillainPlayerController::PlayerTick(float DeltaTime)
 
 void AFillainPlayerController::CursorTrace()
 {
-	FHitResult CursorHit;
 	GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
 	LastActor = ThisActor;
 	ThisActor = CursorHit.GetActor();
 
-	/**
-	 ** Line trace from cursor. There are several scenarios:
-	 *		1) LastActor is null, and This Actor is null (Do Nothing)
-	 *		2) LastActor is null, but This Actor is valid (Highlight This Actor)
-	 *		3) LastActor is valid, but This Actor is null (UnHighlight Last Actor)
-	 *		4) LastActor is valid and ThisActor is valid, and Last Actor and This Actor aren't the same actor (UnHighlight Last Actor and Highlight This Actor)
-	 *		5) Last Actor is valid and ThisActor is valid and LastActor and This Actor are the same actor (Do Nothing)
-	 **/
-
-	if (LastActor == nullptr)
+	if (LastActor != ThisActor)
 	{
-		if (ThisActor != nullptr)
-		{
-			// #2
-			ThisActor->HighlightActor();
-		}
-		else
-		{
-			// #1 Do Nothing
-		}
-	}
-	else // Last Actor is Valid
-	{
-		if (ThisActor == nullptr)
-		{
-			// #3
-			LastActor->UnHighlightActor();
-		}
-		else // both actors are valid
-		{
-			if (LastActor != ThisActor)
-			{
-				// #4
-				LastActor->UnHighlightActor();
-				ThisActor->HighlightActor();
-			}
-			else
-			{
-				// #5 (Do Nothing)
-			}
-		}
+		if (LastActor) LastActor->UnHighlightActor();
+		if (ThisActor) ThisActor->HighlightActor();
 	}
 }
 
@@ -717,10 +683,11 @@ void AFillainPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	if (InputComponent == nullptr) return;
 
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
+	if (UHAFInputComponent* HAFInputComponent = CastChecked<UHAFInputComponent>(InputComponent))
 	{
-		EnhancedInputComponent->BindAction(QuitAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ShowReturnToMainMenu);
-		EnhancedInputComponent->BindAction(ChatAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ToggleInputChatBox);
+		HAFInputComponent->BindAction(QuitAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ShowReturnToMainMenu);
+		HAFInputComponent->BindAction(ChatAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ToggleInputChatBox);
+		HAFInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 	}
 }
 
@@ -934,6 +901,31 @@ FString AFillainPlayerController::GetTeamsInfoText(AHAFGameState* HAFGameState)
 	return InfoTextString;
 }
 
+UHAFAbilitySystemComponent* AFillainPlayerController::GetASC()
+{
+	if (HAFAbilitySystemComponent == nullptr)
+	{
+		HAFAbilitySystemComponent = Cast<UHAFAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return HAFAbilitySystemComponent;
+}
+
+void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+	
+}
+
+void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+{
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagReleased(InputTag);
+}
+
+void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagHeld(InputTag);
+}
 
 
 void AFillainPlayerController::OnRep_ShowTeamScores()

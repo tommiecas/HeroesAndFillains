@@ -11,6 +11,7 @@
 #include "Interfaces/CapsuleInterface.h"
 #include "BaseCharacter.generated.h"
 
+class UGameplayAbility;
 struct FGameplayAttribute;
 class UGameplayEffect;
 class UHAFAttributeSet;
@@ -215,6 +216,11 @@ public:
 	void LogSecondaries_Client() const;
 	void LogSecondaries_Server() const;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName WeaponTipSocketName;
+
+	virtual FVector GetCombatSocketLocation() override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
@@ -248,7 +254,11 @@ protected:
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 
+	void AddCharacterAbilities();
+
 private:
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
 public:
 	static float SafeGetNumeric(const UAbilitySystemComponent* ASC,

@@ -72,6 +72,7 @@ void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* 
 		WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
 		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECR_Overlap);
 	}
 
 	// ✅ Disable collision until attack

@@ -62,6 +62,7 @@ public:
 	UFUNCTION()
 	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
+	
 	virtual void OnSphereOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	
@@ -148,6 +149,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsBottom;
 
+	virtual void OnWeaponStateSet();
+	virtual void OnEquippedOneHanded();
+	virtual void OnEquippedTwoHanded();
+	virtual void OnDropped();
+	virtual void OnEquippedSecondary();
+
 	
 protected:
 	virtual void BeginPlay() override;
@@ -158,11 +165,6 @@ protected:
 	template<typename T>
 	static T Avg(T First, T Second);
 
-	virtual void OnWeaponStateSet();
-	virtual void OnEquippedOneHanded();
-	virtual void OnEquippedTwoHanded();
-	virtual void OnDropped();
-	virtual void OnEquippedSecondary();
 
 
 	
