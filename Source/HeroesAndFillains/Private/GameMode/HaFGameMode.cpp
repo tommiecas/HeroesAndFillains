@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameMode/HAFGameMode.h"
+#include "GameMode/HaFGameMode.h"
 #include "Characters/FillainCharacter.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "Kismet/GameplayStatics.h"

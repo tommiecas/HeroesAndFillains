@@ -9,8 +9,14 @@
 #include "AbilitySystemInterface.h"
 #include "Interfaces/CombatInterface.h"
 #include "Interfaces/CapsuleInterface.h"
+#include "GameplayTagContainer.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "BaseCharacter.generated.h"
 
+class AHAFGameModeBase;
+class APCPickupBaseItem;
+class APrePackagedPCPickupItem;
 class UGameplayAbility;
 struct FGameplayAttribute;
 class UGameplayEffect;
@@ -20,6 +26,8 @@ class UAbilitySystemComponent;
 class UAttributeSet;
 class AHAFGameMode;
 class UMotionWarpingComponent;
+class UAnimMontage;
+class AFillainCharacter;
 
 UENUM(BlueprintType, Blueprintable)
 enum EDeathPose
@@ -40,19 +48,45 @@ class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInter
 public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;
+	virtual UAnimMontage* GetHitReactionMontage_Implementation() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void MeleeAttack();
+	virtual void MajixAttack();
+	virtual void Die() override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastHandleDeath();
+
+	UFUNCTION(BlueprintCallable)
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-    virtual void DirectionalHitReact(const FVector& ImpactPoint);
+
+	UFUNCTION(BlueprintCallable)
+	virtual void DirectionalHitReact(const FVector& ImpactPoint);
+
+	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	UFUNCTION(BlueprintCallable)
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
+
+	UFUNCTION(BlueprintCallable)
 	virtual void ReceiveDamage(AActor* DamagedPawn, float DamageAmount, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
+	virtual void PlayRandomMeleeAttackMontage();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void PlayRandomMajixAttackMontage();
+	
+	virtual void PlayAttackMontage();
 	
 	UFUNCTION(BlueprintCallable)
     virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
-    
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
-	class UCombatComponent* Combat;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName SpellCastersSocketName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	double Theta = 5.123221212212;
+	virtual FVector GetSpellCastersSocketLocation() override;
 	
     virtual bool CanAttack();
     
@@ -82,11 +116,31 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> DeathMontageSections;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TObjectPtr<UAnimMontage> HitReactionMontage;
+	
+	UPROPERTY()
+	TArray<FGameplayTag> AttackTags;
+
 	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
 	class UAnimMontage* MeleeAttackMontage;
+
+	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
+	TArray<UAnimMontage*> MeleeAttackMontages;
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> MeleeAttackMontageSections;
+
+	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
+	class UAnimMontage* MajixAttackMontage;
+
+	UPROPERTY(Replicated, EditAnywhere, Category = Combat)
+	TArray<UAnimMontage*> MajixAttackMontages;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> MajixAttackMontageSections;
+
+	
 	
 	/*********************************
 	***                            ***
@@ -94,9 +148,13 @@ public:
 	***                            ***
 	*********************************/
 
+	UFUNCTION(BlueprintCallable)
 	virtual void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
+	
+	UFUNCTION(BlueprintCallable)
 	virtual int32 PlayRandomMontageSection(UAnimMontage* Montage, TArray<FName> SectionNames);
-	virtual int32 PlayMeleeAttackMontage();
+
+	virtual void PlayAttackMontage(const FGameplayTag& InputTag);
 	virtual void PlayHitReactMontage(const FName& SectionName);
     virtual int32 PlayDeathMontage();
 	virtual void PlayDodgeMontage();
@@ -194,22 +252,27 @@ public:
 
 	void DisableMeshCollision();
 
-	UPROPERTY()
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	// --- GAS pointers (BaseCharacter only holds them; it doesn't create them) ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 
-	UPROPERTY()
-	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<UHAFAttributeSet> HAFAttributeSet = nullptr;
 
-	UPROPERTY()
-	TObjectPtr<UAttributeSet> AttributeSet;
-
-	UPROPERTY()
-	TObjectPtr<UHAFAttributeSet> HAFAttributeSet;
-
+	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	virtual UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent() const {return HAFAbilitySystemComponent;};
-	virtual UAttributeSet* GetAttributeSet() const { return AttributeSet; };
-	virtual UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; };
+
+	// Legacy-friendly getter used elsewhere in your project
+	virtual UAttributeSet* GetAttributeSet() const;
+
+	// Convenience (optional to keep your call sites tidy)
+	UFUNCTION(BlueprintPure, Category="GAS|Attributes")
+	FORCEINLINE UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; }
+	
+
+
+	
+	virtual bool IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const;
 
 	void MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator);
 
@@ -218,21 +281,62 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName WeaponTipSocketName;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	bool WasBaseCharacterHit = false;
 
-	virtual FVector GetCombatSocketLocation() override;
+	UFUNCTION(BlueprintPure, Category="Character|State")
+	bool IsAlive() const;
+
+	UFUNCTION(BlueprintPure, Category="Character|State")
+	bool IsDead() const;
+
+	UFUNCTION(BlueprintPure, Category="Character|Attributes")
+	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintPure, Category="Character|State")
+	bool IsDying() const;
+
+	UFUNCTION(BlueprintPure, Category="Character|State")
+	bool IsCharacterAlive() const;
+
+	UFUNCTION(BlueprintCallable, Category="GAS|Costs")
+	virtual void ConsumeDodgeStamina();
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS|Costs")
+	TSubclassOf<class UGameplayEffect> GE_DodgeStaminaCost;
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS|Costs")
+	float DodgeStaminaCost = 14.f;
+
+	UFUNCTION(BlueprintPure, Category="Costs")
+	float GetDodgeCost() const { return DodgeStaminaCost; }
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
 	void StopMontage(UAnimMontage* Montage);
 	
+	// If false, subclasses can opt out (critters/corpses/etc.)
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	bool bRequiresASC = true;
+
+	// Call this instead of asserting in BeginPlay.
+	void SafeInitASC_ForPawnOwner();          // For NPCs: ASC on Pawn
+	void SafeInitASC_FromPlayerState();       // For players: ASC on PlayerState
+	
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+
+	
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<USkeletalMeshComponent> Weapon;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* CurrentAttackMontage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
-	class UEnemyHealthBarWidgetComponent* HealthBarWidgetComponent;
-
-	bool IsCharacterAlive();
 	bool bIsCharacterDead{false};
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
@@ -249,13 +353,28 @@ protected:
 
 	void ApplyStartupEffects();
 
-
-	void InitializeDefaultAttributes() const;
+	UFUNCTION(BlueprintCallable)
+	virtual void InitializeDefaultAttributes() const;
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 
-	void AddCharacterAbilities();
+	void AddCharacterAbilities() const;
 
+	void Dissolve();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartCharacterDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartWeaponDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
+
+	
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
@@ -265,7 +384,6 @@ public:
 							const UHAFAttributeSet* AS,
 							const FGameplayAttribute& Attr);
 	static float SafeGet(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS, const FGameplayAttribute& Attr);
-	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	
 
 

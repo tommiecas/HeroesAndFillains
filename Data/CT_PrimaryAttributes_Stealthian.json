@@ -1,0 +1,42 @@
+[
+	{
+		"Name": "Attributes.Primary.Strength",
+		"1": 11,
+		"40": 40
+	},
+	{
+		"Name": "Attributes.Primary.Intelligence",
+		"1": 16,
+		"40": 55
+	},
+	{
+		"Name": "Attributes.Primary.Resilience",
+		"1": 19,
+		"40": 100
+	},
+	{
+		"Name": "Attributes.Primary.Vigor",
+		"1": 13,
+		"40": 75
+	},
+	{
+		"Name": "Attributes.Primary.Wisdom",
+		"1": 7,
+		"40": 60
+	},
+	{
+		"Name": "Attributes.Primary.Charisma",
+		"1": 14,
+		"40": 25
+	},
+	{
+		"Name": "Attributes.Primary.Marksmanship",
+		"1": 12,
+		"40": 125
+	},
+	{
+		"Name": "Attributes.Primary.Dexterity",
+		"1": 20,
+		"40": 45
+	}
+]

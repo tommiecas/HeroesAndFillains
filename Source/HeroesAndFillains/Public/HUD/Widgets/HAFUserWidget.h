@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "HAFUserWidget.generated.h"
 
+class AEnemyBase;
 /**
  * 
  */
@@ -17,9 +18,12 @@ class HEROESANDFILLAINS_API UHAFUserWidget : public UUserWidget
 public:
 	UFUNCTION(BlueprintCallable)
 	virtual void SetWidgetController(UObject* InWidgetController);
-
+	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UObject> WidgetController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	TObjectPtr<UObject> OwnerEnemy;
 
 	// virtual void NativeConstruct() override;
 
@@ -30,6 +34,8 @@ protected:
 private:
 
 public:
+	FORCEINLINE UObject* GetWidgetController() const { return WidgetController; }
+	FORCEINLINE UObject* GetOwnerEnemy() const { return OwnerEnemy; }
 
 	
 };

@@ -4,7 +4,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/ShapeComponent.h" // needed for UShapeComponent
+#include "Interfaces/PickupInterface.h"
 #include "PCPickupBaseItem.generated.h"
+
+class USphereComponent;
+class AFillainCharacter;
 
 UENUM(BlueprintType)
 enum class EItemState : uint8
@@ -16,7 +20,7 @@ enum class EItemState : uint8
 };
 
 UCLASS(BlueprintType, Blueprintable)
-class HEROESANDFILLAINS_API APCPickupBaseItem : public AActor
+class HEROESANDFILLAINS_API APCPickupBaseItem : public AActor, public IPickupInterface
 {
 	GENERATED_BODY()
 
@@ -28,7 +32,9 @@ public:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USphereComponent* AreaSphere;
+	
 	// Set at runtime by tag lookup; keep read-only to BP since we assign it in code
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup|Area",
 				meta=(AllowPrivateAccess="true", EditInline="true"),
@@ -55,10 +61,10 @@ public:
 	UWidgetComponent* ItemInfoWidgetComponent;
 
 	UPROPERTY(EditAnywhere, Category = "UI Properties")
-	class UItemInfoWidgetBase* ItemInfoWidget;
+	class UUserWidget* ItemInfoWidget;
 
 	UPROPERTY(EditAnywhere, Category = "UI Properties")
-	class UPickupGearWidget* PickupGearWidget;
+	class UUserWidget* PickupGearWidget;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float RunningTime;
@@ -120,6 +126,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	float TransformedCos();
 
+	UPROPERTY()
+	AFillainCharacter* Character;
+
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -138,4 +147,8 @@ protected:
 	UFUNCTION() virtual void OnAreaBegin(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp,
 								 int32 BodyIndex, bool bFromSweep, const FHitResult& Hit);
 	UFUNCTION() virtual void OnAreaEnd(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIndex);
+
+public:
+	FORCEINLINE virtual UWidgetComponent* GetPickupGearWidgetComponent() const { return PickupGearWidgetComponent; }
+	FORCEINLINE virtual UWidgetComponent* GetItemInfoWidgetComponent() const { return ItemInfoWidgetComponent; }
 };

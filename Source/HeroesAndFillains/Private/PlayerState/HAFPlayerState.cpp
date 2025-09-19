@@ -7,6 +7,8 @@
 #include "Characters/FillainCharacter.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystem/HAFAttributeSet.h"   // <- concrete set (derives from UAttributeSet)
+#include "AbilitySystemComponent.h"
 
 AHAFPlayerState::AHAFPlayerState()
 {
@@ -14,8 +16,9 @@ AHAFPlayerState::AHAFPlayerState()
 	HAFAbilitySystemComponent->SetIsReplicated(true);
 	HAFAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	HAFAttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("HAFAttributeSet")); // <- key line
-
+	HAFAttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("HAFAttributeSet"));
+	HAFAbilitySystemComponent->AddAttributeSetSubobject(HAFAttributeSet.Get());
+	
 	// (optional) quick sanity logs
 	UE_LOG(LogTemp, Warning, TEXT("[PS::Ctor] ASC=%s AS=%s"),
 		*GetNameSafe(HAFAbilitySystemComponent), *GetNameSafe(HAFAttributeSet));

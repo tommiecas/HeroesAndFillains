@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HaFGameMode.h"
 #include "GameMode/HaFGameMode.h"
 #include "TeamsGameMode.generated.h"
 

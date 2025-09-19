@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
+#include "Interfaces/CombatInterface.h"
+#include "Interfaces/PickupInterface.h"
 #include "Items/PrePackagedPCPickupItem.h"
 #include "WeaponBase.generated.h"
 
-class UItemInfoWidgetBase;
-class UPickupGearWidget;
+class UUserWidget;
 class UWidgetComponent;
 class USphereComponent;
 
@@ -26,7 +27,8 @@ enum class EWeaponCategory : uint8
 	EWC_OneHandedSword UMETA(DisplayName = "A Sharp, Pointy Thing You Wield"),
 	EWC_TwoHandedSword UMETA(DisplayName = "A REALLY HEAVY, Sharp, Pointy Thing You Wield"),
 	EWC_Launcher UMETA(DisplayName = "Like a Gun, But Launches Projectiles for Mass Destruction, Always Two-Handed"),
-
+	EWC_MajixSpell UMETA(DisplayName = "A Caster of the Majix, I See..."),
+	
 	EWC_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
@@ -66,18 +68,21 @@ public:
 	virtual void OnSphereOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UNiagaraSystem> ImpactEffect;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<USoundBase> ImpactSound;
+	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Unclaimed;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* AreaSphere;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponCategory, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponCategory WeaponCategory = EWeaponCategory::EWC_NothingButYourFists;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
 	EWeaponType WeaponType = EWeaponType::EWT_None;
 
@@ -149,15 +154,24 @@ public:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsBottom;
 
-	virtual void OnWeaponStateSet();
-	virtual void OnEquippedOneHanded();
-	virtual void OnEquippedTwoHanded();
-	virtual void OnDropped();
-	virtual void OnEquippedSecondary();
-
 	
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnWeaponStateSet();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnEquippedOneHanded();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnEquippedTwoHanded();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnDropped();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnEquippedSecondary();
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	FVector InitialMeshScale = FVector(1.0f);
@@ -197,7 +211,6 @@ public:
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
-	FORCEINLINE UWidgetComponent* GetItemInfoWidgetComponent() const { return ItemInfoWidgetComponent; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 	FORCEINLINE EHandsNeeded GetHandsNeeded() const { return HandsNeeded; }

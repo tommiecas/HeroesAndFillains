@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Pickups/Pickup.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "AmmoPickup.generated.h"

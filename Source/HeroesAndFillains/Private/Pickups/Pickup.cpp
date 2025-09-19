@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Components/StaticMeshComponent.h"

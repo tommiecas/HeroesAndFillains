@@ -3,7 +3,7 @@
 
 #include "HUD/PickupWidgetComponent.h"
 #include "Components/TextBlock.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Melee/MeleeWeapon.h"

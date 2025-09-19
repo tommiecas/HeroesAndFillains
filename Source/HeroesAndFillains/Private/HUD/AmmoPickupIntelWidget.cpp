@@ -8,7 +8,7 @@
 #include "Pickups/AmmoPickup.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/Ranged/RangedWeapon.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Components/TextBlock.h"
 
 

@@ -55,11 +55,7 @@ float UMMC_DexterityAgilityFlexibility::CalculateBaseMagnitude_Implementation(co
 
 	const float NewHalf   = OldHalf   * (1.f - AgilityPercent);
 	const float NewRadius = OldRadius * (1.f - FlexibilityPercent);
-
-	// NO: Character->GetCapsuleComponent()->SetCapsuleHalfHeight(...);
-	// NO: Character->GetCapsuleComponent()->SetCapsuleRadius(...);
-
-	// Return anything; it won't be used.
+	
 	UE_LOG(LogTemp, Warning, TEXT("MMC (debug): half=%.2f radius=%.2f"), NewHalf, NewRadius);
 	return NewHalf - NewRadius;	
 }

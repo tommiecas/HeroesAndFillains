@@ -14,5 +14,6 @@
 #define ECC_Mesh ECollisionChannel::ECC_GameTraceChannel8
 #define ECC_Treasure ECollisionChannel::ECC_GameTraceChannel9
 #define ECC_Area ECollisionChannel::ECC_GameTraceChannel10
+#define ECC_Projectile ECollisionChannel::ECC_GameTraceChannel11
 
 #define CUSTOM_DEPTH_RED 250

@@ -59,7 +59,10 @@ public:
                           int32 OtherBodyIndex);
 
     // High-level “do the thing” wrappers you were calling before
+    UFUNCTION(BlueprintCallable)
     void OnOverlap(AActor* TargetActor);
+
+    UFUNCTION(BlueprintCallable)
     void OnEndOverlap(AActor* TargetActor);
 
     // -------- Ability System helpers --------

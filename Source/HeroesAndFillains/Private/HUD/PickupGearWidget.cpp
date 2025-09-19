@@ -7,11 +7,24 @@
 #include "Components/TextBlock.h"
 #include "Pickups/AmmoPickup.h"
 #include "Pickups/PickupSpawnPoint.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 
+UPickupGearWidget::UPickupGearWidget(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	
+}
+
+void UPickupGearWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// Safe to access owning component here
+	PickupGearOwningComponent = Cast<UWidgetComponent>(GetOwningWidgetComponent());
+}
 
 /*
 void UPickupGearWidget::DelineatePickupType()

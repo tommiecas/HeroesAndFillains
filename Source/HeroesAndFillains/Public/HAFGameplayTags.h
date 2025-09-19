@@ -4,6 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_StaminaCost);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SBC_Damage_Shield);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SBC_Damage_Health);
 
 /**
  * HAFGameplayTags
@@ -47,6 +52,11 @@ public:
 	FGameplayTag Attributes_Secondary_MaxStamina;
 	FGameplayTag Attributes_Secondary_MaxMajix;
 
+	FGameplayTag Attributes_Vital_Health;
+	FGameplayTag Attributes_Vital_Shield;
+	FGameplayTag Attributes_Vital_Stamina;
+	FGameplayTag Attributes_Vital_Majix;
+
 	FGameplayTag Attributes_Invisible_DexterityAgilityFlexibility;
 
 	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
@@ -55,6 +65,10 @@ public:
 	FGameplayTag InputTag_2OrDPadDown;
 	FGameplayTag InputTag_3OrDPadLeft;
 	FGameplayTag InputTag_4OrDPadRight;
+
+	FGameplayTag Damage;
+
+	FGameplayTag Effects_HitReact;
 
 protected:
 

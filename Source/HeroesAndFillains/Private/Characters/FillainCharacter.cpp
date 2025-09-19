@@ -23,7 +23,7 @@
 #include "Sound/SoundCue.h"  
 #include "Particles/ParticleSystemComponent.h"  
 #include "PlayerState/HAFPlayerState.h"  
-#include "Weapons/WeaponTypes.h"  
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"  
 #include "Components/BoxComponent.h"  
 #include "HAFComponents/LagCompensationComponent.h"  
 #include "NiagaraComponent.h"  
@@ -92,64 +92,22 @@
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "EngineUtils.h"
+#include "AbilitySystem/Abilities/HAFProjectileSpell.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/PostProcessVolume.h"
-
-void AFillainCharacter::Client_DisableAllWorldPPV_Implementation()
-{
-	int32 Count = 0;
-
-	for (TActorIterator<APostProcessVolume> It(GetWorld()); It; ++It)
-	{
-		APostProcessVolume* V = *It;
-		if (!IsValid(V)) continue;
-
-		// Hard-disable this volume
-		V->bUnbound     = false;
-		V->BlendWeight  = 0.f;
-		V->Priority     = -9999.f;              // keep it out of blends
-		V->Settings     = FPostProcessSettings(); // reset to defaults
-
-		++Count;
-		UE_LOG(LogTemp, Warning, TEXT("[PPV-Off] Disabled %s (in level: %s)"),
-			   *GetNameSafe(V), *GetNameSafe(V->GetLevel()));
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[PPV-Off] Disabled %d PostProcessVolumes"), Count);
-}
-
-void AFillainCharacter::Client_ClearCameraEffects_Implementation()
-{
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		// Turn OFF any PlayerController fade overlay (color must be FColor)
-		PC->ClientSetCameraFade(
-			/*bEnable=*/false,
-			FColor(0,0,0,255),       // ← use FColor, not FLinearColor
-			FVector2D(0.f, 0.f),
-			/*FadeTime=*/0.f,
-			/*bFadeAudio=*/false,
-			/*bHoldWhenFinished=*/false
-		);
-
-		if (PC->PlayerCameraManager)
-		{
-			// Stop legacy/new camera shakes
-			PC->PlayerCameraManager->StopAllCameraShakes(/*bImmediately=*/true);
-
-			// Remove any lens effects (can look like solid tints/flares)
-			PC->PlayerCameraManager->ClearCameraLensEffects();
-
-			// (Optional, if available in your build) force fade alpha to 0 instantly:
-			// PC->PlayerCameraManager->StartCameraFade(1.f, 0.f, 0.f, FLinearColor::Black, false, false);
-		}
-	}
-}
+#include "Weapons/Majix/HAFProjectile.h"
+#include "Items/PCPickupBaseItem.h"
+#include "Weapons/WeaponBase.h"
+#include "HAFGameplayTags.h"
+#include "GameplayEffectTypes.h"       // FGameplayEffectSpec, FGameplayEffectSpecHandle
+#include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
+#include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
 
 
 AFillainCharacter::AFillainCharacter()
 {
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	SetRootComponent(GetCapsuleComponent());
+	PrimaryActorTick.bCanEverTick = true;
+	
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_PlayerCharacter);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);	
 	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
@@ -158,10 +116,11 @@ AFillainCharacter::AFillainCharacter()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pickupable, ECollisionResponse::ECR_Overlap);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Treasure, ECollisionResponse::ECR_Overlap);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Area, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Projectile, ECR_Overlap);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	
-	
-	PrimaryActorTick.bCanEverTick = true;
 	// SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
@@ -181,8 +140,8 @@ AFillainCharacter::AFillainCharacter()
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
-	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
-	Combat->SetIsReplicated(true);
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->SetIsReplicated(true);
 
 	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
 	Buff->SetIsReplicated(true);
@@ -298,6 +257,8 @@ AFillainCharacter::AFillainCharacter()
 	}
 }
 
+
+
 void AFillainCharacter::FixSelfCameraCollision()
 {
 	// Your pawn should never block the camera probe
@@ -368,115 +329,105 @@ void AFillainCharacter::Client_OnEquipped_Implementation()
 		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
 	}
 	// after the weapon attaches, owning client
-	Combat->CurrentFOV = Combat->DefaultFOV;
-	GetFollowCamera()->SetFieldOfView(Combat->DefaultFOV);
+	CombatComponent->CurrentFOV = CombatComponent->DefaultFOV;
+	GetFollowCamera()->SetFieldOfView(CombatComponent->DefaultFOV);
 }
 
 void AFillainCharacter::BeginPlay()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay A"));
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("[Char] BeginPlay B"));
-	
-	InitFillainCharacterCapsuleBaselinesIfNeeded(); 
+	UE_LOG(LogTemp, Verbose, TEXT("[Char] BeginPlay: %s"), *GetNameSafe(this));
 
-	if (CameraBoom)
+	// --- GAS init BEFORE gameplay that depends on attributes ---
+	if (!ASC)
 	{
-		CameraBoom->bDoCollisionTest = false;   // prevents retraction
-		CameraBoom->TargetArmLength  = 300.f;   // your usual 3P distance
+		ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
 	}
-	bUseControllerRotationYaw = false;
-	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	if (!HAFAttributeSet)
 	{
-		Move->bOrientRotationToMovement = true;
+		HAFAttributeSet = const_cast<UHAFAttributeSet*>(GetHAFAttributeSet());
 	}
 
-	FixSelfCameraCollision();
-	
-	bIsCharacterDead = false;
-
-	Combat = FindComponentByClass<UCombatComponent>();
-
-	if (Combat)
+	if (ASC)
 	{
-		Combat->SetCharacter(this); // this is AFillainCharacter*
+		ASC->InitAbilityActorInfo(this, this);
 	}
-	
-	
-	if (AFillainPlayerController* FillainController = Cast<AFillainPlayerController>(Controller))
+
+	// Fetch attribute set from ASC (returns const), store safely in our UPROPERTY
+	if (ASC)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(FillainController->GetLocalPlayer()))
+		const UHAFAttributeSet* Attr = ASC->GetSet<UHAFAttributeSet>();
+		check(Attr); // Ensure it's present
+		HAFAttributeSet = const_cast<UHAFAttributeSet*>(Attr); // OK: we do not mutate directly
+	}
+
+	// Bind Intuition change → your existing handler
+	if (ASC && HAFAttributeSet)
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(HAFAttributeSet->GetIntuitionAttribute())
+			.AddUObject(this, &AFillainCharacter::OnIntuitionChanged);
+
+		// Seed scanners once with current value so UI/logic is correct at start
 		{
-			Subsystem->AddMappingContext(HAFMappingContext, 0);
+			const float Pct  = ASC->GetNumericAttribute(UHAFAttributeSet::GetIntuitionAttribute());
+			const float Frac = FMath::Clamp(Pct * 0.01f, 0.f, 1.f);
+			for (auto* Scanner : TInlineComponentArray<UHiddenTreasureScannerComponent*>(this, true))
+			{
+				if (Scanner) { Scanner->SetIntuitionFraction(Frac); }
+			}
 		}
 	}
-	/*if (FillainPlayerController == nullptr)
+	// --- Local-only input mappings ---
+	if (IsLocallyControlled())
 	{
-		FillainPlayerController = Cast<AFillainPlayerController>(GetController());
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (ULocalPlayer* LP = PC->GetLocalPlayer())
+			{
+				if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+					ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LP))
+				{
+					if (HAFMappingContext)
+					{
+						Subsystem->AddMappingContext(HAFMappingContext, 0);
+					}
+				}
+			}
+		}
 	}
-	if (FillainPlayerController)
-	{
-		// Set the player state or any other necessary properties here
-		FillainPlayerController->InitPlayerState();
-		HAFPlayerState = FillainPlayerController->GetPlayerState<AHAFPlayerState>();
-
-		// Log the player controller name for debugging
-		UE_LOG(LogTemp, Log, TEXT("FillainPlayerController initialized: %s"), *FillainPlayerController->GetName());
-	}*/
-
+	// --- Spawn default weapon AFTER GAS init so attributes/effects apply immediately ---
 	SpawnDefaultWeapon();
-	
+
+	// --- Damage delegate (server only) ---
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &AFillainCharacter::ReceiveDamage);
 	}
+
 	HideAttachedGrenade();
 
-	UAnimInstance* AnimInstance = Cast<UAnimInstance>(GetMesh()->GetAnimInstance());
-	if (AnimInstance)
+	// Montage end callback
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &AFillainCharacter::OnArmDisarmMontageEnded);
 	}
-	
-	Tags.Add(FName("EngageableTarget"));
 
-	Tags.Add(FName("FillainCharacter"));
+	// Tags (dedup)
+	Tags.AddUnique(FName("EngageableTarget"));
+	Tags.AddUnique(FName("FillainCharacter"));
+	Tags.AddUnique(FName("Fillain"));
 
-	Tags.Add(FName("Fillain"));
-
-	HAFAttributes = GetHAFAttributeSet();
-
-	TArray<UUserWidget*> AllWidgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), AllWidgets, UUserWidget::StaticClass(), false);
-
-	UCapsuleComponent* Cap = GetCapsuleComponent();
-	check(Cap && GetMesh());
-	StandingUnscaledHalfHeight = Cap->GetUnscaledCapsuleHalfHeight();
-	StandingUnscaledRadius     = Cap->GetUnscaledCapsuleRadius();
-	StandingScaledHalfHeight   = Cap->GetScaledCapsuleHalfHeight();
-	StandingMeshRelZ           = GetMesh()->GetRelativeLocation().Z;
-
-	// Get ASC
-	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
-	
-	// Initial sync to whatever values we start with
-	RequestFillainCharacterCapsuleUpdate();
-		
-	if (ASC && HAFAttributeSet)
+	// Cache capsule/mesh baselines (for your stance updates)
 	{
-		// Bind to Intuition changes
-		ASC->GetGameplayAttributeValueChangeDelegate(HAFAttributeSet->GetIntuitionAttribute())
-		.AddLambda([this](const FOnAttributeChangeData& Data)
-		{
-			const float IntuitionFraction = Data.NewValue; // fraction (0.25 = +25%)
-
-			// Apply to any HiddenTreasureComponent attached directly to this actor
-			for (auto* HT : TInlineComponentArray<UHiddenTreasureComponent*>(this, true))
-			{
-				HT->ApplyIntuitionScale(IntuitionFraction);
-			}
-		});
+		UCapsuleComponent* Cap = GetCapsuleComponent();
+		StandingUnscaledHalfHeight = Cap->GetUnscaledCapsuleHalfHeight();
+		StandingUnscaledRadius     = Cap->GetUnscaledCapsuleRadius();
+		StandingScaledHalfHeight   = Cap->GetScaledCapsuleHalfHeight();
+		StandingMeshRelZ           = GetMesh()->GetRelativeLocation().Z;
 	}
+
+	// Initial sync for your capsule update system
+	RequestFillainCharacterCapsuleUpdate();
 }
 
 bool AFillainCharacter::IsCameraWeird(FString& OutWhy) const
@@ -662,7 +613,7 @@ void AFillainCharacter::Tick(float DeltaTime)
 	PollInit();
 
 	if (!GetFillainPlayerController()) return;
-	if (IsUsingGamepad()) Combat->TraceForCrossHairTarget(); else GetFillainPlayerController()->CursorTrace();
+	if (IsUsingGamepad()) CombatComponent->TraceForCrossHairTarget(); else GetFillainPlayerController()->CursorTrace();
 	
 	if (IsLocallyControlled()) HideCharacterIfCameraClose();
 
@@ -719,13 +670,17 @@ void AFillainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingItem, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
+
 	DOREPLIFETIME(AFillainCharacter, bDisableGameplay);
 	DOREPLIFETIME(AFillainCharacter, EliminatedMontage);
 	DOREPLIFETIME(AFillainCharacter, ReloadingMontage);
 	DOREPLIFETIME(AFillainCharacter, ThrowGrenadeMontage);
 	DOREPLIFETIME(AFillainCharacter, ArmDisarmMontage);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingItem, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingMeleeWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AFillainCharacter, OverlappingRangedWeapon, COND_OwnerOnly);
+	
 	
 }
 
@@ -739,8 +694,8 @@ void AFillainCharacter::OnRep_ReplicatedMovement()
 
 void AFillainCharacter::HideSniperScope()
 {
-	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedRangedWeapon);
-	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedRangedWeapon && Gun && Gun->GetRangedType() == ERangedType::ERT_SniperRifle;
+	ARangedWeapon* Gun = Cast<ARangedWeapon>(CombatComponent->EquippedRangedWeapon);
+	bool bHideSniperScope = IsLocallyControlled() && CombatComponent && CombatComponent->bAiming && CombatComponent->EquippedRangedWeapon && Gun && Gun->GetRangedType() == ERangedType::ERT_SniperRifle;
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
@@ -749,8 +704,8 @@ void AFillainCharacter::HideSniperScope()
 
 void AFillainCharacter::ShowSniperScope()
 {
-	ARangedWeapon* Gun = Cast<ARangedWeapon>(Combat->EquippedRangedWeapon);
-	bool bHideSniperScope = IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedRangedWeapon && Gun && Gun->GetRangedType() == ERangedType::ERT_SniperRifle;
+	ARangedWeapon* Gun = Cast<ARangedWeapon>(CombatComponent->EquippedRangedWeapon);
+	bool bHideSniperScope = IsLocallyControlled() && CombatComponent && CombatComponent->bAiming && CombatComponent->EquippedRangedWeapon && Gun && Gun->GetRangedType() == ERangedType::ERT_SniperRifle;
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(true);
@@ -785,9 +740,9 @@ void AFillainCharacter::StartDissolveEffect()
 void AFillainCharacter::DisableAllComponents()
 {
 	bDisableGameplay = true;
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->FireButtonPressed(false);
+		CombatComponent->FireButtonPressed(false);
 	}
 	DisableCapsule();
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -960,15 +915,15 @@ void AFillainCharacter::DropOrDestroyWeapon(AWeaponBase* WeaponBase)
 
 void AFillainCharacter::DropOrDestroyBothWeapons()
 {
-	if (Combat)
+	if (CombatComponent)
 	{
-		if (Combat->EquippedWeapon)
+		if (CombatComponent->EquippedWeapon)
 		{
-			DropOrDestroyWeapon(Combat->EquippedWeapon);
+			DropOrDestroyWeapon(CombatComponent->EquippedWeapon);
 		}
-		if (Combat->SecondaryWeapon)
+		if (CombatComponent->SecondaryWeapon)
 		{
-			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+			DropOrDestroyWeapon(CombatComponent->SecondaryWeapon);
 		}
 	}
 }
@@ -983,7 +938,7 @@ void AFillainCharacter::OnPlayerStateInitialized()
 
 bool AFillainCharacter::CanDisarm()
 {
-	return Combat &&
+	return CombatComponent &&
 		   EquippedWeapon &&
 		   IfPlayerIsReadyToFightAgain() &&
 		   IfPlayerHasEquippedAWeapon();
@@ -997,10 +952,10 @@ bool AFillainCharacter::IfPlayerIsDisarmed()
 bool AFillainCharacter::CanArm()
 {
 	// UE_LOG(LogTemp, Warning, TEXT("CanArm? Equipped: %d, ActionState: %s, BattlePrepped: %s"),
-		// Combat->EquippedWeapon != nullptr,
-		// *UEnum::GetValueAsString(Combat->ActionState),
+		// CombatComponent->EquippedWeapon != nullptr,
+		// *UEnum::GetValueAsString(CombatComponent->ActionState),
 		// *UEnum::GetValueAsString(BattlePrepped));
-	return Combat &&
+	return CombatComponent &&
 		   EquippedWeapon &&
 		   IfPlayerIsReadyToFightAgain() &&
 		   IfPlayerIsDisarmed();
@@ -1008,51 +963,51 @@ bool AFillainCharacter::CanArm()
 
 void AFillainCharacter::AttachWeaponToSpineSocket()
 {
-	if (Combat->EquippedWeapon)
+	if (CombatComponent->EquippedWeapon)
 	{
-		Combat->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+		CombatComponent->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
 	}
 }
 
 void AFillainCharacter::Disarm()
 {
-	if (Combat->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+	if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
 	{
 		PlayArmDisarmMontage(FName("DisarmOneHanded"));
 	}
-	else if (Combat->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	else if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
 	{
 		PlayArmDisarmMontage(FName("DisarmTwoHanded"));
 	}
 	AttachWeaponToSpineSocket();
-	Combat->FightingStyle = EFightingStyle::EFS_Unequipped;
-	Combat->ActionState = EActionState::EAS_EquippingWeapon;
+	CombatComponent->FightingStyle = EFightingStyle::EFS_Unequipped;
+	CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 	BattlePrepped = EBattlePrepped::EBP_Disarmed;
 }
 
 void AFillainCharacter::AttachWeaponToMeleeSocket()
 {
-	if (Combat->EquippedWeapon)
+	if (CombatComponent->EquippedWeapon)
 	{
-		Combat->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("MeleeSocket"));
+		CombatComponent->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("MeleeSocket"));
 		ResetToFightAgain();
 	}
 }
 
 void AFillainCharacter::Arm()
 {
-	if (Combat->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+	if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
 	{
 		PlayArmDisarmMontage(FName("ArmOneHanded"));
 	}
-	else if (Combat->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	else if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
 	{
 		PlayArmDisarmMontage(FName("ArmTwoHanded"));
 	}
 	AttachWeaponToMeleeSocket();
-	Combat->FightingStyle = EFightingStyle::EFS_Melee;
-	Combat->ActionState = EActionState::EAS_EquippingWeapon;
-	BattlePrepped = EBattlePrepped::EBP_Armed;
+	CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+	CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
+	BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
 	ResetToFightAgain();
 }
 
@@ -1069,7 +1024,7 @@ void AFillainCharacter::PlayArmDisarmMontage(const FName& SectionName)
 	}
 	
 	// Set state BEFORE playing
-	Combat->ActionState = EActionState::EAS_EquippingWeapon;
+	CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 	bIsTogglingWeapon = true;
 	
 	// Play and jump to section once
@@ -1130,9 +1085,9 @@ void AFillainCharacter::Destroyed()
 
 	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
 	bool bIsMatchNotInProgress = HAFGameMode && HAFGameMode->GetMatchState() != MatchState::InProgress;
-	if (Combat && Combat->EquippedWeapon && bIsMatchNotInProgress)
+	if (CombatComponent && CombatComponent->EquippedWeapon && bIsMatchNotInProgress)
 	{
-		Combat->EquippedWeapon->Destroy();
+		CombatComponent->EquippedWeapon->Destroy();
 	}
 }
 
@@ -1151,7 +1106,7 @@ void AFillainCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	Combat->ActionState = EActionState::EAS_HitReaction;
+	CombatComponent->ActionState = EActionState::EAS_HitReaction;
 }
 
 void AFillainCharacter::PlayHitReactMontage(const FName& SectionName)
@@ -1161,15 +1116,15 @@ void AFillainCharacter::PlayHitReactMontage(const FName& SectionName)
 
 void AFillainCharacter::RotateInPlace(float DeltaTime)
 {
-	if (Combat && Combat->bWieldingTheSword)
+	if (CombatComponent && CombatComponent->bWieldingTheSword)
 	{
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 		return;
 	}
-	if (Combat && Combat->EquippedWeapon) GetCharacterMovement()->bOrientRotationToMovement = false;
-	if (Combat && Combat->EquippedWeapon) bUseControllerRotationYaw = true;
+	if (CombatComponent && CombatComponent->EquippedWeapon) GetCharacterMovement()->bOrientRotationToMovement = false;
+	if (CombatComponent && CombatComponent->EquippedWeapon) bUseControllerRotationYaw = true;
 	if (bDisableGameplay)
 	{
 		bUseControllerRotationYaw = false;
@@ -1201,7 +1156,7 @@ void AFillainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		HAFInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Move);
 		HAFInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFillainCharacter::Look);
 		HAFInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AFillainCharacter::Jump);
-		HAFInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AFillainCharacter::EquipButtonPressed);
+		HAFInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AFillainCharacter::EquipButtonPressed);
 		HAFInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AFillainCharacter::CrouchButtonPressed);
 		HAFInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AFillainCharacter::AimButtonPressed);
 		HAFInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AFillainCharacter::AimButtonReleased);
@@ -1282,9 +1237,9 @@ void AFillainCharacter::Jump()
 
 void AFillainCharacter::ActivateCombatCharacter()
 {
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->Character = this;
+		CombatComponent->Character = this;
 	}
 }
 
@@ -1320,16 +1275,16 @@ void AFillainCharacter::PostInitializeComponents()
 
 bool AFillainCharacter::IsWeaponASword()
 {
-	return Combat->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Sword ||
-		Combat->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_OneHandedSword ||
-		Combat->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_TwoHandedSword;
+	return CombatComponent->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Sword ||
+		CombatComponent->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_OneHandedSword ||
+		CombatComponent->EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_TwoHandedSword;
 }
 
 bool AFillainCharacter::PlayMeleeMontageForMeleeWeapons()
 {
 	if (IsWeaponASword())
 	{
-		PlayMeleeAttackMontage();
+		PlayRandomMeleeAttackMontage();
 		return true;
 	}
 	return false;
@@ -1349,13 +1304,13 @@ void AFillainCharacter::PlayRangedAnimationsForRangedWeapons(bool bAiming)
 
 bool AFillainCharacter::IsPlayerWeaponlessAndUnableToCombat()
 {
-	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return true;
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return true;
 	return false;
 }
 
 void AFillainCharacter::PlayFireMontage(bool bAiming)
 {
-	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireWeaponMontage)
 	{
@@ -1366,13 +1321,13 @@ void AFillainCharacter::PlayFireMontage(bool bAiming)
 	}
 }
 
-void AFillainCharacter::AssignTypeOfRangedWeapon(AWeaponBase* Weapon, FName SectionName)
+void AFillainCharacter::AssignTypeOfRangedWeapon(AWeaponBase* WB, FName SectionName)
 {
-	ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Weapon);
-	if (Combat->EquippedRangedWeapon)
+	ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(WB);
+	if (CombatComponent->EquippedRangedWeapon)
 	{
-		RangedWeapon = Combat->EquippedRangedWeapon;
-		switch (Combat->EquippedRangedWeapon->GetRangedType())
+		RangedWeapon = CombatComponent->EquippedRangedWeapon;
+		switch (CombatComponent->EquippedRangedWeapon->GetRangedType())
 		{
 		case ERangedType::ERT_AssaultRifle:
 			SectionName = FName("AssaultRifle");
@@ -1418,7 +1373,7 @@ void AFillainCharacter::PlayReloadingMontage()
 		{
 			AnimInstance->Montage_JumpToSection(SectionName, ReloadingMontage);
 		}
-		else if (Combat->EquippedMeleeWeapon) return;
+		else if (CombatComponent->EquippedMeleeWeapon) return;
 	}
 }
 
@@ -1452,20 +1407,15 @@ void AFillainCharacter::PlaySwapMontage()
 void AFillainCharacter::AttackButtonPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("🎯 AttackButtonPressed — EquippedWeapon: %s"),
-	Combat->EquippedWeapon ? *Combat->EquippedWeapon->GetName() : TEXT("nullptr"));
+	CombatComponent->EquippedWeapon ? *CombatComponent->EquippedWeapon->GetName() : TEXT("nullptr"));
 	ResetToFightAgain();
-	if (Combat->EquippedWeapon)
+	if (CombatComponent->EquippedWeapon)
 	{
 		if (EquippedWeaponIsARangedWeapon())
 		{
 			FireButtonPressed();
 		}
-		else if (EquippedWeaponIsAMeleeWeapon())
-		{
-			Combat->ActionState = EActionState::EAS_Unoccupied;
-			Combat->FightingStyle = EFightingStyle::EFS_Melee;
-			MeleeAttack();
-		}
+		if (EquippedWeaponIsAMeleeWeapon()) MeleeAttack();
 	}
 }
 
@@ -1475,16 +1425,24 @@ void AFillainCharacter::MeleeAttack()
 {
 	if (CanAttack())
 	{
-		Combat->ActionState = EActionState::EAS_MeleeAttacking;
-		PlayMeleeAttackMontage();
+		CombatComponent->ActionState = EActionState::EAS_MeleeAttacking;
+		PlayRandomMeleeAttackMontage();
 		
 		// Don’t set ActionState back to Unoccupied here anymore. Let the montage handle it via Notify.
 	}
 }
 
+void AFillainCharacter::MajixAttack()
+{
+	Super::MajixAttack();
+
+	CombatComponent->ActionState = EActionState::EAS_MajixAttacking;
+	PlayRandomMajixAttackMontage();
+}
+
 bool AFillainCharacter::IsOccupied()
 {
-	return Combat->ActionState != EActionState::EAS_Unoccupied;
+	return CombatComponent->ActionState != EActionState::EAS_Unoccupied;
 }
 
 bool AFillainCharacter::HasEnoughStamina(const float Cost) const
@@ -1511,12 +1469,10 @@ void AFillainCharacter::Dodge()
 	if (IsOccupied() || !HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
 
 	PlayDodgeMontage();
-	Combat->ActionState = EActionState::EAS_Dodging;
+	CombatComponent->ActionState = EActionState::EAS_Dodging;
 
-	if (AttributeComponent)
-	{
-		AttributeComponent->UseStamina(AttributeComponent->GetDodgeCost());
-	}
+	ConsumeDodgeStamina();
+
 }
 
 
@@ -1525,9 +1481,9 @@ void AFillainCharacter::FireButtonPressed()
 	if (EquippedWeaponIsAMeleeWeapon()) return;
 	if (bDisableGameplay) return;
 	
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->FireButtonPressed(true);
+		CombatComponent->FireButtonPressed(true);
 	}
 }
 
@@ -1535,29 +1491,110 @@ void AFillainCharacter::FireButtonReleased()
 {
 	if (EquippedWeaponIsAMeleeWeapon()) return;
 	if (bDisableGameplay) return;
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->FireButtonPressed(false);
+		CombatComponent->FireButtonPressed(false);
 	}
 }
 
-int32 AFillainCharacter::PlayMeleeAttackMontage()
+void AFillainCharacter::OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon)
 {
-	Super::PlayMeleeAttackMontage();
-	return PlayRandomMontageSection(MeleeAttackMontage, MeleeAttackMontageSections);
+}
+
+void AFillainCharacter::OnRep_OverlappingRangedWeapon(ARangedWeapon* LastRangedWeapon)
+{
+}
+
+
+
+void AFillainCharacter::PlayAttackMontage(const FGameplayTag& InputTag)
+{
+	if (MeleeAttackMontages.Num() == 0 && MajixAttackMontages.Num() == 0 || !GetMesh() || !GetMesh()->GetAnimInstance()) return;
+	if (MeleeAttackMontages.Num() == 0 && MajixAttackMontages.Num() >= 1)
+	{
+		PlayRandomMajixAttackMontage();
+		return;
+	}
+	
+	if (MeleeAttackMontages.Num() >= 1 && MajixAttackMontages.Num() >= 1)
+	{
+		if (AttackTags.Contains(InputTag)) PlayRandomMajixAttackMontage();
+		else PlayRandomMeleeAttackMontage();
+	}
+	if (MeleeAttackMontages.Num() >= 1 && MajixAttackMontages.Num() == 0) PlayRandomMeleeAttackMontage();
+}
+
+void AFillainCharacter::PlayRandomMeleeAttackMontage()
+{
+	// Pick a random montage
+	int32 Index = FMath::RandRange(0, MeleeAttackMontages.Num() - 1);
+	UAnimMontage* SelectedMontage = MeleeAttackMontages[Index];
+	if (!SelectedMontage) return;
+
+	// Optional: pick a random section
+	FName SectionToPlay = NAME_None;
+	const TArray<FCompositeSection>& Sections = SelectedMontage->CompositeSections;
+	if (Sections.Num() > 0)
+	{
+		const int32 SectionIndex = FMath::RandRange(0, Sections.Num() - 1);
+		SectionToPlay = Sections[SectionIndex].SectionName;
+	}
+	// ✅ Store for use in stop/interruption logic
+	CurrentAttackMontage = SelectedMontage;
+	UE_LOG(LogTemp, Warning, TEXT("🔥 Gnarled is trying to play an attack montage!"));
+
+	// ✅ Play the montage
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	float MontageDuration = AnimInstance->Montage_Play(SelectedMontage);
+	if (MontageDuration > 0.f && SectionToPlay != NAME_None)
+	{
+		AnimInstance->Montage_JumpToSection(SectionToPlay, SelectedMontage);
+		UE_LOG(LogTemp, Warning, TEXT("Root motion active: %s"),
+		GetCharacterMovement()->IsMovingOnGround() ? TEXT("Grounded") : TEXT("Not grounded"));
+	}
+}
+
+void AFillainCharacter::PlayRandomMajixAttackMontage()
+{
+	// Pick a random montage
+	int32 Index = FMath::RandRange(0, MajixAttackMontages.Num() - 1);
+	UAnimMontage* SelectedMontage = MajixAttackMontages[Index];
+	if (!SelectedMontage) return;
+
+	// Optional: pick a random section
+	FName SectionToPlay = NAME_None;
+	const TArray<FCompositeSection>& Sections = SelectedMontage->CompositeSections;
+	if (Sections.Num() > 0)
+	{
+		const int32 SectionIndex = FMath::RandRange(0, Sections.Num() - 1);
+		SectionToPlay = Sections[SectionIndex].SectionName;
+	}
+	// ✅ Store for use in stop/interruption logic
+	CurrentAttackMontage = SelectedMontage;
+	UE_LOG(LogTemp, Warning, TEXT("🔥 Enemy is playing an attack montage!"));
+
+	// ✅ Play the montage
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	float MontageDuration = AnimInstance->Montage_Play(SelectedMontage);
+	if (MontageDuration > 0.f && SectionToPlay != NAME_None)
+	{
+		AnimInstance->Montage_JumpToSection(SectionToPlay, SelectedMontage);
+		UE_LOG(LogTemp, Warning, TEXT("Root motion active: %s"),
+		GetCharacterMovement()->IsMovingOnGround() ? TEXT("Grounded") : TEXT("Not grounded"));
+	}
 }
 
 void AFillainCharacter::ResetToFightAgain()
 {
-	Combat->ActionState = EActionState::EAS_Unoccupied;
+	CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 }
 
 void AFillainCharacter::AttackEnd()
 {
 	Super::AttackEnd();
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->ActionState = EActionState::EAS_Unoccupied;
+		CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
@@ -1565,22 +1602,22 @@ void AFillainCharacter::DodgeEnd()
 {
 	Super::DodgeEnd();
 
-	Combat->ActionState = EActionState::EAS_Unoccupied;
+	CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool AFillainCharacter::IfPlayerIsReadyToFightAgain()
 {
-	return Combat->ActionState == EActionState::EAS_Unoccupied;
+	return CombatComponent->ActionState == EActionState::EAS_Unoccupied;
 }
 
 bool AFillainCharacter::IfPlayerHasEquippedAWeapon()
 {
-	return Combat->FightingStyle != EFightingStyle::EFS_Unequipped;
+	return CombatComponent->FightingStyle != EFightingStyle::EFS_Unequipped;
 }
 
 bool AFillainCharacter::CanAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("CanAttack: ActionState = %d | FightingStyle = %d"), (int32)Combat->ActionState, (int32)Combat->FightingStyle);
+	UE_LOG(LogTemp, Warning, TEXT("CanAttack: ActionState = %d | FightingStyle = %d"), (int32)CombatComponent->ActionState, (int32)CombatComponent->FightingStyle);
 	UE_LOG(LogTemp, Warning, TEXT("Checking CanAttack for: %s"), *GetName());
 
 	return IfPlayerIsReadyToFightAgain() && IfPlayerHasEquippedAWeapon();
@@ -1589,9 +1626,9 @@ bool AFillainCharacter::CanAttack()
 
 void AFillainCharacter::GrenadeButtonPressed()
 {
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->ThrowGrenade();
+		CombatComponent->ThrowGrenade();
 	}
 }
 
@@ -1613,49 +1650,56 @@ void AFillainCharacter::DetermineRolesOnPlayerDeath(AActor* DamagedPawn, AContro
 }
 
 void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType,
-	AController* InstigatorController, AActor* DamageCauser)
+    AController* InstigatorController, AActor* DamageCauser)
 {
-	Super::ReceiveDamage(DamagedPawn, Damage, DamageType, InstigatorController, DamageCauser);
+    Super::ReceiveDamage(DamagedPawn, Damage, DamageType, InstigatorController, DamageCauser);
 
-	HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
-	if (bIsEliminated || HAFGameMode == nullptr) return;
+    HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
+    if (bIsEliminated || HAFGameMode == nullptr) return;
 
-	// Use the AttributeComponent safely
-	UAttributeComponent* AC = AttributeComponent;
-	if (!IsValid(AC))
-	{
-		UE_LOG(LogTemp, Error, TEXT("AttributeComponent is null on %s"), *GetName());
-		return;
-	}
+    UAbilitySystemComponent* AbilSystComp = AbilitySystemComponent;
+    if (!AbilSystComp || Damage <= 0.f) return;
 
-	// Correct shield/health damage application:
-	// 1) Apply to shield first
-	const float ShieldBefore = AC->GetShield();
-	const float DamageToShield = FMath::Min(ShieldBefore, Damage);
-	const float OverflowDamage = Damage - DamageToShield;
+    // Read current values
+    const float ShieldBefore = AbilSystComp->GetNumericAttribute(UHAFAttributeSet::GetShieldAttribute());
 
-	AC->SetShield(FMath::Clamp(ShieldBefore - Damage, 0.f, AC->GetMaxShield()));
+    // Split: shield first, overflow to health
+    const float DamageToShield = FMath::Clamp(FMath::Min(ShieldBefore, Damage), 0.f, ShieldBefore);
+    const float OverflowDamage = FMath::Max(0.f, Damage - DamageToShield);
 
-	// 2) Apply overflow to health
-	AC->SetHealth(FMath::Clamp(AC->GetHealth() - OverflowDamage, 0.f, AC->GetMaxHealth()));
+    if (!GE_DamageSplit) { UE_LOG(LogTemp, Warning, TEXT("%s: GE_DamageSplit not set"), *GetName()); return; }
 
-	// If you need HUD access, guard it:
-	// APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
-	// AFillainHUD* FillainHUD = PC ? Cast<AFillainHUD>(PC->GetHUD()) : nullptr;
-	// if (FillainHUD && FillainHUD->OverlayWidget) { /* update overlay as needed */ }
+    // Build and apply the effect
+    FGameplayEffectContextHandle Ctx = AbilSystComp->MakeEffectContext();
+    FGameplayEffectSpecHandle SpecHandle = AbilSystComp->MakeOutgoingSpec(GE_DamageSplit, 1.f, Ctx);
+    if (!SpecHandle.IsValid()) return;
 
-	// Handle elimination purely based on health (don't gate on HUD availability)
-	if (AC->GetHealth() <= 0.f)
-	{
-		if (HAFGameMode)
-		{
-			FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
-			KillerPlayerController = Cast<AFillainPlayerController>(InstigatorController);
-			DetermineRolesOnPlayerDeath(DamagedPawn, InstigatorController);
-			HAFGameMode->PlayerEliminated(this, FillainPlayerController, KillerPlayerController);
-		}
-	}
+    FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
+    if (!Spec) return;
+
+    // Negative deltas (since modifiers are Add operations)
+    if (DamageToShield > 0.f)
+    {
+        Spec->SetSetByCallerMagnitude(TAG_SBC_Damage_Shield, -DamageToShield);
+    }
+    if (OverflowDamage > 0.f)
+    {
+        Spec->SetSetByCallerMagnitude(TAG_SBC_Damage_Health, -OverflowDamage);
+    }
+
+    AbilSystComp->ApplyGameplayEffectSpecToSelf(*Spec);
+
+    // Elimination check after application
+    const float HealthAfter = AbilSystComp->GetNumericAttribute(UHAFAttributeSet::GetHealthAttribute());
+    if (HealthAfter <= KINDA_SMALL_NUMBER)
+    {
+        FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
+        KillerPlayerController  = Cast<AFillainPlayerController>(InstigatorController);
+        DetermineRolesOnPlayerDeath(DamagedPawn, InstigatorController);
+        HAFGameMode->PlayerEliminated(this, FillainPlayerController, KillerPlayerController);
+    }
 }
+
 
 void AFillainCharacter::SpawnDefaultWeapon()
 {
@@ -1665,9 +1709,9 @@ void AFillainCharacter::SpawnDefaultWeapon()
 	{
 		AWeaponBase* StartingWeapon = World->SpawnActor<AWeaponBase>(DefaultWeaponClass);
 		StartingWeapon->bDestroyWeapon = true;
-		if (Combat)
+		if (CombatComponent)
 		{
-			Combat->EquipWeapon(StartingWeapon);
+			CombatComponent->EquipWeapon(StartingWeapon);
 		}
 	}
 }
@@ -1735,7 +1779,7 @@ bool AFillainCharacter::IsUsingGamepad() const
 
 void AFillainCharacter::Move(const FInputActionValue& Value)
 {
-	if (Combat->ActionState != EActionState::EAS_Unoccupied) return;
+	if (CombatComponent->ActionState != EActionState::EAS_Unoccupied) return;
 	if (bDisableGameplay)
 	{
 		bDisableGameplay = false;
@@ -1780,59 +1824,63 @@ void AFillainCharacter::Look(const FInputActionValue& Value)
 
 void AFillainCharacter::EquipButtonPressed()
 {
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	
-
-	if (CharactersMeleeWeapon)
+	AWeaponBase* OverlappedWeapon = Cast<AWeaponBase>(OverlappingItem);
+	if (OverlappedWeapon)
 	{
-		ToggleArmingAndDisarming();
-		return;
-	}
-	
-	if (bDisableGameplay || (Combat && Combat->ActionState != EActionState::EAS_Unoccupied))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🚫 Equip failed: gameplay disabled or action state is not unoccupied"));
-		return;
-	}
-
-	if (ARangedWeapon* RangedWeaponToEquip = Cast<ARangedWeapon>(OverlappingWeapon))
-	{
-		ServerEquipButtonPressed(RangedWeaponToEquip);
-		SetOverlappingItem(nullptr);
-		SetOverlappingWeapon(nullptr);
-		if (!IsValid(RangedWeaponToEquip))
+		if (AMeleeWeapon* OverlappedMeleeWeapon = Cast<AMeleeWeapon>(OverlappedWeapon))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("❌ No valid weapon to equip"));
-			return;
+			if (EquippedWeapon)
+			{
+				EquippedWeapon->Destroy();
+			}
+			OverlappedMeleeWeapon->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+			OverlappedMeleeWeapon->SetHandsNeeded(OverlappedMeleeWeapon);
+			if (OverlappedMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+			{
+				BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+				CombatComponent->EquippedWeapon = OverlappedMeleeWeapon;
+				CombatComponent->EquippedMeleeWeapon = OverlappedMeleeWeapon;
+				CharactersMeleeWeapon = CombatComponent->EquippedMeleeWeapon;
+				CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+				if (CharactersMeleeWeapon) CharactersMeleeWeapon->bShouldHover = false;
+				if (CharactersMeleeWeapon) CharactersMeleeWeapon ->bShouldFloatSpin = false;
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupGearWidgetComponent) CharactersMeleeWeapon->PickupGearWidgetComponent->SetVisibility(false);
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->ItemInfoWidgetComponent) CharactersMeleeWeapon->ItemInfoWidgetComponent->SetVisibility(false); 
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverDecal) CharactersMeleeWeapon->HoverDecal->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverLight) CharactersMeleeWeapon->HoverLight->DestroyComponent();
+				OverlappingItem = nullptr;
+				EquipWeapon(OverlappedWeapon);
+			}
+			else if (OverlappedMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+			{
+				BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+				CombatComponent->EquippedWeapon = OverlappedMeleeWeapon;
+				CombatComponent->EquippedMeleeWeapon = OverlappedMeleeWeapon;
+				CharactersMeleeWeapon = CombatComponent->EquippedMeleeWeapon;
+				CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+				if (CharactersMeleeWeapon) CharactersMeleeWeapon->bShouldHover = false;
+				if (CharactersMeleeWeapon) CharactersMeleeWeapon ->bShouldFloatSpin = false;
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupGearWidgetComponent) CharactersMeleeWeapon->PickupGearWidgetComponent->SetVisibility(false);
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->ItemInfoWidgetComponent) CharactersMeleeWeapon->ItemInfoWidgetComponent->SetVisibility(false); 
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverDecal) CharactersMeleeWeapon->HoverDecal->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverLight) CharactersMeleeWeapon->HoverLight->DestroyComponent();
+				OverlappingItem = nullptr;
+				EquipWeapon(OverlappedWeapon);
+			}
 		}
-
-		// ✅ Send to server
-		ServerEquipButtonPressed(OverlappingWeapon);
-
-		// ✅ Clean up local overlap (Dark Souls style)
-		SetOverlappingItem(nullptr);
-		SetOverlappingWeapon(nullptr);
-
-		if (bEquipInProgress) return;
-
-		// Snapshot the weapon NOW
-		AWeaponBase* LocalWeapon = OverlappingWeapon;
-		UE_LOG(LogEquipTrace, Warning, TEXT("[%s] EquipButtonPressed | Snapshot Weapon=%s"),
-			*GetName(), LocalWeapon ? *LocalWeapon->GetName() : TEXT("None"));
-
-		if (!LocalWeapon) return;
-
-		bEquipInProgress = true; // debounce immediately
-		ServerEquipWeapon(LocalWeapon); // pass the pointer, don't re-read OverlappingWeapon later
-		if (FollowCamera)
+		if (ARangedWeapon* OverlappedRangedWeapon = Cast<ARangedWeapon>(OverlappedWeapon))
 		{
-			FollowCamera->SetFieldOfView(DefaultFOV);
-			bFOVLock = true;
-			FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
+			OverlappedRangedWeapon->Equip(GetMesh(), FName("RangedSocket"), this, this);
+		}
+		if (AMajixWeapon* OverlappedMajixWeapon = Cast<AMajixWeapon>(OverlappedWeapon))
+		{
+			OverlappedMajixWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
 		}
 	}
-	else return;
+	else
+	{
+		ToggleArmingAndDisarming(EquippedWeapon);
+	}
 }
 
 void AFillainCharacter::ServerEquipWeapon_Implementation(AWeaponBase* WeaponToEquip)
@@ -1840,35 +1888,35 @@ void AFillainCharacter::ServerEquipWeapon_Implementation(AWeaponBase* WeaponToEq
 
 }
 
-void AFillainCharacter::ToggleArmingAndDisarming()
+void AFillainCharacter::ToggleArmingAndDisarming(AWeaponBase* WeaponEquipped)
 {
 	// Equip visually
 	if (CanDisarm())
 	{
-		CharactersWeapon->SetHandsNeeded(CharactersWeapon);
-		if (CharactersWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-			DisarmOneHandedWeapon(CharactersMeleeWeapon);
-		else if (CharactersWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-			DisarmTwoHandedWeapon(CharactersMeleeWeapon);
+		WeaponEquipped->SetHandsNeeded(EquippedWeapon);
+		if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+			DisarmOneHandedWeapon(WeaponEquipped);
+		else if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+			DisarmTwoHandedWeapon(WeaponEquipped);
 	}
 	else if (CanArm())
 	{
-		CharactersWeapon->SetHandsNeeded(CharactersWeapon);
-		if (CharactersWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-			ArmOneHandedWeapon(CharactersMeleeWeapon);
-		else if (CharactersWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-			ArmTwoHandedWeapon(CharactersMeleeWeapon);
+		WeaponEquipped->SetHandsNeeded(WeaponEquipped);
+		if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+			ArmOneHandedWeapon(WeaponEquipped);
+		else if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+			ArmTwoHandedWeapon(WeaponEquipped);
 	}
 }
 
-void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Weapon)
+void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Weap)
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	
-	if (!Combat || !Weapon) return;
+	if (!CombatComponent || !Weap) return;
 
-	if (Combat->ActionState == EActionState::EAS_EquippingWeapon)
+	if (CombatComponent->ActionState == EActionState::EAS_EquippingWeapon)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("❌ Already equipping — ignoring input"));
 		return;
@@ -1877,7 +1925,7 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	// Disarm/arm toggle
 	if (EquippedWeapon && EquippedWeapon->ItemState == EItemState::EIS_Equipped)
 	{
-		ToggleArmingAndDisarming();
+		ToggleArmingAndDisarming(EquippedWeapon);
 		return;
 	}
 	UE_LOG(LogEquipTrace, Warning, TEXT("[%s] ServerEquipWeapon | WeaponToEquip=%s"),
@@ -1886,8 +1934,8 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	if (!OverlappingWeapon || !IsValid(OverlappingWeapon)) { bEquipInProgress = false; return; }
 
 	// Do the equip work (attach, set owner, set Combat refs, play montage, etc.)
-	Combat->EquipWeapon(OverlappingWeapon);
-	Weapon = OverlappingWeapon;
+	CombatComponent->EquipWeapon(OverlappingWeapon);
+	Weap = OverlappingWeapon;
 	Client_OnEquipped();
 	FixSelfCameraCollision();
 
@@ -1897,7 +1945,7 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	{
 		// 1) Lights (HoverLight / flare lights)
 		TArray<ULightComponent*> Lights;
-		Weapon->GetComponents(Lights);
+		Weap->GetComponents(Lights);
 		for (ULightComponent* L : Lights)
 		{
 			if (!L) continue;
@@ -1907,7 +1955,7 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 
 		// 2) Niagara / Cascade FX (muzzle flash, glows)
 		TArray<UNiagaraComponent*> NComps;
-		Weapon->GetComponents(NComps);
+		Weap->GetComponents(NComps);
 		for (UNiagaraComponent* N : NComps)
 		{
 			if (!N) continue;
@@ -1917,7 +1965,7 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 
 		// 3) Decals / 3D widgets used for pickup prompts
 		TArray<UDecalComponent*> Decals;
-		Weapon->GetComponents(Decals);
+		Weap->GetComponents(Decals);
 		for (UDecalComponent* D : Decals)
 		{
 			if (!D) continue;
@@ -1927,10 +1975,6 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 		// (Optional) If you have a specific HoverLight pointer, just disable/destroy it:
 		// if (WeaponToEquip->HoverLight) WeaponToEquip->HoverLight->DestroyComponent();
 	}
-	
-	// Now that we’re done, clear overlaps on the server
-	OverlappingItem = nullptr;
-	OverlappingWeapon = nullptr;
 
 	// Option A: clear on montage end via delegate
 	// Option B: clear now and reset the flag
@@ -1940,17 +1984,17 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	Client_PostEquipCameraFix();
 
 	// Actual equip logic
-	if (Weapon->IsA(ARangedWeapon::StaticClass()))
+	if (Weap->IsA(ARangedWeapon::StaticClass()))
 	{
-		Combat->EquipWeapon(Weapon);
+		CombatComponent->EquipWeapon(Weap);
 		return;
 	}
 
-	if (AMeleeWeapon* Melee = Cast<AMeleeWeapon>(Weapon))
+	if (AMeleeWeapon* Melee = Cast<AMeleeWeapon>(Weap))
 	{
-		Combat->EquipWeapon(Melee);
+		CombatComponent->EquipWeapon(Melee);
 		EquippedWeapon = Melee;
-		Combat->EquippedWeapon = Melee;
+		CombatComponent->EquippedWeapon = Melee;
 		CharactersWeapon = Melee;
 		CharactersMeleeWeapon = Melee;
 
@@ -1965,9 +2009,9 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 		}
 	}
 
-	if (Weapon && Weapon->ItemState == EItemState::EIS_Equipped)
+	if (Weap && Weap->ItemState == EItemState::EIS_Equipped)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("✅ Server equipped %s"), *Weapon->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("✅ Server equipped %s"), *Weap->GetName());
 	}
 	else
 	{
@@ -1977,64 +2021,17 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 }
 
 
-void AFillainCharacter::EquipWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::EquipWeapon(AWeaponBase* AWB)
 {
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	if (!Weapon) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("AFillainCharacter::EquipWeapon() called for: %s"), *Weapon->GetName());
-
-	if (Weapon->IsA(ARangedWeapon::StaticClass()))
-	{
-		if (Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-		{
-			EquipOneHandedRangedWeapon(Weapon);
-		}
-		else if (Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-		{
-			EquipTwoHandedRangedWeapon(Weapon);
-		}
-	}
-	else if (Weapon->IsA(AMeleeWeapon::StaticClass()))
-	{
-		if (Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-		{
-			EquipOneHandedMeleeWeapon(Weapon);
-		}
-		else if (Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-		{
-			EquipTwoHandedMeleeWeapon(Weapon);
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("⚠️ Unknown weapon type or hands needed — cannot equip: %s"), *Weapon->GetName());
-	}
-	if (FollowCamera && CameraBoom)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Before Equip -> Camera Location: %s | Boom Length: %f | AttachedTo: %s"),
-			*FollowCamera->GetComponentLocation().ToString(),
-			CameraBoom->TargetArmLength,
-			*FollowCamera->GetAttachParent()->GetName());
-	}
-
-	// ⚡ Your existing equip logic here
-	// (Attach weapon, set state, play montage, etc.)
-
-	if (FollowCamera && CameraBoom)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("After Equip -> Camera Location: %s | Boom Length: %f | AttachedTo: %s"),
-			*FollowCamera->GetComponentLocation().ToString(),
-			CameraBoom->TargetArmLength,
-			*FollowCamera->GetAttachParent()->GetName());
-	}
-	if (FollowCamera)
-	{
-		FollowCamera->SetFieldOfView(DefaultFOV);
-		bFOVLock = true;
-		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
-	}
+	AWB->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedRangedWeapon;
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon; 
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMajixWeapon;
+	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMajixWeapon; 
+	OverlappingItem = nullptr;
+	EquippedWeapon = AWB;
 }
 
 void AFillainCharacter::ResetCameraRig()
@@ -2098,13 +2095,13 @@ void AFillainCharacter::Client_SafeViewAfterEquip_Implementation()
     if (USkeletalMeshComponent* SMC = GetMesh())
         SMC->SetOwnerNoSee(true);
 
-    if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
-        Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(true);
+    if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
+        CombatComponent->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(true);
 
     // 3) Mute weapon visuals that can full-screen you (lights/FX/widgets/decals)
-    if (Combat && Combat->EquippedWeapon)
+    if (CombatComponent && CombatComponent->EquippedWeapon)
     {
-        AActor* W = Combat->EquippedWeapon;
+        AActor* W = CombatComponent->EquippedWeapon;
 
         TArray<ULightComponent*> Lights;       W->GetComponents(Lights);
         for (ULightComponent* L : Lights) if (L) { L->SetVisibility(false, true); L->SetIntensity(0.f); }
@@ -2220,130 +2217,276 @@ void AFillainCharacter::Client_PostEquipCameraFix_Implementation()
 	GetWorldTimerManager().SetTimerForNextTick(this, &AFillainCharacter::ResetCameraRig);
 }
 
-void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* W)
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 
-	if (Weapon->IsA(ARangedWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+	if (W->IsA(ARangedWeapon::StaticClass()) && W->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		Combat->FightingStyle = EFightingStyle::EFS_Ranged;
-		Weapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-		Weapon->WeaponCategory = EWeaponCategory::EWC_OneHandedFirearm;
-		EquippedWeapon = Weapon;
-		Combat->EquippedWeapon = Weapon;
-		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Weapon);
+		W->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
+		W->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+		W->WeaponCategory = EWeaponCategory::EWC_OneHandedFirearm;
+		EquippedWeapon = W;
+		CombatComponent->EquippedWeapon = W;
+		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(W);
 		CharactersRangedWeapon = RangedWeapon;
-		Combat->EquippedRangedWeapon = RangedWeapon;
+		CombatComponent->EquippedRangedWeapon = RangedWeapon;
 		CharactersRangedWeapon = RangedWeapon;
-		Combat->EquipWeapon(RangedWeapon);
+		CombatComponent->EquipWeapon(RangedWeapon);
 	}
-	if (EquippedWeapon != nullptr && Combat->EquippedWeapon != nullptr)
+	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
 	{
 		OverlappingWeapon = nullptr;
 		OverlappingItem = nullptr;
 	}
 }
 
-void AFillainCharacter::EquipTwoHandedRangedWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::EquipTwoHandedRangedWeapon(AWeaponBase* Wpn)
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	
 	
-	if (Weapon->IsA(ARangedWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+	if (Wpn->IsA(ARangedWeapon::StaticClass()) && Wpn->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
-		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		Combat->FightingStyle = EFightingStyle::EFS_Ranged;
-		Weapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-		Weapon->WeaponCategory = EWeaponCategory::EWC_TwoHandedFirearm;
-		EquippedWeapon = Weapon;
-		Combat->EquippedWeapon = Weapon;
-		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Weapon);
+		Wpn->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
+		Wpn->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		Wpn->WeaponCategory = EWeaponCategory::EWC_TwoHandedFirearm;
+		EquippedWeapon = Wpn;
+		CombatComponent->EquippedWeapon = Wpn;
+		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Wpn);
 		CharactersRangedWeapon = RangedWeapon;
-		Combat->EquippedRangedWeapon = RangedWeapon;
+		CombatComponent->EquippedRangedWeapon = RangedWeapon;
 		CharactersRangedWeapon = RangedWeapon;
-		Combat->EquippedRangedWeapon = RangedWeapon;
-		Combat->EquipWeapon(RangedWeapon);
+		CombatComponent->EquippedRangedWeapon = RangedWeapon;
+		CombatComponent->EquipWeapon(RangedWeapon);
 	}
-	if (EquippedWeapon != nullptr && Combat->EquippedWeapon != nullptr)
+	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
 	{
 		OverlappingWeapon = nullptr;
 		OverlappingItem = nullptr;
 	}
 }
 
-void AFillainCharacter::EquipOneHandedMeleeWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::EquipOneHandedMeleeWeapon(AWeaponBase* Wn)
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	
 	
-	if (Weapon->IsA(AMeleeWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+	if (Wn->IsA(AMeleeWeapon::StaticClass()) && Wn->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		Combat->FightingStyle = EFightingStyle::EFS_Melee;
-		Weapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-		Weapon->WeaponCategory = EWeaponCategory::EWC_OneHandedSword;
-		EquippedWeapon = Weapon;
-		Combat->EquippedWeapon = Weapon;
-		AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(Weapon);
+		Wn->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+		Wn->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+		Wn->WeaponCategory = EWeaponCategory::EWC_OneHandedSword;
+		EquippedWeapon = Wn;
+		CombatComponent->EquippedWeapon = Wn;
+		AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(Wn);
 		CharactersMeleeWeapon = MeleeWeapon;
-		Combat->EquippedMeleeWeapon = MeleeWeapon;
+		CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
 		DisarmOneHandedWeapon(MeleeWeapon);
 		ArmOneHandedWeapon(MeleeWeapon);
 		CharactersMeleeWeapon = MeleeWeapon;
-		Combat->EquippedMeleeWeapon = MeleeWeapon;
+		CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
 	}
-	if (EquippedWeapon != nullptr && Combat->EquippedWeapon != nullptr)
+	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
 	{
 		OverlappingWeapon = nullptr;
 		OverlappingItem = nullptr;
 	}
 }
 
-void AFillainCharacter::EquipTwoHandedMeleeWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::EquipTwoHandedMeleeWeapon(AWeaponBase* WeaponB)
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	
 	
-	if (Weapon->IsA(AMeleeWeapon::StaticClass())&& Weapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+	if (WeaponB->IsA(AMeleeWeapon::StaticClass())&& WeaponB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
-		if (Weapon->IsA(AMeleeWeapon::StaticClass()) && Weapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-		{
 			UE_LOG(LogTemp, Warning, TEXT("🧠 Inside IsA+HandsNeeded block, calling Weapon->Equip"));
-			Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-			Combat->FightingStyle = EFightingStyle::EFS_Melee;
-			Weapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-			Weapon->WeaponCategory = EWeaponCategory::EWC_TwoHandedSword;
-			EquippedWeapon = Weapon;
-			CharactersWeapon = Weapon;
-			Combat->EquippedWeapon = Weapon;
+			WeaponB->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+			AttachWeaponToMeleeSocket();
+			CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+			WeaponB->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+			WeaponB->WeaponCategory = EWeaponCategory::EWC_TwoHandedSword;
+			EquippedWeapon = WeaponB;
+			CharactersWeapon = WeaponB;
+			CombatComponent->EquippedWeapon = WeaponB;
 
 			UE_LOG(LogTemp, Warning, TEXT("Weapon is a %s, IsA(Melee): %d"),
-			   *Weapon->GetClass()->GetName(),
-			   Weapon->IsA(AMeleeWeapon::StaticClass()));
+			   *WeaponB->GetClass()->GetName(),
+			   WeaponB->IsA(AMeleeWeapon::StaticClass()));
 
 		
-			AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(Weapon);
+			AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponB);
 
 			UE_LOG(LogTemp, Warning, TEXT("Cast result: %s"),
 			   MeleeWeapon ? *MeleeWeapon->GetName() : TEXT("nullptr"));
 
 		
 			CharactersMeleeWeapon = MeleeWeapon;
-			Combat->EquippedMeleeWeapon = MeleeWeapon;
+			CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
 			DisarmTwoHandedWeapon(MeleeWeapon);
 			ArmTwoHandedWeapon(MeleeWeapon);
 		}
-	}
-	if (EquippedWeapon != nullptr && Combat->EquippedWeapon != nullptr)
+	
+	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
 	{
 		OverlappingWeapon = nullptr;
 		OverlappingItem = nullptr;
 	}
+}
+
+void AFillainCharacter::EquipOneHandedMajixWeapon(AWeaponBase* MajixWeapon)
+{
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
+	
+	if (MajixWeapon->IsA(AHAFProjectile::StaticClass()) && MajixWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+	{
+		if (AHAFProjectile* ProjectileMajixWeapon = Cast<AHAFProjectile>(MajixWeapon))
+			if (ProjectileMajixWeapon)  
+			{
+				CombatComponent->EquippedWeapon = ProjectileMajixWeapon;
+				EquippedWeapon = CombatComponent->EquippedWeapon;
+				EquippedWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
+				CombatComponent->FightingStyle = EFightingStyle::EFS_Majix;
+				EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+				EquippedWeapon->WeaponCategory = EWeaponCategory::EWC_MajixSpell;
+				EquippedWeapon = MajixWeapon;
+				AMajixWeapon* MajixWpn = Cast<AMajixWeapon>(MajixWeapon);
+				CharactersMajixWeapon = MajixWpn;
+				CombatComponent->EquippedMajixWeapon = MajixWpn;
+				if (MajixWpn &&
+					(MajixWpn->WeaponType == EWeaponType::EWT_MajixProjectile ||
+						MajixWpn->WeaponType == EWeaponType::EWT_FireBolt))
+				{
+					if (IsAbilityInStartupAbilities(UHAFProjectileSpell::StaticClass()))
+					{
+						if (UAbilitySystemComponent* AbSysCo = GetAbilitySystemComponent())
+						{
+							// Easiest: just try by class
+							AbSysCo->TryActivateAbilityByClass(UHAFProjectileSpell::StaticClass());
+
+							// Or, if you specifically want the spec handle:
+							if (FGameplayAbilitySpec* Spec =
+								AbSysCo->FindAbilitySpecFromClass(UHAFProjectileSpell::StaticClass()))
+							{
+								// On the server: TryActivateAbility(handle) is fine.
+								// On a client: call ASC->ServerTryActivateAbility(handle) or rely on prediction.
+								AbSysCo->TryActivateAbility(Spec->Handle);
+							}
+						}
+					}
+				}
+			}
+			if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
+			{
+				OverlappingWeapon = nullptr;
+				OverlappingItem = nullptr;
+			}
+		}
+	}
+
+void AFillainCharacter::EquipTwoHandedMajixWeapon(AWeaponBase* THMWeapon)
+{
+	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
+	
+	
+	if (THMWeapon->IsA(AMajixWeapon::StaticClass()) && THMWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+	{
+		THMWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
+		THMWeapon->Equip(GetMesh(), FName("RightHandSpellSocket"), this, this);
+		CombatComponent->FightingStyle = EFightingStyle::EFS_Majix;
+		THMWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		THMWeapon->WeaponCategory = EWeaponCategory::EWC_MajixSpell;
+		EquippedWeapon = THMWeapon;
+		CombatComponent->EquippedWeapon = THMWeapon;
+		AMajixWeapon* MajixWeap = Cast<AMajixWeapon>(THMWeapon);
+		CharactersMajixWeapon = MajixWeap;
+		CombatComponent->EquippedMajixWeapon = MajixWeap;
+		/* if (MajixWeapon->WeaponType == EWeaponType::EWT_MajixProjectile)
+		{
+			//Add Gameplay Abilities that need two hands when we add the to the game	
+		}
+		{
+			AHAFProjectileSpell* ProjectileSpell = Cast<AHAFProjectile>(MajixWeapon);
+			if (Projectile)
+			{
+				Projectile->SetOwner(this);
+				Projectile->ActivateAbility()
+				
+			}
+		}*/
+		if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
+		{
+			OverlappingWeapon = nullptr;
+			OverlappingItem = nullptr;
+		}
+	}
+}
+
+void AFillainCharacter::FireAtCursor()
+{
+    AFillainPlayerController* PlayCon = Cast<AFillainPlayerController>(GetController());
+    if (!PlayCon || !HAFProjectileClass) return;
+
+    // 1) Where to spawn from (hand or muzzle socket on your character mesh)
+    static const FName SocketName("SpellSocket"); // use your socket name
+    const FTransform MuzzleTM = GetMesh()->GetSocketTransform(SocketName, RTS_World);
+    const FVector   SpawnLoc  = MuzzleTM.GetLocation();
+
+    // 2) What point did we click?
+    FHitResult ClickHit;
+    if (!PlayCon->GetClickHit(ClickHit))
+    {
+        // Fallback: shoot along camera forward far away if nothing was hit
+        FVector CamLoc; FRotator CamRot;
+        PlayCon->GetPlayerViewPoint(CamLoc, CamRot);
+        ClickHit.ImpactPoint = CamLoc + CamRot.Vector() * 100000.f;
+    }
+
+    // 3) Build direction from spawn to click point
+    FVector Dir = (ClickHit.ImpactPoint - SpawnLoc);
+    if (!Dir.Normalize())
+    {
+        // In case we somehow clicked exactly at the spawn point
+        Dir = (MuzzleTM.GetRotation().Vector()).GetSafeNormal();
+    }
+
+    // 4) Spawn and launch
+    FActorSpawnParameters Params;
+    Params.Instigator = this;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    AHAFProjectile* Proj = GetWorld()->SpawnActor<AHAFProjectile>(
+        HAFProjectileClass,
+        FTransform(Dir.Rotation(), SpawnLoc),
+        Params);
+
+    if (!Proj) return;
+
+    // Make sure your projectile sets UpdatedComponent (collision sphere) in its constructor!
+    // Then just set velocity here:
+    if (Proj->ProjectileMovement)
+    {
+        const float Speed = Proj->ProjectileMovement->InitialSpeed; // e.g., 1000
+        Proj->ProjectileMovement->Velocity = Dir * Speed;
+        Proj->ProjectileMovement->Activate(true);
+    }
+
+    // Avoid colliding with yourself
+    if (UPrimitiveComponent* RootPrim = Cast<UPrimitiveComponent>(Proj->GetRootComponent()))
+    {
+        RootPrim->IgnoreActorWhenMoving(this, true);
+    }
 }
 
 bool AFillainCharacter::IfPlayerAlreadyEquippedAnyWeapon()
@@ -2379,10 +2522,24 @@ AMeleeWeapon* AFillainCharacter::EquippedWeaponIsAMeleeWeapon()
 {
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	
-	AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
-	if (Melee == nullptr) return nullptr;
-	else return Melee;
+	if (CharactersMeleeWeapon)
+	{
+		CharactersMeleeWeapon->SetHandsNeeded(CharactersMeleeWeapon);
+		if (CharactersMeleeWeapon && CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) EquipOneHandedMeleeWeapon(CharactersMeleeWeapon);
+		if (CharactersMeleeWeapon && CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) EquipTwoHandedMeleeWeapon(CharactersMeleeWeapon);
+		if (!CharactersMeleeWeapon && (CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_None || CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_MAX)) return nullptr;
+		return CharactersMeleeWeapon;
+	}	return nullptr; // Ensure all control paths return a value
+}
+
+AMajixWeapon* AFillainCharacter::EquippedWeaponIsAMajixWeapon()
+{
+	AMajixWeapon* Majix = Cast<AMajixWeapon>(EquippedWeapon);
+	if (Majix) Majix->SetHandsNeeded(Majix);
+	if (Majix && Majix->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) EquipOneHandedMajixWeapon(Majix);
+	if (Majix && Majix->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) EquipTwoHandedMajixWeapon(Majix);
+	if (Majix == nullptr) return nullptr;
+	else return Majix;
 }
 
 bool AFillainCharacter::WeaponIsUnclaimedFirearm(ARangedWeapon* Ranged)
@@ -2413,31 +2570,31 @@ bool AFillainCharacter::ItemIsPickup()
 
 void AFillainCharacter::SetAllWeaponEnumsForRanged()
 {
-	Combat->EquipWeapon(OverlappingWeapon);
-	OverlappingWeapon = Combat->EquippedRangedWeapon;
+	CombatComponent->EquipWeapon(OverlappingWeapon);
+	OverlappingWeapon = CombatComponent->EquippedRangedWeapon;
 	OverlappingWeapon = CharactersWeapon;
-	CharactersWeapon = Combat->EquippedRangedWeapon;
-	Combat->EquippedWeapon->SetEquippedWeaponState();
+	CharactersWeapon = CombatComponent->EquippedRangedWeapon;
+	CombatComponent->EquippedWeapon->SetEquippedWeaponState();
 }
 
 void AFillainCharacter::SetAllWeaponEnumsForMelee()
 {
-	Combat->EquipWeapon(OverlappingWeapon);
-	OverlappingWeapon = Combat->EquippedMeleeWeapon;
+	CombatComponent->EquipWeapon(OverlappingWeapon);
+	OverlappingWeapon = CombatComponent->EquippedMeleeWeapon;
 	OverlappingWeapon = CharactersWeapon;
-	CharactersWeapon = Combat->EquippedMeleeWeapon;
+	CharactersWeapon = CombatComponent->EquippedMeleeWeapon;
 	OverlappingWeapon = nullptr;
-	Combat->EquippedMeleeWeapon->SetEquippedMeleeWeaponState();
+	CombatComponent->EquippedMeleeWeapon->SetEquippedMeleeWeaponState();
 }
 
 void AFillainCharacter::SetAllItemEnumsForPickup()
 {
 	AAmmoPickup* OverlappingAmmoPickup = Cast<AAmmoPickup>(OverlappingItem);
-	Combat->PickupAmmo(Combat->RangedType, OverlappingAmmoPickup->AmountOfAmmoInside);
+	CombatComponent->PickupAmmo(CombatComponent->RangedType, OverlappingAmmoPickup->AmountOfAmmoInside);
 	OverlappingAmmoPickup->Destroy();
 }
 
-void AFillainCharacter::DisarmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
+void AFillainCharacter::DisarmOneHandedWeapon(AWeaponBase* WeaponInHand)
 {
 	if (!IsValid(WeaponInHand))
 	{
@@ -2451,14 +2608,15 @@ void AFillainCharacter::DisarmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
 		return;
 	}
 
-	if (WeaponInHand == CharactersWeapon->OneHandedWeapon)
+	if (WeaponInHand->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		PlayArmDisarmMontage(FName("DisarmOneHanded"));
+		FName SectionName("DisarmOneHanded");
+		PlayArmDisarmMontage(SectionName);
 
-		if (IsValid(Combat) && IsValid(Combat->EquippedWeapon))
+		if (IsValid(CombatComponent) && IsValid(CombatComponent->EquippedWeapon))
 		{
-			Combat->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+			CombatComponent->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+			CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 		}
 		else
 		{
@@ -2467,22 +2625,25 @@ void AFillainCharacter::DisarmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
 	}
 }
 
-void AFillainCharacter::DisarmTwoHandedWeapon(AMeleeWeapon* WeaponInHand)
+void AFillainCharacter::DisarmTwoHandedWeapon(AWeaponBase* WeaponInHand)
 {
 	if (!IsValid(WeaponInHand))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EquipAndDisarmTwoHandedWeapon: WeaponInHand is invalid."));
 		return;
 	}
-	
-	FName SectionName("DisarmTwoHanded");
-	PlayArmDisarmMontage(SectionName);
-	UE_LOG(LogTemp, Warning, TEXT("PLaying Montage Section: %s"), *SectionName.ToString());
 
-	if (IsValid(Combat) && IsValid(Combat->EquippedWeapon))
+	if (WeaponInHand->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
-		Combat->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-		Combat->ActionState = EActionState::EAS_EquippingWeapon;
+		FName SectionName("DisarmTwoHanded");
+		PlayArmDisarmMontage(SectionName);
+		UE_LOG(LogTemp, Warning, TEXT("PLaying Montage Section: %s"), *SectionName.ToString());
+	}
+
+	if (IsValid(CombatComponent) && IsValid(CombatComponent->EquippedWeapon))
+	{
+		CombatComponent->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 	}
 	else
 	{
@@ -2490,7 +2651,7 @@ void AFillainCharacter::DisarmTwoHandedWeapon(AMeleeWeapon* WeaponInHand)
 	}
 }
 
-void AFillainCharacter::ArmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
+void AFillainCharacter::ArmOneHandedWeapon(AWeaponBase* WeaponInHand)
 {
 	if (!IsValid(WeaponInHand))
 	{
@@ -2504,14 +2665,15 @@ void AFillainCharacter::ArmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
 		return;
 	}
 
-	if (WeaponInHand == CharactersWeapon->OneHandedWeapon)
+	if (WeaponInHand->HandsNeeded  == EHandsNeeded::EHN_OneHandedWeapon)
 	{
+		FName SectionName("ArmOneHanded");
 		PlayArmDisarmMontage(FName("ArmOneHanded"));
 
-		if (IsValid(Combat) && IsValid(Combat->EquippedWeapon))
+		if (IsValid(CombatComponent) && IsValid(CombatComponent->EquippedWeapon))
 		{
-			Combat->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-			Combat->ActionState = EActionState::EAS_EquippingWeapon;
+			CombatComponent->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+			CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 		}
 		else
 		{
@@ -2520,32 +2682,34 @@ void AFillainCharacter::ArmOneHandedWeapon(AMeleeWeapon* WeaponInHand)
 	}
 }
 
-void AFillainCharacter::ArmTwoHandedWeapon(AMeleeWeapon* WeaponInHand)
+void AFillainCharacter::ArmTwoHandedWeapon(AWeaponBase* WeaponInHand)
 {
 	if (!IsValid(WeaponInHand))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EquipAndArmTwoHandedWeapon: WeaponInHand is invalid."));
 		return;
 	}
-	
-	Combat->ActionState = EActionState::EAS_EquippingWeapon;
-	PlayArmDisarmMontage(FName("ArmTwoHanded"));
-	AttachWeaponToMeleeSocket();
 
-	if (IsValid(Combat) && IsValid(Combat->EquippedWeapon))
+	if (WeaponInHand->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
-		Combat->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		FName SectionName("ArmTwoHanded");
+		PlayArmDisarmMontage(FName("ArmTwoHanded"));
+		
+		if (IsValid(CombatComponent) && IsValid(CombatComponent->EquippedWeapon))
+		{
+			CombatComponent->EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EquipAndArmTwoHandedWeapon: Combat or Combat->EquippedWeapon is invalid."));
+		}
+		ResetToFightAgain();
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EquipAndArmTwoHandedWeapon: Combat or Combat->EquippedWeapon is invalid."));
-	}
-	ResetToFightAgain();
 }
 
 void AFillainCharacter::HitReactEnd()
 {
-	Combat->ActionState = EActionState::EAS_Unoccupied;
+	CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 }
 
 float AFillainCharacter::GetHitAssistPaddingCM()
@@ -2586,9 +2750,9 @@ void AFillainCharacter::BindFillainCharacterCapsuleHooksOnce()
 	if (bFillainCharacterCapsuleHooksBound) return;
 
 	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
-	HAFAttributeSet = GetHAFAttributeSet(); // (whichever getter you use)
+	const UHAFAttributeSet* LocalAttrSet = GetHAFAttributeSet(); // (whichever getter you use)
 
-	if (!ASC || !HAFAttributeSet) return;
+	if (!ASC || !LocalAttrSet) return;
 
 	// Bind to all three stats — your original idea is good
 	ASC->GetGameplayAttributeValueChangeDelegate(UHAFAttributeSet::GetAgilityAttribute())
@@ -2693,7 +2857,7 @@ void AFillainCharacter::Server_ApplyFillainCharacterCapsuleFromStats_Implementat
 
 bool AFillainCharacter::PlayerHasSword()
 {
-	return Combat && Combat->bWieldingTheSword;
+	return CombatComponent && CombatComponent->bWieldingTheSword;
 }
 
 void AFillainCharacter::CrouchButtonPressed()
@@ -2709,41 +2873,47 @@ void AFillainCharacter::ReloadButtonPressed()
 {
 	if (bDisableGameplay) return;
 
-	if (Combat)
+	if (CombatComponent)
 	{
-		Combat->Reload();
+		CombatComponent->Reload();
 	}
 }
 
 bool AFillainCharacter::PlayerNotUsingRangedWeapons()
 {
-	return Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged && Combat->EquippedRangedWeapon == nullptr;
+	return CombatComponent && CombatComponent->FightingStyle != EFightingStyle::EFS_Ranged && CombatComponent->EquippedRangedWeapon == nullptr;
 }
 
 bool AFillainCharacter::PlayerUsingRangedWeapons()
 {
-	return Combat && Combat->FightingStyle == EFightingStyle::EFS_Ranged && Combat->EquippedRangedWeapon;;
+	return CombatComponent && CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged && CombatComponent->EquippedRangedWeapon;;
 }
 
 void AFillainCharacter::AimButtonPressed()
 {
-	if (EquippedWeaponIsAMeleeWeapon()) return;
+	if (AMeleeWeapon* MW = Cast<AMeleeWeapon>(EquippedWeapon)) return;
 	if (bDisableGameplay) return;
 
-	if (Combat)
+	if (ARangedWeapon* RW = Cast<ARangedWeapon>(EquippedWeapon))
 	{
-		Combat->SetAiming(true);
+		if (CombatComponent)
+		{
+			CombatComponent->SetAiming(true);
+		}
 	}
 }
 
 void AFillainCharacter::AimButtonReleased()
 {
-	if (EquippedWeaponIsAMeleeWeapon()) return; 
+	if (AMeleeWeapon* MW = Cast<AMeleeWeapon>(EquippedWeapon)) return;
 	if (bDisableGameplay) return;
 
-	if (Combat)
+	if (ARangedWeapon* RW = Cast<ARangedWeapon>(EquippedWeapon))
 	{
-		Combat->SetAiming(false);
+		if (CombatComponent)
+		{
+			CombatComponent->SetAiming(false);
+		}
 	}
 }
 
@@ -2756,7 +2926,7 @@ float AFillainCharacter::CalculateSpeed()
 
 void AFillainCharacter::AimOffset(float DeltaTime)
 {
-	if (Combat && Combat->EquippedWeapon == nullptr) return;
+	if (CombatComponent && CombatComponent->EquippedWeapon == nullptr) return;
 	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
@@ -2820,7 +2990,7 @@ bool AFillainCharacter::SetTurningInPlaceEnum()
 
 void AFillainCharacter::SimProxiesTurn()
 {
-	if (Combat == nullptr || Combat->EquippedRangedWeapon == nullptr || Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged) return;
+	if (CombatComponent == nullptr || CombatComponent->EquippedRangedWeapon == nullptr || CombatComponent && CombatComponent->FightingStyle != EFightingStyle::EFS_Ranged) return;
 	bRotateRootBone = false;
 	float Speed = CalculateSpeed();
 	if (Speed > 0.f)
@@ -2857,13 +3027,13 @@ void AFillainCharacter::SimProxiesTurn()
 
 bool AFillainCharacter::PlayerNotUsingRangedOrMeleeWeapons()
 {
-	return Combat && Combat->FightingStyle != EFightingStyle::EFS_Ranged || Combat->FightingStyle !=
+	return CombatComponent && CombatComponent->FightingStyle != EFightingStyle::EFS_Ranged || CombatComponent->FightingStyle !=
 		EFightingStyle::EFS_Melee;
 }
 
 bool AFillainCharacter::PlayerUsingMeleeWeapons()
 {
-	return Combat && Combat->FightingStyle == EFightingStyle::EFS_Melee;
+	return CombatComponent && CombatComponent->FightingStyle == EFightingStyle::EFS_Melee;
 }
 
 void AFillainCharacter::AttackButtonReleased()
@@ -2876,13 +3046,13 @@ void AFillainCharacter::AttackButtonReleased()
 	
 	if (PlayerUsingRangedWeapons())
 	{
-		Combat->FireButtonPressed(false);
+		CombatComponent->FireButtonPressed(false);
 		ResetToFightAgain();
 	}
 
 	if (PlayerUsingMeleeWeapons())
 	{
-		Combat->FireButtonPressed(false);
+		CombatComponent->FireButtonPressed(false);
 		ResetToFightAgain();
 	}
 } 
@@ -2941,9 +3111,9 @@ void AFillainCharacter::HideCharacterIfCameraClose()
 		CameraBoom->bDoCollisionTest = !bSelfOccluded;
 		GetMesh()->SetOwnerNoSee(bSelfOccluded);
 
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
+			CombatComponent->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
 		}
 
 		UE_LOG(LogTemp, Warning, TEXT("[SelfOccl] SWITCH  Actual=%.1f  Occluded=%d  BoomCollide=%d"),
@@ -2956,10 +3126,10 @@ void AFillainCharacter::UpdateHUDAmmo()
 {
 	FillainPlayerController = FillainPlayerController == nullptr ? Cast<AFillainPlayerController>(Controller) : FillainPlayerController;
 
-	if (FillainPlayerController && Combat && Combat->EquippedRangedWeapon)
+	if (FillainPlayerController && CombatComponent && CombatComponent->EquippedRangedWeapon)
 	{
-		FillainPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
-		FillainPlayerController->SetHUDWeaponAmmo(Combat->EquippedRangedWeapon->GetAmmo());
+		FillainPlayerController->SetHUDCarriedAmmo(CombatComponent->CarriedAmmo);
+		FillainPlayerController->SetHUDWeaponAmmo(CombatComponent->EquippedRangedWeapon->GetAmmo());
 	}
 }
 
@@ -3000,17 +3170,20 @@ void AFillainCharacter::StartDissolve()
 	}
 }
 
-void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
+void AFillainCharacter::SetOverlappingItem(APCPickupBaseItem* HoveringItem)
 {
-	if (ATreasure* Treasure = Cast<ATreasure>(Item))
+	
+	if (ATreasure* Treasure = Cast<ATreasure>(HoveringItem))
 	{
 		AddGoldAcquiredToTotalGold(Treasure);
+		Destroy();
 	}
-	if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(Item))
+	if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(HoveringItem))
 	{
-		Combat->PickupAmmo(Combat->RangedType, AmmoPickup->AmountOfAmmoInside);
+		CombatComponent->PickupAmmo(CombatComponent->RangedType, AmmoPickup->AmountOfAmmoInside);
+		Destroy();
 	}
-	if (AHealthPickup* HealthPickup = Cast<AHealthPickup>(Item))
+	if (AHealthPickup* HealthPickup = Cast<AHealthPickup>(HoveringItem))
 	{
 		if (UAbilitySystemComponent* AbilitySC = GetAbilitySystemComponent())
 		{
@@ -3022,7 +3195,7 @@ void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
 		}
 		Destroy();
 	}
-	if (AShieldPickup* ShieldPickup = Cast<AShieldPickup>(Item))
+	if (AShieldPickup* ShieldPickup = Cast<AShieldPickup>(HoveringItem))
 	{
 		if (UAbilitySystemComponent* ASComponent = GetAbilitySystemComponent())
 		{
@@ -3034,7 +3207,7 @@ void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
 		}
 		Destroy();
 	}
-	if (AStaminaPickup* StaminaPickup = Cast<AStaminaPickup>(Item))
+	if (AStaminaPickup* StaminaPickup = Cast<AStaminaPickup>(HoveringItem))
 	{
 		if (UAbilitySystemComponent* AbilitySComponent = GetAbilitySystemComponent())
 		{
@@ -3046,7 +3219,7 @@ void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
 		}
 		Destroy();
 	}
-	if (AMajixPickup* MajixPickup = Cast<AMajixPickup>(Item))
+	if (AMajixPickup* MajixPickup = Cast<AMajixPickup>(HoveringItem))
 	{
 		if (UAbilitySystemComponent* AbilitySystemC = GetAbilitySystemComponent())
 		{
@@ -3058,19 +3231,20 @@ void AFillainCharacter::SetOverlappingItem(APrePackagedPCPickupItem* Item)
 		}
 		Destroy();
 	}
-	if (ASoul* Soul = Cast<ASoul>(Item))
+	if (ASoul* Soul = Cast<ASoul>(HoveringItem))
 	{
 		AddSoulsGatheredToTotalSouls(Soul);
+		Destroy();
 	}
-	else OverlappingItem = Item;
+	else OverlappingItem = HoveringItem;
 }
 
-void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
+void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* HoveringWeapon)
 {
 
-	OverlappingWeapon = Weapon;
+	OverlappingWeapon = HoveringWeapon;
 	
-	if (OverlappingWeapon && OverlappingWeapon != Weapon)
+	if (OverlappingWeapon && OverlappingWeapon != HoveringWeapon)
 	{
 		OverlappingWeapon->ShowPickupAndInfoWidgets(false);
 	}
@@ -3078,6 +3252,39 @@ void AFillainCharacter::SetOverlappingWeapon(AWeaponBase* Weapon)
 	if (IsLocallyControlled() && OverlappingWeapon)
 	{
 		OverlappingWeapon->ShowPickupAndInfoWidgets(true);
+	}
+}
+
+void AFillainCharacter::SetOverlaps(APCPickupBaseItem* FloatingItem)
+{
+	if (APCPickupBaseItem* BaseItemInAir = Cast<APCPickupBaseItem>(FloatingItem))
+	{
+		OverlappingItem = BaseItemInAir;
+		OverlappingWeapon = nullptr;
+		SetOverlappingItem(OverlappingItem);
+	}
+	if (AWeaponBase* WeaponInAir = Cast<AWeaponBase>(FloatingItem))
+	{
+		OverlappingItem = nullptr;
+		OverlappingWeapon = WeaponInAir;
+		SetOverlappingWeapon(OverlappingWeapon);
+	}
+	else
+	{
+		APrePackagedPCPickupItem* PrePackedItem = Cast<APrePackagedPCPickupItem>(FloatingItem);
+		SetOverlappingItem(PrePackedItem);
+	}
+}
+
+void AFillainCharacter::OnRep_OverlappingItem(APCPickupBaseItem* LastItem)
+{
+	if (OverlappingItem)
+	{
+		OverlappingItem->ShowPickupAndInfoWidgets(true);
+	}
+	if (LastItem)
+	{
+		LastItem->ShowPickupAndInfoWidgets(false);
 	}
 }
 
@@ -3093,56 +3300,45 @@ void AFillainCharacter::OnRep_OverlappingWeapon(AWeaponBase* LastWeapon)
 	}
 }
 
-void AFillainCharacter::OnRep_OverlappingItem(APrePackagedPCPickupItem* LastItem)
-{
-	if (OverlappingItem)
-	{
-		OverlappingItem->ShowPickupAndInfoWidgets(true);
-	}
-	if (LastItem)
-	{
-		LastItem->ShowPickupAndInfoWidgets(false);
-	}
-}
 
 bool AFillainCharacter::IsWeaponEquipped()
 {
-	return (Combat && Combat->EquippedWeapon);
+	return (CombatComponent && CombatComponent->EquippedWeapon);
 }
 
 bool AFillainCharacter::IsAiming()
 {
-	return (Combat && Combat->bAiming);
+	return (CombatComponent && CombatComponent->bAiming);
 }
 
 AWeaponBase* AFillainCharacter::GetEquippedWeapon()
 {
-	if (Combat == nullptr) return nullptr;
-	return Combat->EquippedWeapon;
+	if (CombatComponent == nullptr) return nullptr;
+	return CombatComponent->EquippedWeapon;
 }
 
 FVector AFillainCharacter::GetHitTarget() const
 {
-	if (Combat == nullptr) return FVector();
-	return Combat->HitTarget;
+	if (CombatComponent == nullptr) return FVector();
+	return CombatComponent->HitTarget;
 }
 
 EActionState AFillainCharacter::GetActionState() const
 {
-	if (Combat == nullptr) return EActionState::EAS_MAX;
-	return Combat->ActionState;
+	if (CombatComponent == nullptr) return EActionState::EAS_MAX;
+	return CombatComponent->ActionState;
 }
 
 EWeaponState AFillainCharacter::GetWeaponState() const
 {
-	if (Combat->EquippedWeapon == nullptr) return EWeaponState::EWS_MAX;
-	return Combat->EquippedWeapon->WeaponState;
+	if (CombatComponent->EquippedWeapon == nullptr) return EWeaponState::EWS_MAX;
+	return CombatComponent->EquippedWeapon->WeaponState;
 }
 
 bool AFillainCharacter::IsLocallyReloading()
 {
-	if (Combat == nullptr) return false;
-	return Combat->bLocallyReloading;
+	if (CombatComponent == nullptr) return false;
+	return CombatComponent->bLocallyReloading;
 }
 
 ETeam AFillainCharacter::GetTeam()
@@ -3163,9 +3359,9 @@ ETeam AFillainCharacter::GetTeam()
 
 void AFillainCharacter::SwitchWeapon(AWeaponBase* NewWeapon)
 {
-	if (NewWeapon && Combat && Combat->EquippedWeapon)
+	if (NewWeapon && CombatComponent && CombatComponent->EquippedWeapon)
 	{
-		Combat->EquippedWeapon = NewWeapon;
+		CombatComponent->EquippedWeapon = NewWeapon;
 		// Update the HUD with the new weapon type
 		AFillainPlayerController* PC = Cast<AFillainPlayerController>(GetFillainPlayerController());
 		if (PC)
@@ -3237,6 +3433,12 @@ void AFillainCharacter::InitASC()
 	}
 }
 
+int32 AFillainCharacter::PlayProjectileSpellMontage()
+{
+	const int32 Selection = PlayRandomMontageSection(ProjectileSpellMontage, ProjectileSpellMontageSections);
+	return Selection;
+}
+
 void AFillainCharacter::InitializeAbilityActorInfo()
 {
 	AHAFPlayerState* FillainPlayerState = GetPlayerState<AHAFPlayerState>();
@@ -3244,11 +3446,78 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	FillainPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FillainPlayerState, this);
 	Cast<UHAFAbilitySystemComponent>(FillainPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
-	AttributeSet = FillainPlayerState->GetAttributeSet();
+	HAFAttributeSet = FillainPlayerState->GetHAFAttributeSet();
 
-	
+	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
+	{
+		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
+		{
+			FillainHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, FillainPlayerState->GetAttributeSet());
+		}
+	}
 	InitializeDefaultAttributes();
 }
+
+void AFillainCharacter::InitializeDefaultAttributes() const
+{
+	Super::InitializeDefaultAttributes();
+	
+	if (HasAuthority())
+	{
+		ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
+		ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+		const FGameplayAttribute MaxAttr = UHAFAttributeSet::GetMaxHealthAttribute();
+		UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
+		   AbilitySystemComponent->GetNumericAttribute(MaxAttr));
+
+		if (const UHAFAttributeSet* HAF = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAF->GetMaxHealth());
+		}
+		ApplyEffectToSelf((DefaultVitalAttributes), 1.f);
+		ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
+		if (!AbilitySystemComponent)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ASC is NULL in InitializeDefaultAttributes"));
+			return;
+		}
+
+		if (!HAFAttributeSet)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is NULL in InitializeDefaultAttributes (called too early?)"));
+			return;
+		}
+	}
+	// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
+	UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
+		"Armor=%.3f ArmorPenetration=%.3f BlockChance=%.3f CriticalHitChance=%.3f CriticalHitDamage=%.3f CriticalHitResistance=%.3f "
+		"Agility=%.3f Flexibility=%.3f Purity=%.3f Corruptibility=%.3f Intuition=%.3f Vision=%.3f Charm=%.3f "
+		"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
+		"MaxHealth=%.3f MaxShield=%.3f MaxStamina=%.3f MaxMajix=%.3f"),
+		HasAuthority(),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorPenetrationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetBlockChanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitChanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitDamageAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitResistanceAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetAgilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetFlexibilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetPurityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCorruptibilityAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetIntuitionAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetVisionAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCharmAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetHealthRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetShieldRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetStaminaRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMajixRegenerationAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxHealthAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxShieldAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxStaminaAttribute()),
+			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxMajixAttribute())
+		);
+	}
 
 void AFillainCharacter::PossessedBy(AController* NewController)
 {

@@ -12,6 +12,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
 #include "NiagaraComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Components/WidgetComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 
 
@@ -29,6 +32,7 @@ AStormWeapons::AStormWeapons()
 	BoxTraceEnd->SetupAttachment(WeaponMesh, TEXT("EndBoxTraceSocket"));
 
 	StormWeapon = this;
+	
 }
 
 void AStormWeapons::SetupWeaponBox()
@@ -194,6 +198,15 @@ void AStormWeapons::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsEquipped == true)
+	{
+		if (HoverDecal) HoverDecal->DestroyComponent();
+		if (HoverLight) HoverLight->DestroyComponent();
+		if (PickupGearWidgetComponent) PickupGearWidgetComponent->DestroyComponent();
+		if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->DestroyComponent();
+		if (AreaSphere) AreaSphere->DestroyComponent();
+	}
+	
 	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 2.f); */
 }
 void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -239,14 +252,14 @@ void AStormWeapons::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		// ✅ Cache damage values before GetHit
 		if (AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor))
 		{
-			if (Player->Combat)
+			if (Player->CombatComponent)
 			{
 				const FVector WeaponOrigin = GetActorLocation(); // or trace start
 				const FVector HitLocation = BoxHit.ImpactPoint;
 
 				FDamageEvent DamageEvent; // Use FPointDamageEvent or your custom subclass if needed
 
-				Player->Combat->ReceiveMeleeDamage(
+				Player->CombatComponent->ReceiveMeleeDamage(
 					Damage,
 					DamageEvent,
 					Cast<AController>(GetOwner()->GetInstigatorController()), // Instigator
@@ -271,58 +284,3 @@ void AStormWeapons::NotifyActorBeginOverlap(AActor* OtherActor)
 	// UE_LOG(LogTemp, Warning, TEXT("NotifyActorBeginOverlap with: %s"), *OtherActor->GetName());
 }
 
-bool AStormWeapons::ActorIsSameType(AActor* OtherActor)
-{
-	return GetOwner()->ActorHasTag(TEXT("Enemy")) && OtherActor->ActorHasTag(TEXT("Enemy"));
-}
-
-void AStormWeapons::ExecuteGetHit(FHitResult& BoxHit)
-{
-	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
-	if (HitInterface)
-	{
-		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
-	}
-	OnAttackHit(BoxHit);
-}
-
-void AStormWeapons::BoxTrace(FHitResult& BoxHit)
-{
-
-	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Green, false, 2.0f); */
-	const FVector Start = BoxTraceStart->GetComponentLocation();
-	const FVector End = BoxTraceEnd->GetComponentLocation();
-
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
-
-	for (AActor* Actor : IgnoreActors)
-	{
-		ActorsToIgnore.AddUnique(Actor);
-	}
-
-	UKismetSystemLibrary::BoxTraceSingle(
-		this,
-		Start,
-		End,
-		BoxTraceExtent,
-		BoxTraceStart->GetComponentRotation(),
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		bShowBoxDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
-		BoxHit,
-		true
-	);
-	IgnoreActors.AddUnique(BoxHit.GetActor());
-
-	/* DrawDebugBox(
-	GetWorld(),
-	Start,
-	BoxTraceExtent,
-	BoxTraceStart->GetComponentQuat(),
-	FColor::Red,
-	false,
-	2.0f); */
-	
-}

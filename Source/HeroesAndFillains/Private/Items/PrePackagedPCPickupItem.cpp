@@ -45,8 +45,7 @@ APrePackagedPCPickupItem::APrePackagedPCPickupItem()
 	ItemEffect->SetUsingAbsoluteRotation(false);
 	ItemEffect->SetUsingAbsoluteScale(false);
 	
-	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
-	AreaSphere->SetupAttachment(RootComponent);
+	check(AreaSphere);
 	AreaSphere->SetSphereRadius(125.f, true);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AreaSphere->SetCollisionObjectType(ECC_Pickupable); // Or your custom PCWeaponBox
@@ -65,6 +64,8 @@ void APrePackagedPCPickupItem::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
+
 	/* if (!AreaSphere)
 	{
 		UE_LOG(LogTemp, Error, TEXT("❌ AreaSphere is NULL in actor: %s, class: %s"),
@@ -73,8 +74,20 @@ void APrePackagedPCPickupItem::BeginPlay()
 		return;
 	}*/
 
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnSphereOverlap);
-	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnSphereEndOverlap);
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnEndOverlap);
+}
+
+void APrePackagedPCPickupItem::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+}
+
+void APrePackagedPCPickupItem::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 }
 
 void APrePackagedPCPickupItem::PostInitializeComponents()
@@ -114,6 +127,7 @@ void APrePackagedPCPickupItem::ApplyPickupEffect_Implementation(class AFillainCh
 void APrePackagedPCPickupItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
 	
 		// Set OverlappingItem for non-weapon item types

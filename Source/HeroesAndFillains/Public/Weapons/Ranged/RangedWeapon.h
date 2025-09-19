@@ -6,7 +6,7 @@
 #include "Weapons/WeaponBase.h"
 #include "GameFramework/Actor.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "RangedWeapon.generated.h"
 
 UENUM(BlueprintType)
@@ -56,7 +56,7 @@ public:
 	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 	UFUNCTION()
-	void SetRangedWeaponInformationText(UWidgetComponent* RangedWidgetComponent, ARangedWeapon* RangedWeapon);
+	void SetRangedWeaponInformationText(UWidgetComponent* RangedItemInfoComp, ARangedWeapon* RangedWeapon);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
 	FString RangedWeaponName;
@@ -129,10 +129,10 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnEquippedOneHanded() override;
-	virtual void OnEquippedTwoHanded() override;
-	virtual void OnDropped() override;
-	virtual void OnEquippedSecondary() override;
+	void HighPingOnEquippedOneHanded();
+	void HighPingOnEquippedTwoHanded();
+	void HighPingOnEquippedSecondary();
+	void HighPingOnDropped();
 	
 	virtual void OnSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent, 
@@ -201,7 +201,7 @@ public:
 	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
-	FORCEINLINE UItemInfoWidgetBase* GetItemInfoWidget() const { return ItemInfoWidget; }
+	FORCEINLINE UUserWidget* GetItemInfoWidget() const { return ItemInfoWidget; }
 
 
 

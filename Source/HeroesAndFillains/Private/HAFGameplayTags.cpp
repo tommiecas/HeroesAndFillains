@@ -4,7 +4,12 @@
 #include "HAFGameplayTags.h"
 #include "GameplayTagsManager.h"
 
+// Registers safely during module startup; no static-init order issues.
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_StaminaCost, "SetByCaller.StaminaCost");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SBC_Damage_Shield,      "SetByCaller.Damage.Shield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SBC_Damage_Health,      "SetByCaller.Damage.Health");
 FHAFGameplayTags FHAFGameplayTags::GameplayTags;
+
 
 void FHAFGameplayTags::InitializeNativeGameplayTags()
 {
@@ -172,6 +177,30 @@ FName("Attributes.Secondary.MaxMajix"),
 FString("Increases the Amount of Majix Obtainable")
 );
 
+	/*******************************
+	********************************
+	****    VITAL ATTRIBUTES    ****
+	********************************
+	*******************************/
+	GameplayTags.Attributes_Vital_Health = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Attributes.Vital.Health"),
+	FString("Amount of Damage Incurred Before Death")
+	);
+
+	GameplayTags.Attributes_Vital_Shield = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Attributes.Vital.Shield"),
+	FString("Amount of Shielding Destroyed Before it Affects Your Health")
+	);
+
+	GameplayTags.Attributes_Vital_Stamina = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Attributes.Vital.Stamina"),
+FString("Amount of Times One Can Dodge an Attack Before Exhaustion Sets In, And No Attack is Dodgeable")
+);
+
+	GameplayTags.Attributes_Vital_Majix = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Attributes.Vital.Majix"),
+FString("Amount of Majixal Ability One Has Left Before They Are Unable To Cast Spells") 
+);
 
 	/***********************************
 	************************************
@@ -218,6 +247,16 @@ FString("How the Sausage Gets Made...Go Away")
 	GameplayTags.InputTag_4OrDPadRight = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("InputTag.4OrDPadRight"),
 		FString("Input Tag for the 4 Button or D-Pad Right. What does 'four-the-for' mean anyway?") 
+		);
+
+	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage"),
+		FString("Duh. Damage!") 
+		);
+
+	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Effects.HitReact"),
+		FString("A Reaction to Getting Hit") 
 		);
 
 }

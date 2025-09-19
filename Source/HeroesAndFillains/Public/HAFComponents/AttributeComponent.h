@@ -1,87 +1,68 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// AttributeComponent.h — FINAL (UE 5.5.4, pure-GAS friendly)
 
 #pragma once
 
-#include <Interfaces/PickupInterface.h>
-
 #include "CoreMinimal.h"
-#include "AbilitySystem/HAFAttributeSet.h"
 #include "Components/ActorComponent.h"
 #include "AttributeComponent.generated.h"
 
-
+class UAbilitySystemComponent;
 class UHAFAttributeSet;
+class AController;
+class AActor;
+struct FDamageEvent;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class HEROESANDFILLAINS_API UAttributeComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UAttributeComponent();
-	void CharactersReceiveMeleeDamage(float DamageAmount, const struct FDamageEvent& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
-	UPROPERTY() TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
-	void UseStamina(float StaminaCost);
+
+	// ---- GAS-friendly API (no direct writes) ----
+	virtual void BeginPlay() override;
+
+	/** Safe check routed through ASC numeric read; no cached AttributeSet used */
+	bool bIsDying() const;
+
+	/** Example reader implemented via ASC->GetNumericAttribute in the .cpp */
+	float GetStamina() const;
+
+	/** Non-GAS bookkeeping you’re showing on the HUD */
+	void UpdateTotalSouls(int32 NumberOfSouls);
+	void UpdateTotalGold(int32 AmountOfGold);
+
+	/** Kept for compatibility with existing call sites; now a no-op in .cpp */
+	void CharactersReceiveMeleeDamage(float DamageAmount, const FDamageEvent& DamageEvent,
+									 AController* EventInstigator, AActor* DamageCauser);
+
+	/** Deprecated: stamina regen should be handled by a periodic GameplayEffect */
 	void RegenStamina(float DeltaTime);
 
-	void UpdateTotalSouls(int32 NumberOfSouls);
+	/** Resolve the AttributeSet without caching; const/non-const overloads */
+	const UHAFAttributeSet* ResolveAttrSet() const;
+	UHAFAttributeSet*       ResolveAttrSet();
 
-	void UpdateTotalGold(int32 AmountOfGold);
+public:
+	// ---- Non-GAS attributes/state you still own ----
 	
-	virtual void BeginPlay() override;
-	
+	/** Currency/counter values you display on HUD (not GAS-backed) */
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	int32 GoldAcquired;
+	int32 GoldAcquired = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	int32 SoulsGathered;
+	int32 SoulsGathered = 0;
 
+	/** Gameplay tuning knobs that are not GAS attributes */
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float DodgeCost = 14.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float StaminaRegenRate = 8.f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Actor Attributes")
-	UHAFAttributeSet* FillAttSet;
-
-public:
-	FORCEINLINE bool IsCharacterAlive() const { return FillAttSet->GetHealth() > 0.f; }
-	FORCEINLINE float GetHealth() const { return FillAttSet->GetHealth(); }
-	FORCEINLINE float GetMaxHealth() const { return FillAttSet->GetMaxHealth(); }
-	FORCEINLINE void SetHealth(float NewHealth) const{ FillAttSet->SetHealth(NewHealth); }
-	FORCEINLINE void SetMaxHealth(float NewMaxHealth) const { FillAttSet->SetMaxHealth(NewMaxHealth); }
-
-	FORCEINLINE float GetShield() const { return FillAttSet->GetShield(); }
-	FORCEINLINE float GetMaxShield() const { return FillAttSet->GetMaxShield(); }
-	FORCEINLINE float GetShieldPercent() const { return FillAttSet->GetShield() / FillAttSet->GetMaxShield(); }
-	FORCEINLINE void SetShield(const float NewShield) const { FillAttSet->SetShield(NewShield); }
-	FORCEINLINE void SetMaxShield(const float NewMaxShield) const { FillAttSet->SetMaxShield(NewMaxShield); }
-
-	float GetStamina() const; 
-	FORCEINLINE float GetMaxStamina() const { return FillAttSet->GetMaxStamina(); }
-	FORCEINLINE float GetStaminaPercent() const { return FillAttSet->GetStamina() / FillAttSet->GetMaxStamina(); }
-	FORCEINLINE void SetStamina(const float NewStamina) const { FillAttSet->SetStamina(NewStamina); }
-	FORCEINLINE void SetMaxStamina(const float NewMaxStamina) const { FillAttSet->SetMaxStamina(NewMaxStamina); }
-
-	FORCEINLINE float GetMajix() const  { return FillAttSet->GetMajix(); }
-	FORCEINLINE float GetMaxMajix() const { return FillAttSet->GetMaxMajix(); }
-	FORCEINLINE float GetMajixPercent() const { return FillAttSet->GetMajix() / FillAttSet->GetMaxMajix(); }
-	FORCEINLINE void SetMajix(const float NewMajix) const { FillAttSet->SetMajix(NewMajix); }
-	FORCEINLINE void SetMaxMajix(const float NewMaxMajix) const { FillAttSet->SetMaxMajix(NewMaxMajix); }
-	
-	FORCEINLINE float GetStaminaRegenRate() const { return StaminaRegenRate; }
-	FORCEINLINE void SetStaminaRegenRate(float NewStaminaRegenRate) { StaminaRegenRate = NewStaminaRegenRate; }
-
-	FORCEINLINE int32 GetGoldAcquired() const { return GoldAcquired; }
-	FORCEINLINE void SetGoldAcquired(int32 NewGold) { GoldAcquired = NewGold; }
-
 	FORCEINLINE int32 GetSoulsGathered() const { return SoulsGathered; }
-	FORCEINLINE void SetSoulsGathered(int32 NewSouls) { SoulsGathered = NewSouls; }
-
+	FORCEINLINE int32 GetGoldAcquired() const { return GoldAcquired; }
 	FORCEINLINE float GetDodgeCost() const { return DodgeCost; }
-	FORCEINLINE void SetDodgeCost(float NewDodgeCost) { DodgeCost = NewDodgeCost; }
-
-
-		
+	FORCEINLINE float GetStaminaRegenRate() const { return StaminaRegenRate; }
 };

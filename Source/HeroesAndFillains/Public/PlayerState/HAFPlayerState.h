@@ -48,10 +48,10 @@ public:
 
 protected:
 	// Strongly-typed, initialized in constructor
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UHAFAttributeSet> HAFAttributeSet = nullptr;
 
 private:

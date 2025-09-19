@@ -6,7 +6,7 @@
 #include "Components/WidgetComponent.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
-#include "Weapons/WeaponTypes.h" // Ensure this header is included for Weapon Types
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h" // Ensure this header is included for Weapon Types
 #include "Pickups/AmmoPickup.h"
 #include "Pickups/PickupSpawnPoint.h"
 
@@ -22,10 +22,14 @@ class HEROESANDFILLAINS_API UPickupGearWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	// Required UObject constructor
+	explicit UPickupGearWidget(const FObjectInitializer& ObjectInitializer);
 
-	UPROPERTY()
-	class UWidgetComponent* OwningWidgetComponent;
-	
+	// Bind to UMG elements
+	UPROPERTY() TWeakObjectPtr<UWidgetComponent> PickupGearOwningComponent;
+
+	UWidgetComponent* GetOwningWidgetComponent() const { return PickupGearOwningComponent.Get(); }
+
 	/* void DelineatePickupType();
 
 	UPROPERTY(BlueprintReadOnly, Category = "Pickup", meta = (ExposeOnSpawn = true))
@@ -39,6 +43,14 @@ public:
 	
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* FadeOutAnimation;
+
+protected:
+	// Do setup that needs framework objects here, not in the constructor
+	virtual void NativeConstruct() override;
+
+public:
+	FORCEINLINE UWidgetAnimation* GetFadeInAnimation() const { return FadeInAnimation; }
+	FORCEINLINE UWidgetAnimation* GetFadeOutAnimation() const { return FadeOutAnimation; }
 
 
 };

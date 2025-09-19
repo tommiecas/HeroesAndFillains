@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
+class UAbilitySystemComponent;
 class UHAFInputConfig;
 class AEnemyBase;
 class UTextBlock;
@@ -20,6 +21,7 @@ struct FInputActionValue;
 class AFillainCharacter;
 class IEnemyInterface;
 class UHAFAbilitySystemComponent;
+class USplineComponent;
 
 
 
@@ -56,11 +58,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void CursorTrace();
-
-	UPROPERTY()
+	
 	FHitResult CursorHit;
 
-	
+	bool GetClickHit(FHitResult& OutHit) const;
+
 
 	void HideTeamScores();
 	void InitTeamScores();
@@ -125,7 +127,16 @@ public:
 	UPROPERTY()
 	class AHAFGameMode* GameMode;
 
-	
+	UPROPERTY()
+	FVector CachedDestination = FVector::ZeroVector;
+
+	virtual void SetupInputComponent() override;
+
+	UFUNCTION()
+	void ActivateByTag(FGameplayTag Tag);
+
+	void DebugCursorTrace();
+
 
 private:
 	UPROPERTY(EditAnywhere, Category = HUD)
@@ -133,6 +144,11 @@ private:
 
 	UPROPERTY()
 	UPlayerChat* PlayerChatWidget;
+
+	UPROPERTY() UAbilitySystemComponent* ASC = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="Input|Abilities")
+	FGameplayTag FireballTag; // e.g. set to "Ability.Fireball" in defaults
 
 protected:
 	virtual void BeginPlay() override;
@@ -146,6 +162,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	class UInputAction* ChatAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* ShiftAction;
+
+	void ShiftPressed() {bShiftKeyDown = true;};
+	void ShiftReleased() {bShiftKeyDown = false;};
+	bool bShiftKeyDown = false;
 
 	/**************************************
 	* Sync Time Between Client And Server *
@@ -170,7 +193,6 @@ protected:
 
 	void PollInit();
 
-	virtual void SetupInputComponent() override;
 	void ShowReturnToMainMenu();
 
 	void HandleMatchHasStarted(bool bTeamsMatch = false);
@@ -203,7 +225,14 @@ private:
 	UPROPERTY()
 	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent;
 
-	UHAFAbilitySystemComponent* GetASC();
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UFUNCTION()
+	UHAFAbilitySystemComponent* GetHAFASC();
+
+	UFUNCTION()
+	UAbilitySystemComponent* GetASC();
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
@@ -289,6 +318,20 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float HighPingThreshold = 50.f;
+
+
+	float FollowTime = 0.f;
+	float ShortPressThreshold = 0.5f;
+	bool bAutoRunning = false;
+	bool bTargeting = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	float AutoRunAcceptanceRadius = 50.f;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USplineComponent> Spline;
+
+	void AutoRun();
 
 public:
 	FORCEINLINE AFillainCharacter* GetFillain() const { return Fillain; }

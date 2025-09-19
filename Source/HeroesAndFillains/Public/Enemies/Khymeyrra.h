@@ -16,6 +16,9 @@ class HEROESANDFILLAINS_API AKhymeyrra : public AEnemyBase
 public:
 	AKhymeyrra();
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsEnemyKhymeyrra = true;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -70,6 +73,7 @@ private:
 	UBoxComponent*  RightAxeCollision;
 
 public:
+	
 
 
 };

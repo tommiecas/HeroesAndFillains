@@ -6,16 +6,23 @@
 #include "Blueprint/UserWidget.h"
 #include "ItemInfoWidgetBase.generated.h"
 
-/**
- * 
- */
+class UWidgetComponent;
+
 UCLASS()
 class HEROESANDFILLAINS_API UItemInfoWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
-	// Bind to UMG elements
+	// Required UObject constructor
+	explicit UItemInfoWidgetBase(const FObjectInitializer& ObjectInitializer);
+
+	UPROPERTY()
+	TObjectPtr<UWidgetComponent> ItemInfoOwningComponent;
+
+	UFUNCTION()
+	UWidgetComponent* GetItemInfoOwningComponent() const { return ItemInfoOwningComponent.Get(); }
+
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Line1;
 
@@ -23,10 +30,7 @@ public:
 	UTextBlock* Line2;
 
 	UPROPERTY()
-	UItemInfoWidgetBase* InfoWidgetInstanceA;
-
-	UPROPERTY()
-	UItemInfoWidgetBase* InfoWidgetInstanceB;
+	UItemInfoWidgetBase* InfoWidgetInstance;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Line3;
@@ -37,9 +41,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Line5;
 
-	UPROPERTY()
-	class UWidgetComponent* OwningWidgetComponent;
-	
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* FadeInAnimation;
 	
@@ -53,7 +54,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
-	
 	// Setup functions
 	UFUNCTION(BlueprintCallable)
 	void SetMeleeInfo(const FString& Name, const FString& History,
@@ -64,4 +64,13 @@ public:
 	void SetRangedInfo(const FString& Name, const FString& Description,
 					   const FString& Type, const FString& Rarity,
 					   const FString& Damage);
+
+protected:
+	// Do setup that needs framework objects here, not in the constructor
+	virtual void NativeConstruct() override;
+
+	
+public:
+	FORCEINLINE UWidgetAnimation* GetFadeInAnimation() const { return FadeInAnimation; }
+	FORCEINLINE UWidgetAnimation* GetFadeOutAnimation() const { return FadeOutAnimation; }
 };

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Weapons/Ranged/RangedWeapon.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 

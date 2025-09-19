@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Weapons/WeaponBase.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "MeleeWeapon.generated.h"
 
 class USphereComponent;
@@ -21,19 +21,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator) override;
-	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName) override;
 	virtual void BeginAttack();
 	virtual void ImplementLineTraceGetHit(FHitResult Hit);
 	virtual void TickAttackTrace();
 	virtual void TraceBetweenPoints(FVector& LastLocation, USceneComponent* TracePoint);
 	virtual void EndAttack();
 
-	
+	void ExecuteGetHit(FHitResult& BoxHit);
+
 	UFUNCTION()
 	void SetEquippedMeleeWeaponState();
 
 	UFUNCTION(BlueprintCallable)
-	void SetMeleeWeaponInformationText(UWidgetComponent* MeleeWidgetComponent, AMeleeWeapon* MeleeWeapon);
+	void SetMeleeWeaponInformationText(UWidgetComponent* MeleeItemInfoComp, AMeleeWeapon* MeleeWeapon);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
 	FString MeleeWeaponName;
@@ -52,13 +52,31 @@ public:
 
 	UPROPERTY()
 	TArray<AActor*> IgnoreActors;
+
+	bool ActorIsSameType(AActor* OtherActor);
+
+	void BoxTrace(FHitResult& BoxHit);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector BoxTraceExtent = FVector(5.f);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	bool bShowBoxDebug = false;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceStart;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceEnd;
+
+
+
 	
 protected:
 	virtual void BeginPlay() override;
 	
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
+	UFUNCTION()
+	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	virtual void OnEquippedOneHanded() override;
 	virtual void OnEquippedTwoHanded() override;
@@ -111,7 +129,7 @@ private:
 
 public:
 	FORCEINLINE EMeleeType GetMeleeWeaponType() const { return MeleeType; }
-	FORCEINLINE UItemInfoWidgetBase* GetItemInfoWidget() const { return ItemInfoWidget; }
+	FORCEINLINE UUserWidget* GetItemInfoWidget() const { return ItemInfoWidget; }
 	FORCEINLINE USceneComponent* GetTracePointTip() const { return TracePointTip; }
 	FORCEINLINE USceneComponent* GetTracePointMid() const { return TracePointMid; }
 	FORCEINLINE USceneComponent* GetTracePointHilt() const { return TracePointHilt; }

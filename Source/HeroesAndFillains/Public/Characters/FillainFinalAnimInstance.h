@@ -7,7 +7,8 @@
 #include "Animation/AnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Weapons/WeaponBase.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "HAFComponents/CombatComponent.h"
 #include "FillainFinalAnimInstance.generated.h"
 
@@ -115,6 +116,12 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	EWeaponState CharacterState;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	EBattlePrepped BattlePrepped;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	EWeaponType WeaponType;
 	
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	AWeaponBase* CachedEquippedWeapon = nullptr;

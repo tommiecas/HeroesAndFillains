@@ -12,12 +12,17 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "GenericTeamAgentInterface.h"
 #include "GameplayTagContainer.h"
+#include "MotionWarpingComponent.h"
+#include "HUD/WidgetControllers/OverlayWidgetController.h"
+#include "Characters/CharacterClassInfo.h"
 #include "EnemyBase.generated.h"
 
+class UEnemyHealthBarWidget;
+class UEnemyProgressBarBaseWidget;
+class FOnAttributeChangedSignature;
 class ARangedWeapon;
 class AAIController;
-class UEnemyHealthBarWidgetComponent;
-class UEnemyHealthBarWidget;
+class UWidgetComponent;
 
 UENUM(BlueprintType, Blueprintable)
 enum class EEnemyState : uint8
@@ -52,11 +57,18 @@ public:
 	*******************************/
 
 	virtual int32 GetPlayerLevel() override;
+	virtual void Die() override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "UI")
 	bool bHighlighted = false;
 	
 	void SpawnEnemyWeapon();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnHealthAdjusted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnMaxHealthAdjusted;
 	
 	UFUNCTION(BlueprintCallable)
 	AAIController* LaunchEnemyAIController();
@@ -69,7 +81,8 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void Destroyed() override;
 	virtual void AttackEnd() override;
-
+	virtual void InitializeDefaultAttributes() const override;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	FString EnemyDisplayName = TEXT("Unnamed Enemy");
 
@@ -85,15 +98,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	ARangedWeapon* EquippedEnemyRangedWeapon;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	TArray<UAnimMontage*> MeleeAttackMontages;
-
 	UFUNCTION(BlueprintCallable)
-	virtual void PlayRandomAttackMontage();
+	virtual void PlayRandomMeleeAttackMontage() override;
+	virtual void PlayRandomMajixAttackMontage() override;
 
 	UFUNCTION(BlueprintCallable)
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
+	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TSubclassOf<class ASoul> SoulClass;
 
@@ -128,38 +139,59 @@ public:
 	// Recompute next hop after reaching last hop
 	void DoNextFleeHop();
 	
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bIsCharmed = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* OwnerActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UEnemyHealthBarWidget> EnemyHealthBarWidgetClass;
+
+	void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount) const;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	bool bReactingToHit = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	float BaseWalkSpeed = 250.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float LifeSpan = 5.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bIsFleeing = false;
+	bool bStartupAbilitiesGranted = false;
 
-	UPROPERTY()
-	AActor* CachedPlayer = nullptr;
-
-	// Team ids: 0 = Enemy (default), 1 = PlayerAlly (charmed)
-	FGenericTeamId TeamId = FGenericTeamId(0);
-
-	// How far to run each hop while fleeing
-	UPROPERTY(EditDefaultsOnly, Category="Charm")
-	float FleeHopDistance = 5000.f;
-
+	// Attribute change handlers (must match delegate signatures exactly)
+	void OnHealthChanged(const FOnAttributeChangeData& Data);
+	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 	
-
-	// Helper: apply/remove GAS tags if you’re on GAS
-	void AddStateTag(const FGameplayTag& Tag);
-	void RemoveStateTag(const FGameplayTag& Tag);
-
+	FDelegateHandle HealthChangedHandle;
+	FDelegateHandle MaxHealthChangedHandle;
+	FDelegateHandle HitReactChangedHandle;
+	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+	void SetupASCBindings(UAbilitySystemComponent* ASC);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bASCBindingsInitialized = false;
+
+
+
+
 	virtual void InitializeAbilityActorInfo() override;
 	void SpawnSoul();
 	virtual void CharacterDies() override;
-	virtual int32 PlayMeleeAttackMontage() override;
+	virtual void PlayAttackMontage() override;
 	virtual int32 PlayDeathMontage() override;
 	virtual void MeleeAttack() override;
+	virtual void MajixAttack() override;
 	virtual bool CanAttack() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> EnemyHealthProgressBarWidgetComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	double CombatRadius = 500.f;
@@ -194,11 +226,31 @@ protected:
 	bool IsEnemyEngaged();
 	void CheckCombatTarget();
 	void CheckPatrolTarget();
-	void HideHealthBarWidgetComponent();
-	void ShowHealthBarWidgetComponent();
 	void StartAttackTimer();
 	void ClearAttackTimer();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsCharmed = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsFleeing = false;
+
+	UPROPERTY()
+	AActor* CachedPlayer = nullptr;
+
+	// Team ids: 0 = Enemy (default), 1 = PlayerAlly (charmed)
+	FGenericTeamId TeamId = FGenericTeamId(0);
+
+	// How far to run each hop while fleeing
+	UPROPERTY(EditDefaultsOnly, Category="Charm")
+	float FleeHopDistance = 5000.f;
+
 	
+
+	// Helper: apply/remove GAS tags if you’re on GAS
+	void AddStateTag(const FGameplayTag& Tag);
+	void RemoveStateTag(const FGameplayTag& Tag);
+
 	FTimerHandle PatrolTimer;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
@@ -246,11 +298,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+	ECharacterClass CharacterClass = ECharacterClass::Warrior;
 private:
 	
 
 public:
 	FORCEINLINE FString GetEnemyDisplayName() const { return EnemyDisplayName; }
+	FORCEINLINE UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
 	
 
 };

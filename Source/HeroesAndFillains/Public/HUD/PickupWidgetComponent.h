@@ -6,7 +6,7 @@
 #include "Components/WidgetComponent.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
-#include "Weapons/WeaponTypes.h" // Ensure this header is included for Weapon Types
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h" // Ensure this header is included for Weapon Types
 #include "PickupWidgetComponent.generated.h"
 
 /**

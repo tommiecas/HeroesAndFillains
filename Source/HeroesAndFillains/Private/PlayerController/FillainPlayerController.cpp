@@ -10,7 +10,7 @@
 #include "Components/TextBlock.h"
 #include "Characters/FillainCharacter.h"
 #include "PlayerState/HAFPlayerState.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/WeaponBase.h"
 #include "UObject/EnumProperty.h"
 #include "TimerManager.h"
@@ -51,7 +51,19 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
 #include "HUD/CharacterOverlayFixed.h"
 #include "Input/HAFInputComponent.h"
-
+#include "HAFGameplayTags.h"
+#include "Components/SplineComponent.h"
+#include "NavigationSystem.h"
+#include "NavigationPath.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "HAFGameplayTags.h"
+#include "EnhancedInputSubsystems.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
+#include "Components/SplineComponent.h"
+#include "Input/HAFInputComponent.h"
+#include "Interfaces/EnemyInterface.h"
 #include "Items/Soul.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
@@ -67,6 +79,8 @@ AFillainPlayerController::AFillainPlayerController()
 	MatchCountdownBlinkingColor = FLinearColor(10.0f, 0.0f, 0.491076f, 10.0f);
 
 	bIsMatchCountdownVisible = true;
+	bReplicates = true;
+	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
 }
 
 
@@ -74,6 +88,26 @@ AFillainPlayerController::AFillainPlayerController()
 void AFillainPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+
+	CursorTrace();
+	AutoRun();
+}
+
+void AFillainPlayerController::AutoRun()
+{
+	if (!bAutoRunning) return;
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
+		ControlledPawn->AddMovementInput(Direction);
+
+		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
+		if (DistanceToDestination <= AutoRunAcceptanceRadius)
+		{
+			bAutoRunning = false;
+		}
+	}
 }
 
 void AFillainPlayerController::CursorTrace()
@@ -103,8 +137,7 @@ void AFillainPlayerController::ToggleInputChatBox()
 		if (PlayerChatWidget->InputTextBox->GetVisibility() == ESlateVisibility::Collapsed)
 		{
 			PlayerChatWidget->InputTextBox->SetVisibility(ESlateVisibility::Visible);
-			FInputModeGameAndUI InputMode;
-			InputMode.SetWidgetToFocus(PlayerChatWidget->InputTextBox->TakeWidget());
+			FInputModeGameOnly InputMode;
 			SetInputMode(InputMode);
 			SetShowMouseCursor(true);
 		}
@@ -203,34 +236,6 @@ void AFillainPlayerController::ClientEliminationAnnouncement_Implementation(APla
 	}
 }
 
-void AFillainPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-	FillainHUD = Cast<AFillainHUD>(GetHUD());
-	ServerCheckMatchState();
-
-	
-
-	bShowMouseCursor = true;
-	DefaultMouseCursor = EMouseCursor::Default;
-	FInputModeGameAndUI InputModeData;
-	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	InputModeData.SetHideCursorDuringCapture(false);
-	SetInputMode(InputModeData);
-	
-	if (!IsLocalPlayerController()) return;  // This line is added because the editor keeps on giving me an error after exiting saying only local player controller can access widgets
-	if (PlayerChatClass)
-	{
-		PlayerChatWidget = PlayerChatWidget == nullptr ? CreateWidget<UPlayerChat>(this, PlayerChatClass) : PlayerChatWidget;
-		if (PlayerChatWidget)
-		{
-			PlayerChatWidget->AddToViewport();
-			PlayerChatWidget->InputTextBox->SetVisibility(ESlateVisibility::Collapsed);
-			PlayerChatWidget->InputTextBox->OnTextCommitted.AddDynamic(this, &AFillainPlayerController::OnTextCommitted);
-		}
-	}
-}
-
 void AFillainPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -243,6 +248,7 @@ void AFillainPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 void AFillainPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	DebugCursorTrace();  // <— TEMP: remove later
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
 	PollInit();
@@ -274,6 +280,34 @@ void AFillainPlayerController::Tick(float DeltaTime)
 				FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetText(FText::FromString(TimesUpText));
 			}
 		}
+	}
+}
+
+void AFillainPlayerController::DebugCursorTrace()
+{
+	if (!IsLocalController()) return;
+
+	// Make absolutely sure mouse is configured
+	bShowMouseCursor       = true;
+	bEnableClickEvents     = true;
+	bEnableMouseOverEvents = true;
+
+	FHitResult Hit;
+	const bool bHit = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, /*bTraceComplex*/ false, Hit);
+
+	if (bHit && Hit.bBlockingHit && Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CursorHit] %s @ %s"),
+			*Hit.GetActor()->GetName(),
+			*Hit.Location.ToString());
+	}
+	else
+	{
+		// Print WHY it failed so we know the path
+		UE_LOG(LogTemp, Warning, TEXT("[CursorHit] NO HIT  (bHit=%d, blocking=%d)  Cursor over: %s"),
+			bHit ? 1 : 0,
+			Hit.bBlockingHit ? 1 : 0,
+			bShowMouseCursor ? TEXT("World/Viewport") : TEXT("Unknown"));
 	}
 }
 
@@ -565,6 +599,18 @@ bool AFillainPlayerController::IsHUDReady() const
 		  FillainHUD->CharacterOverlayWidgetFixed->WeaponAmmoAmount;	
 }
 
+bool AFillainPlayerController::GetClickHit(FHitResult& OutHit) const
+{
+	FHitResult Hit;
+	const bool bHit = GetHitResultUnderCursor(ECC_Visibility, /*bTraceComplex*/ true, Hit);
+	if (bHit && Hit.bBlockingHit)
+	{
+		OutHit = Hit;
+		return true;
+	}
+	return false;
+}
+
 void AFillainPlayerController::HideTeamScores()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
@@ -678,17 +724,20 @@ void AFillainPlayerController::PollInit()
 	}
 }
 
-void AFillainPlayerController::SetupInputComponent()
+void AFillainPlayerController::ActivateByTag(FGameplayTag Tag)
 {
-	Super::SetupInputComponent();
-	if (InputComponent == nullptr) return;
+	if (!Tag.IsValid()) return;
 
-	if (UHAFInputComponent* HAFInputComponent = CastChecked<UHAFInputComponent>(InputComponent))
-	{
-		HAFInputComponent->BindAction(QuitAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ShowReturnToMainMenu);
-		HAFInputComponent->BindAction(ChatAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ToggleInputChatBox);
-		HAFInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
-	}
+	UAbilitySystemComponent* ASystemComponent = GetASC(); // your helper in this file
+	if (!ASystemComponent || !IsValid(ASystemComponent)) return;
+
+	APawn* P = GetPawn();
+	if (!IsValid(P) || ASystemComponent->GetAvatarActor() != P) return;
+
+	FGameplayTagContainer TagPot;
+	TagPot.AddTag(Tag);
+
+	ASystemComponent->TryActivateAbilitiesByTag(TagPot); 
 }
 
 void AFillainPlayerController::ShowReturnToMainMenu()
@@ -901,7 +950,7 @@ FString AFillainPlayerController::GetTeamsInfoText(AHAFGameState* HAFGameState)
 	return InfoTextString;
 }
 
-UHAFAbilitySystemComponent* AFillainPlayerController::GetASC()
+UHAFAbilitySystemComponent* AFillainPlayerController::GetHAFASC()
 {
 	if (HAFAbilitySystemComponent == nullptr)
 	{
@@ -912,21 +961,121 @@ UHAFAbilitySystemComponent* AFillainPlayerController::GetASC()
 
 void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	
+	if (InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_4OrDPadRight))
+	{
+		bTargeting = ThisActor ? true : false;
+		bAutoRunning = false;
+	}
 }
 
 void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	if (GetASC() == nullptr) return;
-	GetASC()->AbilityInputTagReleased(InputTag);
+	// Forward to ASC once
+	if (UHAFAbilitySystemComponent* AbilitySystemComp = GetHAFASC())
+	{
+		AbilitySystemComp->AbilityInputTagReleased(InputTag);
+	}
+
+	// Only do click-to-move logic for LMB/Shoulder
+	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
+	{
+		return;
+	}
+
+	if (!bTargeting && !bShiftKeyDown)
+	{
+		const APawn* ControlledPawn = GetPawn();
+		if (ControlledPawn && FollowTime <= ShortPressThreshold)
+		{
+			UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(
+				this,
+				ControlledPawn->GetActorLocation(),
+				CachedDestination
+			);
+
+			// Guard all pointers/arrays
+			if (NavPath && NavPath->PathPoints.Num() > 0 && Spline)
+			{
+				const FVector& FinalPoint = NavPath->PathPoints.Last();
+				const bool bHasMovement = !FinalPoint.Equals(ControlledPawn->GetActorLocation(), KINDA_SMALL_NUMBER);
+
+				// Rebuild spline safely (no ReserveSplinePoints in 5.5.4)
+				Spline->ClearSplinePoints(/*bUpdateSpline=*/false);
+				for (const FVector& PointLoc : NavPath->PathPoints)
+				{
+					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World, /*bUpdateSpline=*/false);
+				}
+				Spline->UpdateSpline();
+
+				CachedDestination = FinalPoint;
+				bAutoRunning = bHasMovement;
+			}
+		}
+
+		FollowTime = 0.f;
+		bTargeting = false;
+	}
 }
+
+
 
 void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
-	if (GetASC() == nullptr) return;
-	GetASC()->AbilityInputTagHeld(InputTag);
+	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
+	{
+		if (GetHAFASC()) GetHAFASC()->AbilityInputTagHeld(InputTag);
+		return;
+	}
+	if (bTargeting || bShiftKeyDown)
+	{
+		if (GetHAFASC()) GetHAFASC()->AbilityInputTagHeld(InputTag);
+	}
+	else
+	{
+		FollowTime += GetWorld()->GetDeltaSeconds();
+		if (CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
+		if (APawn* ControlledPawn = GetPawn())
+		{
+			const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+			ControlledPawn->AddMovementInput(WorldDirection);
+		}
+	}
 }
 
+UAbilitySystemComponent* AFillainPlayerController::GetASC()
+{
+	if (AbilitySystemComponent == nullptr)
+	{
+		AbilitySystemComponent = Cast<UAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return AbilitySystemComponent;
+}
+
+void AFillainPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+
+	if (Subsystem)
+	{
+		Subsystem->AddMappingContext(FillainMappingContext, 0);
+	}
+	bShowMouseCursor = true;
+	DefaultMouseCursor = EMouseCursor::Default;
+	
+	FInputModeGameAndUI InputModeData;
+	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputModeData.SetHideCursorDuringCapture(false);
+	SetInputMode(InputModeData);
+}
+void AFillainPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+	UHAFInputComponent* HAFInputComponent = CastChecked<UHAFInputComponent>(InputComponent);
+	HAFInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &AFillainPlayerController::ShiftPressed);
+	HAFInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AFillainPlayerController::ShiftReleased);
+	HAFInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);;
+}
 
 void AFillainPlayerController::OnRep_ShowTeamScores()
 {
@@ -939,11 +1088,6 @@ void AFillainPlayerController::OnRep_ShowTeamScores()
 		HideTeamScores();
 	}
 }
-
-
-
-
-
 
 /************************************************************************
 **   I added the following functions to complete optional challenges   **
@@ -985,8 +1129,6 @@ void AFillainPlayerController::ToggleMatchCountdownVisibility()
 		FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetVisibility(ESlateVisibility::Visible);
 	}
 }
-
-
 
 FString AFillainPlayerController::GetWeaponTypeDisplayName(EWeaponType TypeOfWeapon)
 {
@@ -1133,6 +1275,15 @@ void AFillainPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	InitOverlayIfNeeded(); // covers timing where Pawn arrives after PS
+
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(InPawn))
+	{
+		AbilitySystemComponent = ASI->GetAbilitySystemComponent();
+	}
+	else
+	{
+		AbilitySystemComponent = nullptr;
+	}
 }
 
 void AFillainPlayerController::InitOverlayIfNeeded()

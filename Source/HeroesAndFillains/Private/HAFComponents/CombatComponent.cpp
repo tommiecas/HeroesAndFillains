@@ -24,9 +24,10 @@
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/WeaponBase.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Enemies/EnemyBase.h"
 #include "HeroesAndFillains/DebugMacros.h"
+#include "Weapons/Majix/MajixWeapon.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -43,12 +44,6 @@ void UCombatComponent::SetCharacter(AFillainCharacter* InCharacter)
 {
 	Character = InCharacter;
 	UE_LOG(LogTemp, Warning, TEXT("✅ CombatComponent: Character set to %s"), *GetNameSafe(Character));
-}
-
-void UCombatComponent::SetEnemy(AEnemyBase* InEnemy)
-{
-	Enemy = InEnemy;
-	UE_LOG(LogTemp, Warning, TEXT("✅ CombatComponent: Enemy set to %s"), *GetNameSafe(Enemy));
 }
 
 
@@ -309,7 +304,7 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
 	if (GetOwnerRole() == ROLE_Authority) Server_CacheHitAssistPadding();
 	else Server_CacheHitAssistPadding(); // RPC to server
-	if (FightingStyle != EFightingStyle::EFS_Ranged || FightingStyle != EFightingStyle::EFS_Melee) return;
+	if (FightingStyle != EFightingStyle::EFS_Ranged || FightingStyle != EFightingStyle::EFS_Melee || FightingStyle != EFightingStyle::EFS_Majix) return;
 	if (FightingStyle == EFightingStyle::EFS_Ranged)
 	{
 		bIsFireButtonPressed = bPressed;
@@ -577,12 +572,8 @@ void UCombatComponent::ResetRecentlyDamaged()
 
 void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 {
-	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
-    {
-        FC->StartCamWatchdog(2.0f, 0.05f);
-    }
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
+	/* EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));*/
 
 	if (!WeaponToEquip || !Character) return;
 
@@ -592,32 +583,43 @@ void UCombatComponent::EquipWeapon(AWeaponBase* WeaponToEquip)
 		return;
 	}
 
-	CurrentlyEquippedWeapon = WeaponToEquip;
+	if (EquippedWeapon) DropEquippedWeapon();
 	
-	DropEquippedWeapon();
 	EquippedWeapon = WeaponToEquip;
 
 	USkeletalMeshComponent* CharMesh = Character ? Character->GetMesh() : nullptr;
-	const FName EquipSocket = FName(TEXT("RightHandSocket")); // or whatever you actually use
+	const FName EquipSocket = FName(TEXT("RangedSocket")); // or whatever you actually use
 
-	if (AWeaponBase* RangedEquipped = Cast<AWeaponBase>(EquippedWeapon))
+	if (ARangedWeapon* EquippedRanged = Cast<ARangedWeapon>(EquippedWeapon))
 	{
-		RangedEquipped->Equip(CharMesh, EquipSocket, GetOwner(), GetCharacter());
-		EquippedRangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
-		FightingStyle = EFightingStyle::EFS_Ranged;
+		EquippedRangedWeapon = EquippedRanged;
 		EquippedRangedWeapon->SetEquippedRangedWeaponState();
-		SetHandsForWeapons(EquippedRangedWeapon);
-		EquippedRangedWeapon->ItemState = EItemState::EIS_Equipped;
-		EquippedRangedWeapon->SetOwner(Character);
-		PlayWeaponEquipSound(EquippedRangedWeapon);
-		EquippedRangedWeapon->SetHUDAmmo();
+		EquippedRangedWeapon->Equip(CharMesh, EquipSocket, GetOwner(), GetCharacter());
+		FightingStyle = EFightingStyle::EFS_Ranged;
 		UpdateCarriedAmmo();
 		ReloadEmptyRangedWeapon();
 		bWieldingTheSword = false;
-		EquippedRangedWeapon->ShowPickupAndInfoWidgets(false);
 		EquippedRangedWeapon->bIsEquipped = true;
 	}
-	Character->StartCamWatchdog(2.0f);
+	if (AMeleeWeapon* EquippedMelee = Cast<AMeleeWeapon>(EquippedWeapon))
+	{
+		EquippedMeleeWeapon = EquippedMelee;
+		EquippedMeleeWeapon->SetEquippedMeleeWeaponState();
+		EquippedMeleeWeapon->Equip(CharMesh, EquipSocket, GetOwner(), GetCharacter());
+		FightingStyle = EFightingStyle::EFS_Ranged;
+		UpdateCarriedAmmo();
+		ReloadEmptyRangedWeapon();
+		bWieldingTheSword = false;
+		EquippedMeleeWeapon->bIsEquipped = true;
+		if (EquippedWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+		{
+			Character->EquipOneHandedMeleeWeapon(EquippedWeapon);
+		}
+		if (EquippedWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
+		{
+			Character->EquipTwoHandedMeleeWeapon(EquippedWeapon);
+		}
+	}
 }
 
 void UCombatComponent::UpdateCarriedAmmo()
@@ -702,7 +704,8 @@ void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 		AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
 		FightingStyle = EFightingStyle::EFS_Melee;
 		ActionState = EActionState::EAS_Unoccupied;
-		Character->BattlePrepped = EBattlePrepped::EBP_Armed;
+		if (Melee->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+		if (Melee->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
 	}
 }
 
@@ -1149,6 +1152,10 @@ EFightingStyle UCombatComponent::SetFightingStyle()
 	{
 		FightingStyle = EFightingStyle::EFS_Melee;
 	}
+	else if (Character->EquippedWeaponIsAMajixWeapon())
+	{
+		FightingStyle = EFightingStyle::EFS_Majix;
+	}
 	else if (!EquippedWeapon)
 	{
 		FightingStyle = EFightingStyle::EFS_Unequipped;
@@ -1236,6 +1243,19 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedMeleeWeapon);
+	}
+}
+
+void UCombatComponent::OnRep_EquippedMajixWeapon()
+{
+	if (EquippedMajixWeapon && Character)
+	{
+		FightingStyle = EFightingStyle::EFS_Majix;
+		EquippedMajixWeapon->SetEquippedWeaponState();
+		SetHandsForWeapons(EquippedMajixWeapon);
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+		PlayWeaponEquipSound(EquippedMajixWeapon);
 	}
 }
 

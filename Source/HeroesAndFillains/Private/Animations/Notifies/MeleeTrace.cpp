@@ -18,7 +18,7 @@ AMeleeWeapon* UMeleeTrace::GetEquippedWeapon(USkeletalMeshComponent* MeshComp)
 	// Example accessor, adjust this to your actual structure
 	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(Fillain))
 	{
-		return Cast<AMeleeWeapon>(FillainCharacter->Combat->EquippedWeapon); 
+		return Cast<AMeleeWeapon>(FillainCharacter->CombatComponent->EquippedWeapon); 
 	}
 
 	return nullptr;

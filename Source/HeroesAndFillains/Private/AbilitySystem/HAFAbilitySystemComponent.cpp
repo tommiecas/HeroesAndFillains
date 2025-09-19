@@ -8,9 +8,7 @@
 
 void UHAFAbilitySystemComponent::AbilityActorInfoSet()
 {
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UHAFAbilitySystemComponent::EffectApplied);
-
-	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UHAFAbilitySystemComponent::ClientEffectApplied);
 }
 
 void UHAFAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities)
@@ -26,11 +24,23 @@ void UHAFAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<
 	}
 }
 
+static bool SpecMatchesInputTag(const FGameplayAbilitySpec& Spec, const FGameplayTag& InputTag)
+{
+	// 1) Allow parent/child tag matches (not exact)
+	if (Spec.GetDynamicSpecSourceTags().HasTag(InputTag)) return true;
+
+	// 2) Also allow matching via the ability’s own tags (many projects put Input.* there)
+	if (Spec.Ability && Spec.Ability->GetAssetTags().HasTag(InputTag)) return true;
+
+	return false;
+}
+
+
 void UHAFAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid()) return;
 
-	for (auto& AbilitySpec : GetActivatableAbilities())
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
 		{
@@ -47,7 +57,7 @@ void UHAFAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inp
 {
 	if (!InputTag.IsValid()) return;
 
-	for (auto& AbilitySpec : GetActivatableAbilities())
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
 		{
@@ -56,7 +66,7 @@ void UHAFAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inp
 	}
 }
 
-void UHAFAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent,
+void UHAFAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,
                                                const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle EffectHandle)
 {
 	FGameplayTagContainer TagContainer;

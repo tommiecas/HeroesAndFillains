@@ -10,7 +10,7 @@
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "GameFramework/Pawn.h"
 #include "HAFComponents/LagCompensationComponent.h"
 #include "PlayerController/FillainPlayerController.h"

@@ -8,7 +8,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Enemies/Khymeyrra.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HUD/EnemyHealthBarWidgetComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "Weapons/Melee/StormWeapons.h"
 

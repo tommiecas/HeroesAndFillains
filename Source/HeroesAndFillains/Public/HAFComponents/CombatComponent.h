@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HUD/FillainHUD.h"
-#include "Weapons/WeaponTypes.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "Weapons/WeaponBase.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Net/UnrealNetwork.h"
 
 #include "CombatComponent.generated.h"
+
+class AEnemyBase;
 
 UENUM(BlueprintType)
 enum class EFightingStyle : uint8
@@ -19,6 +21,7 @@ enum class EFightingStyle : uint8
 	EFS_Unequipped UMETA(DisplayName = "No Style"),
 	EFS_Melee UMETA(DisplayName = "Fights with Melee Weapon"),
 	EFS_Ranged UMETA(DisplayName = "Fights with Firearm"),
+	EFS_Majix UMETA(DisplayName = "Fights with Majix"),
 
 	EFS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -33,6 +36,7 @@ enum class EActionState : uint8
 	EAS_ThrowingGrenade UMETA(DisplayName = "Throwing Grenade"),
 	EAS_SwappingWeapons UMETA(DisplayName = "Swapping Weapons"),
 	EAS_MeleeAttacking UMETA(DisplayName = "Melee Attacking"),
+	EAS_MajixAttacking UMETA(DisplayName = "Majix Attacking"),
 	EAS_EquippingWeapon UMETA(DisplayName = "Equipping Weapon"),
 
 	EAS_MAX UMETA(DisplayName = "DefaultMAX")
@@ -47,7 +51,6 @@ public:
 	UCombatComponent();
 	friend class AFillainCharacter;
 	friend class ABaseCharacter;
-	friend class AEnemyBase;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeaponBase* WeaponToEquip);
@@ -88,6 +91,9 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedRangedWeapon)
 	class ARangedWeapon* EquippedRangedWeapon;
 
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedMajixWeapon)
+	class AMajixWeapon* EquippedMajixWeapon;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	EFightingStyle FightingStyle = EFightingStyle::EFS_Unequipped;
 
@@ -97,6 +103,9 @@ public:
 	UFUNCTION()
 	void OnRep_EquippedMeleeWeapon();
 
+	UFUNCTION()
+	void OnRep_EquippedMajixWeapon();
+	
 	UFUNCTION()
 	void OnRep_EquippedRangedWeapon();
 
@@ -374,6 +383,9 @@ private:
 public:
 	FORCEINLINE AFillainCharacter* GetCharacter() const { return Character; }
 	FORCEINLINE AFillainPlayerController* GetFillainPlayerController() const { return Controller; }
+	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+	FORCEINLINE ARangedWeapon* GetEquippedRangedWeapon() const { return EquippedRangedWeapon; }
+	FORCEINLINE AMeleeWeapon* GetEquippedMeleeWeapon() const { return EquippedMeleeWeapon; }
 	FORCEINLINE AEnemyBase* GetEnemy() const { return Enemy; }
 	FORCEINLINE AEnemyBase* GetHighlightedEnemy() const {return HighlightedEnemy; }
 	FORCEINLINE AFillainHUD* GetHUD() const { return HUD; }

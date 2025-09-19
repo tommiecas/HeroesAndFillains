@@ -2,6 +2,8 @@
 
 
 #include "HAFAssetManager.h"
+
+#include "AbilitySystemGlobals.h"
 #include "HAFGameplayTags.h"
 
 UHAFAssetManager& UHAFAssetManager::Get()
@@ -15,6 +17,8 @@ UHAFAssetManager& UHAFAssetManager::Get()
 void UHAFAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
+	FHAFGameplayTags::InitializeNativeGameplayTags();
 
-	FHAFGameplayTags::InitializeNativeGameplayTags();	
+	//This is required to use TargetData.
+	UAbilitySystemGlobals::Get().InitGlobalData();
 }

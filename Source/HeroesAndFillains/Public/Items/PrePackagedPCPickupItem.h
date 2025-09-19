@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/PCPickupBaseItem.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "PrePackagedPCPickupItem.generated.h"
 
 class USphereComponent;
@@ -32,16 +32,17 @@ public:
 	T Avg(T First, T Second);
 
 
+	UFUNCTION()
+	void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 
 	virtual void SpawnPickupSystem();
 	virtual void SpawnPickupSound();
-
-	
-	
-	UPROPERTY()
-	class UItemInfoWidgetBase* ItemInfoWidgetInstance;
 	
 	/*********************************************
 	****                                      ****
@@ -59,11 +60,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Khristel", meta=(AllowPrivateAccess="true"))
 	class UStaticMeshComponent* ItemMesh;
 	
-	
-
-	// Overlap sphere
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* AreaSphere;
 
 	virtual void ApplyPickupEffect_Implementation(class AFillainCharacter* PlayerChar);
 

@@ -9,7 +9,7 @@
 #include "HAFComponents/CombatComponent.h"
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/Ranged/RangedWeapon.h"
-#include "Weapons/WeaponTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "HAFComponents/CombatComponent.h"
 
 
@@ -27,6 +27,13 @@ void UFillainFinalAnimInstance::NativeInitializeAnimation()
 void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
 	Super::NativeUpdateAnimation(DeltaTime);
+
+	if (FillainCharacterMovement)
+	{
+		GroundSpeed = UKismetMathLibrary::VSizeXY(FillainCharacterMovement->Velocity);
+		IsFalling = FillainCharacterMovement->IsFalling();
+		BattlePrepped = FillainCharacter->GetBattlePrepped();
+	}
 
 	if (APawn* Owner = TryGetPawnOwner())
 	{
@@ -93,9 +100,9 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bUseFABRIK = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied;
 	bUseAimOffsets = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
 	bTransformRightHand = FillainCharacter->GetActionState() == EActionState::EAS_Unoccupied && !FillainCharacter->GetDisableGameplay();
-	if (FillainCharacter && FillainCharacter->Combat)
+	if (FillainCharacter && FillainCharacter->CombatComponent)
 	{
-		AWeaponBase* NewWeapon = FillainCharacter->Combat->EquippedWeapon;
+		AWeaponBase* NewWeapon = FillainCharacter->CombatComponent->EquippedWeapon;
 
 		if (NewWeapon != CachedEquippedWeapon)
 		{
@@ -157,11 +164,16 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		IsFalling = FillainCharacterMovement->IsFalling();
 	}
 
-	if (FillainCharacter->Combat->EquippedMeleeWeapon && FillainCharacter->Combat->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded) bEquippedMeleeWeaponIsTwoHanded = true;
-	if (FillainCharacter->Combat->EquippedMeleeWeapon && FillainCharacter->Combat->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded) bEquippedMeleeWeaponIsOneHanded = true;;
-	StyleOfFighter = FillainCharacter->Combat->FightingStyle;
+	if (FillainCharacter->CombatComponent->EquippedMeleeWeapon && FillainCharacter->CombatComponent->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded) bEquippedMeleeWeaponIsTwoHanded = true;
+	if (FillainCharacter->CombatComponent->EquippedMeleeWeapon && FillainCharacter->CombatComponent->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded) bEquippedMeleeWeaponIsOneHanded = true;;
+	StyleOfFighter = FillainCharacter->CombatComponent->FightingStyle;
 
-	if (FillainCharacter->BattlePrepped == EBattlePrepped::EBP_Armed)
+	if (FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon ||
+		FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon ||
+		FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedOneHandedRangedWeapon ||
+		FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon ||
+		FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedOneHandedMajixWeapon ||
+		FillainCharacter->BattlePrepped == EBattlePrepped::EBP_ArmedTwoHandedMajixWeapon)
 	{
 		bIsArmed = true;
 		bIsDisarmed = false;

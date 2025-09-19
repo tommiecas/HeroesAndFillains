@@ -21,8 +21,11 @@
 #include "Interfaces/CapsuleInterface.h"
 #include "AbilitySystemComponent.h" // <-- for FOnAttributeChangeData
 #include "GameplayEffectTypes.h"
+#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "FillainCharacter.generated.h"
 
+class AHAFProjectile;
+class AMajixWeapon;
 class UGameplayEffect;
 class AWeaponBase;
 class USpringArmComponent;
@@ -48,15 +51,7 @@ class AProjectileFinal;
 class UBoxComponent;
 class UHAFAttributeSet;
 
-UENUM(BlueprintType)
-enum class EBattlePrepped : uint8
-{
-	EBP_Defenseless UMETA(DisplayName = "Has No Weapon"),
-	EBP_Armed UMETA(DisplayName = "Armed With an Equipped Weapon"),
-	EBP_Disarmed UMETA(DisplayName = "Equipped With a Weapon, But Currently Disarmed"),
-	
-	EBP_MAX UMETA(DisplayName = "DefaultMAX")
-};
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerLeavesGame);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageWidget, float, Level);
@@ -71,6 +66,8 @@ public:
 	AFillainCharacter();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
 	void FixSelfCameraCollision();
 
 	UFUNCTION()
@@ -78,6 +75,7 @@ public:
 
 	void RestoreThirdPersonCameraSafe();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void InitializeDefaultAttributes() const override;
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void DirectionalHitReact(const FVector& ImpactPoint) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -85,6 +83,47 @@ public:
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
 	void InitASC();
+
+	UFUNCTION(BlueprintCallable)
+	int32 PlayProjectileSpellMontage();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spells")
+	UAnimMontage* ProjectileSpellMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spells")
+	TArray<FName> ProjectileSpellMontageSections;
+
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_OverlappingItem)
+	APCPickupBaseItem* OverlappingItem;
+
+	UFUNCTION()
+	virtual void OnRep_OverlappingItem(APCPickupBaseItem* LastItem);
+
+	UFUNCTION()
+	virtual void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
+
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
+	AWeaponBase* OverlappingWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingMeleeWeapon)
+	AMeleeWeapon* OverlappingMeleeWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingRangedWeapon)
+	ARangedWeapon* OverlappingRangedWeapon;
+
+	UFUNCTION()
+	virtual void OnRep_OverlappingMeleeWeapon(AMeleeWeapon* LastMeleeWeapon);
+
+	UFUNCTION()
+	virtual void OnRep_OverlappingRangedWeapon(ARangedWeapon* LastRangedWeapon); 
+
+	
+	
+	virtual void PlayAttackMontage(const FGameplayTag& InputTag) override;
+	virtual void PlayRandomMeleeAttackMontage() override;
+	virtual void PlayRandomMajixAttackMontage() override;
+
+	
 
 	FTimerHandle CamWatchdogTimer;
 
@@ -107,9 +146,6 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_ForceFollowCamera();
-
-	UFUNCTION(Client, Reliable)
-	void Client_ClearCameraEffects();
 	
 	
 
@@ -155,17 +191,17 @@ public:
 	
 	// virtual void Restart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	void EquipOneHandedRangedWeapon(AWeaponBase* Weapon);
-	void EquipTwoHandedRangedWeapon(AWeaponBase* Weapon);
-	void EquipOneHandedMeleeWeapon(AWeaponBase* Weapon);
-	void EquipTwoHandedMeleeWeapon(AWeaponBase* Weapon);
-	void EquipWeapon(AWeaponBase* Weapon);
+	void EquipOneHandedRangedWeapon(AWeaponBase* W);
+	void EquipTwoHandedRangedWeapon(AWeaponBase* Wpn);
+	void EquipOneHandedMeleeWeapon(AWeaponBase* Wn);
+	void EquipTwoHandedMeleeWeapon(AWeaponBase* WeaponB);
+	void EquipOneHandedMajixWeapon(AWeaponBase* MajixWeapon);
+	void EquipTwoHandedMajixWeapon(AWeaponBase* THMWeapon);
+	void EquipWeapon(AWeaponBase* AWB);
 	void ActivateCombatCharacter();
 	void InitializeBuffProperties();
 	void ConfigureLagCompensation();
-	virtual void OnRep_PlayerState() override;
 	virtual void InitializeAbilityActorInfo() override;
-	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	bool IsWeaponASword();
@@ -190,6 +226,7 @@ public:
 	void SwitchWeapon(AWeaponBase* NewWeapon);
 	ARangedWeapon* EquippedWeaponIsARangedWeapon();
 	AMeleeWeapon* EquippedWeaponIsAMeleeWeapon();
+	AMajixWeapon* EquippedWeaponIsAMajixWeapon();
 
 
 	bool WeaponIsUnclaimedFirearm(ARangedWeapon* Ranged);
@@ -207,6 +244,9 @@ public:
 
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	class UCombatComponent* CombatComponent;
 
 	UPROPERTY()
 	AFillainPlayerController* VictimController;
@@ -238,6 +278,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="UI|Events")
 	FOnMessageWidget OnMessageWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* ShiftAction;
 	/************
 	** Jumping **
 	************/
@@ -259,7 +302,6 @@ public:
 	void PlayReloadingMontage();
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
-	virtual int32 PlayMeleeAttackMontage() override;
 	void ResetToFightAgain();
 	void PlayArmDisarmMontage(const FName& SectionName);
 
@@ -273,7 +315,6 @@ public:
 	UPROPERTY()
 	class AProjectile* Projectile;
 
-	UFUNCTION(BlueprintCallable)
 	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -327,7 +368,7 @@ public:
 	UInputAction* EquipAction;
 
 	void EquipButtonPressed();
-	void ToggleArmingAndDisarming();
+	void ToggleArmingAndDisarming(AWeaponBase* EquippedWeapon);
 	bool IfPlayerAlreadyEquippedAnyWeapon();
 
 	/**************
@@ -390,7 +431,6 @@ public:
 	UInputAction* ThrowAction;
 
 	void GrenadeButtonPressed();
-	void CalculateShieldDamage(float Damage, float& DamageToHealth);
 	void DetermineRolesOnPlayerDeath(AActor* DamagedPawn, AController* InstigatorController);
 
 	/*************************
@@ -406,6 +446,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	ARangedWeapon* CharactersRangedWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AMajixWeapon* CharactersMajixWeapon;
 
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
@@ -431,6 +474,7 @@ public:
 	void OnArmDisarmMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     virtual void MeleeAttack() override;
+	virtual void MajixAttack() override;
 	bool IsOccupied();
 	bool HasEnoughStamina(const float Cost) const;
 	void Dodge();
@@ -478,7 +522,22 @@ public:
 
 	float GetHitAssistPaddingCM();
 
+	UFUNCTION(BlueprintCallable)
+	void FireAtCursor();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AHAFProjectile> HAFProjectileClass;
+
+	UFUNCTION(BlueprintCallable)
+	void SetOverlaps(APCPickupBaseItem* FloatingItem);
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS|Damage")
+	TSubclassOf<class UGameplayEffect> GE_DamageSplit;
+	
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float HitAssistPaddingCM = 0.f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* HAFMappingContext;
 	
@@ -564,10 +623,10 @@ protected:
 	void SetAllWeaponEnumsForRanged();
 	void SetAllWeaponEnumsForMelee();
 	void SetAllItemEnumsForPickup();
-	void DisarmOneHandedWeapon(AMeleeWeapon* WeaponInHand);
-	void DisarmTwoHandedWeapon(AMeleeWeapon* WeaponInHand);
-	void ArmOneHandedWeapon(AMeleeWeapon* WeaponInHand);
-	void ArmTwoHandedWeapon(AMeleeWeapon* WeaponInHand);
+	void DisarmOneHandedWeapon(AWeaponBase* WeaponInHand);
+	void DisarmTwoHandedWeapon(AWeaponBase* WeaponInHand);
+	void ArmOneHandedWeapon(AWeaponBase* WeaponInHand);
+	void ArmTwoHandedWeapon(AWeaponBase* WeaponInHand);
 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
@@ -656,18 +715,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingItem)
-	class APrePackagedPCPickupItem* OverlappingItem;
-
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
-	class AWeaponBase* OverlappingWeapon;
-
-	UFUNCTION()
-	void OnRep_OverlappingItem(APrePackagedPCPickupItem* LastItem);
-
-	UFUNCTION()
-	void OnRep_OverlappingWeapon(AWeaponBase* LastWeapon);
-
+	
 	UPROPERTY(VisibleInstanceOnly)
 	class AMeleeWeapon* MeleeWeaponOverlapped;
 
@@ -678,10 +726,7 @@ private:
 	AWeaponBase* WeaponOverlapped;
 
 	UFUNCTION(Server, Reliable)
-	void ServerEquipButtonPressed(AWeaponBase* Weapon);
-
-	UFUNCTION(Client, Reliable)
-	void Client_DisableAllWorldPPV();
+	void ServerEquipButtonPressed(AWeaponBase* Weap);
 
 
 
@@ -759,9 +804,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Eliminations)
 	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 
-	//Material Instance set ono the blueprint used with the dynamic material instance
-	UPROPERTY(VisibleAnywhere, Category = Eliminations)
-	UMaterialInstance* DissolveMaterialInstance;
+	
 
 	/****************************
 	****      TEAM COLORS    ****
@@ -816,12 +859,21 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AWeaponBase> DefaultWeaponClass;
 
+
 public:
-	virtual void SetOverlappingItem(APrePackagedPCPickupItem* Item) override;
-	virtual void SetOverlappingWeapon(AWeaponBase* Weapon) override;
+	UFUNCTION(BlueprintCallable)
+	virtual void SetOverlappingItem(APCPickupBaseItem* HoveringItem);
+
+	UFUNCTION(BlueprintCallable)
+	virtual void SetOverlappingWeapon(AWeaponBase* HoveringWeapon);
+	
 	bool IsWeaponEquipped();
 	bool IsAiming();
 
+	FORCEINLINE APCPickupBaseItem* GetOverlappingItem() const { return OverlappingItem; }
+	FORCEINLINE AWeaponBase* GetOverlappingWeapon() const { return OverlappingWeapon; }
+	FORCEINLINE AMeleeWeapon* GetOverlappingMeleeWeapon() const { return OverlappingMeleeWeapon; }
+	FORCEINLINE ARangedWeapon* GetOverlappingRangedWeapon() const { return OverlappingRangedWeapon; }
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
@@ -829,7 +881,7 @@ public:
 	AWeaponBase* GetWeaponThatOverlaps(AWeaponBase* WeaponThatOverlaps);
 	class AAmmoPickup* GetPickupThatOverlaps(class AAmmoPickup* PickupThatOverlaps);
 	AWeaponBase* GetEquippedWeapon();
-	FORCEINLINE FString GetRangedWeaponName() const { return Combat->EquippedRangedWeapon->RangedWeaponName; }
+	FORCEINLINE FString GetRangedWeaponName() const { return CombatComponent->EquippedRangedWeapon->RangedWeaponName; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -855,12 +907,12 @@ public:
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	ETeam GetTeam();
-	FORCEINLINE APrePackagedPCPickupItem* GetOverlappingItem() const { return OverlappingItem; }
-	FORCEINLINE AWeaponBase* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	FORCEINLINE AController* GetCachedEventInstigator() const { return CachedEventInstigator; }
 	FORCEINLINE void SetHealth(const float Amount) const { if (HAFAttributes) HAFAttributes->SetHealth(Amount); }
 	FORCEINLINE void SetShield(const float Amount) const { if (HAFAttributes) HAFAttributes->SetShield(Amount); }
 	FORCEINLINE void SetStamina(const float Amount) const { if (HAFAttributes) HAFAttributes->SetStamina(Amount); }
 	FORCEINLINE void SetMajix(const float Amount) const { if (HAFAttributes) HAFAttributes->SetMajix(Amount); }
+	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+	FORCEINLINE EBattlePrepped GetBattlePrepped() const { return BattlePrepped; }
 
 };

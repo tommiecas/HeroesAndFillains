@@ -1,121 +1,161 @@
+// AttributeComponent.cpp — FINAL (UE 5.5.4, pure-GAS, const-correct, compile-safe)
+
 #include "HAFComponents/AttributeComponent.h"
 
-#include "Characters/FillainCharacter.h"
+#include "AbilitySystem/HAFAttributeSet.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Characters/BaseCharacter.h"
 #include "HUD/FillainHUD.h"
 #include "PlayerController/FillainPlayerController.h"
-#include "GameFramework/DamageType.h"
+#include "GameFramework/Controller.h"
+#include "Kismet/GameplayStatics.h"
+
+// ---------- Local helpers ----------------------------------------------------
+
+namespace
+{
+static FORCEINLINE UAbilitySystemComponent* ResolveASCFromOwner(const UObject* ContextObj)
+{
+	if (!ContextObj) return nullptr;
+
+	const AActor* OwnerActor = Cast<AActor>(ContextObj);
+	if (!OwnerActor) return nullptr;
+
+	// Works for ASC on Pawn or on PlayerState
+	if (UAbilitySystemComponent* ASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(OwnerActor)))
+	{
+		return ASC;
+	}
+
+	// Fallback if your ABaseCharacter exposes a getter
+	if (const ABaseCharacter* BC = Cast<ABaseCharacter>(OwnerActor))
+	{
+		return BC->GetAbilitySystemComponent();
+	}
+
+	return nullptr;
+}
+
+static FORCEINLINE float GetNumeric(const UObject* ContextObj, const FGameplayAttribute& Attr)
+{
+	if (const UAbilitySystemComponent* ASC = ResolveASCFromOwner(ContextObj))
+	{
+		return ASC->GetNumericAttribute(Attr);
+	}
+	return 0.f;
+}
+} // namespace
+
+// ---------- UAttributeComponent ---------------------------------------------
 
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	FillAttSet = nullptr; 
+
 	SoulsGathered = 0;
-	GoldAcquired = 0; // Ensure we start from a defined value
+	GoldAcquired  = 0;
+
+	// No caching of UHAFAttributeSet*; reads go through ASC->GetNumericAttribute(...).
+	// All writes must be done via GameplayEffects (pure GAS).
 }
 
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+bool UAttributeComponent::bIsDying() const
+{
+	const float Health = GetNumeric(this, UHAFAttributeSet::GetHealthAttribute());
+	return Health <= 0.f;
 }
 
 float UAttributeComponent::GetStamina() const
 {
-	if (const UAbilitySystemComponent* ASC = CachedASC.Get())
-	{
-		return ASC->GetNumericAttribute(UHAFAttributeSet::GetStaminaAttribute());
-	}
-	return 0.f;
-}
-
-void UAttributeComponent::RegenStamina(float DeltaTime)
-{
-	if (AFillainCharacter* Fillain = Cast<AFillainCharacter>(GetOwner()))
-	{
-		FillAttSet = Cast<UHAFAttributeSet>(Fillain->GetAttributeSet());
-		FillAttSet->SetStamina(FMath::Clamp(FillAttSet->GetStamina() + StaminaRegenRate * DeltaTime, 0.f, FillAttSet->GetMaxStamina()));		
-	}
-
+	return GetNumeric(this, UHAFAttributeSet::GetStaminaAttribute());
 }
 
 void UAttributeComponent::UpdateTotalSouls(int32 NumberOfSouls)
 {
 	SoulsGathered += NumberOfSouls;
-	UE_LOG(LogTemp, Warning, TEXT("SoulsGathered is now: %d"), SoulsGathered);
 
-	// Update HUD
 	if (UWorld* World = GetWorld())
 	{
-		if (AFillainPlayerController* FillainPlayerController = Cast<AFillainPlayerController>(World->GetFirstPlayerController()))
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(World->GetFirstPlayerController()))
 		{
-			FillainPlayerController->SetHUDSoulsCount(SoulsGathered);
+			PC->SetHUDSoulsCount(SoulsGathered);
 		}
 	}
 }
 
 void UAttributeComponent::UpdateTotalGold(int32 AmountOfGold)
 {
-	// Update internal state first, then HUD
 	GoldAcquired = FMath::Max(0, GoldAcquired + AmountOfGold);
 
 	if (UWorld* World = GetWorld())
 	{
-		if (AFillainPlayerController* FillainPlayerController = Cast<AFillainPlayerController>(World->GetFirstPlayerController()))
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(World->GetFirstPlayerController()))
 		{
-			FillainPlayerController->SetHUDGoldCount(GoldAcquired);
+			PC->SetHUDGoldCount(GoldAcquired);
 		}
 	}
 }
 
-void UAttributeComponent::CharactersReceiveMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+// ---------------- Deprecated (now no-op) ------------------------------------
+
+void UAttributeComponent::CharactersReceiveMeleeDamage(
+	float /*DamageAmount*/,
+	const FDamageEvent& /*DamageEvent*/,
+	AController* /*EventInstigator*/,
+	AActor* /*DamageCauser*/)
 {
-	FillAttSet->SetHealth(FMath::Clamp(FillAttSet->GetHealth() - DamageAmount, 0.f, FillAttSet->GetMaxHealth()));
-
-	// Only proceed if owner is our expected character type
-	if (AFillainCharacter* FillainCharacter = Cast<AFillainCharacter>(GetOwner()))
-	{
-		// DamageEvent.DamageTypeClass is a UClass*, not a UDamageType instance.
-		// Get its CDO (class default object) or a default if none specified.
-		const UDamageType* DamageType = nullptr;
-		if (DamageEvent.DamageTypeClass)
-		{
-			DamageType = DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>();
-		}
-		else
-		{
-			DamageType = GetDefault<UDamageType>();
-		}
-
-		// Pass a valid DamageType pointer to your receive function
-		FillainCharacter->ReceiveDamage(GetOwner(), DamageAmount, DamageType, EventInstigator, DamageCauser);
-	}
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+	UE_LOG(LogTemp, Warning, TEXT("[AttributeComponent] CharactersReceiveMeleeDamage is deprecated. ")
+		TEXT("Apply a GameplayEffect that sets SetByCaller Data.Damage -> IncomingDamage instead."));
+#endif
 }
 
-void UAttributeComponent::UseStamina(float StaminaCost)
+void UAttributeComponent::RegenStamina(float /*DeltaTime*/)
 {
-	if (ABaseCharacter* Char = Cast<ABaseCharacter>(GetOwner()))
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+	UE_LOG(LogTemp, Verbose, TEXT("[AttributeComponent] RegenStamina is deprecated. Use a periodic GE for regen."));
+#endif
+}
+
+// --------------- AttributeSet resolvers (robust across engine APIs) ----------
+
+const UHAFAttributeSet* UAttributeComponent::ResolveAttrSet() const
+{
+	const UAbilitySystemComponent* LocalASC = ResolveASCFromOwner(this);
+	if (!LocalASC) return nullptr;
+
+	// Scan spawned sets to find UHAFAttributeSet (const-correct)
+	const TArray<UAttributeSet*>& Sets = LocalASC->GetSpawnedAttributes();
+	for (UAttributeSet* Set : Sets)
 	{
-		if (!Char->AbilitySystemComponent || !Char->HAFAttributeSet)
+		if (const UHAFAttributeSet* HAF = Cast<UHAFAttributeSet>(Set))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("UseStamina: ASC or AttributeSet not ready"));
-			return;
+			return HAF;
 		}
-
-		const float MaxSta = Char->GetHAFAttributeSet()->GetMaxStamina(); // inline getter is fine now
-		const float CurSta = Char->GetHAFAttributeSet()->GetStamina();
-
-		if (!FMath::IsFinite(MaxSta) || !FMath::IsFinite(CurSta))
-		{
-			UE_LOG(LogTemp, Error, TEXT("UseStamina: Non-finite values (Cur:%f Max:%f)"), CurSta, MaxSta);
-			return;
-		}
-
-		if (CurSta < StaminaCost) return;
-
-		// Apply a GE to modify Stamina, or write directly if you’re not using GEs:
-		// Avoid direct writes if you’re in full GAS; prefer gameplay effects.
-		// ...
-		
-		FillAttSet->SetStamina(FMath::Clamp(FillAttSet->GetStamina() - StaminaCost, 0.f, FillAttSet->GetMaxStamina()));
 	}
+	return nullptr;
+}
+
+UHAFAttributeSet* UAttributeComponent::ResolveAttrSet()
+{
+	UAbilitySystemComponent* LocalASC = ResolveASCFromOwner(this);
+	if (!LocalASC) return nullptr;
+
+	// Mutable version
+	const TArray<UAttributeSet*>& Sets = LocalASC->GetSpawnedAttributes();
+	for (UAttributeSet* Set : Sets)
+	{
+		if (UHAFAttributeSet* HAF = Cast<UHAFAttributeSet>(Set))
+		{
+			return HAF;
+		}
+	}
+	return nullptr;
 }

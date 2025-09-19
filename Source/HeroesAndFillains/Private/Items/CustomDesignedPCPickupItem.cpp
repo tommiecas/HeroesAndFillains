@@ -1,4 +1,4 @@
-#include "Items/CustomDesignedPCPickupItem.h"
+ #include "Items/CustomDesignedPCPickupItem.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -146,21 +146,24 @@ void ACustomDesignedPCPickupItem::OnEndOverlap(AActor* TargetActor)
     {
         ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
     }
-
     if (InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
     {
         UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
         if (!IsValid(TargetASC)) return;
 
         TArray<FActiveGameplayEffectHandle> HandlesToRemove;
-        for (const TPair<FActiveGameplayEffectHandle, TWeakObjectPtr<UAbilitySystemComponent>>& Pair : ActiveEffectHandles)
+
+        // ActiveEffectHandles is a TMap<FActiveGameplayEffectHandle, TWeakObjectPtr<UAbilitySystemComponent>>
+        for (const auto& HandlePair : ActiveEffectHandles)
         {
-            if (Pair.Value.Get() == TargetASC)
+            UAbilitySystemComponent* EffectOwnerASC = HandlePair.Value.Get();
+            if (EffectOwnerASC == TargetASC)
             {
-                TargetASC->RemoveActiveGameplayEffect(Pair.Key, 1);
-                HandlesToRemove.Add(Pair.Key);
+                TargetASC->RemoveActiveGameplayEffect(HandlePair.Key, 1);
+                HandlesToRemove.Add(HandlePair.Key);
             }
         }
+
         for (const FActiveGameplayEffectHandle& Handle : HandlesToRemove)
         {
             ActiveEffectHandles.FindAndRemoveChecked(Handle);

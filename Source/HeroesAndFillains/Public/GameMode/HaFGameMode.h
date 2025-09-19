@@ -6,15 +6,17 @@
 #include "GameFramework/GameMode.h"
 #include "HAFGameMode.generated.h"
 
+class UCharacterClassInfo;
+
 namespace MatchState
 {
 	extern HEROESANDFILLAINS_API const FName Cooldown;
-}
+};
 
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class HEROESANDFILLAINS_API AHAFGameMode : public AGameMode
 {
 	GENERATED_BODY()
@@ -27,6 +29,9 @@ public:
 	void PlayerLeftGame(class AHAFPlayerState* LeavingPlayer);
 	virtual float CalculateDamage(AController* Killer, AController* Victim, float BaseDamage);
 
+	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
+	TObjectPtr<UCharacterClassInfo> CharacterClassInfo;
+	
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
@@ -43,10 +48,12 @@ public:
 
 	bool bTeamsMatch = false;
 
+	bool bDelayedStart = false;
+
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnMatchStateSet() override;
+	virtual void OnMatchStateSet();
 
 private:
 	UPROPERTY()

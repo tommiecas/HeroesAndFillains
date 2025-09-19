@@ -36,5 +36,4 @@ private:
 
 public:
 	FORCEINLINE FTransform GetInitialTransform() const { return InitialTransform; }
-	FORCEINLINE UWidgetComponent* GetPickupGearWidgetComponent() const { return PickupGearWidgetComponent; }
 };
