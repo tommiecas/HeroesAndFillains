@@ -95,7 +95,7 @@
 #include "AbilitySystem/Abilities/HAFProjectileSpell.h"
 #include "Components/PointLightComponent.h"
 #include "Engine/PostProcessVolume.h"
-#include "Weapons/Majix/HAFProjectile.h"
+#include "Weapons/Majix/HAFMajixProjectile.h"
 #include "Items/PCPickupBaseItem.h"
 #include "Weapons/WeaponBase.h"
 #include "HAFGameplayTags.h"
@@ -2348,9 +2348,9 @@ void AFillainCharacter::EquipOneHandedMajixWeapon(AWeaponBase* MajixWeapon)
 		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
 	
 	
-	if (MajixWeapon->IsA(AHAFProjectile::StaticClass()) && MajixWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
+	if (MajixWeapon->IsA(AHAFMajixProjectile::StaticClass()) && MajixWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		if (AHAFProjectile* ProjectileMajixWeapon = Cast<AHAFProjectile>(MajixWeapon))
+		if (AHAFMajixProjectile* ProjectileMajixWeapon = Cast<AHAFMajixProjectile>(MajixWeapon))
 			if (ProjectileMajixWeapon)  
 			{
 				CombatComponent->EquippedWeapon = ProjectileMajixWeapon;
@@ -2417,7 +2417,7 @@ void AFillainCharacter::EquipTwoHandedMajixWeapon(AWeaponBase* THMWeapon)
 			//Add Gameplay Abilities that need two hands when we add the to the game	
 		}
 		{
-			AHAFProjectileSpell* ProjectileSpell = Cast<AHAFProjectile>(MajixWeapon);
+			AHAFProjectileSpell* ProjectileSpell = Cast<AHAFMajixProjectile>(MajixWeapon);
 			if (Projectile)
 			{
 				Projectile->SetOwner(this);
@@ -2466,7 +2466,7 @@ void AFillainCharacter::FireAtCursor()
     Params.Instigator = this;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    AHAFProjectile* Proj = GetWorld()->SpawnActor<AHAFProjectile>(
+    AHAFMajixProjectile* Proj = GetWorld()->SpawnActor<AHAFMajixProjectile>(
         HAFProjectileClass,
         FTransform(Dir.Rotation(), SpawnLoc),
         Params);

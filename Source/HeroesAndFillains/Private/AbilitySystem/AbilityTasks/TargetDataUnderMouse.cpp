@@ -42,7 +42,12 @@ void UTargetDataUnderMouse::Activate()
 		Data->HitResult = CursorHit;
 		DataHandle.Add(Data);
 
-		AbilitySystemComponent->ServerSetReplicatedTargetData(GetAbilitySpecHandle(), GetActivationPredictionKey(), DataHandle, FGameplayTag(), AbilitySystemComponent->ScopedPredictionKey);
+		AbilitySystemComponent->ServerSetReplicatedTargetData(
+			GetAbilitySpecHandle(),
+			GetActivationPredictionKey(),
+			DataHandle,
+			FGameplayTag(),
+			AbilitySystemComponent->ScopedPredictionKey);
 
 		if (ShouldBroadcastAbilityTaskDelegates())
 		{
@@ -57,6 +62,4 @@ void UTargetDataUnderMouse::OnTargetDataReplicatedCallback(const FGameplayAbilit
 	{
 		ValidData.Broadcast(DataHandle);
 	}
-
-
 }

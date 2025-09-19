@@ -10,7 +10,7 @@
  * 
  */
 
-class AHAFProjectile;
+class AHAFMajixProjectile;
 
 UCLASS()
 class HEROESANDFILLAINS_API UHAFProjectileSpell : public UHAFGameplayAbility
@@ -23,7 +23,7 @@ protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<AHAFProjectile> HAFProjectileClass;
+	TSubclassOf<AHAFMajixProjectile> HAFMajixProjectileClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;

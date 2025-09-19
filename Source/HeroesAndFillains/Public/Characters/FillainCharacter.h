@@ -24,7 +24,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "FillainCharacter.generated.h"
 
-class AHAFProjectile;
+class AHAFMajixProjectile;
 class AMajixWeapon;
 class UGameplayEffect;
 class AWeaponBase;
@@ -526,7 +526,7 @@ public:
 	void FireAtCursor();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AHAFProjectile> HAFProjectileClass;
+	TSubclassOf<AHAFMajixProjectile> HAFProjectileClass;
 
 	UFUNCTION(BlueprintCallable)
 	void SetOverlaps(APCPickupBaseItem* FloatingItem);

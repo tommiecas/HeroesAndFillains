@@ -1,88 +1,119 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Weapons/Majix/HAFProjectile.h"
+#include "Weapons/Majix/HAFMajixProjectile.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/AudioComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "Kismet/GameplayStatics.h"
 
-AHAFProjectile::AHAFProjectile()
+AHAFMajixProjectile::AHAFMajixProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true);
-
-	ProjectileRoot = CreateDefaultSubobject<USphereComponent>(TEXT("ProjectileRoot"));
-	ProjectileRoot->SetMobility(EComponentMobility::Movable);
-	SetRootComponent(ProjectileRoot);
-	ProjectileRoot->InitSphereRadius(100.f); 
-	ProjectileRoot->SetCollisionObjectType(ECC_Projectile);
-	ProjectileRoot->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	ProjectileRoot->SetCollisionResponseToAllChannels(ECR_Ignore);
-	ProjectileRoot->SetCollisionResponseToChannel(ECC_WorldStatic,  ECR_Overlap);
-	ProjectileRoot->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
-	ProjectileRoot->SetCollisionResponseToChannel(ECC_Visibility,   ECR_Block);
-	ProjectileRoot->SetCollisionResponseToChannel(ECC_Enemy,ECR_Overlap);
-	ProjectileRoot->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
 	
 	// 2) Reattach & neutralize the base pickup sphere so it’s harmless here
-	if (AreaSphere) // inherited from AWeaponBase
+	// IMPORTANT: Do NOT destroy default subobjects in a constructor (CDO runs here).
+	// Disable / hide instead to avoid engine linker/GC invariants breaking.
+	if (AreaSphere)
 	{
-		AreaSphere->SetupAttachment(ProjectileRoot);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 		AreaSphere->SetGenerateOverlapEvents(false);
+		AreaSphere->SetComponentTickEnabled(false);
 		AreaSphere->SetHiddenInGame(true);
-		AreaSphere->Deactivate(); // stops component tick/activation if any
-		AreaSphere->SetCanEverAffectNavigation(false);
+		AreaSphere->Deactivate();
+	}
+	if (HoverDecal)
+	{
+		HoverDecal->SetHiddenInGame(true);
+		HoverDecal->SetVisibility(false, true);
+		HoverDecal->Deactivate();
+	}
+	if (HoverLight)
+	{
+		HoverLight->SetVisibility(false, true);
+		HoverLight->SetComponentTickEnabled(false);
+		HoverLight->Deactivate();
+	}
+	if (PickupGearWidgetComponent)
+	{
+		PickupGearWidgetComponent->SetVisibleFlag(false);
+		PickupGearWidgetComponent->SetVisibility(false, true);
+		PickupGearWidgetComponent->SetComponentTickEnabled(false);
+		PickupGearWidgetComponent->Deactivate();
+	}
+	if (ItemInfoWidgetComponent)
+	{
+		ItemInfoWidgetComponent->SetVisibleFlag(false);
+		ItemInfoWidgetComponent->SetVisibility(false, true);
+		ItemInfoWidgetComponent->SetComponentTickEnabled(false);
+		ItemInfoWidgetComponent->Deactivate();
+	}
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetVisibility(false, true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetComponentTickEnabled(false);
+		WeaponMesh->Deactivate();
 	}
 	
-	// Inherited mesh from AWeaponBase still exists — just neutralize it
-	if (WeaponMesh) // whatever your base calls it (e.g., WeaponMesh or Mesh)
-	{
-		WeaponMesh->SetupAttachment(ProjectileRoot);                  // no longer root
-		WeaponMesh->SetHiddenInGame(true);                        // we don't want to see it
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetGenerateOverlapEvents(false);
-	}
+	NewSphere = CreateDefaultSubobject<USphereComponent>(TEXT("NewSphere"));
+	SetRootComponent(NewSphere);
+	NewSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	NewSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	NewSphere->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	NewSphere->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	NewSphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	NewSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	NewSphere->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
 	
 	// Projectile movement pushes the sphere (root)
-	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement Component"));
-	ProjectileMovement->UpdatedComponent = ProjectileRoot;     // <— critical
+	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
 	ProjectileMovement->InitialSpeed = 1000.f;
 	ProjectileMovement->MaxSpeed = 1000.f;
-	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
+
+	if (WeaponBox)
+	{
+		WeaponBox = CreateDefaultSubobject<UBoxComponent>("WeaponBox");
+		WeaponBox->SetupAttachment(GetRootComponent());
+		WeaponBox->SetCollisionObjectType(ECC_Projectile);
+		WeaponBox->SetGenerateOverlapEvents(true);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		WeaponBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Block);
+	}
 }
 
-void AHAFProjectile::BeginPlay()
+void AHAFMajixProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	SetLifeSpan(LifeSpan);
-	ProjectileRoot->OnComponentBeginOverlap.AddDynamic(this, &AHAFProjectile::OnSphereOverlap);
+
+	if (ensureMsgf(NewSphere != nullptr, TEXT("NewSphere was not created")))
+	{
+		NewSphere->OnComponentBeginOverlap.AddDynamic(this, &AHAFMajixProjectile::OnNewSphereOverlap);
+	}
 
 	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
 }
 
-void AHAFProjectile::Destroyed()
-{
-	if (!bHit && !HasAuthority())
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-		LoopingSoundComponent->Stop();
-	}
-	Super::Destroyed();
-}
 
-void AHAFProjectile::OnSphereOverlap(
+void AHAFMajixProjectile::OnNewSphereOverlap(
     UPrimitiveComponent* OverlappedComponent,
     AActor* OtherActor,
     UPrimitiveComponent* OtherComp,
@@ -90,7 +121,7 @@ void AHAFProjectile::OnSphereOverlap(
     bool bFromSweep,
     const FHitResult& SweepResult)
 {
-    // Play local impact AV once (okay on both sides if purely cosmetic; otherwise replicate via cues)
+/*    // Play local impact AV once (okay on both sides if purely cosmetic; otherwise replicate via cues)
     if (ImpactSound)
     {
         UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
@@ -152,7 +183,7 @@ void AHAFProjectile::OnSphereOverlap(
     {
         // Client cosmetic flag if you need it
         bHit = true;
-    }
+    }*/
 }
 
 

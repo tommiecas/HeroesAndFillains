@@ -16,7 +16,7 @@ class APickupSpawnPoint;
 /**
 * 
 */
-UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable)
 class HEROESANDFILLAINS_API UPickupGearWidget : public UUserWidget
 {
 	GENERATED_BODY()

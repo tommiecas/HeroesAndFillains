@@ -70,7 +70,7 @@
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "GameFramework/Controller.h"
-#include "Weapons/Majix/HAFProjectile.h"
+#include "Weapons/Majix/HAFMajixProjectile.h"
 #include "ModifiedMagnitudeCalculations/MMC_Agility.h"
 #include "ModifiedMagnitudeCalculations/MMC_DexterityAgilityFlexibility.h"
 #include "ModifiedMagnitudeCalculations/MMC_Intuition.h"

@@ -7,29 +7,29 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Weapons/Majix/MajixWeapon.h"
-#include "HAFProjectile.generated.h"
+#include "HAFMajixProjectile.generated.h"
 
 class UNiagaraComponent;
 class USphereComponent;
 class UProjectileMovementComponent;
-class AHAFProjectile;
+class AHAFMajixProjectile;
 
 UCLASS(Blueprintable, BlueprintType)
-class HEROESANDFILLAINS_API AHAFProjectile : public AMajixWeapon
+class HEROESANDFILLAINS_API AHAFMajixProjectile : public AMajixWeapon
 {
 	GENERATED_BODY()
 	
 public:	
-	AHAFProjectile();
+	AHAFMajixProjectile();
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Destroyed() override;
 
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+	UFUNCTION()
+	virtual void OnNewSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 private:
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
@@ -40,9 +40,9 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category="Audio|FX")
 	UAudioComponent* LoopingSoundComponent = nullptr;
-	
+
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent>  ProjectileRoot;
+	TObjectPtr<USphereComponent> NewSphere;
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundBase> LoopingSound;
