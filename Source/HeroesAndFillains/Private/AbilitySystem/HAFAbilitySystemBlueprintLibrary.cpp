@@ -92,4 +92,19 @@ void UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(const UObject* Worl
 	}
 }
 
+FGameplayEffectContextHandle UHAFAbilitySystemBlueprintLibrary::AddSourceObjectToContext(
+	const FGameplayEffectContextHandle& Context, UObject* SourceObject)
+{
+	FGameplayEffectContextHandle NewContext = Context;
+	NewContext.AddSourceObject(SourceObject);
+	return NewContext;
+}
+
+bool UHAFAbilitySystemBlueprintLibrary::IsGameplayEffectSpecHandleValid(const FGameplayEffectSpecHandle& SpecHandle)
+{
+	{
+		return SpecHandle.IsValid();
+	}
+}
+
 	

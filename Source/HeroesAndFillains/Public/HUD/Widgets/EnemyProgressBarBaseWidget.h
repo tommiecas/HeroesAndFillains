@@ -6,6 +6,8 @@
 #include "HAFUserWidget.h"
 #include "EnemyProgressBarBaseWidget.generated.h"
 
+class UEnemyHealthBarWidget;
+class UWidgetComponent;
 /**
  * 
  */
@@ -15,5 +17,15 @@ class HEROESANDFILLAINS_API UEnemyProgressBarBaseWidget : public UHAFUserWidget
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	virtual void UpdateOwnerEnemy(class AEnemyBase* NewEnemy);
+
+	UPROPERTY()
+	UEnemyProgressBarBaseWidget* HealthBarInstance = nullptr;
+	
+protected:
+	virtual void NativeConstruct() override;
+
+		
 	
 };

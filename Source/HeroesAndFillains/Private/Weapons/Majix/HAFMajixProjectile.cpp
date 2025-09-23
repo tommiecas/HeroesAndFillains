@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "HAFGameplayTags.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/AudioComponent.h"
@@ -71,12 +72,11 @@ AHAFMajixProjectile::AHAFMajixProjectile()
 	NewSphere = CreateDefaultSubobject<USphereComponent>(TEXT("NewSphere"));
 	SetRootComponent(NewSphere);
 	NewSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	NewSphere->SetCollisionObjectType(ECC_Projectile);
 	NewSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	NewSphere->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	NewSphere->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
-	NewSphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	NewSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	NewSphere->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+	NewSphere->IgnoreActorWhenMoving(this, true);
 	
 	// Projectile movement pushes the sphere (root)
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
@@ -86,16 +86,10 @@ AHAFMajixProjectile::AHAFMajixProjectile()
 
 	if (WeaponBox)
 	{
-		WeaponBox = CreateDefaultSubobject<UBoxComponent>("WeaponBox");
-		WeaponBox->SetupAttachment(GetRootComponent());
-		WeaponBox->SetCollisionObjectType(ECC_Projectile);
-		WeaponBox->SetGenerateOverlapEvents(true);
-		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-		WeaponBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-		WeaponBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
-		WeaponBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
-		WeaponBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Block);
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponBox->SetGenerateOverlapEvents(false);
+		WeaponBox->SetHiddenInGame(true);
+		WeaponBox->Deactivate();
 	}
 }
 
@@ -109,81 +103,68 @@ void AHAFMajixProjectile::BeginPlay()
 		NewSphere->OnComponentBeginOverlap.AddDynamic(this, &AHAFMajixProjectile::OnNewSphereOverlap);
 	}
 
+	if (AActor* MyOwner = GetOwner())
+	{
+		NewSphere->IgnoreActorWhenMoving(MyOwner, true);
+	}
+	
 	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
 }
 
-
-void AHAFMajixProjectile::OnNewSphereOverlap(
-    UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult& SweepResult)
+void AHAFMajixProjectile::Destroyed()
 {
-/*    // Play local impact AV once (okay on both sides if purely cosmetic; otherwise replicate via cues)
-    if (ImpactSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-    }
-    if (ImpactEffect)
-    {
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-    }
-    if (LoopingSoundComponent)
-    {
-        LoopingSoundComponent->Stop();
-    }
-
-    // Prevent re-entry during the same frame or multiple overlaps
-    if (bHasAppliedEffect) { return; }
-    bHasAppliedEffect = true;
-
-    // Stop more overlaps immediately
-    if (UPrimitiveComponent* RootPrim = Cast<UPrimitiveComponent>(GetRootComponent()))
-    {
-        RootPrim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    // Server-only effect application
-    if (HasAuthority())
-    {
-        // Basic validity guards
-        if (IsValid(OtherActor) && OtherActor != GetOwner())
-        {
-            // Resolve target ASC safely (works for actors/components implementing IAbilitySystemInterface)
-            UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
-
-            // Resolve source ASC from the instigator (who fired this projectile)
-            AActor* InstigatorActor = GetInstigator();
-            UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorActor);
-
-            if (IsValid(TargetASC) && IsValid(SourceASC) && IsValid(DamageEffectClass))
-            {
-                // Build spec *now*, not earlier
-                FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
-                Ctx.AddSourceObject(this);
-
-                const int32 AbilityLevel = 1; // or your computed level
-                FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, AbilityLevel, Ctx);
-
-                if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
-                {
-                    TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-                }
-            	UE_LOG(LogTemp, Warning, TEXT("Damage On: %s"), *TargetASC->GetName());
-
-            }
-        }
-
-        // Give the particle/audio a tick to breathe; or just Destroy() if you prefer
-        SetLifeSpan(0.05f);
-    }
-    else
-    {
-        // Client cosmetic flag if you need it
-        bHit = true;
-    }*/
+	if (!bHit && !HasAuthority())
+	{
+		if (ImpactSound) UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+		if (ImpactEffect) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+		if (LoopingSoundComponent) LoopingSoundComponent->Stop();
+	}
+	Super::Destroyed();
 }
 
+
+void AHAFMajixProjectile::OnNewSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this && OtherActor != GetOwner())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+		if (LoopingSoundComponent) LoopingSoundComponent->Stop();
+
+		if (HasAuthority())
+		{
+			if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
+			{
+				if (DamageEffectSpecHandle.IsValid())
+				{
+					// ✅ Extract the damage value from the spec (SetByCaller)
+					float DamageAmount = 0.f;
+					DamageEffectSpecHandle.Data->GetSetByCallerMagnitude(
+						FGameplayTag::RequestGameplayTag(FName("SetByCaller.Damage")),
+						false,
+						DamageAmount
+					);
+
+					UE_LOG(LogTemp, Warning, TEXT("Fireball hit %s at %s | Damage: %.2f"),
+						*OtherActor->GetName(),
+						*SweepResult.ImpactPoint.ToString(),
+						DamageAmount);
+					
+					// ✅ Apply damage effect to the target
+					TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Projectile: Invalid DamageEffectSpecHandle on overlap!"));
+				}
+			}
+
+			Destroy();
+		}
+		else
+		{
+			bHit = true;
+		}
+	}
+}
 

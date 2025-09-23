@@ -96,6 +96,7 @@ ABaseCharacter::ABaseCharacter()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	
+	
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetupAttachment(RootComponent);
 	
@@ -171,7 +172,7 @@ void ABaseCharacter::SafeInitASC_ForPawnOwner()
 	}
 
 	// NEW: cache your AttributeSet (safe if called multiple times)
-	HAFAttributeSet = const_cast<UHAFAttributeSet*>(AbilitySystemComponent->GetSet<UHAFAttributeSet>());
+	AttributeSet = const_cast<UAttributeSet*>(AbilitySystemComponent->GetSet<UAttributeSet>());
 }
 
 void ABaseCharacter::SafeInitASC_FromPlayerState()
@@ -188,7 +189,7 @@ void ABaseCharacter::SafeInitASC_FromPlayerState()
 					PlayerASC->InitAbilityActorInfo(PS, this);
 				}
 				// NEW:
-				HAFAttributeSet = const_cast<UHAFAttributeSet*>(PlayerASC->GetSet<UHAFAttributeSet>());
+				AttributeSet = const_cast<UAttributeSet*>(PlayerASC->GetSet<UAttributeSet>());
 			}
 		}
 	}
@@ -216,7 +217,7 @@ float ABaseCharacter::GetCurrentHealth() const
 	if (!AbilitySystemComponent) return 0.f;
 
 	// Fast path if we cached the set (optional)
-	if (HAFAttributeSet)
+	if (AttributeSet)
 	{
 		// If your AttributeSet exposes a direct getter, either is fine:
 		// return HAFAttributeSet->GetHealth();
@@ -274,16 +275,25 @@ void ABaseCharacter::ConsumeDodgeStamina()
 
 void ABaseCharacter::MulticastHandleDeath_Implementation()
 {
-	Weapon->SetSimulatePhysics(true);
-	Weapon->SetEnableGravity(true);
-	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	if (Weapon)
+	{
+		Weapon->SetSimulatePhysics(true);
+		Weapon->SetEnableGravity(true);
+		Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	}
 
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetEnableGravity(true);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetMesh())
+	{
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetEnableGravity(true);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	}
+
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 	Dissolve();
 }
 
@@ -292,14 +302,15 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	// Early exit if actor is pending kill or invalid
 	if (!IsValid(this)) return;
 
-	// ✅ Apply cached damage BEFORE anything else
-	WasBaseCharacterHit = true; 
-	TakeDamage(CachedDamageAmount, CachedDamageEvent, CachedEventInstigator, CachedDamageCauser);
+	// Mark this character as having been hit
+	WasBaseCharacterHit = true;
 
-	// Handle hit reaction
+	// ❌ Do NOT call TakeDamage here, since GameplayEffects already applied health changes
+
+	// Handle hit reaction or death
 	if (GetCurrentHealth() > KINDA_SMALL_NUMBER)
 	{
-		if (IsValid(HitReactMontage) && Hitter)
+		if (IsValid(HitReactMontage) && IsValid(Hitter))
 		{
 			DirectionalHitReact(Hitter->GetActorLocation());
 		}
@@ -309,6 +320,7 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 		CharacterDies();
 	}
 
+	// Play audiovisual feedback
 	PlayHitSound(ImpactPoint);
 	SpawnHitSpecialEffects(ImpactPoint);
 }
@@ -333,7 +345,7 @@ void ABaseCharacter::MajixAttack()
 
 void ABaseCharacter::Die()
 {
-	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	if (Weapon) Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	MulticastHandleDeath();
 }
 
@@ -490,17 +502,18 @@ void ABaseCharacter::MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInsti
 
 	// --- From here, game thread only ---
 
-	const UHAFAttributeSet* AS = GetHAFAttributeSet();
+	const UAttributeSet* AS = GetAttributeSet();
 	if (!AS)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is null on %s"), *GetNameSafe(this));
 		return;
 	}
 
-	const float CurrentCharm = AS->GetCharm();  // 0..100
-	if (CurrentCharm <= 0.f) return;
+	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
+	if (HAFAttributeSet) const float CurrentCharm = HAFAttributeSet->GetCharm();  // 0..100
+	if (HAFAttributeSet->GetCharm() <= 0.f) return;
 
-	const float Chance = FMath::Clamp(CurrentCharm, 0.f, 100.f) * 0.01f;
+	const float Chance = FMath::Clamp(HAFAttributeSet->GetCharm(), 0.f, 100.f) * 0.01f;
 	const float Roll   = FMath::FRand();
 
 	if (Roll > Chance) return;
@@ -613,7 +626,7 @@ FVector ABaseCharacter::GetSpellCastersSocketLocation()
 
 bool ABaseCharacter::CanAttack()
 {
-	return false;
+	return true;
 }
 
 bool ABaseCharacter::IsCharacterAlive() const
@@ -642,7 +655,7 @@ float ABaseCharacter::SafeGet(const UAbilitySystemComponent* ASC, const UHAFAttr
     return (ASC && AS) ? ASC->GetNumericAttribute(Attr) : NAN;
 }
 
-void ABaseCharacter::ApplyStartupEffects()
+void ABaseCharacter::ApplyStartupEffects() const
 {
 	 if (!HasAuthority() || !AbilitySystemComponent) return;
 
@@ -663,30 +676,31 @@ void ABaseCharacter::ApplyStartupEffects()
     ApplyGE(DefaultVitalAttributes);
     ApplyGE(DefaultInvisibleAttributes);
 
-    if (HasAuthority() && HAFAttributeSet)   // ← changed from AttributeSet
+	UHAFAttributeSet* HAFAttriSet = Cast<UHAFAttributeSet>(AttributeSet);
+    if (HasAuthority() && HAFAttriSet)   // ← changed from AttributeSet
     {
         UE_LOG(LogTemp, Warning, TEXT("[SERVER] After ApplyStartupEffects: Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f MaxHealth=%f MaxShield=%f MaxStamina=%f MaxMajix=%f"),
-            HAFAttributeSet->GetArmor(),
-            HAFAttributeSet->GetArmorPenetration(),
-            HAFAttributeSet->GetBlockChance(),
-            HAFAttributeSet->GetCriticalHitChance(),
-            HAFAttributeSet->GetCriticalHitDamage(),
-            HAFAttributeSet->GetCriticalHitResistance(),
-            HAFAttributeSet->GetAgility(),
-            HAFAttributeSet->GetFlexibility(),
-            HAFAttributeSet->GetPurity(),
-            HAFAttributeSet->GetCorruptibility(),
-            HAFAttributeSet->GetIntuition(),
-            HAFAttributeSet->GetVision(),
-            HAFAttributeSet->GetCharm(),
-            HAFAttributeSet->GetHealthRegeneration(),
-            HAFAttributeSet->GetShieldRegeneration(),
-            HAFAttributeSet->GetStaminaRegeneration(),
-            HAFAttributeSet->GetMajixRegeneration(),
-            HAFAttributeSet->GetMaxHealth(),
-            HAFAttributeSet->GetMaxShield(),
-            HAFAttributeSet->GetMaxStamina(),
-            HAFAttributeSet->GetMaxMajix());
+            HAFAttriSet->GetArmor(),
+            HAFAttriSet->GetArmorPenetration(),
+            HAFAttriSet->GetBlockChance(),
+            HAFAttriSet->GetCriticalHitChance(),
+            HAFAttriSet->GetCriticalHitDamage(),
+            HAFAttriSet->GetCriticalHitResistance(),
+            HAFAttriSet->GetAgility(),
+            HAFAttriSet->GetFlexibility(),
+            HAFAttriSet->GetPurity(),
+            HAFAttriSet->GetCorruptibility(),
+            HAFAttriSet->GetIntuition(),
+            HAFAttriSet->GetVision(),
+            HAFAttriSet->GetCharm(),
+            HAFAttriSet->GetHealthRegeneration(),
+            HAFAttriSet->GetShieldRegeneration(),
+            HAFAttriSet->GetStaminaRegeneration(),
+            HAFAttriSet->GetMajixRegeneration(),
+            HAFAttriSet->GetMaxHealth(),
+            HAFAttriSet->GetMaxShield(),
+            HAFAttriSet->GetMaxStamina(),
+            HAFAttriSet->GetMaxMajix());
     }
 }
 
@@ -703,7 +717,7 @@ void ABaseCharacter::InitializeDefaultAttributes() const
 void ABaseCharacter::LogSecondaries_Server() const
 {
     const UAbilitySystemComponent* ASC = AbilitySystemComponent;
-    const UHAFAttributeSet* AS = HAFAttributeSet;
+    const UHAFAttributeSet* AS = Cast<UHAFAttributeSet>(AttributeSet);
 
     UE_LOG(LogTemp, Warning, TEXT("[SERVER] After InitializeDefaultAttributes: "
         "Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f "
@@ -738,7 +752,8 @@ void ABaseCharacter::LogSecondaries_Client() const
 {
 	if (!IsLocallyControlled()) return;
 
-	if (AbilitySystemComponent && HAFAttributeSet)
+	const UAbilitySystemComponent* ASC = AbilitySystemComponent;
+	const UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] On Widget Init: "
 		"Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f "
@@ -871,7 +886,7 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 UAttributeSet* ABaseCharacter::GetAttributeSet() const
 {
 	// We only cache a const set on BaseCharacter; return a mutable pointer for legacy call sites.
-	return const_cast<UHAFAttributeSet*>(HAFAttributeSet.Get());
+	return const_cast<UAttributeSet*>(AttributeSet.Get());
 }
 
 void ABaseCharacter::Dissolve()

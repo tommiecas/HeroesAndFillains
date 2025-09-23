@@ -34,10 +34,23 @@ AEnemyBase::AEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy); GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Projectile, ECollisionResponse::ECR_Overlap); GetCapsuleComponent()->SetGenerateOverlapEvents(true); GetMesh()->SetupAttachment(GetRootComponent()); GetMesh()->SetGenerateOverlapEvents(true); GetMesh()->SetCollisionObjectType(ECC_Mesh); GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block); GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Block); GetMesh()->SetCollisionResponseToChannel(ECC_Projectile, ECR_Overlap);
-	EnemyHealthProgressBarWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
-	EnemyHealthProgressBarWidgetComponent->SetupAttachment(GetRootComponent());
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Enemy);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Projectile, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
+	GetMesh()->SetupAttachment(GetRootComponent());
+	GetMesh()->SetGenerateOverlapEvents(false);
+	GetMesh()->SetCollisionObjectType(ECC_Mesh);
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	
+	
 	// Perception (unique names; fine to keep)
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("EnemyPerception"));
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("EnemySightConfig"));
@@ -47,11 +60,12 @@ AEnemyBase::AEnemyBase()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
-	UHAFAttributeSet* NewAttrSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("HAFAttributeSet"));
-	AbilitySystemComponent->AddAttributeSetSubobject(NewAttrSet);
-	HAFAttributeSet = NewAttrSet;
+	AttributeSet = CreateDefaultSubobject<UHAFAttributeSet>("AttributeSet");
+
+	EnemyHealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("EnemyHealthBar"));
+	EnemyHealthBar->SetupAttachment(GetRootComponent());
 
 }
 
@@ -263,37 +277,71 @@ void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 
 void AEnemyBase::BeginPlay()
 {
-	Super::BeginPlay();               // calls BaseCharacter::BeginPlay
-	SafeInitASC_ForPawnOwner();   
+	Super::BeginPlay();
+	InitializeAbilityActorInfo();
 
+	// --- Enemy Health Bar setup ---
+	if (UUserWidget* WidgetObj = EnemyHealthBar->GetUserWidgetObject())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyHealthBar widget class is: %s"), *WidgetObj->GetClass()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyHealthBar has no UserWidgetObject!"));
+	}
+	if (UEnemyProgressBarBaseWidget* HealthBarWidget = Cast<UEnemyProgressBarBaseWidget>(EnemyHealthBar->GetUserWidgetObject()))
+	{
+		HealthBarWidget->UpdateOwnerEnemy(this);
+		HealthBarWidget->SetVisibility(ESlateVisibility::Visible);
+		HealthBarWidget->SetWidgetController(this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyBase::BeginPlay - EnemyHealthBar widget is not of type UEnemyProgressBarBaseWidget"));
+	}
+
+	// --- GAS Attribute Delegates ---
+	if (const UHAFAttributeSet* HAFAttSet = Cast<UHAFAttributeSet>(AttributeSet))
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetMaxHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+
+		OnHealthChanged.Broadcast(HAFAttSet->GetHealth());
+		OnMaxHealthChanged.Broadcast(HAFAttSet->GetMaxHealth());
+	}
+
+	// calls BaseCharacter::BeginPlay
+	SafeInitASC_ForPawnOwner();
+
+	// --- Movement setup ---
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
-		Move->MaxWalkSpeed = BaseWalkSpeed; // fine to keep
+		Move->MaxWalkSpeed = BaseWalkSpeed;
 	}
 
-	Tags.AddUnique(FName("Enemy"));         // fine to keep
+	// --- Tags ---
+	Tags.AddUnique(FName("Enemy"));
 
-	// Non-GAS delegates (safe)
+	// --- AI Perception ---
 	if (ensureMsgf(AIPerceptionComponent, TEXT("%s: AIPerceptionComponent is null"), *GetName()))
 	{
-		AIPerceptionComponent->OnTargetPerceptionUpdated
-			.AddDynamic(this, &AEnemyBase::OnTargetDetected);
+		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyBase::OnTargetDetected);
 	}
 
-	// Health bar hookup (no manual lifecycle calls)
-	if (ensureMsgf(EnemyHealthProgressBarWidgetComponent, TEXT("%s: HealthBarWidgetComponent is null"), *GetName()))
-	{
-		if (UEnemyHealthBarWidget* HB =
-				Cast<UEnemyHealthBarWidget>(EnemyHealthProgressBarWidgetComponent->GetUserWidgetObject()))
-		{
-			HB->OwnerEnemy = this;          // OK
-			// Do NOT call HB->OnWidgetConstructed() here.
-			// Put setup in UUserWidget::NativeOnInitialized / NativeConstruct.
-		}
-	}
+	// --- Enemy-specific init ---
+	InitializeEnemy();
 
-	InitializeEnemy();                       // non-GAS setup only
-
+	// --- Attribute component ---
 	if (AttributeComponent)
 	{
 		DeadEnemySoulCount = AttributeComponent->GetSoulsGathered();
@@ -304,6 +352,14 @@ void AEnemyBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	EnemyHealthBar->InitWidget();  // makes sure the UserWidgetObject is created
+
+	if (UEnemyProgressBarBaseWidget* EnemyHealthWidget =
+		Cast<UEnemyProgressBarBaseWidget>(EnemyHealthBar->GetUserWidgetObject()))
+	{
+		EnemyHealthWidget->UpdateOwnerEnemy(this);
+	}
+	
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC)
 	{
@@ -324,10 +380,6 @@ void AEnemyBase::PossessedBy(AController* NewController)
 			*GetNameSafe(ActorOwner), *GetNameSafe(AvatarActor));
 	}
 
-	// Bind attribute change delegates / gameplay event listeners ONLY.
-	// (Do not touch Mesh/AnimInstance/UI widgets here.)
-	SetupASCBindings(ASC);
-
 	// Give startup abilities ONCE.
 	// Prefer a member bool bStartupAbilitiesGranted = false; on your enemy.
 	if (!bStartupAbilitiesGranted)
@@ -337,42 +389,21 @@ void AEnemyBase::PossessedBy(AController* NewController)
 	}
 
 	// Apply initial attributes (now that ASC has correct Owner/Avatar).
-	if (const UHAFAttributeSet* HAFAttSet = ASC->GetSet<UHAFAttributeSet>())
+	if (const UHAFAttributeSet* Attributes = ASC->GetSet<UHAFAttributeSet>())
 	{
-		HAFAttSet->ApplyInitialValuesForOwner();
+		Attributes->ApplyInitialValuesForOwner();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyBase::PossessedBy - UHAFAttributeSet not found on ASC"));
 	}
-}
 
-void AEnemyBase::SetupASCBindings(UAbilitySystemComponent* ASC)
-{
-	if (!ASC || bASCBindingsInitialized) return;
-
-	const UHAFAttributeSet* HAFSet = ASC->GetSet<UHAFAttributeSet>();
-	if (!HAFSet) return;
-
-	// Attribute change delegates
-	HealthChangedHandle = ASC
-		->GetGameplayAttributeValueChangeDelegate(HAFSet->GetHealthAttribute())
-		.AddUObject(this, &AEnemyBase::OnHealthChanged); // use UFUNCTION, not lambda
-
-	MaxHealthChangedHandle = ASC
-		->GetGameplayAttributeValueChangeDelegate(HAFSet->GetMaxHealthAttribute())
-		.AddUObject(this, &AEnemyBase::OnMaxHealthChanged);
-
-	// Tag event
-	HitReactChangedHandle = ASC
-		->RegisterGameplayTagEvent(FHAFGameplayTags::Get().Effects_HitReact, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &AEnemyBase::HitReactTagChanged);
-
-	// Seed UI once
-	OnHealthAdjusted.Broadcast(HAFSet->GetHealth());
-	OnMaxHealthAdjusted.Broadcast(HAFSet->GetMaxHealth());
-
-	bASCBindingsInitialized = true;
+	if (UEnemyProgressBarBaseWidget* HB = Cast<UEnemyProgressBarBaseWidget>(EnemyHealthBar->GetUserWidgetObject()))
+	{
+		HB->UpdateOwnerEnemy(this);          // OK
+		// Do NOT call HB->OnWidgetConstructed() here.
+		// Put setup in UUserWidget::NativeOnInitialized / NativeConstruct.
+	}
 }
 
 void AEnemyBase::OnRep_PlayerState()
@@ -384,7 +415,6 @@ void AEnemyBase::OnRep_PlayerState()
 		// If your ASC lives on the character (AI), InitAbilityActorInfo may already be done.
 		if (!ASC->GetAvatarActor()) ASC->InitAbilityActorInfo(this, this);
 
-		SetupASCBindings(ASC);              // idempotent binds (guard inside)
 	}
 }
 
@@ -405,18 +435,6 @@ void AEnemyBase::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCou
 			}
 		}
 	}
-}
-
-void AEnemyBase::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	OnHealthAdjusted.Broadcast(Data.NewValue);
-	// optional: death check
-	if (Data.NewValue <= 0.f) MulticastHandleDeath();
-}
-
-void AEnemyBase::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
-{
-	OnMaxHealthAdjusted.Broadcast(Data.NewValue);
 }
 
 void AEnemyBase::InitializeAbilityActorInfo()
@@ -452,7 +470,7 @@ void AEnemyBase::CharacterDies()
 	Super::CharacterDies();
 	EnemyState = EEnemyState::EES_Dead;
 	ClearAttackTimer();
-	// EnemyHealthBarWidgetComponent->GetUserWidgetObject()->RemoveFromParent();
+	EnemyHealthBar->GetUserWidgetObject()->RemoveFromParent();
 	DisableCapsule();
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -607,7 +625,7 @@ void AEnemyBase::InitializeEnemy()
 {
 	LaunchEnemyAIController();
 	MoveToTarget(PatrolTarget);
-	// EnemyHealthBarWidgetComponent->GetUserWidgetObject()->SetVisibility(ESlateVisibility::Visible);
+	EnemyHealthBar->GetUserWidgetObject()->SetVisibility(ESlateVisibility::Visible);
 	SpawnEnemyWeapon();
 	InitializeAbilitySystem();
 }

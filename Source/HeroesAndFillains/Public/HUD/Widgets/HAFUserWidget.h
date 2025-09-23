@@ -22,8 +22,8 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UObject> WidgetController;
 
-	UPROPERTY(BlueprintReadWrite, Category = "UI")
-	TObjectPtr<UObject> OwnerEnemy;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UObject> OwnerEnemy = nullptr;
 
 	// virtual void NativeConstruct() override;
 

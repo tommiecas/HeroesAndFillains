@@ -58,6 +58,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "HAFGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
+#include "IMediaCache.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
@@ -950,18 +951,9 @@ FString AFillainPlayerController::GetTeamsInfoText(AHAFGameState* HAFGameState)
 	return InfoTextString;
 }
 
-UHAFAbilitySystemComponent* AFillainPlayerController::GetHAFASC()
-{
-	if (HAFAbilitySystemComponent == nullptr)
-	{
-		HAFAbilitySystemComponent = Cast<UHAFAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
-	}
-	return HAFAbilitySystemComponent;
-}
-
 void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	if (InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_4OrDPadRight))
+	if (InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{
 		bTargeting = ThisActor ? true : false;
 		bAutoRunning = false;
@@ -970,70 +962,52 @@ void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 
 void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	// Forward to ASC once
-	if (UHAFAbilitySystemComponent* AbilitySystemComp = GetHAFASC())
-	{
-		AbilitySystemComp->AbilityInputTagReleased(InputTag);
-	}
-
-	// Only do click-to-move logic for LMB/Shoulder
 	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{
+		if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 		return;
 	}
+	
+	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 
 	if (!bTargeting && !bShiftKeyDown)
 	{
 		const APawn* ControlledPawn = GetPawn();
-		if (ControlledPawn && FollowTime <= ShortPressThreshold)
+		if (FollowTime <= ShortPressThreshold && ControlledPawn)
 		{
-			UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(
-				this,
-				ControlledPawn->GetActorLocation(),
-				CachedDestination
-			);
-
-			// Guard all pointers/arrays
-			if (NavPath && NavPath->PathPoints.Num() > 0 && Spline)
+			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this,ControlledPawn->GetActorLocation(),CachedDestination))
 			{
-				const FVector& FinalPoint = NavPath->PathPoints.Last();
-				const bool bHasMovement = !FinalPoint.Equals(ControlledPawn->GetActorLocation(), KINDA_SMALL_NUMBER);
-
-				// Rebuild spline safely (no ReserveSplinePoints in 5.5.4)
-				Spline->ClearSplinePoints(/*bUpdateSpline=*/false);
+				Spline->ClearSplinePoints();
 				for (const FVector& PointLoc : NavPath->PathPoints)
 				{
-					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World, /*bUpdateSpline=*/false);
+					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
 				}
-				Spline->UpdateSpline();
-
-				CachedDestination = FinalPoint;
-				bAutoRunning = bHasMovement;
+				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() -1];
+				bAutoRunning = true;
 			}
 		}
-
 		FollowTime = 0.f;
 		bTargeting = false;
 	}
 }
 
 
-
 void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
 	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{
-		if (GetHAFASC()) GetHAFASC()->AbilityInputTagHeld(InputTag);
+		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
 		return;
 	}
 	if (bTargeting || bShiftKeyDown)
 	{
-		if (GetHAFASC()) GetHAFASC()->AbilityInputTagHeld(InputTag);
+		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
 	}
 	else
 	{
 		FollowTime += GetWorld()->GetDeltaSeconds();
 		if (CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
+
 		if (APawn* ControlledPawn = GetPawn())
 		{
 			const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
@@ -1042,13 +1016,13 @@ void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	}
 }
 
-UAbilitySystemComponent* AFillainPlayerController::GetASC()
+UHAFAbilitySystemComponent* AFillainPlayerController::GetASC()
 {
-	if (AbilitySystemComponent == nullptr)
+	if (HAFAbilitySystemComponent == nullptr)
 	{
-		AbilitySystemComponent = Cast<UAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+		HAFAbilitySystemComponent = Cast<UHAFAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
 	}
-	return AbilitySystemComponent;
+	return HAFAbilitySystemComponent;
 }
 
 void AFillainPlayerController::BeginPlay()

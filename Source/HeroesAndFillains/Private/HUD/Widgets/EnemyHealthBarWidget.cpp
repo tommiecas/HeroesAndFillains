@@ -5,7 +5,13 @@
 
 #include "Enemies/EnemyBase.h"
 
-void UEnemyHealthBarWidget::OnWidgetConstructed_Implementation()
+
+void UEnemyHealthBarWidget::UpdateOwnerEnemy(class AEnemyBase* NewEnemy)
 {
-	AEnemyBase* WidgetControllingEnemyBase = Cast<AEnemyBase>(OwnerEnemy);
+	Super::UpdateOwnerEnemy(NewEnemy);
+}
+
+void UEnemyHealthBarWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
 }

@@ -17,60 +17,66 @@ void UHAFProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	
 }
 
-void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+FGameplayEffectContextHandle UHAFProjectileSpell::AddSourceObjectToContext(const FGameplayEffectContextHandle& Context,
+	UObject* SourceObject)
 {
-	AActor* Avatar = GetAvatarActorFromActorInfo();
-	if (!Avatar) return;
-
-	const bool bIsServer = Avatar->HasAuthority();
-	if (!bIsServer) return;
-
-	if (!HAFMajixProjectileClass)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UHAFProjectileSpell::SpawnProjectile called without HAFMajixProjectileClass set"));
-		return;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UHAFProjectileSpell::SpawnProjectile: World is null"));
-		return;
-	}
-	
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Avatar);
-	if (CombatInterface)
-	{
-		const FVector SocketLocation = CombatInterface->GetSpellCastersSocketLocation();
-		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-		Rotation.Pitch = 0.f;
-
-		FTransform SpawnTransform;
-		SpawnTransform.SetLocation(SocketLocation);
-		SpawnTransform.SetRotation(Rotation.Quaternion());
-
-		AHAFMajixProjectile* Projectile = World->SpawnActorDeferred<AHAFMajixProjectile>(
-			HAFMajixProjectileClass,
-			SpawnTransform,
-			GetOwningActorFromActorInfo(),
-			Cast<APawn>(GetOwningActorFromActorInfo()),
-			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-		if (!Projectile)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UHAFProjectileSpell::SpawnProjectile failed to spawn projectile"));
-			return;
-		}
-
-		// If you later need to pass effect classes, set them on the projectile before FinishSpawning.
-		/* const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());		
-		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
-		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
-		const float ScaledDamage = Damage.GetValueAtLevel(10);
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, ScaledDamage);
-		Projectile->DamageEffectSpecHandle = SpecHandle; */
-
-		Projectile->FinishSpawning(SpawnTransform);
-	}
+	FGameplayEffectContextHandle NewContext = Context;
+	NewContext.AddSourceObject(SourceObject);
+	return NewContext;
 }
 
+void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+{
+    if (!GetAvatarActorFromActorInfo()->HasAuthority()) return;
+
+    if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetAvatarActorFromActorInfo()))
+    {
+        const FVector SocketLocation = CombatInterface->GetSpellCastersSocketLocation();
+        FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+        Rotation.Pitch = 0.f;
+
+        FTransform SpawnTransform;
+        SpawnTransform.SetLocation(SocketLocation);
+        SpawnTransform.SetRotation(Rotation.Quaternion());
+
+        AHAFMajixProjectile* Projectile = GetWorld()->SpawnActorDeferred<AHAFMajixProjectile>(
+            HAFMajixProjectileClass,
+            SpawnTransform,
+            GetOwningActorFromActorInfo(),
+            Cast<APawn>(GetOwningActorFromActorInfo()),
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+        if (const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo()))
+        {
+            FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+            Context.AddSourceObject(Projectile);
+
+            FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), Context);
+
+            if (SpecHandle.IsValid())
+            {
+                const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+
+                // ✅ Correctly assign the SetByCaller.Damage tag
+                UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
+                    SpecHandle,
+                    FGameplayTag::RequestGameplayTag(FName("SetByCaller.Damage")),
+                    ScaledDamage
+                );
+
+                Projectile->DamageEffectSpecHandle = SpecHandle;
+
+                UE_LOG(LogTemp, Log, TEXT("Projectile spawned with valid spec for %s | Damage: %.2f"),
+                    *DamageEffectClass->GetName(),
+                    ScaledDamage);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Projectile spawn failed: invalid DamageEffectSpecHandle! DamageEffectClass = %s"),
+                    DamageEffectClass ? *DamageEffectClass->GetName() : TEXT("nullptr"));
+            }
+        }
+
+        Projectile->FinishSpawning(SpawnTransform);
+    }
+}

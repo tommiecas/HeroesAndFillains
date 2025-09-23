@@ -65,10 +65,10 @@ public:
 	void SpawnEnemyWeapon();
 
 	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnHealthAdjusted;
+	FOnAttributeChangedSignature OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnMaxHealthAdjusted;
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 	
 	UFUNCTION(BlueprintCallable)
 	AAIController* LaunchEnemyAIController();
@@ -143,7 +143,7 @@ public:
 	AActor* OwnerActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UEnemyHealthBarWidget> EnemyHealthBarWidgetClass;
+	TSubclassOf<UEnemyProgressBarBaseWidget> EnemyHealthBarWidgetClass;
 
 	void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount) const;
 
@@ -158,23 +158,20 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bStartupAbilitiesGranted = false;
-
-	// Attribute change handlers (must match delegate signatures exactly)
-	void OnHealthChanged(const FOnAttributeChangeData& Data);
-	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 	
 	FDelegateHandle HealthChangedHandle;
 	FDelegateHandle MaxHealthChangedHandle;
 	FDelegateHandle HitReactChangedHandle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> EnemyHealthBar;
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-
-	void SetupASCBindings(UAbilitySystemComponent* ASC);
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bASCBindingsInitialized = false;
 
@@ -190,8 +187,7 @@ protected:
 	virtual void MajixAttack() override;
 	virtual bool CanAttack() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UWidgetComponent> EnemyHealthProgressBarWidgetComponent;
+	
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	double CombatRadius = 500.f;

@@ -15,6 +15,11 @@ class HEROESANDFILLAINS_API UEnemyHealthBarWidget : public UEnemyProgressBarBase
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintNativeEvent, Category = "UI")
-	void OnWidgetConstructed();
+	virtual void UpdateOwnerEnemy(class AEnemyBase* NewEnemy) override;
+
+protected:
+	virtual void NativeConstruct() override;
+
+protected: 
+	
 };

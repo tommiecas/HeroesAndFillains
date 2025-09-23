@@ -114,18 +114,19 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 
 	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
 	{
-		const FGameplayAttribute HealthAttribute = Character->GetHAFAttributeSet()->GetHealthAttribute();
+		const UHAFAttributeSet* HeroesAndFillainsAttSet = Cast<UHAFAttributeSet>(ASC->GetSet<UHAFAttributeSet>());
+		const FGameplayAttribute HealthAttribute = HeroesAndFillainsAttSet->GetHealthAttribute();
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 
-		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetHealthAttribute(), EGameplayModOp::Additive, HealThisFrame);
-	}
+		ASC->ApplyModToAttribute(HeroesAndFillainsAttSet->GetHealthAttribute(), EGameplayModOp::Additive, HealThisFrame);
 
-	AmountToHeal -= HealThisFrame;
+		AmountToHeal -= HealThisFrame;
 
-	if (AmountToHeal <= 0.f || Character->GetHAFAttributeSet()->GetHealth() >= Character->GetHAFAttributeSet()->GetMaxHealth())
-	{
-		bAmIAlreadyHealing = false;
-		AmountToHeal = 0.f;
+		if (AmountToHeal <= 0.f || HeroesAndFillainsAttSet->GetHealth() >= HeroesAndFillainsAttSet->GetMaxHealth())
+		{
+			bAmIAlreadyHealing = false;
+			AmountToHeal = 0.f;
+		}
 	}
 }
 
@@ -137,18 +138,18 @@ void UBuffComponent::ShieldRampUp(float DeltaTime)
 
 	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
 	{
-		const FGameplayAttribute ShieldAttribute = Character->GetHAFAttributeSet()->GetShieldAttribute();
+		const UHAFAttributeSet* HeroesAndFillainsAttriSet = Cast<UHAFAttributeSet>((ASC->GetSet<UHAFAttributeSet>()));
+		const FGameplayAttribute ShieldAttribute = HeroesAndFillainsAttriSet->GetShieldAttribute();
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 
-		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetShieldAttribute(), EGameplayModOp::Additive, FortifyThisFrame);
-	}
+		ASC->ApplyModToAttribute(HeroesAndFillainsAttriSet->GetShieldAttribute(), EGameplayModOp::Additive, FortifyThisFrame);
+		AmountOfShieldFortified -= FortifyThisFrame;
 
-	AmountOfShieldFortified -= FortifyThisFrame;
-
-	if (AmountOfShieldFortified <= 0.f || Character->GetHAFAttributeSet()->GetShield() >= Character->GetHAFAttributeSet()->GetMaxShield())
-	{
-		bAmIAlreadyFortifyingShield = false;
-		AmountOfShieldFortified = 0.f;
+		if (AmountOfShieldFortified <= 0.f || HeroesAndFillainsAttriSet->GetShield() >= HeroesAndFillainsAttriSet->GetMaxShield())
+		{
+			bAmIAlreadyFortifyingShield = false;
+			AmountOfShieldFortified = 0.f;
+		}
 	}
 }
 
@@ -161,19 +162,21 @@ inline void UBuffComponent::StaminaRampUp(float DeltaTime)
 	// ✅ Use GAS to apply healing
 	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
 	{
-		const FGameplayAttribute StaminaAttribute = Character->GetHAFAttributeSet()->GetStaminaAttribute();
+		const UHAFAttributeSet* HAFAttributeS = Cast<UHAFAttributeSet>(ASC->GetSet<UHAFAttributeSet>());
+		const FGameplayAttribute StaminaAttribute = HAFAttributeS->GetStaminaAttribute();
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 
-		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetStaminaAttribute(), EGameplayModOp::Additive, RechargeThisFrame);
+		ASC->ApplyModToAttribute(HAFAttributeS->GetStaminaAttribute(), EGameplayModOp::Additive, RechargeThisFrame);
 
-	}
+	
 
-	AmountOfStaminaRecharged -= RechargeThisFrame;
+		AmountOfStaminaRecharged -= RechargeThisFrame;
 
-	if (AmountOfStaminaRecharged <= 0.f || Character->GetHAFAttributeSet()->GetStamina() >= Character->GetHAFAttributeSet()->GetMaxStamina())
-	{
-		bAmIAlreadyRechargingStamina = false;
-		AmountOfStaminaRecharged = 0.f;
+		if (AmountOfStaminaRecharged <= 0.f || HAFAttributeS->GetStamina() >= HAFAttributeS->GetMaxStamina())
+		{
+			bAmIAlreadyRechargingStamina = false;
+			AmountOfStaminaRecharged = 0.f;
+		}
 	}
 }
 
@@ -186,19 +189,20 @@ inline void UBuffComponent::MajixRampUp(float DeltaTime)
 	// ✅ Use GAS to apply healing
 	if (UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent())
 	{
-		const FGameplayAttribute MajixAttribute = Character->GetHAFAttributeSet()->GetMajixAttribute();
+		const UHAFAttributeSet* AttributesForHAF = Cast<UHAFAttributeSet>(ASC->GetSet<UHAFAttributeSet>());
+		const FGameplayAttribute MajixAttribute = AttributesForHAF->GetMajixAttribute();
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 
-		ASC->ApplyModToAttribute(Character->GetHAFAttributeSet()->GetMajixAttribute(), EGameplayModOp::Additive, SummonThisFrame);
+		ASC->ApplyModToAttribute(AttributesForHAF->GetMajixAttribute(), EGameplayModOp::Additive, SummonThisFrame);
+		
 
-	}
+		AmountOfMajixSummoned -= SummonThisFrame;
 
-	AmountOfMajixSummoned -= SummonThisFrame;
-
-	if (AmountOfMajixSummoned <= 0.f || Character->GetHAFAttributeSet()->GetMajix() >= Character->GetHAFAttributeSet()->GetMaxMajix())
-	{
-		bAmIAlreadySummoningMajix = false;
-		AmountOfMajixSummoned = 0.f;
+		if (AmountOfMajixSummoned <= 0.f || AttributesForHAF->GetMajix() >= AttributesForHAF->GetMaxMajix())
+		{
+			bAmIAlreadySummoningMajix = false;
+			AmountOfMajixSummoned = 0.f;
+		}
 	}
 }
 

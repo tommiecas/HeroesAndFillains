@@ -343,9 +343,9 @@ void AFillainCharacter::BeginPlay()
 	{
 		ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
 	}
-	if (!HAFAttributeSet)
+	if (!AttributeSet)
 	{
-		HAFAttributeSet = const_cast<UHAFAttributeSet*>(GetHAFAttributeSet());
+		AttributeSet = const_cast<UAttributeSet*>(GetAttributeSet());
 	}
 
 	if (ASC)
@@ -358,13 +358,16 @@ void AFillainCharacter::BeginPlay()
 	{
 		const UHAFAttributeSet* Attr = ASC->GetSet<UHAFAttributeSet>();
 		check(Attr); // Ensure it's present
-		HAFAttributeSet = const_cast<UHAFAttributeSet*>(Attr); // OK: we do not mutate directly
+		AttributeSet = const_cast<UHAFAttributeSet*>(Attr); // OK: we do not mutate directly
 	}
 
 	// Bind Intuition change → your existing handler
-	if (ASC && HAFAttributeSet)
+	const UHAFAttributeSet* Attr = ASC->GetSet<UHAFAttributeSet>();
+	check(Attr); // Ensure it's present
+	AttributeSet = const_cast<UHAFAttributeSet*>(Attr); // OK: we do not mutate directly
+	if (ASC && Attr)
 	{
-		ASC->GetGameplayAttributeValueChangeDelegate(HAFAttributeSet->GetIntuitionAttribute())
+		ASC->GetGameplayAttributeValueChangeDelegate(Attr->GetIntuitionAttribute())
 			.AddUObject(this, &AFillainCharacter::OnIntuitionChanged);
 
 		// Seed scanners once with current value so UI/logic is correct at start
@@ -1416,6 +1419,10 @@ void AFillainCharacter::AttackButtonPressed()
 			FireButtonPressed();
 		}
 		if (EquippedWeaponIsAMeleeWeapon()) MeleeAttack();
+		if (EquippedWeapon && BattlePrepped == EBattlePrepped::EBP_Disarmed)
+		{
+			if (EquippedWeaponIsAMajixWeapon()) MajixAttack();
+		}
 	}
 }
 
@@ -1461,11 +1468,12 @@ void AFillainCharacter::Dodge()
 	if (!HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
 
 	// Either use cached pointer (after InitASC ran on this machine)…
-	const UHAFAttributeSet* AS = HAFAttributeSet ? HAFAttributeSet
+	const UAttributeSet* AS = AttributeSet ? AttributeSet.Get()
 												 : AbilitySystemComponent->GetSet<UHAFAttributeSet>();
 	if (!AS) { UE_LOG(LogTemp, Warning, TEXT("AttributeSet null in Dodge")); return; }
 
-	const float Stamina = AS->GetStamina();  // now safe
+	const UHAFAttributeSet* HAFASet = Cast<UHAFAttributeSet>(AS);
+	const float Stamina = HAFASet->GetStamina();  // now safe
 	if (IsOccupied() || !HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
 
 	PlayDodgeMontage();
@@ -1898,14 +1906,37 @@ void AFillainCharacter::ToggleArmingAndDisarming(AWeaponBase* WeaponEquipped)
 			DisarmOneHandedWeapon(WeaponEquipped);
 		else if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 			DisarmTwoHandedWeapon(WeaponEquipped);
+		BattlePrepped = EBattlePrepped::EBP_Disarmed;
 	}
 	else if (CanArm())
 	{
 		WeaponEquipped->SetHandsNeeded(WeaponEquipped);
 		if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-			ArmOneHandedWeapon(WeaponEquipped);
+		{
+			if (WeaponEquipped->IsA(AMeleeWeapon::StaticClass()))
+			{
+				ArmOneHandedWeapon(WeaponEquipped);
+				BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+			}
+			if (WeaponEquipped->IsA(ARangedWeapon::StaticClass()))
+			{
+				ArmOneHandedWeapon(WeaponEquipped);
+				BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedRangedWeapon;
+			}
+		}
 		else if (WeaponEquipped->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-			ArmTwoHandedWeapon(WeaponEquipped);
+		{
+			if (WeaponEquipped->IsA(AMeleeWeapon::StaticClass()))
+			{
+				ArmTwoHandedWeapon(WeaponEquipped);
+				BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+			}
+			if (WeaponEquipped->IsA(ARangedWeapon::StaticClass()))
+			{
+				ArmTwoHandedWeapon(WeaponEquipped);
+				BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon;
+			}
+		}
 	}
 }
 
@@ -2750,7 +2781,7 @@ void AFillainCharacter::BindFillainCharacterCapsuleHooksOnce()
 	if (bFillainCharacterCapsuleHooksBound) return;
 
 	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
-	const UHAFAttributeSet* LocalAttrSet = GetHAFAttributeSet(); // (whichever getter you use)
+	const UAttributeSet* LocalAttrSet = GetAttributeSet(); // (whichever getter you use)
 
 	if (!ASC || !LocalAttrSet) return;
 
@@ -3446,13 +3477,13 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	FillainPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FillainPlayerState, this);
 	Cast<UHAFAbilitySystemComponent>(FillainPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
-	HAFAttributeSet = FillainPlayerState->GetHAFAttributeSet();
+	AttributeSet = FillainPlayerState->GetAttributeSet();
 
 	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
 	{
 		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
 		{
-			FillainHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, FillainPlayerState->GetAttributeSet());
+			FillainHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
 	InitializeDefaultAttributes();
@@ -3470,9 +3501,9 @@ void AFillainCharacter::InitializeDefaultAttributes() const
 		UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
 		   AbilitySystemComponent->GetNumericAttribute(MaxAttr));
 
-		if (const UHAFAttributeSet* HAF = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
+		if (const UHAFAttributeSet* HAFAttributeSet = AbilitySystemComponent->GetSet<UHAFAttributeSet>())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAF->GetMaxHealth());
+			UE_LOG(LogTemp, Warning, TEXT("[Set] MaxHealth=%f"), HAFAttributeSet->GetMaxHealth());
 		}
 		ApplyEffectToSelf((DefaultVitalAttributes), 1.f);
 		ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
@@ -3482,42 +3513,45 @@ void AFillainCharacter::InitializeDefaultAttributes() const
 			return;
 		}
 
-		if (!HAFAttributeSet)
+		if (!AttributeSet)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is NULL in InitializeDefaultAttributes (called too early?)"));
 			return;
 		}
-	}
-	// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
-	UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
-		"Armor=%.3f ArmorPenetration=%.3f BlockChance=%.3f CriticalHitChance=%.3f CriticalHitDamage=%.3f CriticalHitResistance=%.3f "
-		"Agility=%.3f Flexibility=%.3f Purity=%.3f Corruptibility=%.3f Intuition=%.3f Vision=%.3f Charm=%.3f "
-		"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
-		"MaxHealth=%.3f MaxShield=%.3f MaxStamina=%.3f MaxMajix=%.3f"),
-		HasAuthority(),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetArmorPenetrationAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetBlockChanceAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitChanceAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitDamageAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCriticalHitResistanceAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetAgilityAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetFlexibilityAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetPurityAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCorruptibilityAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetIntuitionAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetVisionAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetCharmAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetHealthRegenerationAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetShieldRegenerationAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetStaminaRegenerationAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMajixRegenerationAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxHealthAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxShieldAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxStaminaAttribute()),
-			SafeGet(AbilitySystemComponent, HAFAttributeSet, HAFAttributeSet->GetMaxMajixAttribute())
+		if (UHAFAttributeSet* HAFASet = Cast<UHAFAttributeSet>(AttributeSet))
+		{
+			// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
+			UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
+				"Armor=%.3f ArmorPenetration=%.3f BlockChance=%.3f CriticalHitChance=%.3f CriticalHitDamage=%.3f CriticalHitResistance=%.3f "
+				"Agility=%.3f Flexibility=%.3f Purity=%.3f Corruptibility=%.3f Intuition=%.3f Vision=%.3f Charm=%.3f "
+				"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
+				"MaxHealth=%.3f MaxShield=%.3f MaxStamina=%.3f MaxMajix=%.3f"),
+				HasAuthority(),
+					SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetArmorAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetArmorPenetrationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetBlockChanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitChanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitDamageAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitResistanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetAgilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetFlexibilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetPurityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCorruptibilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetIntuitionAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetVisionAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCharmAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetHealthRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent,HAFASet, HAFASet->GetShieldRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetStaminaRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMajixRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxHealthAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxShieldAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxStaminaAttribute()),
+				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxMajixAttribute())
 		);
+		}
 	}
+}
 
 void AFillainCharacter::PossessedBy(AController* NewController)
 {
@@ -3538,7 +3572,7 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 
 	// Use the PS-owned ASC & AttributeSet (don’t call GetSet here)
 	AbilitySystemComponent = PS->GetAbilitySystemComponent();
-	HAFAttributeSet        = PS->GetHAFAttributeSet();
+	AttributeSet        = PS->GetHAFAttributeSet();
 
 	// Owner = PlayerState, Avatar = Character
 	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
@@ -3555,15 +3589,16 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 
 	// Optional: quick pointer sanity
 	UE_LOG(LogTemp, Warning, TEXT("[Character::PossessedBy] ASC=%s AS=%s"),
-		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
+		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
 
 	// Safe “post-init” log (no direct FGameplayAttributeData deref)
 	auto SafeGet=[&](const FGameplayAttribute& A){return AbilitySystemComponent->GetNumericAttribute(A);};
+	UHAFAttributeSet* HAFAtSet = Cast<UHAFAttributeSet>(AttributeSet);
 	UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
 		HasAuthority(),
-		SafeGet(HAFAttributeSet->GetMaxHealthAttribute()),
-		SafeGet(HAFAttributeSet->GetArmorAttribute()),
-		SafeGet(HAFAttributeSet->GetCriticalHitChanceAttribute()));
+		SafeGet(HAFAtSet->GetMaxHealthAttribute()),
+		SafeGet(HAFAtSet->GetArmorAttribute()),
+		SafeGet(HAFAtSet->GetCriticalHitChanceAttribute()));
 
 	// Ensure ASC is initialized (common place you do InitAbilityActorInfo)
 	BindFillainCharacterCapsuleHooksOnce();        // server bind
@@ -3580,12 +3615,12 @@ void AFillainCharacter::OnRep_PlayerState()
 	if (!PS) return;
 
 	AbilitySystemComponent = PS->GetAbilitySystemComponent();
-	HAFAttributeSet        = PS->GetHAFAttributeSet();
+	AttributeSet        = PS->GetHAFAttributeSet();
 
 	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 
 	UE_LOG(LogTemp, Warning, TEXT("[Character::OnRep_PlayerState] ASC=%s AS=%s"),
-		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
+		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
 
 	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
 	BindHiddenTreasureCapsuleHooksOnce();

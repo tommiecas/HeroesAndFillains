@@ -227,12 +227,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-
+	
 	UFUNCTION()
-	UHAFAbilitySystemComponent* GetHAFASC();
-
-	UFUNCTION()
-	UAbilitySystemComponent* GetASC();
+	UHAFAbilitySystemComponent* GetASC();
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);

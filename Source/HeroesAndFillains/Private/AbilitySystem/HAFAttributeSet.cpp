@@ -240,6 +240,8 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s, Health: %f"), *P.TargetAvatarActor->GetName(), GetHealth());
+
 		if (P.TargetAvatarActor)
 		{
 			UE_LOG(LogTemp, Verbose, TEXT("Health changed on %s: %.2f"),
@@ -301,7 +303,12 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 				{
 					const FVector ImpactPoint = Enemy->GetActorLocation();
 					AActor* InstigatorActor = P.SourceAvatarActor ? P.SourceAvatarActor : P.TargetAvatarActor;
-					Enemy->GetHit(ImpactPoint, InstigatorActor);
+
+					// ✅ Correct way: use Execute_ wrapper so it routes to BP or C++ safely
+					if (Enemy->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+					{
+						IHitInterface::Execute_GetHit(Enemy, ImpactPoint, InstigatorActor);
+					}
 
 					if (P.TargetASC)
 					{

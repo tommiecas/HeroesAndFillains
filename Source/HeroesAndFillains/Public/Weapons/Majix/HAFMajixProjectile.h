@@ -22,14 +22,18 @@ class HEROESANDFILLAINS_API AHAFMajixProjectile : public AMajixWeapon
 public:	
 	AHAFMajixProjectile();
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
-
+	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void OnNewSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> NewSphere;
 	
 private:
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
@@ -40,9 +44,6 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category="Audio|FX")
 	UAudioComponent* LoopingSoundComponent = nullptr;
-
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent> NewSphere;
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundBase> LoopingSound;

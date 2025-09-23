@@ -257,7 +257,7 @@ public:
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UHAFAttributeSet> HAFAttributeSet = nullptr;
+	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -267,7 +267,6 @@ public:
 
 	// Convenience (optional to keep your call sites tidy)
 	UFUNCTION(BlueprintPure, Category="GAS|Attributes")
-	FORCEINLINE UHAFAttributeSet* GetHAFAttributeSet() const { return HAFAttributeSet; }
 	
 
 
@@ -351,7 +350,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultInvisibleAttributes;
 
-	void ApplyStartupEffects();
+	UFUNCTION(BlueprintCallable)
+	void ApplyStartupEffects() const;
 
 	UFUNCTION(BlueprintCallable)
 	virtual void InitializeDefaultAttributes() const;
