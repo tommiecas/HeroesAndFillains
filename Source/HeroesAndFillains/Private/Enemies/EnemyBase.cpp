@@ -67,6 +67,9 @@ AEnemyBase::AEnemyBase()
 	EnemyHealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("EnemyHealthBar"));
 	EnemyHealthBar->SetupAttachment(GetRootComponent());
 
+	EnemyShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("EnemyShieldBar"));
+	EnemyShieldBar->SetupAttachment(GetRootComponent());
+
 }
 
 void AEnemyBase::HighlightActor()
@@ -97,9 +100,23 @@ int32 AEnemyBase::GetPlayerLevel()
 void AEnemyBase::Die()
 {
 	SetLifeSpan(LifeSpan);
+	if (EnemyHealthBar)
+	{
+		if (UHAFAttributeSet* EnemyHAFAS = Cast<UHAFAttributeSet>(AttributeSet))
+		{
+			EnemyHAFAS->SetHealth(0.f);
+			EnemyHealthBar->DestroyComponent();
+		}
+	}
+	Dissolve();
 	Super::Die();
 }
 
+void AEnemyBase::Dissolve()
+{
+	Super::Dissolve();
+	bIsCharacterDead = true;
+}
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -120,8 +137,61 @@ void AEnemyBase::Tick(float DeltaTime)
 		GetRotationWarpTarget();
 		GetMotionWarpingComponent()->AddOrUpdateWarpTargetFromLocationAndRotation("RotationTarget", CombatTarget->GetActorLocation(), CombatTarget->GetActorRotation());
 	}
-}
 
+	if (AttributeSet)
+	{
+		UHAFAttributeSet* EHAFAS = Cast<UHAFAttributeSet>(AttributeSet);
+		if (EHAFAS->GetShield() > 0 && EHAFAS->GetShield() <= EHAFAS->GetMaxShield())
+		{
+			if (EnemyShieldBar && EnemyHealthBar)
+			{
+				UUserWidget* ShieldAsUserWidget = Cast<UUserWidget>(EnemyShieldBar->GetUserWidgetObject());
+				if (ShieldAsUserWidget) ShieldAsUserWidget->SetVisibility(ESlateVisibility::Visible);
+				UUserWidget* HealthAsUserWidget = Cast<UUserWidget>(EnemyHealthBar->GetUserWidgetObject());
+				if (HealthAsUserWidget) HealthAsUserWidget->SetVisibility(ESlateVisibility::Hidden);
+			}
+			if (EHAFAS->GetShield() <= 0.f)
+			{
+				UUserWidget* ShieldUserWidget = Cast<UUserWidget>(EnemyShieldBar->GetUserWidgetObject());
+				if (ShieldUserWidget) ShieldUserWidget->RemoveFromParent(); 
+			}
+		}
+		if (!EnemyShieldBar && EnemyHealthBar)
+		{
+			if (EnemyHealthBar && EHAFAS->GetHealth() > 50.f)
+			{
+				UUserWidget* HealthUserWidget = Cast<UUserWidget>(EnemyHealthBar->GetUserWidgetObject());
+				if (HealthUserWidget) HealthUserWidget->SetVisibility(ESlateVisibility::Visible);
+			}
+			if (EHAFAS->GetHealth() <= 50.f)
+			{
+				if (GetMesh())
+				{
+					GetMesh()->SetCollisionObjectType(ECC_WorldStatic);
+					GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+					GetMesh() ->SetCollisionResponseToAllChannels(ECR_Block);
+				}
+				if (EHAFAS->GetHealth() <= 2.f)
+				{
+					GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				}
+				if (EHAFAS->GetHealth() <= 1.f)
+				{
+					if (Weapon) Weapon->SetEnableGravity(true);
+					if (Weapon) Weapon->SetSimulatePhysics(true);
+					if (Weapon) Weapon->SetCollisionResponseToAllChannels(ECR_Block);
+					GetMesh()->SetSimulatePhysics(true);
+					GetMesh()->SetEnableGravity((true));
+				}
+				if (EHAFAS->GetHealth() <=0.f)
+				{
+					Die();
+				}
+			}
+		}
+		if (!EnemyShieldBar && !EnemyHealthBar) return;
+	}
+}
 
 void AEnemyBase::TriggerCharm(AActor* InPlayerActor)
 {
@@ -244,7 +314,6 @@ void AEnemyBase::Destroyed()
 
 void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	ClearPatrolTimer();
 	ClearAttackTimer();
 
@@ -264,6 +333,7 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 	{
 		if (!IsEnemyDead()) StartAttackTimer();
 	}
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
 }
 
 void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
@@ -275,10 +345,16 @@ void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 	}
 }
 
+void AEnemyBase::MulticastHandleDeath_Implementation()
+{
+	Super::MulticastHandleDeath_Implementation();
+}
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitializeAbilityActorInfo();
+	UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
 
 	// --- Enemy Health Bar setup ---
 	if (UUserWidget* WidgetObj = EnemyHealthBar->GetUserWidgetObject())
@@ -300,24 +376,51 @@ void AEnemyBase::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("EnemyBase::BeginPlay - EnemyHealthBar widget is not of type UEnemyProgressBarBaseWidget"));
 	}
 
+	// --- Enemy Shield Bar setup ---
+	if (UUserWidget* WidgetObj = EnemyShieldBar->GetUserWidgetObject())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyShieldBar widget class is: %s"), *WidgetObj->GetClass()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyShieldBar has no UserWidgetObject!"));
+	}
+	if (UEnemyProgressBarBaseWidget* ShieldBarWidget = Cast<UEnemyProgressBarBaseWidget>(EnemyShieldBar->GetUserWidgetObject()))
+	{
+		ShieldBarWidget->UpdateOwnerEnemy(this);
+		ShieldBarWidget->SetVisibility(ESlateVisibility::Visible);
+		ShieldBarWidget->SetWidgetController(this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyBase::BeginPlay - EnemyShieldBar widget is not of type UEnemyProgressBarBaseWidget"));
+	}
+
 	// --- GAS Attribute Delegates ---
 	if (const UHAFAttributeSet* HAFAttSet = Cast<UHAFAttributeSet>(AttributeSet))
 	{
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetHealthAttribute()).AddLambda(
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetShieldAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
-				OnHealthChanged.Broadcast(Data.NewValue);
+				OnShieldChanged.Broadcast(Data.NewValue);
 			}
 		);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetMaxHealthAttribute()).AddLambda(
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HAFAttSet->GetMaxShieldAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
-				OnMaxHealthChanged.Broadcast(Data.NewValue);
+				OnMaxShieldChanged.Broadcast(Data.NewValue);
 			}
 		);
+		AbilitySystemComponent->RegisterGameplayTagEvent(FHAFGameplayTags::Get().Effects_HitReact, EGameplayTagEventType::NewOrRemoved).AddUObject(
+			this,
+			&AEnemyBase::HitReactTagChanged
+		);
+
 
 		OnHealthChanged.Broadcast(HAFAttSet->GetHealth());
 		OnMaxHealthChanged.Broadcast(HAFAttSet->GetMaxHealth());
+		OnShieldChanged.Broadcast(HAFAttSet->GetShield());
+		OnMaxShieldChanged.Broadcast(HAFAttSet->GetMaxShield());
 	}
 
 	// calls BaseCharacter::BeginPlay
@@ -353,12 +456,20 @@ void AEnemyBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	EnemyHealthBar->InitWidget();  // makes sure the UserWidgetObject is created
-
+	EnemyShieldBar->InitWidget();
+	
 	if (UEnemyProgressBarBaseWidget* EnemyHealthWidget =
 		Cast<UEnemyProgressBarBaseWidget>(EnemyHealthBar->GetUserWidgetObject()))
 	{
 		EnemyHealthWidget->UpdateOwnerEnemy(this);
 	}
+
+	if (UEnemyProgressBarBaseWidget* EnemyShieldWidget  =
+		Cast<UEnemyProgressBarBaseWidget>(EnemyShieldBar->GetUserWidgetObject()))
+	{
+		EnemyShieldWidget->UpdateOwnerEnemy(this);
+	}
+
 	
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC)
@@ -404,6 +515,12 @@ void AEnemyBase::PossessedBy(AController* NewController)
 		// Do NOT call HB->OnWidgetConstructed() here.
 		// Put setup in UUserWidget::NativeOnInitialized / NativeConstruct.
 	}
+	if (UEnemyProgressBarBaseWidget* SB = Cast<UEnemyProgressBarBaseWidget>(EnemyShieldBar->GetUserWidgetObject()))
+	{
+		SB->UpdateOwnerEnemy(this);          // OK
+		// Do NOT call HB->OnWidgetConstructed() here.
+		// Put setup in UUserWidget::NativeOnInitialized / NativeConstruct.
+	}
 }
 
 void AEnemyBase::OnRep_PlayerState()
@@ -418,9 +535,10 @@ void AEnemyBase::OnRep_PlayerState()
 	}
 }
 
-void AEnemyBase::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount) const
+
+void AEnemyBase::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	const bool bHitReacting = NewCount > 0;
+	bHitReacting = NewCount > 0;
 	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
 	if (bReactingToHit)
 	{
@@ -448,7 +566,6 @@ void AEnemyBase::InitializeAbilityActorInfo()
 
 void AEnemyBase::InitializeDefaultAttributes() const
 {
-	Super::InitializeDefaultAttributes();
 	UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }
 
@@ -463,21 +580,6 @@ void AEnemyBase::SpawnSoul()
 		SpawnedSoul->SetSoulValue(EnemySouls);
 		SpawnedSoul->SetOriginEnemy(this);
 	}
-}
-
-void AEnemyBase::CharacterDies()
-{
-	Super::CharacterDies();
-	EnemyState = EEnemyState::EES_Dead;
-	ClearAttackTimer();
-	EnemyHealthBar->GetUserWidgetObject()->RemoveFromParent();
-	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
-	GetCharacterMovement()->bOrientRotationToMovement = false;
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	UE_LOG(LogTemp, Warning, TEXT("Calling SpawnSoul now!"));
-	SpawnSoul();
-	UE_LOG(LogTemp, Warning, TEXT("SpawnSoul completed!"));
 }
 
 int32 AEnemyBase::PlayDeathMontage()
@@ -623,9 +725,9 @@ void AEnemyBase::InitializeAbilitySystem()
 
 void AEnemyBase::InitializeEnemy()
 {
+	EnemyHealthBar->InitWidget();
 	LaunchEnemyAIController();
 	MoveToTarget(PatrolTarget);
-	EnemyHealthBar->GetUserWidgetObject()->SetVisibility(ESlateVisibility::Visible);
 	SpawnEnemyWeapon();
 	InitializeAbilitySystem();
 }
@@ -843,6 +945,24 @@ void AEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			{
 				ASC->GetGameplayAttributeValueChangeDelegate(HAFSet->GetMaxHealthAttribute())
 				   .Remove(MaxHealthChangedHandle);
+			}
+		}
+		if (ShieldChangedHandle.IsValid())
+		{
+			const UHAFAttributeSet* HAFSet = ASC->GetSet<UHAFAttributeSet>();
+			if (HAFSet)
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(HAFSet->GetShieldAttribute())
+				   .Remove(ShieldChangedHandle);
+			}
+		}
+		if (MaxShieldChangedHandle.IsValid())
+		{
+			const UHAFAttributeSet* HAFSet = ASC->GetSet<UHAFAttributeSet>();
+			if (HAFSet)
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(HAFSet->GetMaxShieldAttribute())
+				   .Remove(MaxShieldChangedHandle);
 			}
 		}
 		if (HitReactChangedHandle.IsValid())

@@ -59,8 +59,13 @@ public:
 	virtual int32 GetPlayerLevel() override;
 	virtual void Die() override;
 
+	virtual void Dissolve() override;
+
 	UPROPERTY(BlueprintReadOnly, Category = "UI")
 	bool bHighlighted = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bHitReacting = false;
 	
 	void SpawnEnemyWeapon();
 
@@ -69,6 +74,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedSignature OnMaxHealthChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnShieldChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnMaxShieldChanged;
 	
 	UFUNCTION(BlueprintCallable)
 	AAIController* LaunchEnemyAIController();
@@ -145,7 +156,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UEnemyProgressBarBaseWidget> EnemyHealthBarWidgetClass;
 
-	void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount) const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UEnemyProgressBarBaseWidget> EnemyShieldBarWidgetClass;
+
+	void HitReactTagChanged(FGameplayTag CallbackTag, int32 NewCount);
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	bool bReactingToHit = false;
@@ -161,11 +175,18 @@ public:
 	
 	FDelegateHandle HealthChangedHandle;
 	FDelegateHandle MaxHealthChangedHandle;
+	FDelegateHandle ShieldChangedHandle;
+	FDelegateHandle MaxShieldChangedHandle;
 	FDelegateHandle HitReactChangedHandle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> EnemyHealthBar;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> EnemyShieldBar;
+
+	virtual void MulticastHandleDeath_Implementation() override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -180,7 +201,6 @@ protected:
 
 	virtual void InitializeAbilityActorInfo() override;
 	void SpawnSoul();
-	virtual void CharacterDies() override;
 	virtual void PlayAttackMontage() override;
 	virtual int32 PlayDeathMontage() override;
 	virtual void MeleeAttack() override;
@@ -250,7 +270,7 @@ protected:
 	FTimerHandle PatrolTimer;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	float DeathLifeSpan = 3.f;
+	float DeathLifeSpan = 7.f;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FTimerHandle AttackTimer;

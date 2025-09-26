@@ -546,10 +546,6 @@ void UCombatComponent::ReceiveMeleeDamage(
 	Character->CachedEventInstigator = EventInstigator;
 	Character->CachedDamageCauser = DamageCauser;
 
-	Character->DirectionalHitReact(HitLocation);
-
-	
-	
 	Character->GetHit_Implementation(HitLocation, DamageCauser);
 	
 	// Optional: spawn effects like blood, sparks, decals

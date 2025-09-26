@@ -1,4 +1,6 @@
 #include "AbilitySystem/HAFAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemGlobals.h"
@@ -7,8 +9,11 @@
 #include "HAFGameplayTags.h"
 #include "Characters/BaseCharacter.h"
 #include "GameplayTagContainer.h"
+#include "Components/WidgetComponent.h"
 #include "Enemies/EnemyBase.h"
 #include "HAFComponents/CombatComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerController/FillainPlayerController.h"
 
 #define ONREP_ATTR(Class, Prop) \
 void Class::OnRep_##Prop(const FGameplayAttributeData& Old##Prop) \
@@ -131,18 +136,12 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const
 {
 	Properties.EffectContextHandle = Data.EffectSpec.GetContext();
-
 	Properties.SourceASC = Properties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
-	if (Properties.SourceASC == nullptr)
-	{
-		Properties.SourceASC = Properties.EffectContextHandle.GetInstigatorAbilitySystemComponent();
-	}
 
 	if (IsValid(Properties.SourceASC) && Properties.SourceASC->AbilityActorInfo.IsValid() && Properties.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
 		Properties.SourceAvatarActor = Properties.SourceASC->AbilityActorInfo->AvatarActor.Get();
 		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
-
 		if (Properties.SourceController == nullptr && Properties.SourceAvatarActor != nullptr)
 		{
 			if (const APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
@@ -156,18 +155,12 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 		}
 	}
 
-	Properties.TargetASC = GetOwningAbilitySystemComponent();
-	if (IsValid(Properties.TargetASC) && Properties.TargetASC->AbilityActorInfo.IsValid() && Properties.TargetASC->AbilityActorInfo->AvatarActor.IsValid())
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
 	{
-		Properties.TargetAvatarActor = Properties.TargetASC->AbilityActorInfo->AvatarActor.Get();
-		Properties.TargetController = Properties.TargetASC->AbilityActorInfo->PlayerController.Get();
+		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 		Properties.TargetCharacter = Cast<ACharacter>(Properties.TargetAvatarActor);
-	}
-	if (!Properties.TargetASC)
-	{
-		Properties.TargetAvatarActor = nullptr;
-		Properties.TargetController  = nullptr;
-		Properties.TargetCharacter   = nullptr;
+		Properties.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Properties.TargetAvatarActor);
 	}
 }
 
@@ -198,6 +191,7 @@ void UHAFAttributeSet::AdjustAttributeForMaxChange(
         }
     }
 }
+
 
 void UHAFAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
@@ -233,46 +227,46 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	FEffectProperties P;
-	SetEffectProperties(Data, P);
+	FEffectProperties Properties;
+	SetEffectProperties(Data, Properties);
 
 	// Clamp vitals if they were modified by an effect
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s, Health: %f"), *P.TargetAvatarActor->GetName(), GetHealth());
+		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s, Health: %f"), *Properties.TargetAvatarActor->GetName(), GetHealth());
 
-		if (P.TargetAvatarActor)
+		if (Properties.TargetAvatarActor)
 		{
 			UE_LOG(LogTemp, Verbose, TEXT("Health changed on %s: %.2f"),
-				*P.TargetAvatarActor->GetName(), GetHealth());
+				*Properties.TargetAvatarActor->GetName(), GetHealth());
 		}
 	}
 	if (Data.EvaluatedData.Attribute == GetMajixAttribute())
 	{
 		SetMajix(FMath::Clamp(GetMajix(), 0.f, GetMaxMajix()));
-		if (P.TargetAvatarActor)
+		if (Properties.TargetAvatarActor)
 		{
 			UE_LOG(LogTemp, Verbose, TEXT("Majix changed on %s: %.2f"),
-				*P.TargetAvatarActor->GetName(), GetMajix());
+				*Properties.TargetAvatarActor->GetName(), GetMajix());
 		}
 	}
 	if (Data.EvaluatedData.Attribute == GetShieldAttribute())
 	{
 		SetShield(FMath::Clamp(GetShield(), 0.f, GetMaxShield()));
-		if (P.TargetAvatarActor)
+		if (Properties.TargetAvatarActor)
 		{
 			UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
-				*P.TargetAvatarActor->GetName(), GetShield());
+				*Properties.TargetAvatarActor->GetName(), GetShield());
 		}
 	}
 	if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
-		if (P.TargetAvatarActor)
+		if (Properties.TargetAvatarActor)
 		{
 			UE_LOG(LogTemp, Verbose, TEXT("Stamina changed on %s: %.2f"),
-				*P.TargetAvatarActor->GetName(), GetStamina());
+				*Properties.TargetAvatarActor->GetName(), GetStamina());
 		}
 	}
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
@@ -280,44 +274,103 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 		const float Dmg = GetIncomingDamage();
 		SetIncomingDamage(0.f);
 
-		if (Dmg > 0.f)
+		if (Dmg > 0.f && Dmg < GetShield())
 		{
-			const float NewHP = FMath::Clamp(GetHealth() - Dmg, 0.f, GetMaxHealth());
-			SetHealth(NewHP);
+			TakeDamageFromShield(Dmg, Properties);
+			return;
+		}
+		else if (Dmg >0 && Dmg >= GetShield())
+		{
+			TakeDamageFromShieldThenHealth(Dmg, Properties);
+			return;
+		}
+		else if (Dmg > 0.f && GetShield() == 0.f)
+		{
+			TakeDamageFromHealth(Dmg, Properties);			
+			return;
+		}
+	}
+}
 
-			const bool bFatal = (NewHP <= 0.f);
-			if (bFatal)
-			{
-				if (P.TargetAvatarActor)
-				{
-					if (ICombatInterface* CI = Cast<ICombatInterface>(P.TargetAvatarActor))
-					{
-						CI->Die();
-					}
-				}
-			}
-			else
-			{
-				// Prefer the target actor rather than GetOwningActor() for hit-reacts
-				if (AEnemyBase* Enemy = (P.TargetAvatarActor ? Cast<AEnemyBase>(P.TargetAvatarActor) : nullptr))
-				{
-					const FVector ImpactPoint = Enemy->GetActorLocation();
-					AActor* InstigatorActor = P.SourceAvatarActor ? P.SourceAvatarActor : P.TargetAvatarActor;
+void UHAFAttributeSet::TakeDamageFromShield(float Damage, const FEffectProperties& Properties)
+{
+	SetShield(GetShield() - Damage);
+	if (Properties.TargetAvatarActor)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
+			*Properties.TargetAvatarActor->GetName(), GetShield());
+	}
+	DealWithDeathAndWidgets(Damage, Properties);
+}
 
-					// ✅ Correct way: use Execute_ wrapper so it routes to BP or C++ safely
-					if (Enemy->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
-					{
-						IHitInterface::Execute_GetHit(Enemy, ImpactPoint, InstigatorActor);
-					}
+void UHAFAttributeSet::TakeDamageFromShieldThenHealth(float Damage, const FEffectProperties& Properties)
+{
+	float DiffTakenFromHealth = (Damage - GetShield());
+	SetShield(0.f);
+	if (AEnemyBase* BadGuy = Cast<AEnemyBase>(Properties.TargetAvatarActor))
+	{
+		if (BadGuy->EnemyShieldBar) BadGuy->EnemyShieldBar->DestroyComponent();
+		if (BadGuy->EnemyHealthBar) BadGuy->EnemyHealthBar->SetVisibility(true);
+		if (BadGuy->EnemyHealthBar->IsWidgetVisible() == true)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("HealthBar should be seen in game now"));
+		}
+		if (BadGuy->EnemyHealthBar->IsWidgetVisible() == false)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No Health Bar will be seen in game"))
+		}
+	}
+	if (Properties.TargetAvatarActor)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
+			*Properties.TargetAvatarActor->GetName(), GetShield());
+	}
+	SetHealth(GetHealth() - DiffTakenFromHealth);
+	const float NewHealth = GetHealth();
+	SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+	if (Properties.TargetAvatarActor)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Health changed on %s: %.2f"),
+			*Properties.TargetAvatarActor->GetName(), GetHealth());
+	}
+	DealWithDeathAndWidgets(Damage, Properties);
+}
 
-					if (P.TargetASC)
-					{
-						FGameplayTagContainer Tags;
-						Tags.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
-						P.TargetASC->TryActivateAbilitiesByTag(Tags);
-					}
-				}
-			}
+void UHAFAttributeSet::TakeDamageFromHealth(float Damage, const FEffectProperties& Properties)
+{
+	const float NewHealth = GetHealth() - Damage;
+	SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+	
+	DealWithDeathAndWidgets(Damage, Properties);
+}
+
+void UHAFAttributeSet::DealWithDeathAndWidgets(float Damage, const FEffectProperties& Properties)
+{
+	const bool bFatal = GetHealth() <= 0.f;
+	if (bFatal)
+	{
+		ICombatInterface* CombatInterface = Cast<ICombatInterface>(Properties.TargetAvatarActor);
+		if (CombatInterface)
+		{
+			CombatInterface->Die();
+		}
+	}
+	else
+	{
+		FGameplayTagContainer TagContainer;
+		TagContainer.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
+		Properties.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+	}
+	ShowFloatingText(Properties, Damage);
+}
+
+void UHAFAttributeSet::ShowFloatingText(const FEffectProperties& Properties, float Damage) const
+{
+	if (Properties.SourceCharacter != Properties.TargetCharacter)
+	{
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0)))
+		{
+			PC->ShowDamageNumber(Damage, Properties.TargetCharacter);
 		}
 	}
 }

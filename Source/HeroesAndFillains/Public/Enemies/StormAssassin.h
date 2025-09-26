@@ -31,7 +31,71 @@ class HEROESANDFILLAINS_API AStormAssassin : public AEnemyBase
 public:
 	AStormAssassin();
 	virtual void Tick(float DeltaTime) override;
-	virtual void AttackEnd();
+	virtual void AttackEnd() override;
+	virtual void Die() override;
+	virtual void MulticastHandleDeath_Implementation() override;
+	virtual void Dissolve() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineZero(UMaterialInstanceDynamic* DynamicMaterialInstanceZero);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineOne(UMaterialInstanceDynamic* DynamicMaterialInstanceOne);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineTwo(UMaterialInstanceDynamic* DynamicMaterialInstanceTwo);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineThree(UMaterialInstanceDynamic* DynamicMaterialInstanceThree);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineFour(UMaterialInstanceDynamic* DynamicMaterialInstanceFour);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineFive(UMaterialInstanceDynamic* DynamicMaterialInstanceFive);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineSix(UMaterialInstanceDynamic* DynamicMaterialInstanceSix);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineSeven(UMaterialInstanceDynamic* DynamicMaterialInstanceSeven);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineEight(UMaterialInstanceDynamic* DynamicMaterialInstanceEight);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartStormDissolveTimelineNine(UMaterialInstanceDynamic* DynamicMaterialInstanceNine);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceZero;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceOne;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceTwo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceThree;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceFour;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceFive;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceSix;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceSeven;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceEight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceNine;
+
 
 protected:
 	virtual void BeginPlay() override;

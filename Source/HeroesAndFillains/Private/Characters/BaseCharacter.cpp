@@ -42,7 +42,7 @@
 #include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 #include "PlayerController/FillainPlayerController.h"  
-#include "GameMode/HAFGameMode.h"  
+#include "GameMode/HaFGameMode.h"  
 #include "TimerManager.h"  
 #include "Kismet/GameplayStatics.h"  
 #include "Sound/SoundCue.h"  
@@ -273,6 +273,12 @@ void ABaseCharacter::ConsumeDodgeStamina()
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec);
 }
 
+void ABaseCharacter::Die()
+{
+	if (Weapon) Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	MulticastHandleDeath();
+}
+
 void ABaseCharacter::MulticastHandleDeath_Implementation()
 {
 	if (Weapon)
@@ -284,10 +290,12 @@ void ABaseCharacter::MulticastHandleDeath_Implementation()
 
 	if (GetMesh())
 	{
+		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		GetMesh()->SetCollisionObjectType(ECC_WorldStatic);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+
 		GetMesh()->SetSimulatePhysics(true);
 		GetMesh()->SetEnableGravity(true);
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	}
 
 	if (GetCapsuleComponent())
@@ -297,6 +305,11 @@ void ABaseCharacter::MulticastHandleDeath_Implementation()
 	Dissolve();
 }
 
+void ABaseCharacter::Dissolve()
+{
+	if (bIsCharacterDead) return;
+	
+}
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	// Early exit if actor is pending kill or invalid
@@ -317,12 +330,39 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	}
 	else
 	{
-		CharacterDies();
+		Die();
 	}
 
 	// Play audiovisual feedback
 	PlayHitSound(ImpactPoint);
 	SpawnHitSpecialEffects(ImpactPoint);
+}
+
+FDirectionalHitResult ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
+{
+	FDirectionalHitResult Result;
+
+	const FVector Forward = GetActorForwardVector();
+	const FVector ActorLocation = GetActorLocation();
+	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, ActorLocation.Z);
+	const FVector ToHit = (ImpactLowered - ActorLocation).GetSafeNormal();
+
+	Theta = FMath::RadiansToDegrees(
+		FMath::Acos(FVector::DotProduct(Forward, ToHit))
+	);
+
+	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
+	if (CrossProduct.Z < 0)
+	{
+		Theta *= -1.f;
+	}
+
+	if (Theta >= -45.f && Theta < 45.f)        Result.bFromFront = true;
+	else if (Theta >= -135.f && Theta < -45.f) Result.bFromLeft  = true;
+	else if (Theta >= 45.f && Theta < 135.f)   Result.bFromRight = true;
+	else                                       Result.bFromBack  = true;
+
+	return Result;
 }
 
 void ABaseCharacter::MeleeAttack()
@@ -343,12 +383,6 @@ void ABaseCharacter::MajixAttack()
 	}
 }
 
-void ABaseCharacter::Die()
-{
-	if (Weapon) Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	MulticastHandleDeath();
-}
-
 void ABaseCharacter::CharacterDies()
 {
 	UE_LOG(LogTemp, Warning, TEXT("CharacterDies() called for: %s"), *GetName());
@@ -359,7 +393,7 @@ void ABaseCharacter::CharacterDies()
 	if (AEnemyBase* DeadEnemy = Cast<AEnemyBase>(this))
 	{
 		Tags.Add(FName("Dead"));
-		PlayDeathMontage();
+		Die();
 	}
 	if (AFillainCharacter* DeadFillain = Cast<AFillainCharacter>(this))
 	{
@@ -372,46 +406,6 @@ void ABaseCharacter::CharacterDies()
 			if (!KillerPlayerController) VictimPlayerController->InitializeHUDEliminationMessage(KillerPlayerController, VictimPlayerController, CachedInstigatorController);
 		}
 	}
-}
-
-void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
-{
-	// Determine direction of hit
-	const FVector Forward = GetActorForwardVector();
-	const FVector ActorLocation = GetActorLocation();
-	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, ActorLocation.Z);
-	const FVector ToHit = (ImpactLowered - ActorLocation).GetSafeNormal();
-
-	const double CosTheta = FVector::DotProduct(Forward, ToHit);
-	Theta = FMath::Acos(CosTheta);
-	Theta = FMath::RadiansToDegrees(Theta);
-
-	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
-	if (CrossProduct.Z < 0)
-	{
-		Theta *= -1.f;
-	}
-
-	FName Section;
-
-	if (Theta >= -45.f && Theta < 45.f)
-	{
-		Section = FName("FromFront");
-	}
-	else if (Theta >= -135.f && Theta < -45.f)
-	{
-		Section = FName("FromLeft");
-	}
-	else if (Theta >= 45.f && Theta < 135.f)
-	{
-		Section = FName("FromRight");
-	}
-	else
-	{
-		Section = FName("FromBack");
-	}
-
-	PlayHitReactMontage(Section);
 }
 
 void ABaseCharacter::PlayHitReactMontage(const FName& Section)
@@ -888,7 +882,7 @@ UAttributeSet* ABaseCharacter::GetAttributeSet() const
 	// We only cache a const set on BaseCharacter; return a mutable pointer for legacy call sites.
 	return const_cast<UAttributeSet*>(AttributeSet.Get());
 }
-
+/*
 void ABaseCharacter::Dissolve()
 {
 	if (IsValid(DissolveMaterialInstance))
@@ -898,14 +892,14 @@ void ABaseCharacter::Dissolve()
 
 		StartCharacterDissolveTimeline(DynamicMatInst);
 	}
-	if (IsValid(WeaponDissolveMaterialInstance))
+	if (Weapon && IsValid(WeaponDissolveMaterialInstance))
 	{
 		UMaterialInstanceDynamic* WeaponDynamicMatInst = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstance, this);
 		Weapon->SetMaterial(0, WeaponDynamicMatInst);
 
 		StartWeaponDissolveTimeline(WeaponDynamicMatInst);
 	}
-}
+} */
 
 bool ABaseCharacter::IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const
 {

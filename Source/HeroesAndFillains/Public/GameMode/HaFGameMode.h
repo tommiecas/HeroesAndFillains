@@ -1,9 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
 #include "HAFGameMode.generated.h"
 
 class UCharacterClassInfo;
@@ -14,7 +13,7 @@ namespace MatchState
 };
 
 /**
- * 
+ * Base GameMode for Heroes and Fillains
  */
 UCLASS(BlueprintType, Blueprintable)
 class HEROESANDFILLAINS_API AHAFGameMode : public AGameMode
@@ -31,7 +30,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<UCharacterClassInfo> CharacterClassInfo;
-	
+    
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
@@ -47,13 +46,15 @@ public:
 	void SendChat(const FString& Text, const FString& PlayerName);
 
 	bool bTeamsMatch = false;
-
 	bool bDelayedStart = false;
-
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnMatchStateSet();
+	virtual void OnMatchStateSet() override;
+
+	/** New: Hooks for HybridGameMode (safe to call Super) */
+	virtual void OnEnterPvE();
+	virtual void OnEnterPvP();
 
 private:
 	UPROPERTY()
@@ -64,5 +65,4 @@ private:
 public:
 	class AFillainCharacter* GetCharacter() const { return Character; }
 	FORCEINLINE float GetCountdownTime() const { return CountdownTime; }
-
 };

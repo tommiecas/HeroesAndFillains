@@ -11,6 +11,7 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "FillainPlayerController.generated.h"
 
+class UDamageTextComponent;
 class UAbilitySystemComponent;
 class UHAFInputConfig;
 class AEnemyBase;
@@ -52,6 +53,9 @@ public:
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
+
+	UFUNCTION(Client, Reliable)
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsHUDReady() const;
@@ -166,6 +170,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* ShiftAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* ToggleGameModeAction;
+
 	void ShiftPressed() {bShiftKeyDown = true;};
 	void ShiftReleased() {bShiftKeyDown = false;};
 	bool bShiftKeyDown = false;
@@ -219,6 +226,9 @@ protected:
 	FString GetTeamsInfoText (class AHAFGameState* HAFGameState);
 
 private:
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ToggleGameMode();
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UHAFInputConfig> InputConfig;
 
@@ -262,7 +272,7 @@ private:
     class AHAFPlayerState* State;
 
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
-	class AHAFGameMode* Mode;
+	class AHAFGameMode* ModeBase;
 
 
 
@@ -329,6 +339,9 @@ private:
 	TObjectPtr<USplineComponent> Spline;
 
 	void AutoRun();
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
 
 public:
 	FORCEINLINE AFillainCharacter* GetFillain() const { return Fillain; }

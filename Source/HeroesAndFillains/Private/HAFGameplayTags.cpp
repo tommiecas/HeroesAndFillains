@@ -249,8 +249,8 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("Input Tag for the 4 Button or D-Pad Right. What does 'four-the-for' mean anyway?") 
 		);
 
-	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage"),
+	GameplayTags.SetByCaller_Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("SetByCaller.Damage"),
 		FString("Duh. Damage!") 
 		);
 

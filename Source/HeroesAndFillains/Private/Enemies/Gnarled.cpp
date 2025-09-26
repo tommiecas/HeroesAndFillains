@@ -54,8 +54,26 @@ void AGnarled::BeginPlay()
 
 }
 
+void AGnarled::Dissolve()
+{
+	if (IsValid(DissolveMaterialInstanceZero) && IsValid(DissolveMaterialInstanceOne) && IsValid(DissolveMaterialInstanceTwo))
+	{
+		UMaterialInstanceDynamic* DynamicMatInstZero = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceZero, this);
+		UMaterialInstanceDynamic* DynamicMatInstOne = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceOne, this);
+		UMaterialInstanceDynamic* DynamicMatInstTwo = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceTwo, this);
+
+		GetMesh()->SetMaterial(0, DynamicMatInstZero);
+		GetMesh()->SetMaterial(1, DynamicMatInstOne);
+		GetMesh()->SetMaterial(2, DynamicMatInstTwo);
+
+		StartCharacterDissolveTimelineZero(DynamicMatInstZero);
+		StartCharacterDissolveTimelineOne(DynamicMatInstOne);
+		StartCharacterDissolveTimelineTwo(DynamicMatInstTwo);
+	}
+}
+
 void AGnarled::OnFistOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
 	if (Player && bCanDamage && !RightFistDamagedActors.Contains(Player) && !LeftFistDamagedActors.Contains(Player))
@@ -149,3 +167,11 @@ void AGnarled::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnable
 		RightFistDamagedActors.Empty();
 	}
 }
+
+void AGnarled::MulticastHandleDeath_Implementation()
+{
+	Super::MulticastHandleDeath_Implementation();
+	Dissolve();
+}
+
+

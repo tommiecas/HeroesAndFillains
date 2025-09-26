@@ -11,7 +11,7 @@
 
 namespace MatchState
 {
-	const FName Cooldown = FName(TEXT("Cooldown"));
+	const FName Cooldown = FName("Cooldown");
 }
 
 
@@ -26,8 +26,6 @@ void AHAFGameMode::BeginPlay()
 
 	LevelStartingTime = GetWorld()->GetTimeSeconds();
 }
-
-
 
 void AHAFGameMode::Tick(float DeltaTime)
 {
@@ -62,14 +60,25 @@ void AHAFGameMode::Tick(float DeltaTime)
 void AHAFGameMode::OnMatchStateSet()
 {
 	Super::OnMatchStateSet();
+
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		AFillainPlayerController* FillainPlayer = Cast<AFillainPlayerController>(*It);
-		if (FillainPlayer)
+		if (AFillainPlayerController* FillainPlayer = Cast<AFillainPlayerController>(*It))
 		{
+			// Forward the current MatchState and team info to the player controller
 			FillainPlayer->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
+}
+
+void AHAFGameMode::OnEnterPvE()
+{
+	
+}
+
+void AHAFGameMode::OnEnterPvP()
+{
+	
 }
 
 float AHAFGameMode::CalculateDamage(AController* Killer, AController* Victim, float BaseDamage)
@@ -82,7 +91,7 @@ void AHAFGameMode::PlayerEliminated(class AFillainCharacter* VictimCharacter, cl
 	if (KillerController == nullptr || KillerController->PlayerState == nullptr)
 	{
 		ABaseCharacter* DeadCharacter = Cast<ABaseCharacter>(VictimCharacter);
-		DeadCharacter->CharacterDies();
+		DeadCharacter->Die();
 	}
 	if (VictimController == nullptr || VictimController->PlayerState == nullptr) return;
 	AHAFPlayerState* KillerPlayerState = KillerController ? Cast<AHAFPlayerState>(KillerController->PlayerState) : nullptr;

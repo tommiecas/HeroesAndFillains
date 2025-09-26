@@ -52,6 +52,57 @@ void AStormAssassin::AttackEnd()
 	DisableRightFoot();
 }
 
+void AStormAssassin::Die()
+{
+	Super::Die();
+}
+
+void AStormAssassin::MulticastHandleDeath_Implementation()
+{
+	Super::MulticastHandleDeath_Implementation();
+	Dissolve();
+}
+
+void AStormAssassin::Dissolve()
+{
+	if (IsValid(DissolveMaterialInstanceZero) && IsValid(DissolveMaterialInstanceOne) && IsValid(DissolveMaterialInstanceTwo) && IsValid(DissolveMaterialInstanceThree) && IsValid(DissolveMaterialInstanceFour) && IsValid(DissolveMaterialInstanceFive) && IsValid(DissolveMaterialInstanceSix) && IsValid(DissolveMaterialInstanceSeven) && IsValid(DissolveMaterialInstanceEight) && IsValid(DissolveMaterialInstanceNine))
+	{
+		UMaterialInstanceDynamic* DynamicStormMatInstZero = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceZero, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstOne = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceOne, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstTwo = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceTwo, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstThree = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceThree, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstFour = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceFour, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstFive = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceFive, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstSix = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceSix, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstSeven = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceSeven, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstEight = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceEight, this);
+		UMaterialInstanceDynamic* DynamicStormMatInstNine = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceNine, this);
+
+		GetMesh()->SetMaterial(0, DynamicStormMatInstZero);
+		GetMesh()->SetMaterial(1, DynamicStormMatInstOne);
+		GetMesh()->SetMaterial(2, DynamicStormMatInstTwo);
+		GetMesh()->SetMaterial(3, DynamicStormMatInstThree);
+		GetMesh()->SetMaterial(4, DynamicStormMatInstFour);
+		GetMesh()->SetMaterial(5, DynamicStormMatInstFive);
+		GetMesh()->SetMaterial(6, DynamicStormMatInstSix);
+		GetMesh()->SetMaterial(7, DynamicStormMatInstSeven);
+		GetMesh()->SetMaterial(8, DynamicStormMatInstEight);
+		GetMesh()->SetMaterial(9, DynamicStormMatInstNine);
+		
+		StartStormDissolveTimelineZero(DynamicStormMatInstZero);
+		StartStormDissolveTimelineOne(DynamicStormMatInstOne);
+		StartStormDissolveTimelineTwo(DynamicStormMatInstTwo);
+		StartStormDissolveTimelineThree(DynamicStormMatInstThree);
+		StartStormDissolveTimelineFour(DynamicStormMatInstFour);
+		StartStormDissolveTimelineFive(DynamicStormMatInstFive);
+		StartStormDissolveTimelineSix(DynamicStormMatInstSix);
+		StartStormDissolveTimelineSeven(DynamicStormMatInstSeven);
+		StartStormDissolveTimelineEight(DynamicStormMatInstEight);
+		StartStormDissolveTimelineNine(DynamicStormMatInstNine);
+	}
+}
+
+
 void AStormAssassin::BeginPlay()
 {
 	Super::BeginPlay();

@@ -17,7 +17,7 @@
 #include "Characters/FillainAnimInstance.h"  
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 #include "PlayerController/FillainPlayerController.h"  
-#include "GameMode/HAFGameMode.h"  
+#include "GameMode/HaFGameMode.h"  
 #include "TimerManager.h"  
 #include "Kismet/GameplayStatics.h"  
 #include "Sound/SoundCue.h"  
@@ -650,14 +650,8 @@ void AFillainCharacter::NotifyHit(
 	UE_LOG(LogTemp, Warning, TEXT("🚧 BLOCKED by: %s (%s)"), *Other->GetName(), *OtherComp->GetName());
 }
 
-void AFillainCharacter::DirectionalHitReact(const FVector& ImpactPoint)
-{
-	UE_LOG(LogTemp, Warning, TEXT("🎯 DirectionalHitReact triggered"));
-	Super::DirectionalHitReact(ImpactPoint);
-}
-
 float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
+                                    class AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
@@ -728,7 +722,7 @@ void AFillainCharacter::Eliminate(bool bPlayerLeftGame)
 	
 }
 
-void AFillainCharacter::StartDissolveEffect()
+/* void AFillainCharacter::StartDissolveEffect()
 {
 	if (DissolveMaterialInstance)
 	{
@@ -739,6 +733,7 @@ void AFillainCharacter::StartDissolveEffect()
 	}
 	StartDissolve();
 }
+*/
 
 void AFillainCharacter::DisableAllComponents()
 {
@@ -796,7 +791,7 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 	bIsEliminated = true;
 	UAnimInstance* AnimBlueprint = Cast<UAnimInstance>(GetMesh()->GetAnimInstance()); 
 	PlayEliminatedMontage();
-	StartDissolveEffect();
+	// StartDissolveEffect();
 	DisableAllComponents();
 	SpawnEliminationBotEffect();
 	PlayEliminationSound();
@@ -935,7 +930,7 @@ void AFillainCharacter::OnPlayerStateInitialized()
 {
 	HAFPlayerState->AddToScore(0.f);
 	HAFPlayerState->AddToDefeats(0);
-	SetTeamColor(HAFPlayerState->GetTeam());
+	// SetTeamColor(HAFPlayerState->GetTeam());
 	SetSpawnPoint();
 }
 
@@ -1106,10 +1101,10 @@ void AFillainCharacter::HideAttachedGrenade()
 void AFillainCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (!IsValid(this)) return;
-
-	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	CombatComponent->ActionState = EActionState::EAS_HitReaction;
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
 }
 
 void AFillainCharacter::PlayHitReactMontage(const FName& SectionName)
@@ -1751,7 +1746,7 @@ void AFillainCharacter::MulticastLostTheLead_Implementation()
 {
 	DestroyCrown();
 }
-
+/*
 void AFillainCharacter::SetTeamColor(ETeam Team)
 {
 	if (GetMesh() == nullptr || OriginalMaterial == nullptr) return;
@@ -1771,6 +1766,7 @@ void AFillainCharacter::SetTeamColor(ETeam Team)
 		break;
 	}
 }
+*/
 
 bool AFillainCharacter::IsUsingGamepad() const
 {

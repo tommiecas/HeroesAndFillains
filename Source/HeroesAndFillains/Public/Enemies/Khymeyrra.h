@@ -19,6 +19,58 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsEnemyKhymeyrra = true;
+
+	virtual void MulticastHandleDeath_Implementation() override;
+	virtual void Dissolve() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineZero(UMaterialInstanceDynamic* DynamicMaterialInstanceZero);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineOne(UMaterialInstanceDynamic* DynamicMaterialInstanceOne);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineTwo(UMaterialInstanceDynamic* DynamicMaterialInstanceTwo);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineThree(UMaterialInstanceDynamic* DynamicMaterialInstanceThree);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineFour(UMaterialInstanceDynamic* DynamicMaterialInstanceFour);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineFive(UMaterialInstanceDynamic* DynamicMaterialInstanceFive);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineSix(UMaterialInstanceDynamic* DynamicMaterialInstanceSix);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartKhymeyrrahDissolveTimelineSeven(UMaterialInstanceDynamic* DynamicMaterialInstanceSeven);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceZero;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceOne;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceTwo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceThree;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceFour;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceFive;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceSix;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> KhymeyrrahDissolveMaterialInstanceSeven;
+
 	
 protected:
 	virtual void BeginPlay() override;

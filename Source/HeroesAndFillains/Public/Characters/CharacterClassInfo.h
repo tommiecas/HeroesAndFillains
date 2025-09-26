@@ -13,7 +13,7 @@ enum class ECharacterClass : uint8
 {
 	Majixian,
 	Warrior,
-	Sharpshooter,
+	Gunslinger,
 	Stealthian,
 	Zealot
 };
@@ -25,6 +25,13 @@ struct FCharacterClassDefaultInfo
 
 	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
 	TSubclassOf<UGameplayEffect> PrimaryAttributes;
+
+	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
+	TSubclassOf<UGameplayEffect> SecondaryAttributes;
+
+	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
+	TSubclassOf<UGameplayEffect> VitalAttributes;;
+	
 };
 /**
  * 
@@ -37,19 +44,16 @@ class HEROESANDFILLAINS_API UCharacterClassInfo : public UDataAsset
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")
 	TMap<ECharacterClass, FCharacterClassDefaultInfo> CharacterClassInformation;;
-
-	UPROPERTY(EditDefaultsOnly, Category = "CommonClassDefaults")
-	TSubclassOf<UGameplayEffect> SecondaryAttributes;
-
-	UPROPERTY(EditDefaultsOnly, Category = "CommonClassDefaults")
-	TSubclassOf<UGameplayEffect> VitalAttributes;
-
-	UPROPERTY(EditDefaultsOnly, Category = "CommonClassDefaults")
+	
+	UPROPERTY(EditDefaultsOnly, Category = "ChommonClassDefaults")
 	TSubclassOf<UGameplayEffect> InvisibleAttributes;
-
-	UPROPERTY(EditDefaultsOnly, Category = "CommonClassDefaults")
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> CommonAbilities;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="CommonClassDefaults|Damage")
+	TObjectPtr<UCurveTable> DamageCalculationCoefficients;
+	
 	FCharacterClassDefaultInfo GetClassDefaultInfo(ECharacterClass CharacterClass);
 	
 };

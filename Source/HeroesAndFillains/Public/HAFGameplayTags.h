@@ -66,7 +66,7 @@ public:
 	FGameplayTag InputTag_3OrDPadLeft;
 	FGameplayTag InputTag_4OrDPadRight;
 
-	FGameplayTag Damage;
+	FGameplayTag SetByCaller_Damage;
 
 	FGameplayTag Effects_HitReact;
 

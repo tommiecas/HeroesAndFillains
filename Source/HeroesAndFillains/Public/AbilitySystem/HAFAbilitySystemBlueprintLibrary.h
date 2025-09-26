@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
+#include "Characters/CharacterClassInfo.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "HAFAbilitySystemBlueprintLibrary.generated.h"
 
@@ -32,6 +33,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC);
 
+	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|CharacterClassDefaults")
+	static UCharacterClassInfo* GetCharacterClassInfo(const UObject* WorldContextObject);
+
 	UFUNCTION(BlueprintCallable, Category = "Ability|GameplayEffects")
 	static FGameplayEffectContextHandle AddSourceObjectToContext(
 		const FGameplayEffectContextHandle& Context, 
@@ -39,5 +43,5 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Ability|GameplayEffects")
 	static bool IsGameplayEffectSpecHandleValid(const FGameplayEffectSpecHandle& SpecHandle);
-	
+
 };

@@ -14,7 +14,7 @@
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "BaseCharacter.generated.h"
 
-class AHAFGameModeBase;
+class AHAFGameMode;
 class APCPickupBaseItem;
 class APrePackagedPCPickupItem;
 class UGameplayAbility;
@@ -40,6 +40,25 @@ enum EDeathPose
 	
 	EDP_MAX UMETA(DisplayName = "DefaultMAX")
 };
+
+USTRUCT(BlueprintType)
+struct FDirectionalHitResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bFromFront = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bFromBack = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bFromLeft = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bFromRight = false;
+};
+
 UCLASS()
 class HEROESANDFILLAINS_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface, public ICapsuleInterface
 {
@@ -54,15 +73,18 @@ public:
 	virtual void MajixAttack();
 	virtual void Die() override;
 
+	UFUNCTION(BlueprintCallable)
+	virtual void Dissolve();
+
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastHandleDeath();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
-	UFUNCTION(BlueprintCallable)
-	virtual void DirectionalHitReact(const FVector& ImpactPoint);
-
+	UFUNCTION(BlueprintCallable, Category="HitReaction")
+	FDirectionalHitResult DirectionalHitReact(const FVector& ImpactPoint);
+	
 	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -360,7 +382,14 @@ protected:
 
 	void AddCharacterAbilities() const;
 
-	void Dissolve();
+	/*************************************
+	*****                            *****
+	*****     DISSOLVE MATERIALS     *****
+	*****                            *****
+	*************************************/
+
+	/* UFUNCTION(BlueprintCallable)
+	 virtual void Dissolve();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void StartCharacterDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
@@ -372,8 +401,8 @@ protected:
 	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
-
+	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance; 
+*/
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")

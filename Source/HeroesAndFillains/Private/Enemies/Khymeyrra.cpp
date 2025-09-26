@@ -64,6 +64,45 @@ void AKhymeyrra::BeginPlay()
 	*GetMesh()->GetComponentScale().ToString());
 }
 
+void AKhymeyrra::MulticastHandleDeath_Implementation()
+{
+	Super::MulticastHandleDeath_Implementation();
+	Dissolve();
+}
+
+void AKhymeyrra::Dissolve()
+{
+	if (IsValid(KhymeyrrahDissolveMaterialInstanceZero) && IsValid(KhymeyrrahDissolveMaterialInstanceOne) && IsValid(KhymeyrrahDissolveMaterialInstanceTwo) && IsValid(KhymeyrrahDissolveMaterialInstanceThree) && IsValid(KhymeyrrahDissolveMaterialInstanceFour) && IsValid(KhymeyrrahDissolveMaterialInstanceFive) && IsValid(KhymeyrrahDissolveMaterialInstanceSix) && IsValid(KhymeyrrahDissolveMaterialInstanceSeven))
+	{
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstZero = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceZero, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstOne = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceOne, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstTwo = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceTwo, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstThree = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceThree, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstFour = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceFour, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstFive = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceFive, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstSix = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceSix, this);
+		UMaterialInstanceDynamic* DynamicKhymeyrrahMatInstSeven = UMaterialInstanceDynamic::Create(KhymeyrrahDissolveMaterialInstanceSeven, this);
+
+		GetMesh()->SetMaterial(0, DynamicKhymeyrrahMatInstZero);
+		GetMesh()->SetMaterial(1, DynamicKhymeyrrahMatInstOne);
+		GetMesh()->SetMaterial(2, DynamicKhymeyrrahMatInstTwo);
+		GetMesh()->SetMaterial(3, DynamicKhymeyrrahMatInstThree);
+		GetMesh()->SetMaterial(4, DynamicKhymeyrrahMatInstFour);
+		GetMesh()->SetMaterial(5, DynamicKhymeyrrahMatInstFive);
+		GetMesh()->SetMaterial(6, DynamicKhymeyrrahMatInstSix);
+		GetMesh()->SetMaterial(7, DynamicKhymeyrrahMatInstSeven);
+		
+		StartKhymeyrrahDissolveTimelineZero(DynamicKhymeyrrahMatInstZero);
+		StartKhymeyrrahDissolveTimelineOne(DynamicKhymeyrrahMatInstOne);
+		StartKhymeyrrahDissolveTimelineTwo(DynamicKhymeyrrahMatInstTwo);
+		StartKhymeyrrahDissolveTimelineThree(DynamicKhymeyrrahMatInstThree);
+		StartKhymeyrrahDissolveTimelineFour(DynamicKhymeyrrahMatInstFour);
+		StartKhymeyrrahDissolveTimelineFive(DynamicKhymeyrrahMatInstFive);
+		StartKhymeyrrahDissolveTimelineSix(DynamicKhymeyrrahMatInstSix);
+		StartKhymeyrrahDissolveTimelineSeven(DynamicKhymeyrrahMatInstSeven);
+	}
+}
+
 int32 AKhymeyrra::PlayDeathMontage()
 {
 	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);

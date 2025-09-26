@@ -55,8 +55,6 @@ void ATeamsGameMode::Logout(AController* Exiting)
 
 void ATeamsGameMode::HandleMatchHasStarted()
 {
-	Super::HandleMatchHasStarted();
-
 	AHAFGameState* BGameState = Cast<AHAFGameState>(UGameplayStatics::GetGameState(this));
 	if (BGameState)
 	{

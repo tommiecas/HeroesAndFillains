@@ -28,7 +28,7 @@
 #include "Characters/FillainAnimInstance.h"
 #include "Characters/FillainFinalAnimInstance.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
-#include "GameMode/HAFGameMode.h"
+#include "GameMode/HaFGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -63,6 +63,8 @@
 #include "NavigationSystem.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Components/SplineComponent.h"
+#include "GameMode/HybridGameMode.h"
+#include "HUD/Widgets/DamageTextComponent.h"
 #include "Input/HAFInputComponent.h"
 #include "Interfaces/EnemyInterface.h"
 #include "Items/Soul.h"
@@ -588,6 +590,18 @@ void AFillainPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 }
 
+void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+{
+	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	{
+		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		DamageText->RegisterComponent();
+		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		DamageText->SetDamageText(DamageAmount);
+	}
+}
+
 bool AFillainPlayerController::IsHUDReady() const
 {
 	return FillainHUD &&
@@ -951,6 +965,22 @@ FString AFillainPlayerController::GetTeamsInfoText(AHAFGameState* HAFGameState)
 	return InfoTextString;
 }
 
+void AFillainPlayerController::ToggleGameMode()
+{
+	if (AHybridGameMode* GM = GetWorld()->GetAuthGameMode<AHybridGameMode>())
+	{
+		// Flip between PvE and PvP
+		if (GM->CurrentMode == EGameModeType::EGMT_PvE)
+		{
+			GM->SetGameMode(EGameModeType::EGMT_PvP);
+		}
+		else
+		{
+			GM->SetGameMode(EGameModeType::EGMT_PvE);
+		}
+	}
+}
+
 void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if (InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
@@ -1049,6 +1079,8 @@ void AFillainPlayerController::SetupInputComponent()
 	HAFInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &AFillainPlayerController::ShiftPressed);
 	HAFInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AFillainPlayerController::ShiftReleased);
 	HAFInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);;
+	HAFInputComponent->BindAction(ToggleGameModeAction, ETriggerEvent::Triggered, this, &AFillainPlayerController::ToggleGameMode);
+
 }
 
 void AFillainPlayerController::OnRep_ShowTeamScores()

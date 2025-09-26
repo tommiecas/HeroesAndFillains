@@ -66,6 +66,10 @@ public:
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	void ApplyInitialValuesForOwner() const;
+	void TakeDamageFromShield(float Damage, const FEffectProperties& Properties);
+	void TakeDamageFromShieldThenHealth(float Damage, const FEffectProperties& Properties);
+	void TakeDamageFromHealth(float Damage, const FEffectProperties& Properties);
+	void DealWithDeathAndWidgets(float Damage, const FEffectProperties& Properties); 
 
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 
@@ -283,6 +287,7 @@ private:
 	const FGameplayAttributeData& MaxAttribute,
 	float NewMaxValue,
 	const FGameplayAttribute& AffectedAttributeProperty);
+	void ShowFloatingText(const FEffectProperties& Properties, float Damage) const;
 
 public:
 

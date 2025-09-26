@@ -77,7 +77,6 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void InitializeDefaultAttributes() const override;
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
-	virtual void DirectionalHitReact(const FVector& ImpactPoint) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
@@ -213,7 +212,7 @@ public:
 	void Eliminate(bool bPlayerLeftGame);
 	void HideSniperScope();
 	void ShowSniperScope();
-	void StartDissolveEffect();
+	// void StartDissolveEffect();
 	void DisableAllComponents();
 	void SpawnEliminationBotEffect();
 	void PlayEliminationSound();
@@ -342,7 +341,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
 
-	void SetTeamColor(ETeam Team);
+	// void SetTeamColor(ETeam Team);
 	
 	/****************** 
 	** Moving Around **
@@ -529,7 +528,7 @@ public:
 	TSubclassOf<AHAFMajixProjectile> HAFProjectileClass;
 
 	UFUNCTION(BlueprintCallable)
-	void SetOverlaps(APCPickupBaseItem* FloatingItem);
+	 void SetOverlaps(APCPickupBaseItem* FloatingItem);
 
 	UPROPERTY(EditDefaultsOnly, Category="GAS|Damage")
 	TSubclassOf<class UGameplayEffect> GE_DamageSplit;
@@ -862,10 +861,10 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual void SetOverlappingItem(APCPickupBaseItem* HoveringItem);
+	virtual void SetOverlappingItem(APCPickupBaseItem* HoveringItem) override;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void SetOverlappingWeapon(AWeaponBase* HoveringWeapon);
+	virtual void SetOverlappingWeapon(AWeaponBase* HoveringWeapon) override;
 	
 	bool IsWeaponEquipped();
 	bool IsAiming();
