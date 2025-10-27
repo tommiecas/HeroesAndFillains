@@ -1,207 +1,148 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Enemies/StormAssassin.h"
-#include "Animation/AnimInstance.h"
-#include "Characters/FillainCharacter.h"
+
+#include "Enemies/Gnarled.h"
 #include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Enemies/Khymeyrra.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Characters/FillainCharacter.h"
+#include "GameFramework/DamageType.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
-#include "Weapons/Melee/StormWeapons.h"
+#include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 AStormAssassin::AStormAssassin()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	
-	RightFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFootCollision"));
-	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFootSocket"));
-	RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	RightFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox); // e.g., Enemy
-	RightFootCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	RightFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); // PlayerCharacter
-	RightFootCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); // Player Character's Weapon
-	RightFootCollision->SetGenerateOverlapEvents(true);
+    PrimaryActorTick.bCanEverTick = true;
 
-	LeftFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftFootCollision"));
-	LeftFootCollision->SetupAttachment(GetMesh(), FName("LeftFootSocket"));
-	LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeftFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox); // e.g., Enemy
-	LeftFootCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	LeftFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap); // PlayerCharacter
-	LeftFootCollision->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECollisionResponse::ECR_Overlap); // Player Character's Weapon
-	LeftFootCollision->SetGenerateOverlapEvents(true);
+    // --- Right Fist ---
+    RightFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFistCollision"));
+    RightFootCollision->SetupAttachment(GetMesh(), FName("RightFistSocket"));
+    RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RightFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
+    RightFootCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+    RightFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+    RightFootCollision->SetGenerateOverlapEvents(true);
 
-	if (StormAssassin == EStormAssassin::ESA_Sandstorm) EnemyDisplayName = TEXT("the Storm Assassin known as Sandstorm");
-	if (StormAssassin == EStormAssassin::ESA_Soulstorm) EnemyDisplayName = TEXT("the Storm Assassin known as Soulstorm");
-	if (StormAssassin == EStormAssassin::ESA_Skystorm) EnemyDisplayName = TEXT("the Storm Assassin known as Skystorm");
-	if (StormAssassin == EStormAssassin::ESA_Shadowstorm) EnemyDisplayName = TEXT("the Storm Assassin known as Shadowstorm");
+    // --- Left Fist ---
+    LeftFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftFistCollision"));
+    LeftFootCollision->SetupAttachment(GetMesh(), FName("LeftFistSocket"));
+    LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    LeftFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
+    LeftFootCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+    LeftFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+    LeftFootCollision->SetGenerateOverlapEvents(true);
+
+    // Optional: initial display name
+    EnemyDisplayName = FText::FromString(TEXT("a Gnarled"));
 }
 
-void AStormAssassin::Tick(float DeltaTime)
+void AGnarled::BeginPlay()
 {
-	Super::Tick(DeltaTime);
+    Super::BeginPlay();
+
+    // ✅ Register these colliders with the inherited attack system
+    RegisterAttackCollision(RightFistCollision);
+    RegisterAttackCollision(LeftFistCollision);
+
+    Tags.Add(FName("Gnarled"));
 }
 
-void AStormAssassin::AttackEnd()
+void AGnarled::Tick(float DeltaTime)
 {
-	Super::AttackEnd();
-
-	DisableLeftFoot();
-	DisableRightFoot();
+    Super::Tick(DeltaTime);
 }
 
-void AStormAssassin::Die()
+void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	Super::Die();
+    
+    if (!bCanDamage || !OtherActor) return;
+
+    Super::OnAttackCollisionOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep,
+                                    SweepResult);
+
+    // Make sure we only hit the player
+    AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
+    if (!Player || DamagedActors.Contains(Player)) return;
+
+    DamagedActors.Add(Player);
+
+    // Apply damage
+    const float DamageAmount = BaseDamage > 0.f ? BaseDamage : 15.f;
+    UGameplayStatics::ApplyDamage(Player, DamageAmount, GetController(), this, nullptr);
+
+    // Debug visuals
+    FVector HitLocation = OtherActor->GetActorLocation();
+
+    if (!SweepResult.ImpactPoint.IsNearlyZero())
+    {
+        HitLocation = SweepResult.ImpactPoint;
+    }
+
+    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
+    UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s for %.1f damage!"), *GetName(), *GetNameSafe(Player), DamageAmount);
+
+    // Optional: temporary blood Niagara
+    // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodFX, HitLocation);
+
+    // Reset damage after a short delay
+    bCanDamage = false;
+    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AGnarled::ResetCanDamage, 0.3f, false);
 }
 
-void AStormAssassin::MulticastHandleDeath_Implementation()
+void AGnarled::Dissolve()
 {
-	Super::MulticastHandleDeath_Implementation();
-	Dissolve();
+    // --- optional visual dissolve code here ---
+    // e.g. spawn dynamic material instances and run dissolve timelines
 }
 
-void AStormAssassin::Dissolve()
+int32 AGnarled::PlayDeathMontage()
 {
-	if (IsValid(DissolveMaterialInstanceZero) && IsValid(DissolveMaterialInstanceOne) && IsValid(DissolveMaterialInstanceTwo) && IsValid(DissolveMaterialInstanceThree) && IsValid(DissolveMaterialInstanceFour) && IsValid(DissolveMaterialInstanceFive) && IsValid(DissolveMaterialInstanceSix) && IsValid(DissolveMaterialInstanceSeven) && IsValid(DissolveMaterialInstanceEight) && IsValid(DissolveMaterialInstanceNine))
-	{
-		UMaterialInstanceDynamic* DynamicStormMatInstZero = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceZero, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstOne = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceOne, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstTwo = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceTwo, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstThree = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceThree, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstFour = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceFour, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstFive = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceFive, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstSix = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceSix, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstSeven = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceSeven, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstEight = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceEight, this);
-		UMaterialInstanceDynamic* DynamicStormMatInstNine = UMaterialInstanceDynamic::Create(DissolveMaterialInstanceNine, this);
-
-		GetMesh()->SetMaterial(0, DynamicStormMatInstZero);
-		GetMesh()->SetMaterial(1, DynamicStormMatInstOne);
-		GetMesh()->SetMaterial(2, DynamicStormMatInstTwo);
-		GetMesh()->SetMaterial(3, DynamicStormMatInstThree);
-		GetMesh()->SetMaterial(4, DynamicStormMatInstFour);
-		GetMesh()->SetMaterial(5, DynamicStormMatInstFive);
-		GetMesh()->SetMaterial(6, DynamicStormMatInstSix);
-		GetMesh()->SetMaterial(7, DynamicStormMatInstSeven);
-		GetMesh()->SetMaterial(8, DynamicStormMatInstEight);
-		GetMesh()->SetMaterial(9, DynamicStormMatInstNine);
-		
-		StartStormDissolveTimelineZero(DynamicStormMatInstZero);
-		StartStormDissolveTimelineOne(DynamicStormMatInstOne);
-		StartStormDissolveTimelineTwo(DynamicStormMatInstTwo);
-		StartStormDissolveTimelineThree(DynamicStormMatInstThree);
-		StartStormDissolveTimelineFour(DynamicStormMatInstFour);
-		StartStormDissolveTimelineFive(DynamicStormMatInstFive);
-		StartStormDissolveTimelineSix(DynamicStormMatInstSix);
-		StartStormDissolveTimelineSeven(DynamicStormMatInstSeven);
-		StartStormDissolveTimelineEight(DynamicStormMatInstEight);
-		StartStormDissolveTimelineNine(DynamicStormMatInstNine);
-	}
+    const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+    TEnumAsByte<EDeathPose> Pose(Selection);
+    if (Pose < EDeathPose::EDP_MAX)
+    {
+        DeathPose = Pose;
+    }
+    return Selection;
 }
 
-
-void AStormAssassin::BeginPlay()
+void AGnarled::EnableLeftSideMeleeAttack()
 {
-	Super::BeginPlay();
-
-	RightFootCollision->OnComponentBeginOverlap.AddDynamic(this, &AStormAssassin::OnRightFootOverlap);
-	LeftFootCollision->OnComponentBeginOverlap.AddDynamic(this, &AStormAssassin::OnLeftFootOverlap);
+    if (LeftFistCollision)
+    {
+        LeftFistCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Left Fist Enabled"));
+        DrawDebugBox(GetWorld(), LeftFistCollision->GetComponentLocation(),
+                     LeftFistCollision->GetScaledBoxExtent(),
+                     FColor::Green, false, 0.25f, 0, 2);
+    }
 }
 
-void AStormAssassin::OnLeftFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-								   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AGnarled::DisableLeftSideMeleeAttack()
 {
-	AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
-	if (Player && bCanDamage && !LeftFootDamagedActors.Contains(Player))
-	{
-		LeftFootDamagedActors.Add(Player);
-		
-		if (const UDamageType* DamageTypeInstance = NewObject<UDamageType>(this, UDamageType::StaticClass()))
-		{
-			Player->ReceiveDamage(Player, FootDamage, DamageTypeInstance, GetController(), this);
-		}
-		bCanDamage = false; // or timer reset, etc.
-	}
-	GetWorld()->GetTimerManager().SetTimer(
-		FootDamageResetTimer,
-		this,
-		&AStormAssassin::DisableRightFoot,
-		0.25f, // or however long the kick takes
-		false);
+    if (LeftFistCollision)
+    {
+        LeftFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Fist Disabled"));
+    }
 }
 
-void AStormAssassin::OnRightFootOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AGnarled::EnableRightSideMeleeAttack()
 {
-	AFillainCharacter* Player = Cast<AFillainCharacter>(OtherActor);
-	if (Player && bCanDamage && !RightFootDamagedActors.Contains(Player))
-	{
-		RightFootDamagedActors.Add(Player);
-		
-		if (const UDamageType* DamageTypeInstance = NewObject<UDamageType>(this, UDamageType::StaticClass()))
-		{
-			Player->ReceiveDamage(Player, FootDamage, DamageTypeInstance, GetController(), this);
-		}
-		bCanDamage = false; // or timer reset, etc.
-	}
-	GetWorld()->GetTimerManager().SetTimer(
-		FootDamageResetTimer,
-		this,
-		&AStormAssassin::DisableLeftFoot,
-		0.25f, // or however long the kick takes
-		false);
+    if (RightFistCollision)
+    {
+        RightFistCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Right Fist Enabled"));
+        DrawDebugBox(GetWorld(), RightFistCollision->GetComponentLocation(),
+                     RightFistCollision->GetScaledBoxExtent(),
+                     FColor::Cyan, false, 0.25f, 0, 2);
+    }
 }
 
-void AStormAssassin::EnableLeftFoot()
+void AGnarled::DisableRightSideMeleeAttack()
 {
-	LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	LeftFootDamagedActors.Empty();
-	bCanDamage = true;
-	EnemyState = EEnemyState::EES_Attacking;
-	CanAttack();
-	StopAllMontages();
-	// UE_LOG(LogTemp, Warning, TEXT("🟢 Left foot collision enabled"));
-}
-
-void AStormAssassin::DisableLeftFoot()
-{
-	LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeftFootCollision->SetGenerateOverlapEvents(false);
-	bCanDamage = false;
-	EnemyState = EEnemyState::EES_Patrolling;
-	StopAllMontages();
-	LeftFootDamagedActors.Empty(); // ✅ Clear after swing ends
-}
-
-void AStormAssassin::EnableRightFoot()
-{
-	RightFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	RightFootDamagedActors.Empty();
-	bCanDamage = true;
-	EnemyState = EEnemyState::EES_Patrolling;
-	CanAttack();
-	StopAllMontages();
-}
-
-void AStormAssassin::DisableRightFoot()
-{
-	RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	RightFootCollision->SetGenerateOverlapEvents(false);
-	bCanDamage = false;
-	StopAllMontages();
-	RightFootDamagedActors.Empty(); // ✅ Clear after swing ends
-}
-
-int32 AStormAssassin::PlayDeathMontage()
-{
-	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
-	TEnumAsByte<EDeathPose> Pose(Selection);;
-	if (Pose < EDeathPose::EDP_MAX)
-	{
-		DeathPose = Pose;
-	}
-	return Selection;
+    if (RightFistCollision)
+    {
+        RightFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Fist Disabled"));
+    }
 }

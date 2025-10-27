@@ -6,7 +6,7 @@
 #include "Characters/FillainCharacter.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
-#include "HUD/ItemInfoWidgetBase.h"
+#include "UI/ItemInfoWidgetBase.h"
 #include "Weapons/WeaponBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Components/BoxComponent.h"
@@ -21,8 +21,8 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/DecalComponent.h"
 #include "Components/PointLightComponent.h"
-#include "HUD/ItemInfoWidgetBase.h" //
-#include "HUD/PickupGearWidget.h"
+#include "UI/ItemInfoWidgetBase.h" //
+#include "UI/PickupGearWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/Melee/StormWeapons.h"
 

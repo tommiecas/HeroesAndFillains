@@ -3,10 +3,14 @@
 
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 
+#include "HAFAbilityTypes.h"
 #include "Characters/CharacterClassInfo.h"
+#include "Enemies/EnemyBase.h"
 #include "GameMode/HaFGameMode.h"
-#include "HUD/FillainHUD.h"
-#include "HUD/WidgetControllers/HAFWidgetController.h"
+#include "UI/FillainHUD.h"
+#include "UI/WidgetControllers/AttributeMenuWidgetController.h"
+#include "UI/WidgetControllers/HAFWidgetController.h"
+#include "UI/Widgets/EnemyAttributeMenuWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerState/HAFPlayerState.h"
 
@@ -28,8 +32,14 @@ UOverlayWidgetController* UHAFAbilitySystemBlueprintLibrary::GetOverlayWidgetCon
 }
 
 UAttributeMenuWidgetController* UHAFAbilitySystemBlueprintLibrary::GetAttributeMenuWidgetController(
-	const UObject* WorldContextObject)
+		const UObject* WorldContextObject)
 {
+	if (!WorldContextObject)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GetAttributeMenuWidgetController: Invalid parameters"));
+		return nullptr;
+	}
+
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
 	{
 		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(PC->GetHUD()))
@@ -42,6 +52,38 @@ UAttributeMenuWidgetController* UHAFAbilitySystemBlueprintLibrary::GetAttributeM
 		}
 	}
 	return nullptr;
+	// THIS IS THE INTERFACE STUFF AI CAME UP WITH TO REPLACE THE OBJECT/ENEMYATTRIBBUTEMENUWIDGETCONTROLLER DEBACLE.
+/*
+	// ✅ If the target actor implements the interface, we’re good.
+	if (TargetActor->GetClass()->ImplementsInterface(UEnemyAttributeMenuWidgetControllerInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Returning %s as its own WidgetController"), *TargetActor->GetName());
+		return TargetActor;
+	}
+
+	// ✅ Fallback: maybe it’s the player’s HUD or PS-based system
+	APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
+	if (!PC) return nullptr;
+
+	AFillainHUD* FillainHUD = Cast<AFillainHUD>(PC->GetHUD());
+	if (!FillainHUD)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GetAttributeMenuWidgetController: No FillainHUD found"));
+		return nullptr;
+	}
+
+	// --- Handle player case (Fillain)
+	if (AHAFPlayerState* PS = PC->GetPlayerState<AHAFPlayerState>())
+	{
+		UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+		UAttributeSet* AS = PS->GetAttributeSet();
+		if (ASC && AS)
+		{
+			const FWidgetControllerParams Params(PC, PS, ASC, AS);
+			return FillainHUD->GetAttributeMenuWidgetController(Params);
+		}
+	}
+	return nullptr;*/
 }
 
 void UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC)
@@ -106,6 +148,42 @@ bool UHAFAbilitySystemBlueprintLibrary::IsGameplayEffectSpecHandleValid(const FG
 {
 	{
 		return SpecHandle.IsValid();
+	}
+}
+
+bool UHAFAbilitySystemBlueprintLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->IsBlockedHit();
+	}
+	return false;
+}
+
+bool UHAFAbilitySystemBlueprintLibrary::IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->IsCriticalHit();
+	}
+	return false;
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsBlockedHit)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetIsBlockedHit(bInIsBlockedHit);
+	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetIsCriticalHit(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsCriticalHit)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetIsCriticalHit(bInIsCriticalHit);
 	}
 }
 

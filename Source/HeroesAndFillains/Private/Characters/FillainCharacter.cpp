@@ -102,6 +102,8 @@
 #include "GameplayEffectTypes.h"       // FGameplayEffectSpec, FGameplayEffectSpecHandle
 #include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
 #include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
+#include "UI/WidgetControllers/HAFWidgetController.h"
+#include "UI/WidgetControllers/OverlayWidgetController.h"
 
 
 AFillainCharacter::AFillainCharacter()
@@ -431,6 +433,21 @@ void AFillainCharacter::BeginPlay()
 
 	// Initial sync for your capsule update system
 	RequestFillainCharacterCapsuleUpdate();
+
+	ApplyStartupEffects();     // <-- apply your attribute GE here
+	// Delay HUD init by a short time to let the AbilitySystem settle
+	FTimerHandle HUDInitTimer;
+	GetWorldTimerManager().SetTimer(HUDInitTimer, [this]()
+	{
+		if (APlayerController* PC = Cast<APlayerController>(Controller))
+		{
+			AFillainHUD* HUD = Cast<AFillainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->InitializeOverlay(PC, GetPlayerState(), AbilitySystemComponent, AttributeSet);
+			}
+		}
+	}, 0.05f, false); // 50 ms delay
 }
 
 bool AFillainCharacter::IsCameraWeird(FString& OutWhy) const
@@ -1683,11 +1700,11 @@ void AFillainCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const U
     // Negative deltas (since modifiers are Add operations)
     if (DamageToShield > 0.f)
     {
-        Spec->SetSetByCallerMagnitude(TAG_SBC_Damage_Shield, -DamageToShield);
+        Spec->SetSetByCallerMagnitude(TAG_Damage_Shield, -DamageToShield);
     }
     if (OverflowDamage > 0.f)
     {
-        Spec->SetSetByCallerMagnitude(TAG_SBC_Damage_Health, -OverflowDamage);
+        Spec->SetSetByCallerMagnitude(TAG_Damage_Health, -OverflowDamage);
     }
 
     AbilSystComp->ApplyGameplayEffectSpecToSelf(*Spec);
@@ -2739,6 +2756,11 @@ void AFillainCharacter::HitReactEnd()
 	CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 }
 
+void AFillainCharacter::ApplyStartupEffects() const
+{
+	Super::ApplyStartupEffects();
+}
+
 float AFillainCharacter::GetHitAssistPaddingCM()
 {
 	const UAbilitySystemComponent* AbilitySC =
@@ -2868,9 +2890,9 @@ void AFillainCharacter::Server_ApplyFillainCharacterCapsuleFromStats_Implementat
 		// Multicast so clients snap visually
 		Multicast_ApplyFillainCharacterCapsuleSize(TargetUnscaledHalf, TargetUnscaledRadius);
 
-		// Helpful logging
-		UE_LOG(LogTemp, Warning, TEXT("[Capsule] Agi=%.1f Flex=%.1f => R=%.1f HH=%.1f"),
-			Agility, Flexibility, TargetUnscaledRadius, TargetUnscaledHalf);
+		// Helpful logging - DEBUGGING AGILITY/FLEXIBILITY
+		//UE_LOG(LogTemp, Warning, TEXT("[Capsule] Agi=%.1f Flex=%.1f => R=%.1f HH=%.1f"),
+		//	Agility, Flexibility, TargetUnscaledRadius, TargetUnscaledHalf);
 	}
 
 	void AFillainCharacter::Multicast_ApplyFillainCharacterCapsuleSize_Implementation(float TargetUnscaledHalf, float TargetUnscaledRadius)
@@ -3475,14 +3497,38 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
 	AttributeSet = FillainPlayerState->GetAttributeSet();
 
+	InitializeDefaultAttributes();
+
+	if (const UHAFAttributeSet* AS = Cast<UHAFAttributeSet>(AttributeSet))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Health=%f / Max=%f | Shield=%f / Max=%f"),
+			AS->GetHealth(), AS->GetMaxHealth(), AS->GetShield(), AS->GetMaxShield());
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("ASC Owner: %s | Avatar: %s"),
+	*GetNameSafe(AbilitySystemComponent->GetOwnerActor()),
+	*GetNameSafe(AbilitySystemComponent->GetAvatarActor()));
+
+	UE_LOG(LogTemp, Warning, TEXT("AttributeSet outer: %s"), *GetNameSafe(AttributeSet->GetOuter()));
+
 	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
 	{
-		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
+		if (AFillainHUD* OnscreenHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
 		{
-			FillainHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
+			OnscreenHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
-	InitializeDefaultAttributes();
+	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
+	{
+		if (AFillainHUD* GameHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
+		{
+			FWidgetControllerParams OverlayWCParams;
+			if (UOverlayWidgetController* WC = GameHUD->GetOverlayWidgetController(OverlayWCParams))
+			{
+				WC->BroadcastInitialValues(); // rebroadcast once attributes are real
+			}
+		}
+	}
 }
 
 void AFillainCharacter::InitializeDefaultAttributes() const
@@ -3493,6 +3539,7 @@ void AFillainCharacter::InitializeDefaultAttributes() const
 	{
 		ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 		ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+		ApplyEffectToSelf(DefaultResistanceAttributes, 1.f);
 		const FGameplayAttribute MaxAttr = UHAFAttributeSet::GetMaxHealthAttribute();
 		UE_LOG(LogTemp, Warning, TEXT("[ASC] MaxHealth=%f"),
 		   AbilitySystemComponent->GetNumericAttribute(MaxAttr));
@@ -3517,7 +3564,7 @@ void AFillainCharacter::InitializeDefaultAttributes() const
 		if (UHAFAttributeSet* HAFASet = Cast<UHAFAttributeSet>(AttributeSet))
 		{
 			// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
-			UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
+			/*UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
 				"Armor=%.3f ArmorPenetration=%.3f BlockChance=%.3f CriticalHitChance=%.3f CriticalHitDamage=%.3f CriticalHitResistance=%.3f "
 				"Agility=%.3f Flexibility=%.3f Purity=%.3f Corruptibility=%.3f Intuition=%.3f Vision=%.3f Charm=%.3f "
 				"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
@@ -3544,7 +3591,7 @@ void AFillainCharacter::InitializeDefaultAttributes() const
 				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxShieldAttribute()),
 				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxStaminaAttribute()),
 				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxMajixAttribute())
-		);
+		);*/
 		}
 	}
 }
@@ -3579,6 +3626,7 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 	{
 		ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
 		ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
+		ApplyEffectToSelf(DefaultResistanceAttributes, 1);
 		ApplyEffectToSelf(DefaultVitalAttributes, 1);
 		ApplyEffectToSelf(DefaultInvisibleAttributes, 1);
 	}
@@ -3590,11 +3638,11 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 	// Safe “post-init” log (no direct FGameplayAttributeData deref)
 	auto SafeGet=[&](const FGameplayAttribute& A){return AbilitySystemComponent->GetNumericAttribute(A);};
 	UHAFAttributeSet* HAFAtSet = Cast<UHAFAttributeSet>(AttributeSet);
-	UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
+	/* UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
 		HasAuthority(),
 		SafeGet(HAFAtSet->GetMaxHealthAttribute()),
 		SafeGet(HAFAtSet->GetArmorAttribute()),
-		SafeGet(HAFAtSet->GetCriticalHitChanceAttribute()));
+		SafeGet(HAFAtSet->GetCriticalHitChanceAttribute())); */
 
 	// Ensure ASC is initialized (common place you do InitAbilityActorInfo)
 	BindFillainCharacterCapsuleHooksOnce();        // server bind
@@ -3710,9 +3758,9 @@ void AFillainCharacter::ApplyFillainCharacterCapsuleSize_FeetPlanted(float Targe
             Move->SetMovementMode(MOVE_Walking);
         }
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("[CapsuleApply] R=%.2f HH=%.2f NewScaledHalf=%.2f"),
-        Radius, Half, NewScaledHalf);
+// DEBUGGING CAPSULE SIZE CHANGE RE: AGILITY/FLEXIBILITY
+//    UE_LOG(LogTemp, Warning, TEXT("[CapsuleApply] R=%.2f HH=%.2f NewScaledHalf=%.2f"),
+ //       Radius, Half, NewScaledHalf);
 }
 
  /******************************************************\

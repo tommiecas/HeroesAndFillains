@@ -9,9 +9,9 @@
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "HAFComponents/CombatComponent.h"
-#include "HUD/AmmoPickupIntelWidget.h"
-#include "HUD/ItemInfoWidgetBase.h"
-#include "HUD/PickupGearWidget.h"
+#include "UI/AmmoPickupIntelWidget.h"
+#include "UI/ItemInfoWidgetBase.h"
+#include "UI/PickupGearWidget.h"
 
 AAmmoPickup::AAmmoPickup()
 	: Super()

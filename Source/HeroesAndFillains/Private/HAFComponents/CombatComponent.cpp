@@ -12,7 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "PlayerController/FIllainPlayerController.h"
 #include "Camera/CameraComponent.h"
-#include "HUD/FillainHUD.h"
+#include "UI/FillainHUD.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "Characters/FillainAnimInstance.h"

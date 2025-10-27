@@ -24,6 +24,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
+
+	
 	
 protected:
 	virtual void BeginPlay() override;
@@ -36,6 +38,8 @@ protected:
 	TObjectPtr<USphereComponent> NewSphere;
 	
 private:
+	
+	
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass; // use this instead of a cached SpecHandle
 

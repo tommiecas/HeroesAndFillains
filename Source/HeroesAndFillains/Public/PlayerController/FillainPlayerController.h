@@ -7,14 +7,12 @@
 #include "GameFramework/PlayerController.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
-#include "Weapons/Melee/MeleeWeapon.h"
+#include "Interfaces/EnemyInterface.h"
 #include "FillainPlayerController.generated.h"
 
 class UDamageTextComponent;
 class UAbilitySystemComponent;
 class UHAFInputConfig;
-class AEnemyBase;
 class UTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
@@ -55,7 +53,7 @@ public:
 	void SetHUDGrenades(int32 Grenades);
 
 	UFUNCTION(Client, Reliable)
-	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter);
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsHUDReady() const;
@@ -277,7 +275,7 @@ private:
 
 
 
-	float MatchTime = 0.f;
+	float MatchTime = 5400.f;
 	float WarmupTime = 0.f;
 	float LevelStartingTime = 0.f;
 	float CooldownTime = 0.f;

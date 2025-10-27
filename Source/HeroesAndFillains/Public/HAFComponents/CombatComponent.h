@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "HUD/FillainHUD.h"
+#include "UI/FillainHUD.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "Weapons/WeaponBase.h"

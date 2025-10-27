@@ -140,7 +140,7 @@ void AHAFMajixProjectile::OnNewSphereOverlap(UPrimitiveComponent* OverlappedComp
 					// ✅ Extract the damage value from the spec (SetByCaller)
 					float DamageAmount = 0.f;
 					DamageEffectSpecHandle.Data->GetSetByCallerMagnitude(
-						FGameplayTag::RequestGameplayTag(FName("SetByCaller.Damage")),
+						FGameplayTag::RequestGameplayTag(FName("Damage")),
 						false,
 						DamageAmount
 					);

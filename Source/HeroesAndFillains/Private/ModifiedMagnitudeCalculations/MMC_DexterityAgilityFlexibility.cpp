@@ -56,7 +56,7 @@ float UMMC_DexterityAgilityFlexibility::CalculateBaseMagnitude_Implementation(co
 	const float NewHalf   = OldHalf   * (1.f - AgilityPercent);
 	const float NewRadius = OldRadius * (1.f - FlexibilityPercent);
 	
-	UE_LOG(LogTemp, Warning, TEXT("MMC (debug): half=%.2f radius=%.2f"), NewHalf, NewRadius);
+	// UE_LOG(LogTemp, Warning, TEXT("MMC (debug): half=%.2f radius=%.2f"), NewHalf, NewRadius);
 	return NewHalf - NewRadius;	
 }
 

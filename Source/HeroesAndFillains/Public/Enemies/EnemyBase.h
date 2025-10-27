@@ -3,326 +3,408 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "MotionWarping.h"
 #include "Characters/BaseCharacter.h"
+#include "Delegates/AttributeDelegates.h" // ✅ Must come before generated.h
+#include "Interfaces/EnemyAttributeMenuWidgetControllerInterface.h"
 #include "Interfaces/EnemyInterface.h"
-#include "Interfaces/HitInterface.h"
-#include "Items/Soul.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "GenericTeamAgentInterface.h"
-#include "GameplayTagContainer.h"
-#include "MotionWarpingComponent.h"
-#include "HUD/WidgetControllers/OverlayWidgetController.h"
-#include "Characters/CharacterClassInfo.h"
 #include "EnemyBase.generated.h"
 
-class UEnemyHealthBarWidget;
-class UEnemyProgressBarBaseWidget;
-class FOnAttributeChangedSignature;
-class ARangedWeapon;
-class AAIController;
+class UTimelineComponent;
+class UBoxComponent;
+class UEnemyWidgetControllerBase;
 class UWidgetComponent;
+class UHAFAbilitySystemComponent;
+class UHAFAttributeSet;
+class UEnemyStatsWidget;
+class UEnemyAttributeMenuWidget;
+class AAIController;
+class ASoul;
+class AWeaponBase;
+class AMeleeWeapon;
+class ARangedWeapon;
+class UEnemyProgressBarBaseWidget;
+class UAttributeInfo;
+class AHAFAIController;
+class UBehaviorTreeComponent;
+class UBehaviorTree;
 
-UENUM(BlueprintType, Blueprintable)
+
+UENUM(BlueprintType)
 enum class EEnemyState : uint8
 {
-	EES_NoState UMETA(DisplayName = "NoState"),
-	EES_Dead UMETA(DisplayName = "Dead"),
-	EES_Patrolling UMETA(DisplayName = "Patrolling"),
-	EES_Chasing UMETA(DisplayName = "Chasing"),
-	EES_Attacking UMETA(DisplayName = "Attacking"),
-	EES_Engaged UMETA(DisplayName = "Engaged"),
-
-	EES_MAX UMETA(DisplayName = "DefaultMAX")
+    EES_Patrolling      UMETA(DisplayName = "Patrolling"),
+    EES_Chasing         UMETA(DisplayName = "Chasing"),
+    EES_Attacking       UMETA(DisplayName = "Attacking"),
+    EES_Engaged         UMETA(DisplayName = "Engaged"),
+    EES_Dead            UMETA(DisplayName = "Dead"),
+    EES_Idle            UMETA(DisplayName = "Idle")
 };
 
 UCLASS()
-class HEROESANDFILLAINS_API AEnemyBase : public ABaseCharacter, public IEnemyInterface, public IGenericTeamAgentInterface
+class HEROESANDFILLAINS_API AEnemyBase  : public ABaseCharacter, public IEnemyInterface, public IEnemyAttributeMenuWidgetControllerInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AEnemyBase();
-
-	/******************************
-	****    Enemy Interface    ****
-	******************************/
-	
-	virtual auto HighlightActor() -> void override;
-	virtual void UnHighlightActor() override;
-
-	/*******************************
-	****    Combat Interface    ****
-	*******************************/
-
-	virtual int32 GetPlayerLevel() override;
-	virtual void Die() override;
-
-	virtual void Dissolve() override;
-
-	UPROPERTY(BlueprintReadOnly, Category = "UI")
-	bool bHighlighted = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	bool bHitReacting = false;
-	
-	void SpawnEnemyWeapon();
-
-	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnHealthChanged;
+    AEnemyBase();
+
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void PossessedBy(AController* NewController) override;
+    virtual void OnRep_PlayerState() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    // --- Interface ---
+    virtual UAbilitySystemComponent* GetEnemyASC_Implementation() const override;
+    virtual UAttributeSet* GetEnemyAttributeSet_Implementation() const override;
+    virtual void BroadcastEnemyAttributeInfo(const FGameplayTag& AttributeTag, const FGameplayAttribute& Attribute) const;
+    virtual void BindCallbacksToDependencies_Implementation() override;
+    virtual void BroadcastInitialEnemyValues_Implementation() override;
+
+    // --- Combat / AI ---
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                             class AController* EventInstigator, AActor* DamageCauser) override;
+    virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+    virtual void Die() override;
+    virtual void Dissolve() override;
+    virtual int32 PlayDeathMontage() override;
+
+    virtual void MeleeAttack() override;
+    virtual void MajixAttack() override;
+    virtual void PlayAttackMontage() override;
+    virtual void PlayRandomMeleeAttackMontage() override;
+    virtual void PlayRandomMajixAttackMontage() override;
+    virtual void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+    virtual bool CanAttack() override;
+    virtual void AttackEnd() override;
+    virtual void InitializeDefaultAttributes() const override;
+
+    // --- Delegates ---
+    UPROPERTY(BlueprintAssignable, Category = "GAS | Attributes")
+    FAttributeInfoSignature EnemyAttributeInfoDelegate;
+    
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyHealthChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyMaxHealthChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyShieldChanged; // [Fixed] Typo corrected
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyMaxShieldChanged; // [Fixed] Typo corrected
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyStaminaChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyMaxStaminaChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyMajixChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnAttributeChanged OnEnemyMaxMajixChanged;
+
+    void HandleChangeInHealth(const FOnAttributeChangeData& Data);
+    void HandleChangeInMaxHealth(const FOnAttributeChangeData& Data);
+    void HandleChangeInShield(const FOnAttributeChangeData& Data);
+    void HandleChangeInMaxShield(const FOnAttributeChangeData& Data);
+    void HandleChangeInStamina(const FOnAttributeChangeData& Data);
+    void HandleChangeInMaxStamina(const FOnAttributeChangeData& Data);
+    void HandleChangeInMajix(const FOnAttributeChangeData& Data);
+    void HandleChangeInMaxMajix(const FOnAttributeChangeData& Data);
+
+    UPROPERTY()
+    UEnemyWidgetControllerBase* EnemyWidgetController;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UEnemyWidgetControllerBase> EnemyWidgetControllerClass;
+    
+    // --- AI Logic ---
+    void InitializeEnemy();
+
+    UFUNCTION(BlueprintCallable)
+    AHAFAIController* LaunchEnemyHAFAIController();
+
+    UFUNCTION(BlueprintCallable)
+    virtual void RegisterAttackCollision(UBoxComponent* CollisionBox);
+
+    void CheckPatrolTarget();
+    void CheckCombatTarget();
+    void PatrolTimerFinished();
+    void EnemiesLoseInterest();
+    void EnemiesStartPatrolling();
+    void EnemiesChaseTarget();
+    bool IsOutsideCombatRadius();
+    bool IsOutsideAttackRadius();
+    bool IsInsideAttackRadius();
+    bool IsEnemyChasing();
+    bool IsEnemyAttacking();
+    bool IsEnemyEngaged();
+    bool IsEnemyDead();
+    void ClearPatrolTimer();
+    void StartAttackTimer();
+    void ClearAttackTimer();
+    bool InTargetRange(AActor* Target, double Radius);
+    void MoveToTarget(AActor* Target);
+    AActor* ChoosePatrolTarget();
+    void PawnSeen(APawn* SeenPawn);
+
+    UFUNCTION()
+    void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
+
+    // --- Weapons ---
+    void SpawnEnemyWeapon();
+
+    // --- UI / Widgets ---
+    void InitializeEnemyWidgets();
+    void InitializeEnemyAttributeMenu();
+    void UpdateEnemyAttributeMenu();
+
+    UFUNCTION(BlueprintCallable, Category = "Visual")
+    virtual void HighlightActor() override;
+
+    UFUNCTION(BlueprintCallable, Category = "Visual")
+    virtual void UnHighlightActor() override;
+
+    UFUNCTION(BlueprintCallable, Category = "Visual")
+    virtual void OnHoverStart() override;
+
+    UFUNCTION(BlueprintCallable, Category = "Visual")
+    virtual void OnHoverEnd() override;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnMaxHealthChanged;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnShieldChanged;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnAttributeChangedSignature OnMaxShieldChanged;
-	
-	UFUNCTION(BlueprintCallable)
-	AAIController* LaunchEnemyAIController();
-
-	void InitializeEnemy();
-	virtual void Tick(float DeltaTime) override;
-    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	void InitializeAbilitySystem();
-	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-	virtual void Destroyed() override;
-	virtual void AttackEnd() override;
-	virtual void InitializeDefaultAttributes() const override;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	FString EnemyDisplayName = TEXT("Unnamed Enemy");
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Navigation")
-	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+    // --- GAS ---
+    virtual void InitializeAbilityActorInfo() override;
+    virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                      class AController* EventInstigator, AActor* DamageCauser) override;
+
+    // --- Soul / Charm / Flee ---
+    void SpawnSoul();
+    void TriggerCharm(AActor* InPlayerActor);
+    void BeginFlee();
+    void DoNextFleeHop();
+    void AddStateTag(const FGameplayTag& Tag);
+    void RemoveStateTag(const FGameplayTag& Tag);
+    FGenericTeamId GetGenericTeamId() const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	AMeleeWeapon* EquippedEnemyMeleeWeapon;
+    // --- Helpers ---
+    virtual int32 GetPlayerLevel() override;
+    virtual void MulticastHandleDeath_Implementation() override;
+    void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	AWeaponBase* EquippedEnemyWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	ARangedWeapon* EquippedEnemyRangedWeapon;
-
-	UFUNCTION(BlueprintCallable)
-	virtual void PlayRandomMeleeAttackMontage() override;
-	virtual void PlayRandomMajixAttackMontage() override;
-
-	UFUNCTION(BlueprintCallable)
-	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	TSubclassOf<class ASoul> SoulClass;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	int32 DeadEnemySoulCount;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAIPerceptionComponent* AIPerceptionComponent;
-
-	UPROPERTY()
-	UAISenseConfig_Sight* SightConfig;
-
-	UFUNCTION()
-	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
-
-	UFUNCTION(BlueprintCallable)
-	void TriggerCharm(AActor* InPlayerActor);
-	
-	// IGenericTeamAgentInterface
-	virtual FGenericTeamId GetGenericTeamId() const override; // declaration only
-	virtual void SetGenericTeamId(const FGenericTeamId& InTeamId) override { TeamId = InTeamId; }
-
-	// Called by BT Service when no enemy remains or player dead
-	UFUNCTION(BlueprintCallable)
-	void BeginFlee();
-
-	// Accessors the BT will use:
-	bool IsCharmed() const { return bIsCharmed; }
-	bool IsFleeing() const { return bIsFleeing; }
-	AActor* GetCachedPlayer() const { return CachedPlayer; }
-
-	// Recompute next hop after reaching last hop
-	void DoNextFleeHop();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AActor* OwnerActor;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UEnemyProgressBarBaseWidget> EnemyHealthBarWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UEnemyProgressBarBaseWidget> EnemyShieldBarWidgetClass;
-
-	void HitReactTagChanged(FGameplayTag CallbackTag, int32 NewCount);
-
-	UPROPERTY(BlueprintReadOnly, Category = "Combat")
-	bool bReactingToHit = false;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Combat")
-	float BaseWalkSpeed = 250.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float LifeSpan = 5.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bStartupAbilitiesGranted = false;
-	
-	FDelegateHandle HealthChangedHandle;
-	FDelegateHandle MaxHealthChangedHandle;
-	FDelegateHandle ShieldChangedHandle;
-	FDelegateHandle MaxShieldChangedHandle;
-	FDelegateHandle HitReactChangedHandle;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UWidgetComponent> EnemyHealthBar;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UWidgetComponent> EnemyShieldBar;
-
-	virtual void MulticastHandleDeath_Implementation() override;
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_PlayerState() override;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bASCBindingsInitialized = false;
-
-
-
-
-	virtual void InitializeAbilityActorInfo() override;
-	void SpawnSoul();
-	virtual void PlayAttackMontage() override;
-	virtual int32 PlayDeathMontage() override;
-	virtual void MeleeAttack() override;
-	virtual void MajixAttack() override;
-	virtual bool CanAttack() override;
-
-	
-	
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	double CombatRadius = 500.f;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWeaponBase> WeaponClass;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	double AttackRadius = 150.f;
-	
-	UFUNCTION()
-	void PawnSeen(APawn* SeenPawn);
-
-	UPROPERTY(EditAnywhere, Category = Combat)
-	double AcceptanceRadius = 50.f;
-	
-	bool InTargetRange(AActor* Target, double Radius);
-	void MoveToTarget(AActor* Target);
-	AActor* ChoosePatrolTarget();
-	void ClearPatrolTimer();
-
-	void PatrolTimerFinished();
-	void EnemiesLoseInterest();
-	void EnemiesStartPatrolling();
-	bool IsOutsideCombatRadius();
-	void EnemiesChaseTarget();
-	bool IsOutsideAttackRadius();
-	bool IsInsideAttackRadius();
-	bool IsEnemyDead();
-	bool IsEnemyChasing();
-	bool IsEnemyAttacking();
-	bool IsEnemyEngaged();
-	void CheckCombatTarget();
-	void CheckPatrolTarget();
-	void StartAttackTimer();
-	void ClearAttackTimer();
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bIsCharmed = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bIsFleeing = false;
-
-	UPROPERTY()
-	AActor* CachedPlayer = nullptr;
-
-	// Team ids: 0 = Enemy (default), 1 = PlayerAlly (charmed)
-	FGenericTeamId TeamId = FGenericTeamId(0);
-
-	// How far to run each hop while fleeing
-	UPROPERTY(EditDefaultsOnly, Category="Charm")
-	float FleeHopDistance = 5000.f;
-
-	
-
-	// Helper: apply/remove GAS tags if you’re on GAS
-	void AddStateTag(const FGameplayTag& Tag);
-	void RemoveStateTag(const FGameplayTag& Tag);
-
-	FTimerHandle PatrolTimer;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float DeathLifeSpan = 7.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	FTimerHandle AttackTimer;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float AttackMin = .5f;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float AttackMax = 1.f;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float PatrollingSpeed = 125.f;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float ChasingSpeed = 300.f;
-
-	
-	/*********************
-	***                ***
-	***   NAVIGATION   ***
-	***                ***
-	*********************/
-
-	UPROPERTY(VisibleAnywhere)
-	class AAIController* EnemyController;
-	
-	UPROPERTY(EditInstanceOnly, Category = "AI Navigation", BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	AActor* PatrolTarget;
-
-	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
-	TArray<AActor*> PatrolTargets;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	double PatrolRadius = 1000.f;
-
-	UPROPERTY(EditAnywhere, Category = "AI Navigation")
-	float PatrolWaitMin = 5.f;
-
-	UPROPERTY(EditAnywhere, Category = "AI Navigation")
-	float PatrolWaitMax = 10.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
-	int32 Level = 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
-	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+    void SetEnemyState(EEnemyState NewState);          // [Restored]
+    bool IsAttacking() const;                          // [Restored]
+    bool IsPatrolling() const;                         // [Restored]
+    bool bHitReacting = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+    float BaseWalkSpeed = 100.f;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+    EEnemyState EnemyState = EEnemyState::EES_Idle;
+    
+    // --- Components ---
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    UHAFAbilitySystemComponent* EnemyAbilitySystemComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    UHAFAttributeSet* EnemyAttributeSet;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+    UAttributeInfo* EnemyAttributeInfoOverride; // [Restored]
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWidgetComponent* EnemyStatsWidgetComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Perception")
+    UAIPerceptionComponent* AIPerceptionComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Perception")
+    UAISenseConfig_Sight* SightConfig;
+
+    // --- Widgets ---
+    UPROPERTY()
+    UEnemyStatsWidget* EnemyStatsWidget;
+
+    UPROPERTY()
+    UEnemyAttributeMenuWidget* EnemyAttributeMenuWidget;
+
+    // --- Weapons ---
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
+    TArray<UBoxComponent*> AttackCollisions;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+    AWeaponBase* EquippedEnemyWeapon;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+    AMeleeWeapon* EquippedEnemyMeleeWeapon;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+    ARangedWeapon* EquippedEnemyRangedWeapon;
+
+    // --- AI ---
+    UPROPERTY()
+    AHAFAIController* EnemyController;
+
+    // --- Flee / Charm ---
+    UPROPERTY()
+    AActor* CachedPlayer;
+
+    bool bIsCharmed = false;
+    bool bIsFleeing = false;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Flee")
+    float FleeHopDistance = 800.f;
+
+    // --- Gameplay Data ---
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float PatrolRadius = 400.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float AttackRadius = 150.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float AcceptanceRadius = 150.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float CombatRadius = 600.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float PatrolWaitMin = 3.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float PatrolWaitMax = 7.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float AttackMin = 1.f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float AttackMax = 2.f;
+
+    FTimerHandle PatrolTimer;
+    FTimerHandle AttackTimer;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UEnemyStatsWidget> EnemyStatsWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UEnemyAttributeMenuWidget> EnemyAttributeMenuWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Souls")
+    TSubclassOf<ASoul> SoulClass;
+
+    FGenericTeamId TeamId;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+    FText EnemyDisplayName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    TObjectPtr<UBehaviorTree> BehaviorTree;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    TObjectPtr<AHAFAIController>HAFAIController;
+    
+    virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
+    
+    virtual void ResetCanDamage();
+    
+    
+    // GAS Interface implementations
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+    UAbilitySystemComponent* GetEnemyASC() const; 
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+    UAttributeSet* GetEnemyAttributeSet() const;
+
+    UPROPERTY()
+    TArray<AActor*> DamagedActors;
+
+    UFUNCTION(BlueprintCallable, Category = "Motion Warping")
+    void SetWarpTargetsForCombatTarget(AActor* TargetActor);
+    
+protected:    
+    void SafeInitASC_ForPawnOwner();
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+    void BindCallbacksToDependencies();
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+    void BroadcastInitialEnemyValues();
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bDead = false;
+
+   
+
 private:
-	
+   
+    
+   
 
+    bool bCanDamage = true;
+
+
+
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    float BaseDamage = 20.f;
+
+    // Death
+   
+
+   
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    UParticleSystem* DeathParticles;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    USoundBase* DeathSound;
+
+   
+    // Soul
+    UPROPERTY(EditAnywhere, Category = "Soul")
+    int32 SoulValue = 10;
+    // Dissolve
+    UPROPERTY()
+    UTimelineComponent* DissolveTimeline;
+    // Damage effect
+    UPROPERTY(EditAnywhere, Category = "Combat|Damage")
+    TSubclassOf<UGameplayEffect> DamageEffectClass;
+   
+    FTimerHandle DamageResetTimer;
+    // Movement
+   
+
+    // Combat state
+
+   
+    // Cached player controller for UI
+    UPROPERTY()
+    APlayerController* CachedPC;
+    // Hover state for UI
+    UPROPERTY()
+    bool bIsHovered = false;
+    // Last hovered enemy for perception system
+    UPROPERTY()
+    AEnemyBase* LastHoveredEnemy = nullptr;
+    // Weapons
+   
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    UParticleSystem* HitParticles;
+    
+private:
+   
+    /** Currently active hover menu widget instance */
+    UPROPERTY()
+    UEnemyAttributeMenuWidget* ActiveAttributeMenuWidget = nullptr;
+
+   
 public:
-	FORCEINLINE FString GetEnemyDisplayName() const { return EnemyDisplayName; }
-	FORCEINLINE UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
-	
-
+    FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
+    FORCEINLINE FText GetEnemyDisplayName() const { return EnemyDisplayName; }
 };

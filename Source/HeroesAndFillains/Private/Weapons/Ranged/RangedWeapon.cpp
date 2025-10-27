@@ -14,19 +14,19 @@
 #include "Weapons/Ranged/Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
-#include "HUD/PickupWidgetComponent.h"
+#include "UI/PickupWidgetComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Components/PointLightComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/TextBlock.h"
 #include "HAFComponents/CombatComponent.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
-#include "HUD/ItemInfoWidgetBase.h"
-#include "HUD/PickupGearWidget.h"
+#include "UI/ItemInfoWidgetBase.h"
+#include "UI/PickupGearWidget.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
-#include "HUD/ItemInfoWidgetBase.h"
+#include "UI/ItemInfoWidgetBase.h"
 
 ARangedWeapon::ARangedWeapon()
 	: Super()

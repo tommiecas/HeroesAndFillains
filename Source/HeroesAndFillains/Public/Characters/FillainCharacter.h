@@ -7,7 +7,7 @@
 #include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "AbilitySystem/HAFAttributeSet.h"
-#include "HUD/OverheadWidget.h"
+#include "UI/OverheadWidget.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
@@ -241,6 +241,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	AMeleeWeapon* AcquiredMeleeWeapon;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	AFillainHUD* FillainHUD;
+	
 	UPROPERTY()
 	AFillainPlayerController* FillainPlayerController;
 
@@ -630,6 +633,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
 
+	virtual void ApplyStartupEffects() const override;
+	
 private:
 	UPROPERTY(VisibleInstanceOnly, Category="Camera")
 	bool bSelfOccluded = false;            // tracks current hide state
@@ -913,5 +918,5 @@ public:
 	FORCEINLINE void SetMajix(const float Amount) const { if (HAFAttributes) HAFAttributes->SetMajix(Amount); }
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	FORCEINLINE EBattlePrepped GetBattlePrepped() const { return BattlePrepped; }
-
+	FORCEINLINE AFillainHUD* GetHUD() const { return FillainHUD; }
 };

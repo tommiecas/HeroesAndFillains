@@ -15,7 +15,7 @@ class HEROESANDFILLAINS_API AMajixWeapon : public AWeaponBase
 public:
 	AMajixWeapon();
 
-	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = "true"))
 	FGameplayEffectSpecHandle DamageEffectSpecHandle;
 	
 protected:

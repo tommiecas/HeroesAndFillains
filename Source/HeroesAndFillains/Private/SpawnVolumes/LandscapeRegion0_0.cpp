@@ -10,13 +10,13 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Blueprint/UserWidget.h"
-#include "HUD/PickupWidgetComponent.h"
+#include "UI/PickupWidgetComponent.h"
 #include "Weapons/WeaponBase.h"
 #include "CollisionQueryParams.h"
 #include "LandscapeComponent.h"
 #include "Engine/OverlapResult.h"             // 🔥 For FOverlapResult
-#include "HUD/ItemInfoWidgetBase.h"
-#include "HUD/PickupGearWidget.h"
+#include "UI/ItemInfoWidgetBase.h"
+#include "UI/PickupGearWidget.h"
 #include "Pickups/AmmoPickup.h"
 #include "Pickups/PickupSpawnPoint.h"
 #include "Templates/Function.h"               // 🔥 For TFunction

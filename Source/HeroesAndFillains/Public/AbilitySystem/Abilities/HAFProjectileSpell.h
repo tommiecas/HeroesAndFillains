@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HAFDamageGameplayAbility.h"
 #include "AbilitySystem/Abilities/HAFGameplayAbility.h"
 #include "HAFProjectileSpell.generated.h"
 
@@ -14,7 +15,7 @@ class AHAFMajixProjectile;
 class UGameplayEffect;
 
 UCLASS()
-class HEROESANDFILLAINS_API UHAFProjectileSpell : public UHAFGameplayAbility
+class HEROESANDFILLAINS_API UHAFProjectileSpell : public UHAFDamageGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -30,10 +31,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AHAFMajixProjectile> HAFMajixProjectileClass;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SpawnProjectile(const FVector& ProjectileTargetLocation);
 

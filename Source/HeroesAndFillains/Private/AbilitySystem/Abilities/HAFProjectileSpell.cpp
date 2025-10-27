@@ -46,37 +46,27 @@ void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocatio
             Cast<APawn>(GetOwningActorFromActorInfo()),
             ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-        if (const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo()))
-        {
-            FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-            Context.AddSourceObject(Projectile);
+        const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+        FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+    	EffectContextHandle.SetAbility(this);
+    	EffectContextHandle.AddSourceObject(Projectile);
+		TArray<TWeakObjectPtr<AActor>> Actors;
+    	Actors.Add(Projectile);
+    	EffectContextHandle.AddActors(Actors);
+    	FHitResult HitResult;
+    	HitResult.Location = ProjectileTargetLocation;
+    	EffectContextHandle.AddHitResult(HitResult);
 
-            FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), Context);
+        const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);;
+        const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
 
-            if (SpecHandle.IsValid())
-            {
-                const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+    	for (auto& Pair : DamageTypes)
+    	{
+    		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+    		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+    	}
 
-                // ✅ Correctly assign the SetByCaller.Damage tag
-                UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
-                    SpecHandle,
-                    FGameplayTag::RequestGameplayTag(FName("SetByCaller.Damage")),
-                    ScaledDamage
-                );
-
-                Projectile->DamageEffectSpecHandle = SpecHandle;
-
-                UE_LOG(LogTemp, Log, TEXT("Projectile spawned with valid spec for %s | Damage: %.2f"),
-                    *DamageEffectClass->GetName(),
-                    ScaledDamage);
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("Projectile spawn failed: invalid DamageEffectSpecHandle! DamageEffectClass = %s"),
-                    DamageEffectClass ? *DamageEffectClass->GetName() : TEXT("nullptr"));
-            }
-        }
-
-        Projectile->FinishSpawning(SpawnTransform);
+        Projectile->DamageEffectSpecHandle = SpecHandle;
+    	Projectile->FinishSpawning(SpawnTransform);
     }
 }

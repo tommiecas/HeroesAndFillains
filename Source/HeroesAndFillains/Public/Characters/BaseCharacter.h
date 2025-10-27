@@ -11,7 +11,6 @@
 #include "Interfaces/CapsuleInterface.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "BaseCharacter.generated.h"
 
 class AHAFGameMode;
@@ -237,6 +236,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	class  AMeleeWeapon* EquippedMeleeWeapon;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	class  ARangedWeapon* EquippedRangedWeapon;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class AFillainPlayerController* KillerPlayerController;
 
@@ -289,10 +291,6 @@ public:
 
 	// Convenience (optional to keep your call sites tidy)
 	UFUNCTION(BlueprintPure, Category="GAS|Attributes")
-	
-
-
-	
 	virtual bool IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const;
 
 	void MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator);
@@ -367,13 +365,16 @@ protected:
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultResistanceAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultInvisibleAttributes;
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyStartupEffects() const;
+	virtual void ApplyStartupEffects() const;
 
 	UFUNCTION(BlueprintCallable)
 	virtual void InitializeDefaultAttributes() const;
@@ -409,6 +410,9 @@ private:
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
 public:
+	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+	FORCEINLINE AMeleeWeapon* GetEquippedMeleeWeapon() const { return EquippedMeleeWeapon; }
+	FORCEINLINE ARangedWeapon* GetEquippedRangedWeapon() const { return EquippedRangedWeapon; }
 	static float SafeGetNumeric(const UAbilitySystemComponent* ASC,
 							const UHAFAttributeSet* AS,
 							const FGameplayAttribute& Attr);

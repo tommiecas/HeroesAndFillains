@@ -6,6 +6,15 @@
 #include "Engine/DataAsset.h"
 #include "AttributeIhfo.generated.h"
 
+UENUM(BlueprintType)
+enum class EAttributeCategory : uint8
+{
+	Primary     UMETA(DisplayName = "Primary"),
+	Secondary   UMETA(DisplayName = "Secondary"),
+	Resistance  UMETA(DisplayName = "Resistance"),
+	Vital		UMETA(DisplayName = "Vital")
+};
+
 USTRUCT (BlueprintType)
 struct FHAFAttributeInfo
 {
@@ -24,6 +33,9 @@ struct FHAFAttributeInfo
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool IsLeftSideAttribute = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EAttributeCategory AttributeCategory = EAttributeCategory::Primary;
 };
 
 

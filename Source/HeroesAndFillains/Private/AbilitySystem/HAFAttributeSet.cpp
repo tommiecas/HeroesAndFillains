@@ -9,57 +9,65 @@
 #include "HAFGameplayTags.h"
 #include "Characters/BaseCharacter.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "Components/WidgetComponent.h"
 #include "Enemies/EnemyBase.h"
 #include "HAFComponents/CombatComponent.h"
+#include "UI/Widgets/EnemyProgressBarBaseWidget.h"
+#include "UI/Widgets/EnemyStatsWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerController/FillainPlayerController.h"
-
-#define ONREP_ATTR(Class, Prop) \
-void Class::OnRep_##Prop(const FGameplayAttributeData& Old##Prop) \
-{ \
-GAMEPLAYATTRIBUTE_REPNOTIFY(Class, Prop, Old##Prop); \
-}
+#include "HAFGameplayTags.h"
 
 UHAFAttributeSet::UHAFAttributeSet() 
 {
-    // NO GetOwningActor() here.
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
 
-    const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+	// Primary
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, GetStrengthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, GetIntelligenceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience, GetResilienceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor, GetVigorAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Dexterity, GetDexterityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Marksmanship, GetMarksmanshipAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Wisdom, GetWisdomAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Charisma, GetCharismaAttribute);
 
-    // Primary
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength,        GetStrengthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence,    GetIntelligenceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience,      GetResilienceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor,           GetVigorAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Dexterity,       GetDexterityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Marksmanship,    GetMarksmanshipAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Wisdom,          GetWisdomAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Charisma,        GetCharismaAttribute);
+	// Secondary
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Armor, GetArmorAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, GetArmorPenetrationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_BlockChance, GetBlockChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitChance, GetCriticalHitChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitDamage, GetCriticalHitDamageAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitResistance, GetCriticalHitResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Agility, GetAgilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Flexibility, GetFlexibilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Purity, GetPurityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Corruptibility, GetCorruptibilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Intuition, GetIntuitionAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Vision, GetVisionAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Speed, GetSpeedAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Charm, GetCharmAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_HealthRegeneration, GetHealthRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ShieldRegeneration, GetShieldRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_StaminaRegeneration, GetStaminaRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MajixRegeneration, GetMajixRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxShield, GetMaxShieldAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina, GetMaxStaminaAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMajix, GetMaxMajixAttribute);
 
-    // Secondary
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Armor,                 GetArmorAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ArmorPenetration,      GetArmorPenetrationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_BlockChance,           GetBlockChanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitChance,     GetCriticalHitChanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitDamage,     GetCriticalHitDamageAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitResistance, GetCriticalHitResistanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Agility,               GetAgilityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Flexibility,           GetFlexibilityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Purity,                GetPurityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Corruptibility,        GetCorruptibilityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Intuition,             GetIntuitionAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Vision,                GetVisionAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Charm,                 GetCharmAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_HealthRegeneration,    GetHealthRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ShieldRegeneration,    GetShieldRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_StaminaRegeneration,   GetStaminaRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MajixRegeneration,     GetMajixRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth,             GetMaxHealthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxShield,             GetMaxShieldAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina,            GetMaxStaminaAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMajix,			  GetMaxMajixAttribute);
-
+	// Resistances
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Fire, GetFireproofAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Ice, GetThermalRadiationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Ice, GetBodyTempAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Lightning, GetShockproofAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_MeleeAttacks, GetInvulnerabilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_RuleOfOrder, GetHeartOfDarknessAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_ChaosMajix, GetChaosIncorruptibleAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Toxicity, GetImmunityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Stun, GetUnstoppableAttribute);
+	
 	// Vital
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Health,GetHealthAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Shield,GetShieldAttribute);
@@ -70,29 +78,11 @@ UHAFAttributeSet::UHAFAttributeSet()
     TagsToAttributes.Add(GameplayTags.Attributes_Invisible_DexterityAgilityFlexibility, GetDexterityAgilityFlexibilityAttribute);
 }
 
-void UHAFAttributeSet::ApplyInitialValuesForOwner() const 
-{
-	// Avoid touching owner/ASC if we’re in a CDO tree.
-	if (HasAnyFlags(RF_ClassDefaultObject)) return;
-	if (const UObject* OuterMost = GetOuter(); OuterMost && OuterMost->HasAnyFlags(RF_ClassDefaultObject))
-	{
-		return;
-	}
-
-	const UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
-	const AActor* OwnerActor = ASC ? ASC->GetOwnerActor() : GetTypedOuter<AActor>();
-
-	if (!OwnerActor) return;
-
-	const bool bIsFillain =
-		OwnerActor->ActorHasTag("Fillain") || OwnerActor->ActorHasTag("FillainCharacter");
-	
-}
-
 void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	// Primary Attributes
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Strength, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Intelligence, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Resilience, COND_None, REPNOTIFY_Always);
@@ -102,6 +92,7 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Wisdom, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Charisma, COND_None, REPNOTIFY_Always);
 
+	// Secondary Attributes
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Armor, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ArmorPenetration, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, BlockChance, COND_None, REPNOTIFY_Always);
@@ -115,6 +106,7 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DarkMajixProficiency, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Intuition, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Vision, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Speed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Charm, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, HealthRegeneration, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ShieldRegeneration, COND_None, REPNOTIFY_Always);
@@ -125,43 +117,49 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxMajix, COND_None, REPNOTIFY_Always);
 
+	// Invisible Attributes
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, COND_None, REPNOTIFY_Always);
+
+	// Resistance Attributes
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Fireproof, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Shockproof, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ChaosIncorruptible, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Immunity, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Unstoppable, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Invulnerability, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, HeartOfDarkness, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ThermalRadiation, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, BodyTemp, COND_None, REPNOTIFY_Always);
+	
+
+	// Vital Attributes
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Shield, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Majix, COND_None, REPNOTIFY_Always);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, COND_None, REPNOTIFY_Always);
 }
 
 void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const
 {
-	Properties.EffectContextHandle = Data.EffectSpec.GetContext();
+	Properties.EffectContextHandle = Data.EffectSpec.GetEffectContext();
 	Properties.SourceASC = Properties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 
-	if (IsValid(Properties.SourceASC) && Properties.SourceASC->AbilityActorInfo.IsValid() && Properties.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+	if (Properties.SourceASC)
 	{
-		Properties.SourceAvatarActor = Properties.SourceASC->AbilityActorInfo->AvatarActor.Get();
+		Properties.SourceAvatarActor = Properties.SourceASC->GetAvatarActor();
 		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
-		if (Properties.SourceController == nullptr && Properties.SourceAvatarActor != nullptr)
+		if (!Properties.SourceController && Properties.SourceAvatarActor)
 		{
-			if (const APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
+			if (APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
 			{
 				Properties.SourceController = Pawn->GetController();
 			}
 		}
-		if (Properties.SourceController)
-		{
-			Properties.SourceCharacter = Cast<ACharacter>(Properties.SourceController->GetPawn());
-		}
 	}
 
-	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
-	{
-		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
-		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
-		Properties.TargetCharacter = Cast<ACharacter>(Properties.TargetAvatarActor);
-		Properties.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Properties.TargetAvatarActor);
-	}
+	Properties.TargetASC = Data.Target.AbilityActorInfo->AbilitySystemComponent.Get();
+	Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+	Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 }
 
 void UHAFAttributeSet::AdjustAttributeForMaxChange(
@@ -227,191 +225,313 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	FEffectProperties Properties;
-	SetEffectProperties(Data, Properties);
+	FEffectProperties Props;
+	SetEffectProperties(Data, Props);
 
-	// Clamp vitals if they were modified by an effect
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	const FGameplayAttribute& Attribute = Data.EvaluatedData.Attribute;
+
+	// --- Clamp vitals ---
+	if (Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s, Health: %f"), *Properties.TargetAvatarActor->GetName(), GetHealth());
-
-		if (Properties.TargetAvatarActor)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Health changed on %s: %.2f"),
-				*Properties.TargetAvatarActor->GetName(), GetHealth());
-		}
 	}
-	if (Data.EvaluatedData.Attribute == GetMajixAttribute())
-	{
-		SetMajix(FMath::Clamp(GetMajix(), 0.f, GetMaxMajix()));
-		if (Properties.TargetAvatarActor)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Majix changed on %s: %.2f"),
-				*Properties.TargetAvatarActor->GetName(), GetMajix());
-		}
-	}
-	if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+	else if (Attribute == GetShieldAttribute())
 	{
 		SetShield(FMath::Clamp(GetShield(), 0.f, GetMaxShield()));
-		if (Properties.TargetAvatarActor)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
-				*Properties.TargetAvatarActor->GetName(), GetShield());
-		}
 	}
-	if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+	else if (Attribute == GetStaminaAttribute())
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
-		if (Properties.TargetAvatarActor)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Stamina changed on %s: %.2f"),
-				*Properties.TargetAvatarActor->GetName(), GetStamina());
-		}
 	}
-	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	else if (Attribute == GetMajixAttribute())
 	{
-		const float Dmg = GetIncomingDamage();
+		SetMajix(FMath::Clamp(GetMajix(), 0.f, GetMaxMajix()));
+	}
+	else if (Attribute == GetIncomingDamageAttribute())
+	{
+		const float Damage = GetIncomingDamage();
 		SetIncomingDamage(0.f);
 
-		if (Dmg > 0.f && Dmg < GetShield())
+		if (Damage > 0.f)
 		{
-			TakeDamageFromShield(Dmg, Properties);
-			return;
-		}
-		else if (Dmg >0 && Dmg >= GetShield())
-		{
-			TakeDamageFromShieldThenHealth(Dmg, Properties);
-			return;
-		}
-		else if (Dmg > 0.f && GetShield() == 0.f)
-		{
-			TakeDamageFromHealth(Dmg, Properties);			
-			return;
+			ApplyDamage(Damage, Props);
 		}
 	}
 }
 
-void UHAFAttributeSet::TakeDamageFromShield(float Damage, const FEffectProperties& Properties)
+void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 {
-	SetShield(GetShield() - Damage);
-	if (Properties.TargetAvatarActor)
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
-			*Properties.TargetAvatarActor->GetName(), GetShield());
-	}
-	DealWithDeathAndWidgets(Damage, Properties);
-}
+	float RemainingDamage = Damage;
 
-void UHAFAttributeSet::TakeDamageFromShieldThenHealth(float Damage, const FEffectProperties& Properties)
-{
-	float DiffTakenFromHealth = (Damage - GetShield());
-	SetShield(0.f);
-	if (AEnemyBase* BadGuy = Cast<AEnemyBase>(Properties.TargetAvatarActor))
+	// --- Absorb by shield first ---
+	if (GetShield() > 0.f)
 	{
-		if (BadGuy->EnemyShieldBar) BadGuy->EnemyShieldBar->DestroyComponent();
-		if (BadGuy->EnemyHealthBar) BadGuy->EnemyHealthBar->SetVisibility(true);
-		if (BadGuy->EnemyHealthBar->IsWidgetVisible() == true)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("HealthBar should be seen in game now"));
-		}
-		if (BadGuy->EnemyHealthBar->IsWidgetVisible() == false)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("No Health Bar will be seen in game"))
-		}
+		const float NewShield = FMath::Max(0.f, GetShield() - RemainingDamage);
+		RemainingDamage -= (GetShield() - NewShield);
+		SetShield(NewShield);
 	}
-	if (Properties.TargetAvatarActor)
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("Shield changed on %s: %.2f"),
-			*Properties.TargetAvatarActor->GetName(), GetShield());
-	}
-	SetHealth(GetHealth() - DiffTakenFromHealth);
-	const float NewHealth = GetHealth();
-	SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
-	if (Properties.TargetAvatarActor)
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("Health changed on %s: %.2f"),
-			*Properties.TargetAvatarActor->GetName(), GetHealth());
-	}
-	DealWithDeathAndWidgets(Damage, Properties);
-}
 
-void UHAFAttributeSet::TakeDamageFromHealth(float Damage, const FEffectProperties& Properties)
-{
-	const float NewHealth = GetHealth() - Damage;
-	SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
-	
-	DealWithDeathAndWidgets(Damage, Properties);
-}
-
-void UHAFAttributeSet::DealWithDeathAndWidgets(float Damage, const FEffectProperties& Properties)
-{
-	const bool bFatal = GetHealth() <= 0.f;
-	if (bFatal)
+	// --- Apply leftover to health ---
+	if (RemainingDamage > 0.f)
 	{
-		ICombatInterface* CombatInterface = Cast<ICombatInterface>(Properties.TargetAvatarActor);
-		if (CombatInterface)
+		SetHealth(FMath::Clamp(GetHealth() - RemainingDamage, 0.f, GetMaxHealth()));
+	}
+
+	// --- Handle death or hit reaction ---
+	if (GetHealth() <= 0.f)
+	{
+		if (ICombatInterface* Combat = Cast<ICombatInterface>(Props.TargetAvatarActor))
 		{
-			CombatInterface->Die();
+			Combat->Die();
 		}
 	}
 	else
 	{
-		FGameplayTagContainer TagContainer;
-		TagContainer.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
-		Properties.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+		FGameplayTagContainer Tags;
+		Tags.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
+		Props.TargetASC->TryActivateAbilitiesByTag(Tags);
 	}
-	ShowFloatingText(Properties, Damage);
+
+	// --- Floating text or damage numbers are optional ---
+	const bool bBlocked  = UHAFAbilitySystemBlueprintLibrary::IsBlockedHit(Props.EffectContextHandle);
+	const bool bCritical = UHAFAbilitySystemBlueprintLibrary::IsCriticalHit(Props.EffectContextHandle);
+	ShowFloatingText(Props, Damage, bBlocked, bCritical);
 }
 
-void UHAFAttributeSet::ShowFloatingText(const FEffectProperties& Properties, float Damage) const
+void UHAFAttributeSet::ShowFloatingText(const FEffectProperties& Properties, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	if (Properties.SourceCharacter != Properties.TargetCharacter)
 	{
 		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0)))
 		{
-			PC->ShowDamageNumber(Damage, Properties.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Properties.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }
 
-ONREP_ATTR(UHAFAttributeSet, Strength)
-ONREP_ATTR(UHAFAttributeSet, Intelligence)
-ONREP_ATTR(UHAFAttributeSet, Resilience)
-ONREP_ATTR(UHAFAttributeSet, Vigor)
-ONREP_ATTR(UHAFAttributeSet, Dexterity)
-ONREP_ATTR(UHAFAttributeSet, Marksmanship)
-ONREP_ATTR(UHAFAttributeSet, Wisdom)
-ONREP_ATTR(UHAFAttributeSet, Charisma)
+void UHAFAttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Health, OldValue);
+}
 
-ONREP_ATTR(UHAFAttributeSet, Armor)
-ONREP_ATTR(UHAFAttributeSet, ArmorPenetration)
-ONREP_ATTR(UHAFAttributeSet, BlockChance)
-ONREP_ATTR(UHAFAttributeSet, CriticalHitChance)
-ONREP_ATTR(UHAFAttributeSet, CriticalHitDamage)
-ONREP_ATTR(UHAFAttributeSet, CriticalHitResistance)
-ONREP_ATTR(UHAFAttributeSet, Agility)
-ONREP_ATTR(UHAFAttributeSet, Flexibility)
-ONREP_ATTR(UHAFAttributeSet, Purity)
-ONREP_ATTR(UHAFAttributeSet, Corruptibility)
-ONREP_ATTR(UHAFAttributeSet, DarkMajixProficiency)
-ONREP_ATTR(UHAFAttributeSet, Intuition)
-ONREP_ATTR(UHAFAttributeSet, Vision)
-ONREP_ATTR(UHAFAttributeSet, Charm)
+void UHAFAttributeSet::OnRep_Shield(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Shield, OldValue);
+}
 
-ONREP_ATTR(UHAFAttributeSet, HealthRegeneration)
-ONREP_ATTR(UHAFAttributeSet, ShieldRegeneration)
-ONREP_ATTR(UHAFAttributeSet, StaminaRegeneration)
-ONREP_ATTR(UHAFAttributeSet, MajixRegeneration)
+void UHAFAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Stamina, OldValue);
+}
 
-ONREP_ATTR(UHAFAttributeSet, MaxHealth)
-ONREP_ATTR(UHAFAttributeSet, MaxShield)
-ONREP_ATTR(UHAFAttributeSet, MaxStamina)
-ONREP_ATTR(UHAFAttributeSet, MaxMajix)
+void UHAFAttributeSet::OnRep_Majix(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Majix, OldValue);
+}
 
-ONREP_ATTR(UHAFAttributeSet, Health)
-ONREP_ATTR(UHAFAttributeSet, Shield)
-ONREP_ATTR(UHAFAttributeSet, Stamina)
-ONREP_ATTR(UHAFAttributeSet, Majix)
+void UHAFAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Strength, OldValue);
+}
 
-ONREP_ATTR(UHAFAttributeSet, DexterityAgilityFlexibility)
+void UHAFAttributeSet::OnRep_Intelligence(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Intelligence, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Resilience(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Resilience, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Vigor, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Dexterity(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Dexterity, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Marksmanship(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Marksmanship, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Wisdom(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Wisdom, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Charisma(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Charisma, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Armor(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Armor, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_ArmorPenetration(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ArmorPenetration, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_BlockChance(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, BlockChance, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitChance(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitChance, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitDamage(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitDamage, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_CriticalHitResistance(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, CriticalHitResistance, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Agility(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Agility, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Flexibility(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Flexibility, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Purity(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Purity, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Corruptibility(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Corruptibility, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_DarkMajixProficiency(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, DarkMajixProficiency, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Intuition(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Intuition, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Vision(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Vision, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Speed(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Speed, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Charm(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Charm, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_HealthRegeneration(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, HealthRegeneration, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_ShieldRegeneration(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ShieldRegeneration, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_StaminaRegeneration(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, StaminaRegeneration, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_MajixRegeneration(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MajixRegeneration, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxHealth, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_MaxShield(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxShield, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxStamina, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_MaxMajix(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, MaxMajix, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Fireproof(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Fireproof, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_ThermalRadiation(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ThermalRadiation, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_BodyTemp(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, BodyTemp, OldValue);
+}
+
+void UHAFAttributeSet::OnRep_Shockproof(const FGameplayAttributeData& OldShockproof) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Shockproof, OldShockproof);
+}
+
+void UHAFAttributeSet::OnRep_Invulnerability(const FGameplayAttributeData& OldInvulnerability) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Invulnerability, OldInvulnerability);
+}
+
+void UHAFAttributeSet::OnRep_ChaosIncorruptible(const FGameplayAttributeData& OldChaosIncorruptible) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ChaosIncorruptible, OldChaosIncorruptible);
+}
+
+void UHAFAttributeSet::OnRep_HeartOfDarkness(const FGameplayAttributeData& OldHeartOfDarkness) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, HeartOfDarkness, OldHeartOfDarkness);
+}
+
+void UHAFAttributeSet::OnRep_Immunity(const FGameplayAttributeData& OldImmunity) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Immunity, OldImmunity);
+}
+
+void UHAFAttributeSet::OnRep_Unstoppable(const FGameplayAttributeData& OldUnstoppable) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Unstoppable, OldUnstoppable);
+}
+
+void UHAFAttributeSet::OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldDexterityAgilityFlexibility) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, OldDexterityAgilityFlexibility);
+}
+
+

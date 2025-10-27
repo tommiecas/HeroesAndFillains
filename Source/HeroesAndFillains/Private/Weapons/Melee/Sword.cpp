@@ -5,10 +5,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Characters/FillainCharacter.h"
-#include "HUD/PickupWidgetComponent.h"
+#include "UI/PickupWidgetComponent.h"
 #include "Components/WidgetComponent.h"  
 #include "HeroesAndFillains/HeroesAndFillains.h"
-#include "HUD/PickupGearWidget.h"
+#include "UI/PickupGearWidget.h"
 
 ASword::ASword()  
 {  

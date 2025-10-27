@@ -7,8 +7,13 @@
 #include "NativeGameplayTags.h"
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_StaminaCost);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SBC_Damage_Shield);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SBC_Damage_Health);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_StaminaRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_MajixCost);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_MajixRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_ShieldRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_HealthRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Damage_Shield);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Damage_Health);
 
 /**
  * HAFGameplayTags
@@ -42,6 +47,7 @@ public:
 	FGameplayTag Attributes_Secondary_Corruptibility;
 	FGameplayTag Attributes_Secondary_Intuition;
 	FGameplayTag Attributes_Secondary_Vision;
+	FGameplayTag Attributes_Secondary_Speed;
 	FGameplayTag Attributes_Secondary_Charm;
 	FGameplayTag Attributes_Secondary_HealthRegeneration;
 	FGameplayTag Attributes_Secondary_ShieldRegeneration;
@@ -59,6 +65,15 @@ public:
 
 	FGameplayTag Attributes_Invisible_DexterityAgilityFlexibility;
 
+	FGameplayTag Attributes_Resistance_Fire;
+	FGameplayTag Attributes_Resistance_Lightning;
+	FGameplayTag Attributes_Resistance_ChaosMajix;
+	FGameplayTag Attributes_Resistance_MeleeAttacks;
+	FGameplayTag Attributes_Resistance_RuleOfOrder;
+	FGameplayTag Attributes_Resistance_Ice;
+	FGameplayTag Attributes_Resistance_Toxicity;
+	FGameplayTag Attributes_Resistance_Stun;
+	
 	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
 	FGameplayTag InputTag_RightMouseButtonOrGamepadShoulder;
 	FGameplayTag InputTag_1OrDPadUp;
@@ -66,7 +81,17 @@ public:
 	FGameplayTag InputTag_3OrDPadLeft;
 	FGameplayTag InputTag_4OrDPadRight;
 
-	FGameplayTag SetByCaller_Damage;
+	FGameplayTag Damage;
+	FGameplayTag Damage_Burn;
+	FGameplayTag Damage_Shock;
+	FGameplayTag Damage_CorruptChaos;
+	FGameplayTag Damage_Physical;
+	FGameplayTag Damage_PureOrder;
+	FGameplayTag Damage_Frostbite;
+	FGameplayTag Damage_Poison;
+	FGameplayTag Damage_Paralysis;
+	
+	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;
 
 	FGameplayTag Effects_HitReact;
 

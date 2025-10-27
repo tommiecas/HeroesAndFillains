@@ -6,7 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Characters/BaseCharacter.h"
-#include "HUD/FillainHUD.h"
+#include "UI/FillainHUD.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "GameFramework/Controller.h"
 #include "Kismet/GameplayStatics.h"

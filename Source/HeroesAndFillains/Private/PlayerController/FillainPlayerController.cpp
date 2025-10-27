@@ -4,8 +4,8 @@
 #include "PlayerController/FillainPlayerController.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "HUD/FillainHUD.h"
-#include "HUD/CharacterOverlayFixed.h"
+#include "UI/FillainHUD.h"
+#include "UI/CharacterOverlayFixed.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Characters/FillainCharacter.h"
@@ -19,57 +19,34 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "HAFComponents/CombatComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/PlayerState.h"
-#include "HUD/OverheadWidget.h"
-#include "Components/CapsuleComponent.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Characters/FillainAnimInstance.h"
-#include "Characters/FillainFinalAnimInstance.h"
-#include "HeroesAndFillains/HeroesAndFillains.h"
 #include "GameMode/HaFGameMode.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sound/SoundCue.h"
-#include "Particles/ParticleSystemComponent.h"
-#include "GameMode/LobbyGameMode.h"
-#include "HUD/Announcement.h"
+#include "UI/Announcement.h"
 #include "GameStates/HAFGameState.h"
 #include "Components/Image.h"
 #include "Components/InputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "HUD/ReturnToMainMenu.h"
-#include "HUD/PlayerChat.h"
-#include "HUD/PlayerChatTextBlock.h"
+#include "UI/ReturnToMainMenu.h"
+#include "UI/PlayerChat.h"
 #include "Components/EditableText.h"
-#include "Components/ScrollBox.h"
-#include "Enemies/EnemyBase.h"
-#include "HAFComponents/AttributeComponent.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Announcement.h"
-#include "HUD/CharacterOverlayFixed.h"
 #include "Input/HAFInputComponent.h"
 #include "HAFGameplayTags.h"
 #include "Components/SplineComponent.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
-#include "AbilitySystemBlueprintLibrary.h"
-#include "HAFGameplayTags.h"
-#include "EnhancedInputSubsystems.h"
-#include "IMediaCache.h"
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
-#include "AbilitySystem/HAFAbilitySystemComponent.h"
-#include "Components/SplineComponent.h"
+#include "Enemies/EnemyBase.h"
 #include "GameMode/HybridGameMode.h"
-#include "HUD/Widgets/DamageTextComponent.h"
-#include "Input/HAFInputComponent.h"
+#include "UI/Widgets/DamageTextComponent.h"
 #include "Interfaces/EnemyInterface.h"
-#include "Items/Soul.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Weapons/Melee/MeleeWeapon.h"
+#include "UI/WidgetControllers/HAFWidgetController.h"
+#include "Interfaces/EnemyInterface.h"
+#include "Interfaces/InterfaceHelpers.h"
 
 
 AFillainPlayerController::AFillainPlayerController()
@@ -123,8 +100,18 @@ void AFillainPlayerController::CursorTrace()
 
 	if (LastActor != ThisActor)
 	{
-		if (LastActor) LastActor->UnHighlightActor();
-		if (ThisActor) ThisActor->HighlightActor();
+		// End hover on the old one
+		if (LastActor)
+		{
+			LastActor->OnHoverEnd();
+			LastActor->UnHighlightActor();
+		}
+
+		if (ThisActor)
+		{
+			ThisActor->OnHoverStart();
+			ThisActor->HighlightActor();
+		}
 	}
 }
 
@@ -298,20 +285,20 @@ void AFillainPlayerController::DebugCursorTrace()
 	FHitResult Hit;
 	const bool bHit = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, /*bTraceComplex*/ false, Hit);
 
-	if (bHit && Hit.bBlockingHit && Hit.GetActor())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CursorHit] %s @ %s"),
-			*Hit.GetActor()->GetName(),
-			*Hit.Location.ToString());
-	}
-	else
-	{
+	//if (bHit && Hit.bBlockingHit && Hit.GetActor())
+	//{
+		//UE_LOG(LogTemp, Warning, TEXT("[CursorHit] %s @ %s"),
+	//		*Hit.GetActor()->GetName(),
+	//		*Hit.Location.ToString());
+	//}
+	//else
+	//{
 		// Print WHY it failed so we know the path
-		UE_LOG(LogTemp, Warning, TEXT("[CursorHit] NO HIT  (bHit=%d, blocking=%d)  Cursor over: %s"),
-			bHit ? 1 : 0,
-			Hit.bBlockingHit ? 1 : 0,
-			bShowMouseCursor ? TEXT("World/Viewport") : TEXT("Unknown"));
-	}
+	//	UE_LOG(LogTemp, Warning, TEXT("[CursorHit] NO HIT  (bHit=%d, blocking=%d)  Cursor over: %s"),
+	//		bHit ? 1 : 0,
+	//		Hit.bBlockingHit ? 1 : 0,
+	//		bShowMouseCursor ? TEXT("World/Viewport") : TEXT("Unknown"));
+	//}
 }
 
 void AFillainPlayerController::CheckPing(float DeltaTime)
@@ -590,15 +577,15 @@ void AFillainPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 }
 
-void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
-{
+void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
+{ 
 	if (IsValid(TargetCharacter) && DamageTextComponentClass)
 	{
 		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
 		DamageText->RegisterComponent();
 		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(DamageAmount);
+		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
 	}
 }
 
@@ -1233,12 +1220,11 @@ void AFillainPlayerController::UpdateEliminationMessageForPvE(AFillainPlayerCont
 	{
 		FString NameOfVictim = VictimPlayerController->PlayerState->GetPlayerName();
 		AEnemyBase* KillerVillain = Cast<AEnemyBase>(InstigatorController->GetPawn());
-		FString NameOfKiller = KillerVillain->GetEnemyDisplayName();
+		FString NameOfKiller = KillerVillain->GetEnemyDisplayName().ToString();
 		FText EliminationMessage = FText::FromString(TEXT("Was Eliminated By"));
 		FString VictimName = NameOfVictim;
 		FString KillerName = NameOfKiller;
 		ShowEliminationUI(VictimName, KillerName, EliminationMessage);
-
 		
 	}
 }

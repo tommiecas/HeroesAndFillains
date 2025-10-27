@@ -26,7 +26,7 @@
 #include "EnhancedInputComponent.h"  
 #include "Components/WidgetComponent.h"  
 #include "GameFramework/PlayerState.h"  
-#include "HUD/OverheadWidget.h"  
+#include "UI/OverheadWidget.h"  
 #include "Net/UnrealNetwork.h"  
 #include "Weapons/WeaponBase.h"
 #include "HAFComponents/CombatComponent.h"  
@@ -655,46 +655,60 @@ void ABaseCharacter::ApplyStartupEffects() const
 
     auto ApplyGE = [this](TSubclassOf<UGameplayEffect> GEClass)
     {
+    	UHAFAttributeSet* HAFAttriSet = Cast<UHAFAttributeSet>(AttributeSet);
         if (!GEClass) return;
-        FGameplayEffectContextHandle Ctx = AbilitySystemComponent->MakeEffectContext();
-        Ctx.AddSourceObject(this);
-        FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(GEClass, 1.f, Ctx);
-        if (Spec.IsValid())
+
+    	FGameplayEffectContextHandle Ctx = AbilitySystemComponent->MakeEffectContext();
+
+    	Ctx.AddSourceObject(this);
+
+    	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(GEClass, 1.f, Ctx);
+
+    	if (Spec.IsValid())
         {
             AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
         }
     };
 
+	UHAFAttributeSet* HAFAS = Cast<UHAFAttributeSet>(AttributeSet);
     ApplyGE(DefaultPrimaryAttributes);
-    ApplyGE(DefaultSecondaryAttributes);
-    ApplyGE(DefaultVitalAttributes);
-    ApplyGE(DefaultInvisibleAttributes);
 
-	UHAFAttributeSet* HAFAttriSet = Cast<UHAFAttributeSet>(AttributeSet);
-    if (HasAuthority() && HAFAttriSet)   // ← changed from AttributeSet
+	ApplyGE(DefaultSecondaryAttributes);
+
+	ApplyGE(DefaultResistanceAttributes);
+	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+
+	ApplyGE(DefaultVitalAttributes);
+	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+
+	ApplyGE(DefaultInvisibleAttributes);
+
+	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+	
+    if (HasAuthority() && HAFAS)   // ← changed from AttributeSet
     {
         UE_LOG(LogTemp, Warning, TEXT("[SERVER] After ApplyStartupEffects: Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f MaxHealth=%f MaxShield=%f MaxStamina=%f MaxMajix=%f"),
-            HAFAttriSet->GetArmor(),
-            HAFAttriSet->GetArmorPenetration(),
-            HAFAttriSet->GetBlockChance(),
-            HAFAttriSet->GetCriticalHitChance(),
-            HAFAttriSet->GetCriticalHitDamage(),
-            HAFAttriSet->GetCriticalHitResistance(),
-            HAFAttriSet->GetAgility(),
-            HAFAttriSet->GetFlexibility(),
-            HAFAttriSet->GetPurity(),
-            HAFAttriSet->GetCorruptibility(),
-            HAFAttriSet->GetIntuition(),
-            HAFAttriSet->GetVision(),
-            HAFAttriSet->GetCharm(),
-            HAFAttriSet->GetHealthRegeneration(),
-            HAFAttriSet->GetShieldRegeneration(),
-            HAFAttriSet->GetStaminaRegeneration(),
-            HAFAttriSet->GetMajixRegeneration(),
-            HAFAttriSet->GetMaxHealth(),
-            HAFAttriSet->GetMaxShield(),
-            HAFAttriSet->GetMaxStamina(),
-            HAFAttriSet->GetMaxMajix());
+            HAFAS->GetArmor(),
+            HAFAS->GetArmorPenetration(),
+            HAFAS->GetBlockChance(),
+            HAFAS->GetCriticalHitChance(),
+            HAFAS->GetCriticalHitDamage(),
+            HAFAS->GetCriticalHitResistance(),
+            HAFAS->GetAgility(),
+            HAFAS->GetFlexibility(),
+            HAFAS->GetPurity(),
+            HAFAS->GetCorruptibility(),
+            HAFAS->GetIntuition(),
+            HAFAS->GetVision(),
+            HAFAS->GetCharm(),
+            HAFAS->GetHealthRegeneration(),
+            HAFAS->GetShieldRegeneration(),
+            HAFAS->GetStaminaRegeneration(),
+            HAFAS->GetMajixRegeneration(),
+            HAFAS->GetMaxHealth(),
+            HAFAS->GetMaxShield(),
+            HAFAS->GetMaxStamina(),
+            HAFAS->GetMaxMajix());
     }
 }
 
@@ -702,6 +716,7 @@ void ABaseCharacter::InitializeDefaultAttributes() const
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+	ApplyEffectToSelf(DefaultResistanceAttributes, 1.f);
 	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
 	ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
 	
@@ -713,7 +728,7 @@ void ABaseCharacter::LogSecondaries_Server() const
     const UAbilitySystemComponent* ASC = AbilitySystemComponent;
     const UHAFAttributeSet* AS = Cast<UHAFAttributeSet>(AttributeSet);
 
-    UE_LOG(LogTemp, Warning, TEXT("[SERVER] After InitializeDefaultAttributes: "
+    /* UE_LOG(LogTemp, Warning, TEXT("[SERVER] After InitializeDefaultAttributes: "
         "Armor=%f ArmorPenetration=%f BlockChance=%f CriticalHitChance=%f CriticalHitDamage=%f CriticalHitResistance=%f "
         "Agility=%f Flexibility=%f Purity=%f Corruptibility=%f Intuition=%f Vision=%f Charm=%f "
         "HealthRegeneration=%f ShieldRegeneration=%f StaminaRegeneration=%f MajixRegeneration=%f "
@@ -739,7 +754,7 @@ void ABaseCharacter::LogSecondaries_Server() const
         SafeGetNumeric(ASC, AS, AS->GetMaxShieldAttribute()),
         SafeGetNumeric(ASC, AS, AS->GetMaxStaminaAttribute()),
         SafeGetNumeric(ASC, AS, AS->GetMaxMajixAttribute())
-    );
+    );*/
 }
 
 void ABaseCharacter::LogSecondaries_Client() const

@@ -6,8 +6,13 @@
 
 // Registers safely during module startup; no static-init order issues.
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_StaminaCost, "SetByCaller.StaminaCost");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SBC_Damage_Shield,      "SetByCaller.Damage.Shield");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SBC_Damage_Health,      "SetByCaller.Damage.Health");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_StaminaRegen, "SetByCaller.StaminaRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_MajixCost, "SetByCaller.MajixCost");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_MajixRegen, "SetByCaller.MajixRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_ShieldRegen, "SetByCaller.ShieldRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_HealthRegen, "SetByCaller.HealthRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Damage_Shield,      "Damage.Shield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Damage_Health,      "Damage.Health");
 FHAFGameplayTags FHAFGameplayTags::GameplayTags;
 
 
@@ -132,6 +137,11 @@ void FHAFGameplayTags::InitializeNativeGameplayTags()
 	FString("Increases the Odds of Making That Impossible Shot with your Firearm")
 	);
 
+	GameplayTags.Attributes_Secondary_Speed = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Attributes.Secondary.Speed"),
+	FString("Increases how Fast You Walk, Run, and Jump")
+	);
+
 	GameplayTags.Attributes_Secondary_Charm = UGameplayTagsManager::Get().AddNativeGameplayTag(
 	FName("Attributes.Secondary.Charm"),
 	FString("Increases the Odds of an Attacking Foe Suddenly Realizing You're Their Friend!")
@@ -249,11 +259,125 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("Input Tag for the 4 Button or D-Pad Right. What does 'four-the-for' mean anyway?") 
 		);
 
-	GameplayTags.SetByCaller_Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("SetByCaller.Damage"),
+	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage"),
 		FString("Duh. Damage!") 
 		);
+	
+	/***************************
+	****************************
+	****    DAMAGE TYPES    ****
+	****************************
+	***************************/
 
+	GameplayTags.Damage_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Burn"),
+		FString("Fire burns... in case you didn't know.") 
+		);
+
+	GameplayTags.Damage_Shock = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Shock"),
+		FString("Lightning electrocutes... you'll see soon enough.") 
+		);
+
+	GameplayTags.Damage_CorruptChaos = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.CorruptChaos"),
+		FString("Chaos corrupts... is your soul worth it?")
+		);
+
+	GameplayTags.Damage_Physical = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Physical"),
+		FString("Physical damage...because sometimes nothing says it better than a good punch in the face.")
+		);
+
+	GameplayTags.Damage_PureOrder = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.PureOrder"),
+		FString("Pure Order... always stay in line and obey.")
+		);
+
+	GameplayTags.Damage_Frostbite = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Frostbite"),
+		FString("Frostbite... ice, ice, baby.")
+		);
+
+	GameplayTags.Damage_Poison = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Poison"),
+		FString("Poison... the clock is ticking.")
+		);
+
+	GameplayTags.Damage_Paralysis = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Paralysis"),
+		FString("Paralysis... hope you like it here, because you're never leaving.")
+		);
+
+	/**************************
+	***************************
+	****    RESISTANCES    ****
+	***************************
+	**************************/
+
+	GameplayTags.Attributes_Resistance_Fire = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Fire"),
+		FString("Reduces Burn Damage Taken from Fire")
+		);
+
+	GameplayTags.Attributes_Resistance_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Lightning"),
+		FString("Reduces Shock Damage Taken from Lightning")
+		);
+
+	GameplayTags.Attributes_Resistance_ChaosMajix = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.ChaosMajix"),
+		FString("Reduces Corrupt Chaos Damage Taken from Majix")
+		);
+
+	GameplayTags.Attributes_Resistance_MeleeAttacks = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.MeleeAttacks"),
+		FString("Reduces Physical Damage Taken from Melee Attacks")
+		);
+
+	GameplayTags.Attributes_Resistance_RuleOfOrder = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.RuleOfOrder"),
+		FString("Reduces Pure Order Damage Taken from the Rule of Order")
+		);
+
+	GameplayTags.Attributes_Resistance_Ice = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Ice"),
+		FString("Reduces Frostbite Damage Taken from Ice")
+		);
+
+	GameplayTags.Attributes_Resistance_Toxicity = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Toxicity"),
+		FString("Reduces Poison Damage Taken from Toxic Substances")
+		);
+
+	GameplayTags.Attributes_Resistance_Stun = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Stun"),
+		FString("Reduces Paralysis Damage Taken from Being Stunned")
+		);
+	
+
+	/*************************************************
+	**************************************************
+	****    MAP OF DAMAGE TYPES TO RESISTANCES    ****
+	**************************************************
+	*************************************************/
+
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Burn, GameplayTags.Attributes_Resistance_Fire);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Shock, GameplayTags.Attributes_Resistance_Lightning);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_CorruptChaos, GameplayTags.Attributes_Resistance_ChaosMajix);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Physical, GameplayTags.Attributes_Resistance_MeleeAttacks);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_PureOrder, GameplayTags.Attributes_Resistance_RuleOfOrder);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Frostbite, GameplayTags.Attributes_Resistance_Ice);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Poison, GameplayTags.Attributes_Resistance_Toxicity);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Paralysis, GameplayTags.Attributes_Resistance_Stun);
+	
+	/**********************
+	***********************
+	****    EFFECTS    ****
+	***********************
+	**********************/
+	
 	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Effects.HitReact"),
 		FString("A Reaction to Getting Hit") 

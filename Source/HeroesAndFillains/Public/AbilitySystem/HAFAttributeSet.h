@@ -48,7 +48,7 @@ struct FEffectProperties
 	ACharacter* TargetCharacter = nullptr;
 };
 
-//typedef TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
+// typedef TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
 
 template<class T>
 using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateUserPolicy>::FFuncPtr;
@@ -65,14 +65,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
-	void ApplyInitialValuesForOwner() const;
-	void TakeDamageFromShield(float Damage, const FEffectProperties& Properties);
-	void TakeDamageFromShieldThenHealth(float Damage, const FEffectProperties& Properties);
-	void TakeDamageFromHealth(float Damage, const FEffectProperties& Properties);
-	void DealWithDeathAndWidgets(float Damage, const FEffectProperties& Properties); 
+	void ApplyDamage(float Damage, const FEffectProperties& Properties);
 
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
-
+	
 	/*********************************
 	****    PRIMARY ATTRIBUTES    ****
 	**********************************/
@@ -165,6 +161,10 @@ public:
 	FGameplayAttributeData Vision;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Vision);
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Speed, Category = "Secondary Attributes")
+	FGameplayAttributeData Speed;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Speed);
+
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Charm, Category = "Secondary Attributes")
 	FGameplayAttributeData Charm;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Charm);
@@ -201,6 +201,47 @@ public:
 	FGameplayAttributeData MaxMajix;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, MaxMajix);
 
+	/************************************
+	****    RESISTANCE ATTRIBUTES    ****
+	************************************/
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Fireproof, Category = "Resistance Attributes")
+	FGameplayAttributeData Fireproof;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Fireproof);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Shockproof, Category = "Resistance Attributes");
+	FGameplayAttributeData Shockproof;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Shockproof);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ChaosIncorruptible, Category = "Resistance Attributes");
+	FGameplayAttributeData ChaosIncorruptible;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, ChaosIncorruptible);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ThermalRadiation, Category = "Resistance Attributes");
+	FGameplayAttributeData ThermalRadiation;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, ThermalRadiation);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_BodyTemp, Category = "Resistance Attributes");
+	FGameplayAttributeData BodyTemp;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, BodyTemp);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_HeartOfDarkness, Category = "Resistance Attributes");
+	FGameplayAttributeData HeartOfDarkness;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, HeartOfDarkness);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Invulnerability, Category = "Resistance Attributes");
+	FGameplayAttributeData Invulnerability;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Invulnerability);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Unstoppable, Category = "Resistance Attributes");
+	FGameplayAttributeData Unstoppable;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Unstoppable);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Immunity, Category = "Resistance Attributes");
+	FGameplayAttributeData Immunity;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, Immunity);
+
+	
 	
 	/*******************************
 	****    VITAL ATTRIBUTES    ****
@@ -238,46 +279,57 @@ public:
 	FGameplayAttributeData IncomingDamage;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, IncomingDamage);
 
-	UFUNCTION() void OnRep_Strength(const FGameplayAttributeData& OldStrength);
-	UFUNCTION() void OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence);
-	UFUNCTION() void OnRep_Resilience(const FGameplayAttributeData& OldResilience);
-	UFUNCTION() void OnRep_Vigor(const FGameplayAttributeData& OldVigor);
-	UFUNCTION() void OnRep_Dexterity(const FGameplayAttributeData& OldDexterity);
-	UFUNCTION() void OnRep_Marksmanship(const FGameplayAttributeData& OldMarksmanship);
-	UFUNCTION() void OnRep_Wisdom(const FGameplayAttributeData& OldWisdom);
-	UFUNCTION() void OnRep_Charisma(const FGameplayAttributeData& OldCharisma);
+	UFUNCTION() void OnRep_Strength(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Intelligence(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Resilience(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Vigor(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Dexterity(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Marksmanship(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Wisdom(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Charisma(const FGameplayAttributeData& OldValue) const;
 
-	UFUNCTION() void OnRep_Armor(const FGameplayAttributeData& OldArmor);
-	UFUNCTION() void OnRep_ArmorPenetration(const FGameplayAttributeData& OldArmorPenetration);
-	UFUNCTION() void OnRep_BlockChance(const FGameplayAttributeData& OldBlockChance);
-	UFUNCTION() void OnRep_CriticalHitChance(const FGameplayAttributeData& OldCriticalHitChance);
-	UFUNCTION() void OnRep_CriticalHitDamage(const FGameplayAttributeData& OldCriticalHitDamage);
-	UFUNCTION() void OnRep_CriticalHitResistance(const FGameplayAttributeData& OldCriticalHitResistance);
-	UFUNCTION() void OnRep_Agility(const FGameplayAttributeData& OldAgility);
-	UFUNCTION() void OnRep_Flexibility(const FGameplayAttributeData& OldFlexibility);
-	UFUNCTION() void OnRep_Purity(const FGameplayAttributeData& OldPurity);
-	UFUNCTION() void OnRep_Corruptibility(const FGameplayAttributeData& OldCorruptibility);
-	UFUNCTION() void OnRep_DarkMajixProficiency(const FGameplayAttributeData& OldDarkMajixProficiency);
-	UFUNCTION() void OnRep_Intuition(const FGameplayAttributeData& OldIntuition);
-	UFUNCTION() void OnRep_Vision(const FGameplayAttributeData& OldVision); // <-- fix OldSVision -> OldVision
-	UFUNCTION() void OnRep_Charm(const FGameplayAttributeData& OldCharm);
+	UFUNCTION() void OnRep_Armor(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_ArmorPenetration(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_BlockChance(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_CriticalHitChance(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_CriticalHitDamage(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_CriticalHitResistance(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Agility(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Flexibility(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Purity(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Corruptibility(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_DarkMajixProficiency(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Intuition(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Vision(const FGameplayAttributeData& OldValue) const; // <-- fix OldSVision -> OldVision
+	UFUNCTION() void OnRep_Speed(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Charm(const FGameplayAttributeData& OldValue) const;
 
-	UFUNCTION() void OnRep_HealthRegeneration(const FGameplayAttributeData& OldHealthRegeneration);
-	UFUNCTION() void OnRep_ShieldRegeneration(const FGameplayAttributeData& OldShieldRegeneration);
-	UFUNCTION() void OnRep_StaminaRegeneration(const FGameplayAttributeData& OldStaminaRegeneration);
-	UFUNCTION() void OnRep_MajixRegeneration(const FGameplayAttributeData& OldMajixRegeneration);
+	UFUNCTION() void OnRep_HealthRegeneration(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_ShieldRegeneration(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_StaminaRegeneration(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_MajixRegeneration(const FGameplayAttributeData& OldValue) const;
 
-	UFUNCTION() void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth);
-	UFUNCTION() void OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield);
-	UFUNCTION() void OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina);
-	UFUNCTION() void OnRep_MaxMajix(const FGameplayAttributeData& OldMaxMajix);
+	UFUNCTION() void OnRep_Fireproof(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Shockproof(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_ChaosIncorruptible(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Invulnerability(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_HeartOfDarkness(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_ThermalRadiation(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_BodyTemp(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Unstoppable(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Immunity(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION() void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_MaxShield(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_MaxStamina(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_MaxMajix(const FGameplayAttributeData& OldValue) const;
 
-	UFUNCTION() void OnRep_Health(const FGameplayAttributeData& OldHealth);
-	UFUNCTION() void OnRep_Shield(const FGameplayAttributeData& OldShield);
-	UFUNCTION() void OnRep_Stamina(const FGameplayAttributeData& OldStamina);
-	UFUNCTION() void OnRep_Majix(const FGameplayAttributeData& OldMajix);
+	UFUNCTION() void OnRep_Health(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Shield(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Stamina(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION() void OnRep_Majix(const FGameplayAttributeData& OldValue) const;
 
-	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldDexterityAgilityFlexibility);
+	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldValue) const;
 
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const;
@@ -287,7 +339,7 @@ private:
 	const FGameplayAttributeData& MaxAttribute,
 	float NewMaxValue,
 	const FGameplayAttribute& AffectedAttributeProperty);
-	void ShowFloatingText(const FEffectProperties& Properties, float Damage) const;
+	void ShowFloatingText(const FEffectProperties& Properties, float Damage, bool bBlockedHit, bool bCriticalHit) const;
 
 public:
 

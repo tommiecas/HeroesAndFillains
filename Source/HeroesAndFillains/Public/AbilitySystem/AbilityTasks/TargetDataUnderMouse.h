@@ -5,7 +5,9 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "TargetDataUnderMouse.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMouseTargetDataSignature, const FGameplayAbilityTargetDataHandle&, DataHandle);
+class AEnemyBase;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMouseTargetDataSignature, const FGameplayAbilityTargetDataHandle&,
+                                            DataHandle);
 /**
  * 
  */
@@ -22,11 +24,18 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FMouseTargetDataSignature ValidData;
 
+	UFUNCTION(BlueprintCallable, Category="Ability|Tasks")
+	void OnDestroy(bool bInOwnerFinished);
+
+	FTimerHandle HoverTimerHandle;
+
 private:
 	virtual void Activate() override;
 	void SendMouseCursorData();
 
 	void OnTargetDataReplicatedCallback(const FGameplayAbilityTargetDataHandle& DataHandle, FGameplayTag ActivationTag);
 
+	UPROPERTY()
+	AEnemyBase* LastHoveredEnemy = nullptr;
 };
 	
