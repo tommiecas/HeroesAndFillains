@@ -1,6 +1,5 @@
 #include "Enemies/StormAssassin.h"
 
-#include "Enemies/Gnarled.h"
 #include "Components/BoxComponent.h"
 #include "Characters/FillainCharacter.h"
 #include "GameFramework/DamageType.h"
@@ -31,26 +30,26 @@ AStormAssassin::AStormAssassin()
     LeftFootCollision->SetGenerateOverlapEvents(true);
 
     // Optional: initial display name
-    EnemyDisplayName = FText::FromString(TEXT("a Gnarled"));
+    EnemyDisplayName = FText::FromString(TEXT("a fearsome Storm Assassin"));
 }
 
-void AGnarled::BeginPlay()
+void AStormAssassin::BeginPlay()
 {
     Super::BeginPlay();
 
     // ✅ Register these colliders with the inherited attack system
-    RegisterAttackCollision(RightFistCollision);
-    RegisterAttackCollision(LeftFistCollision);
+    RegisterAttackCollision(RightFootCollision);
+    RegisterAttackCollision(LeftFootCollision);
 
-    Tags.Add(FName("Gnarled"));
+    Tags.Add(FName("StormAssassin"));
 }
 
-void AGnarled::Tick(float DeltaTime)
+void AStormAssassin::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 }
 
-void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AStormAssassin::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     
@@ -85,16 +84,16 @@ void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent
 
     // Reset damage after a short delay
     bCanDamage = false;
-    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AGnarled::ResetCanDamage, 0.3f, false);
+    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AStormAssassin::ResetCanDamage, 0.3f, false);
 }
 
-void AGnarled::Dissolve()
+void AStormAssassin::Dissolve()
 {
     // --- optional visual dissolve code here ---
     // e.g. spawn dynamic material instances and run dissolve timelines
 }
 
-int32 AGnarled::PlayDeathMontage()
+int32 AStormAssassin::PlayDeathMontage()
 {
     const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
     TEnumAsByte<EDeathPose> Pose(Selection);
@@ -105,44 +104,44 @@ int32 AGnarled::PlayDeathMontage()
     return Selection;
 }
 
-void AGnarled::EnableLeftSideMeleeAttack()
+void AStormAssassin::EnableLeftSideMeleeAttack()
 {
-    if (LeftFistCollision)
+    if (LeftFootCollision)
     {
-        LeftFistCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         UE_LOG(LogTemp, Warning, TEXT("🟢 Left Fist Enabled"));
-        DrawDebugBox(GetWorld(), LeftFistCollision->GetComponentLocation(),
-                     LeftFistCollision->GetScaledBoxExtent(),
+        DrawDebugBox(GetWorld(), LeftFootCollision->GetComponentLocation(),
+                     LeftFootCollision->GetScaledBoxExtent(),
                      FColor::Green, false, 0.25f, 0, 2);
     }
 }
 
-void AGnarled::DisableLeftSideMeleeAttack()
+void AStormAssassin::DisableLeftSideMeleeAttack()
 {
-    if (LeftFistCollision)
+    if (LeftFootCollision)
     {
-        LeftFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Fist Disabled"));
+        LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Foot Disabled"));
     }
 }
 
-void AGnarled::EnableRightSideMeleeAttack()
+void AStormAssassin::EnableRightSideMeleeAttack()
 {
-    if (RightFistCollision)
+    if (RightFootCollision)
     {
-        RightFistCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        RightFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         UE_LOG(LogTemp, Warning, TEXT("🟢 Right Fist Enabled"));
-        DrawDebugBox(GetWorld(), RightFistCollision->GetComponentLocation(),
-                     RightFistCollision->GetScaledBoxExtent(),
+        DrawDebugBox(GetWorld(), RightFootCollision->GetComponentLocation(),
+                     RightFootCollision->GetScaledBoxExtent(),
                      FColor::Cyan, false, 0.25f, 0, 2);
     }
 }
 
-void AGnarled::DisableRightSideMeleeAttack()
+void AStormAssassin::DisableRightSideMeleeAttack()
 {
-    if (RightFistCollision)
+    if (RightFootCollision)
     {
-        RightFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Fist Disabled"));
+        RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Foot Disabled"));
     }
 }

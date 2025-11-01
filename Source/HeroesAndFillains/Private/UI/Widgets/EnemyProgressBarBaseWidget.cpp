@@ -6,10 +6,87 @@
 #include "Components/WidgetComponent.h"
 #include "Enemies/EnemyBase.h"
 
+void UEnemyProgressBarBaseWidget::InitializeForEnemy(AEnemyBase* Enemy)
+{
+	if (Enemy && Enemy->HealthBarWidget)
+	{
+		UpdateOwnerEnemy(Enemy);
+	}
+	if (Enemy && Enemy->ShieldBarWidget)
+	{
+		UpdateOwnerEnemy(Enemy);
+	}
+}
+
+void UEnemyProgressBarBaseWidget::RefreshVisibility(float Health, float Shield, AEnemyBase* Enemy)
+{
+	if (Enemy && Enemy->ShieldBarWidget)
+	{
+		Enemy->GetShieldBarWidget()->SetVisibility(Shield > 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+
+	if (Enemy && Enemy->HealthBarWidget)
+	{
+		// Health bar is always visible, but shield may cover it
+		Enemy->GetHealthBarWidget()->SetVisibility(Health > 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UEnemyProgressBarBaseWidget::UpdateStats(float Health, float MaxHealth, float Shield, float MaxShield, AEnemyBase* Enemy)
+{
+	if (Enemy && Enemy->GetHealthBarWidget())
+	{
+		Enemy->GetHealthBarWidget()->SetVisibility(Health > 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+
+	if (Enemy && Enemy->GetShieldBarWidget())
+	{
+		if (Shield > 0)
+		{
+			Enemy->GetShieldBarWidget()->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			Enemy->GetShieldBarWidget()->RemoveFromParent();
+		}
+	}
+}
+
+void UEnemyProgressBarBaseWidget::UpdateProgressBar_Implementation(float CurrentValue, float MaxValue)
+{
+}
+
+void UEnemyProgressBarBaseWidget::InitForEnemy(AEnemyBase* InEnemy)
+{
+	Super::InitForEnemy(InEnemy);
+
+	if (InEnemy && InEnemy->GetHealthBarWidget())
+	{
+		InEnemy->GetHealthBarWidget()->bInitialized = true;
+		InEnemy->GetHealthBarWidget()->UpdateOwnerEnemy(InEnemy);  // sets "Base Enemy" in BP
+	}
+
+	if (InEnemy && InEnemy->GetShieldBarWidget())
+	{
+		InEnemy->GetShieldBarWidget()->UpdateOwnerEnemy(InEnemy);  // sets "Base Enemy" in BP
+	}
+}
+
 void UEnemyProgressBarBaseWidget::UpdateOwnerEnemy(AEnemyBase* NewEnemy)
 {
 	Super::UpdateOwnerEnemy(NewEnemy);
-	OwnerEnemy = NewEnemy;
+
+	if (NewEnemy && NewEnemy->GetHealthBarWidget())
+	{ 
+		NewEnemy->GetHealthBarWidget()->bInitialized = true;
+		NewEnemy->GetHealthBarWidget()->UpdateOwnerEnemy(NewEnemy);
+	}
+
+	if (NewEnemy && NewEnemy->GetShieldBarWidget())
+	{
+		NewEnemy->GetShieldBarWidget()->bInitialized = true;
+		NewEnemy->GetShieldBarWidget()->UpdateOwnerEnemy(NewEnemy);
+	}
 }
 
 void UEnemyProgressBarBaseWidget::NativeOnInitialized()

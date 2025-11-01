@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CombatCollisionsAmendedEnemyBaseClass.h"
+#include "Enemies/EnemyBase.h"
 #include "StormAssassin.generated.h"
 
 UCLASS()
-class HEROESANDFILLAINS_API AStormAssassin : public ACombatCollisionsAmendedEnemyBaseClass
+class HEROESANDFILLAINS_API AStormAssassin : public AEnemyBase
 {
 
 	GENERATED_BODY()
@@ -26,10 +26,10 @@ public:
 	virtual int32 PlayDeathMontage() override;
 
 protected:
-	virtual void EnableLeftSideMeleeAttack() override;
-	virtual void DisableLeftSideMeleeAttack() override;
-	virtual void EnableRightSideMeleeAttack() override;
-	virtual void DisableRightSideMeleeAttack() override;
+	virtual void EnableLeftSideMeleeAttack();
+	virtual void DisableLeftSideMeleeAttack();
+	virtual void EnableRightSideMeleeAttack();
+	virtual void DisableRightSideMeleeAttack();
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	UBoxComponent* LeftFootCollision;

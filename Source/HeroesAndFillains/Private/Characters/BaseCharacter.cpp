@@ -93,12 +93,7 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SetRootComponent(GetCapsuleComponent());
-
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	
-	
-	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	GetMesh()->SetupAttachment(RootComponent);
 	
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 	
@@ -269,7 +264,7 @@ void ABaseCharacter::ConsumeDodgeStamina()
 	FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
 	if (!ensure(Spec)) return;
 
-	Spec->SetSetByCallerMagnitude(TAG_SetByCaller_StaminaCost, -DodgeCost);
+	Spec->SetSetByCallerMagnitude(TAG_VitalEffects_StaminaCost, -DodgeCost);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec);
 }
 

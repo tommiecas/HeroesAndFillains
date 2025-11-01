@@ -221,10 +221,6 @@ public:
 	FGameplayAttributeData ThermalRadiation;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, ThermalRadiation);
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_BodyTemp, Category = "Resistance Attributes");
-	FGameplayAttributeData BodyTemp;
-	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, BodyTemp);
-
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_HeartOfDarkness, Category = "Resistance Attributes");
 	FGameplayAttributeData HeartOfDarkness;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, HeartOfDarkness);
@@ -315,7 +311,6 @@ public:
 	UFUNCTION() void OnRep_Invulnerability(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_HeartOfDarkness(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_ThermalRadiation(const FGameplayAttributeData& OldValue) const;
-	UFUNCTION() void OnRep_BodyTemp(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_Unstoppable(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_Immunity(const FGameplayAttributeData& OldValue) const;
 	
@@ -329,6 +324,8 @@ public:
 	UFUNCTION() void OnRep_Stamina(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_Majix(const FGameplayAttributeData& OldValue) const;
 
+	UFUNCTION() void OnRep_IncomingDamage(const FGameplayAttributeData& OldValue) const;
+	
 	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldValue) const;
 
 private:

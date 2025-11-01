@@ -109,6 +109,12 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void SetHighlighted(bool bOn);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+    bool bDestroyOnEffectApplication = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+    bool bApplyEffectsToEnemies = false;
     
 private:
     void BindOverlapToAreaShape();     // finds AreaShape from base and binds

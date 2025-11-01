@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CombatCollisionsAmendedEnemyBaseClass.h"
 #include "Gnarled.h"
 #include "Gnarledling.generated.h"
 
@@ -33,14 +32,14 @@ protected:
 	virtual void DisableRightSideMeleeAttack() override;
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* LeftFootCollision;
+	UBoxComponent* LeftFistlingCollision;
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* RightFootCollision;
+	UBoxComponent* RightFistlingCollision;
 	
 	// Only Gnarled-specific settings remain
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float FootDamage = 25.f;
+	float FistlingDamage = 10.f;
 
-	FTimerHandle FootDamageResetTimer;
+	FTimerHandle FistlingDamageResetTimer;
 };

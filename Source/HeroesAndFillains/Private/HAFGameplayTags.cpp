@@ -5,12 +5,12 @@
 #include "GameplayTagsManager.h"
 
 // Registers safely during module startup; no static-init order issues.
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_StaminaCost, "SetByCaller.StaminaCost");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_StaminaRegen, "SetByCaller.StaminaRegen");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_MajixCost, "SetByCaller.MajixCost");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_MajixRegen, "SetByCaller.MajixRegen");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_ShieldRegen, "SetByCaller.ShieldRegen");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_HealthRegen, "SetByCaller.HealthRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_StaminaCost, "VitalEffects.StaminaCost");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_StaminaRegen, "VitalEffects.StaminaRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_MajixCost, "VitalEffects.MajixCost");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_MajixRegen, "VitalEffects.MajixRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_ShieldRegen, "VitalEffects.ShieldRegen");
+UE_DEFINE_GAMEPLAY_TAG(TAG_VitalEffects_HealthRegen, "VitalEffects.HealthRegen");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Damage_Shield,      "Damage.Shield");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Damage_Health,      "Damage.Health");
 FHAFGameplayTags FHAFGameplayTags::GameplayTags;
@@ -381,6 +381,11 @@ FString("How the Sausage Gets Made...Go Away")
 	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Effects.HitReact"),
 		FString("A Reaction to Getting Hit") 
+		);
+
+	GameplayTags.Damage_IncomingDamage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.IncomingDamage"),
+		FString("Damage that is being dealt to you") 
 		);
 
 }

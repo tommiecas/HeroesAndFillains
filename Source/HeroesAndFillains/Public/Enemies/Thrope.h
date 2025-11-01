@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CombatCollisionsAmendedEnemyBaseClass.h"
-#include "StormAssassin.generated.h"
+#include "Enemies/EnemyBase.h"
+#include "Thrope.generated.h"
 
 UCLASS()
-class HEROESANDFILLAINS_API AThrope : public ACombatCollisionsAmendedEnemyBaseClass
+class HEROESANDFILLAINS_API AThrope : public AEnemyBase
 {
 
 	GENERATED_BODY()
@@ -26,28 +26,28 @@ public:
 	virtual int32 PlayDeathMontage() override;
 
 protected:
-	virtual void EnableLeftSideMeleeAttack() override;
-	virtual void DisableLeftSideMeleeAttack() override;
-	virtual void EnableRightSideMeleeAttack() override;
-	virtual void DisableRightSideMeleeAttack() override;
+	virtual void EnableLeftSideMeleeAttack();
+	virtual void DisableLeftSideMeleeAttack();
+	virtual void EnableRightSideMeleeAttack();
+	virtual void DisableRightSideMeleeAttack();
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* LeftHandsClawsCollision;
+	UBoxComponent* LeftHandClawsCollision;
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* LeftFeetClawsCollision;
+	UBoxComponent* LeftFootClawsCollision;
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* RightHandsClawsCollision;
+	UBoxComponent* RightHandClawsCollision;
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
-	UBoxComponent* RightFeetClawsCollision;
+	UBoxComponent* RightFootClawsCollision;
 	
 	// Only Storm-specific settings remain
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float ClawsHandDamage = 25.f;
-	float ClawsFeettDamage = 25.f;
+	float HandClawsDamage = 35.f;
+	float FootClawsDamage = 25.f;
 
-	FTimerHandle ClawsHandsResetTimer;
-	FTimerHandle ClawsFeetResetTimer;
+	FTimerHandle HandClawsResetTimer;
+	FTimerHandle FootClawsResetTimer;
 };

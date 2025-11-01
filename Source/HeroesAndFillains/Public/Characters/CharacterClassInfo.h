@@ -15,7 +15,9 @@ enum class ECharacterClass : uint8
 	Warrior,
 	Gunslinger,
 	Stealthian,
-	Zealot
+	Zealot,
+
+	None
 };
 
 USTRUCT(BlueprintType)
@@ -43,6 +45,9 @@ class HEROESANDFILLAINS_API UCharacterClassInfo : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")
+	ECharacterClass CharacterClass = ECharacterClass::None;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")
 	TMap<ECharacterClass, FCharacterClassDefaultInfo> CharacterClassInformation;;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "ChommonClassDefaults")
@@ -54,6 +59,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="CommonClassDefaults|Damage")
 	TObjectPtr<UCurveTable> DamageCalculationCoefficients;
 	
-	FCharacterClassDefaultInfo GetClassDefaultInfo(ECharacterClass CharacterClass);
+	FCharacterClassDefaultInfo GetClassDefaultInfo(ECharacterClass CharClass);
 	
 };

@@ -6,12 +6,12 @@
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_StaminaCost);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_StaminaRegen);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_MajixCost);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_MajixRegen);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_ShieldRegen);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_HealthRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_StaminaCost);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_StaminaRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_MajixCost);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_MajixRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_ShieldRegen);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_VitalEffects_HealthRegen);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Damage_Shield);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Damage_Health);
 
@@ -82,6 +82,7 @@ public:
 	FGameplayTag InputTag_4OrDPadRight;
 
 	FGameplayTag Damage;
+	FGameplayTag Damage_IncomingDamage;
 	FGameplayTag Damage_Burn;
 	FGameplayTag Damage_Shock;
 	FGameplayTag Damage_CorruptChaos;

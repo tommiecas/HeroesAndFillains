@@ -94,6 +94,8 @@ void ACustomDesignedPCPickupItem::OnAreaEndOverlap(UPrimitiveComponent* /*Overla
 // -------- high-level overlap behavior (your original API) --------
 void ACustomDesignedPCPickupItem::OnOverlap(AActor* TargetActor)
 {
+    if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+
     UE_LOG(LogTemp, Warning, TEXT("[Pickup] Overlap by %s"), *GetNameSafe(TargetActor));
 
     if (bRequirePhysicalOverlapForApplication)
@@ -134,6 +136,8 @@ void ACustomDesignedPCPickupItem::OnOverlap(AActor* TargetActor)
 
 void ACustomDesignedPCPickupItem::OnEndOverlap(AActor* TargetActor)
 {
+    if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+
     if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
     {
         ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
@@ -189,11 +193,30 @@ UAbilitySystemComponent* ACustomDesignedPCPickupItem::GetASCFromCharacter(AFilla
 
 void ACustomDesignedPCPickupItem::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
 {
+    if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+    
     if (!GameplayEffectClass) return;
 
     UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
     if (!TargetASC) return;
 
+    check(GameplayEffectClass);
+    FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+    EffectContextHandle.AddSourceObject(this);
+    const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, ActorLevel, EffectContextHandle);
+    const FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+
+    const bool bIsInfinite = EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
+    if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
+    {
+        ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+    }
+
+    if (!bIsInfinite)
+    {
+        Destroy();
+    }
+    
     UAbilitySystemComponent* SourceASC = TargetASC; // or your true source ASC
     FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
     Ctx.AddSourceObject(this);
@@ -203,6 +226,11 @@ void ACustomDesignedPCPickupItem::ApplyEffectToTarget(AActor* TargetActor, TSubc
     if (SpecHandle.IsValid())
     {
         SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+    }
+
+    if (bDestroyOnEffectApplication && EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Instant)
+    {
+        Destroy();
     }
 }
 

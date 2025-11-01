@@ -14,8 +14,8 @@ void UEnemyBaseWidget::SetWidgetController(UObject* InController)
 	PropagateControllerToChildren();
 	WidgetControllerSet(); // Calls _Implementation or BP override
 
-	UE_LOG(LogTemp, Log, TEXT("[%s] WidgetController set to %s"),
-		*GetName(), *InController->GetName());
+	// UE_LOG(LogTemp, Log, TEXT("[%s] WidgetController set to %s"),
+	//	*GetName(), *InController->GetName());
 }
 
 void UEnemyBaseWidget::PropagateControllerToChildren()

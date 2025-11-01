@@ -5,13 +5,17 @@
 #include "CoreMinimal.h"
 #include "MotionWarping.h"
 #include "Characters/BaseCharacter.h"
+#include "Characters/CharacterClassInfo.h"
 #include "Delegates/AttributeDelegates.h" // ✅ Must come before generated.h
 #include "Interfaces/EnemyAttributeMenuWidgetControllerInterface.h"
 #include "Interfaces/EnemyInterface.h"
+#include "Interfaces/HitInterface.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "EnemyBase.generated.h"
 
+class UCombatComponent;
+enum class ECharacterClass : uint8;
 class UTimelineComponent;
 class UBoxComponent;
 class UEnemyWidgetControllerBase;
@@ -30,7 +34,6 @@ class UAttributeInfo;
 class AHAFAIController;
 class UBehaviorTreeComponent;
 class UBehaviorTree;
-
 
 UENUM(BlueprintType)
 enum class EEnemyState : uint8
@@ -70,10 +73,18 @@ public:
     virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
     virtual void Die() override;
     virtual void Dissolve() override;
+    virtual void Destroyed() override;
     virtual int32 PlayDeathMontage() override;
 
+    UFUNCTION(BlueprintCallable)
+    void Attack();
+    
     virtual void MeleeAttack() override;
     virtual void MajixAttack() override;
+
+    UFUNCTION(BlueprintCallable)
+    void RangedAttack();
+    
     virtual void PlayAttackMontage() override;
     virtual void PlayRandomMeleeAttackMontage() override;
     virtual void PlayRandomMajixAttackMontage() override;
@@ -81,6 +92,10 @@ public:
     virtual bool CanAttack() override;
     virtual void AttackEnd() override;
     virtual void InitializeDefaultAttributes() const override;
+
+    void HideEnemyStatWidgets();
+    void ShowEnemyStatWidgets();
+
 
     // --- Delegates ---
     UPROPERTY(BlueprintAssignable, Category = "GAS | Attributes")
@@ -124,6 +139,21 @@ public:
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UEnemyWidgetControllerBase> EnemyWidgetControllerClass;
+
+    // Pointer to your health widget controller
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+    UEnemyWidgetControllerBase* EnemyHealthWidgetController;
+    
+    // Pointer to your shield widget controller
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+    UEnemyWidgetControllerBase* EnemyShieldWidgetController;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UEnemyWidgetControllerBase> EnemyHealthWidgetControllerClass;
+    
+    // Pointer to your shield widget controller
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UEnemyWidgetControllerBase> EnemyShieldWidgetControllerClass;
     
     // --- AI Logic ---
     void InitializeEnemy();
@@ -143,18 +173,27 @@ public:
     bool IsOutsideCombatRadius();
     bool IsOutsideAttackRadius();
     bool IsInsideAttackRadius();
-    bool IsEnemyChasing();
-    bool IsEnemyAttacking();
-    bool IsEnemyEngaged();
-    bool IsEnemyDead();
+    bool IsEnemyChasing() const;
+    bool IsEnemyAttacking() const;
+    bool IsEnemyEngaged() const;
+    bool IsEnemyDead() const ;
     void ClearPatrolTimer();
     void StartAttackTimer();
     void ClearAttackTimer();
-    bool InTargetRange(AActor* Target, double Radius);
-    void MoveToTarget(AActor* Target);
+    bool InTargetRange(AActor* Target, double Radius) const;
+    void MoveToTarget(AActor* Target) const;
     AActor* ChoosePatrolTarget();
     void PawnSeen(APawn* SeenPawn);
 
+    UPROPERTY(EditAnywhere, Category = Combat)
+    float PatrollingSpeed = 125.f;
+
+    UPROPERTY(EditAnywhere, Category = Combat)
+    float ChasingSpeed = 300.f;
+	
+    UPROPERTY(EditAnywhere, Category = Combat)
+    float DeathLifeSpan = 8.f;
+    
     UFUNCTION()
     void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
 
@@ -209,17 +248,14 @@ public:
     EEnemyState EnemyState = EEnemyState::EES_Idle;
     
     // --- Components ---
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GAS")
     UHAFAbilitySystemComponent* EnemyAbilitySystemComponent;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GAS")
     UHAFAttributeSet* EnemyAttributeSet;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
     UAttributeInfo* EnemyAttributeInfoOverride; // [Restored]
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UWidgetComponent* EnemyStatsWidgetComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Perception")
     UAIPerceptionComponent* AIPerceptionComponent;
@@ -228,11 +264,17 @@ public:
     UAISenseConfig_Sight* SightConfig;
 
     // --- Widgets ---
-    UPROPERTY()
-    UEnemyStatsWidget* EnemyStatsWidget;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWidgetComponent* HealthBarWidgetComponent;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWidgetComponent* ShieldBarWidgetComponent;
 
     UPROPERTY()
     UEnemyAttributeMenuWidget* EnemyAttributeMenuWidget;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+    TSubclassOf<UEnemyAttributeMenuWidget> EnemyAttributeMenuWidgetClass;
 
     // --- Weapons ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
@@ -289,12 +331,18 @@ public:
     FTimerHandle PatrolTimer;
     FTimerHandle AttackTimer;
 
+    UPROPERTY()
+    UEnemyProgressBarBaseWidget* HealthBarWidget;
+
+    UPROPERTY()
+    UEnemyProgressBarBaseWidget* ShieldBarWidget;
+    
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UEnemyStatsWidget> EnemyStatsWidgetClass;
+    TSubclassOf<UEnemyProgressBarBaseWidget> HealthBarWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UEnemyAttributeMenuWidget> EnemyAttributeMenuWidgetClass;
-
+    TSubclassOf<UEnemyProgressBarBaseWidget> ShieldBarWidgetClass;
+    
     UPROPERTY(EditDefaultsOnly, Category = "Souls")
     TSubclassOf<ASoul> SoulClass;
 
@@ -302,12 +350,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
     FText EnemyDisplayName;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    TObjectPtr<UBehaviorTree> BehaviorTree;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    TObjectPtr<AHAFAIController>HAFAIController;
     
     virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled) override;
     
@@ -327,7 +369,50 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Motion Warping")
     void SetWarpTargetsForCombatTarget(AActor* TargetActor);
     
-protected:    
+    // Virtual, empty by default — so each enemy can override
+    UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+    virtual void EnableLeftSideMeleeAttack() {}
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+    virtual void DisableLeftSideMeleeAttack() {}
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+    virtual void EnableRightSideMeleeAttack() {}
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+    virtual void DisableRightSideMeleeAttack() {}
+
+    // Current patrol target
+    UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+    AActor* PatrolTarget;
+
+    UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+    TArray<AActor*> PatrolTargets;
+
+    UPROPERTY(EditAnywhere, Category = Combat)
+    TSubclassOf<class AWeaponBase> BaseWeaponClass;
+
+    UPROPERTY(EditAnywhere, Category = Combat)
+    TSubclassOf<UCombatComponent> CombatComponentClass;
+
+    // Add this override
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+    
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    TObjectPtr<UBehaviorTree> BehaviorTree;
+
+    UPROPERTY()
+    TObjectPtr<AHAFAIController>HAFAIController;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+    ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
+    UFUNCTION()
+    virtual void OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+    
     void SafeInitASC_ForPawnOwner();
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -341,17 +426,21 @@ protected:
 
    
 
-private:
-   
-    
-   
-
+    UPROPERTY()
     bool bCanDamage = true;
 
+   
 
+    
 
-    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    FTimerHandle DamageResetTimer;
+    
+
+    // ✅ How much base damage a single melee hit deals
     float BaseDamage = 20.f;
+
+
+   
 
     // Death
    
@@ -368,14 +457,15 @@ private:
     // Soul
     UPROPERTY(EditAnywhere, Category = "Soul")
     int32 SoulValue = 10;
+
     // Dissolve
     UPROPERTY()
     UTimelineComponent* DissolveTimeline;
     // Damage effect
+
     UPROPERTY(EditAnywhere, Category = "Combat|Damage")
     TSubclassOf<UGameplayEffect> DamageEffectClass;
    
-    FTimerHandle DamageResetTimer;
     // Movement
    
 
@@ -385,19 +475,18 @@ private:
     // Cached player controller for UI
     UPROPERTY()
     APlayerController* CachedPC;
+
     // Hover state for UI
     UPROPERTY()
     bool bIsHovered = false;
+
     // Last hovered enemy for perception system
     UPROPERTY()
     AEnemyBase* LastHoveredEnemy = nullptr;
-    // Weapons
-   
 
+    // Weapons
     UPROPERTY(EditAnywhere, Category = "Combat")
     UParticleSystem* HitParticles;
-    
-private:
    
     /** Currently active hover menu widget instance */
     UPROPERTY()
@@ -407,4 +496,6 @@ private:
 public:
     FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
     FORCEINLINE FText GetEnemyDisplayName() const { return EnemyDisplayName; }
+    FORCEINLINE UEnemyProgressBarBaseWidget* GetHealthBarWidget() const { return HealthBarWidget; }
+    FORCEINLINE UEnemyProgressBarBaseWidget* GetShieldBarWidget() const { return ShieldBarWidget; }
 };

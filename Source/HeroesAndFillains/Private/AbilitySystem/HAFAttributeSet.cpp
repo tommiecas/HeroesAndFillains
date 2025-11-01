@@ -60,7 +60,6 @@ UHAFAttributeSet::UHAFAttributeSet()
 	// Resistances
 	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Fire, GetFireproofAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Ice, GetThermalRadiationAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Ice, GetBodyTempAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Lightning, GetShockproofAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_MeleeAttacks, GetInvulnerabilityAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_RuleOfOrder, GetHeartOfDarknessAttribute);
@@ -73,6 +72,9 @@ UHAFAttributeSet::UHAFAttributeSet()
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Shield,GetShieldAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Stamina,GetStaminaAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Majix,GetMajixAttribute);
+
+	//Damage
+	TagsToAttributes.Add(GameplayTags.Damage_IncomingDamage, GetIncomingDamageAttribute);
 	
     // Invisible
     TagsToAttributes.Add(GameplayTags.Attributes_Invisible_DexterityAgilityFlexibility, GetDexterityAgilityFlexibilityAttribute);
@@ -117,6 +119,8 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, MaxMajix, COND_None, REPNOTIFY_Always);
 
+	//DamageAttributes
+	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, IncomingDamage, COND_None, REPNOTIFY_Always);
 	// Invisible Attributes
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, COND_None, REPNOTIFY_Always);
 
@@ -129,7 +133,6 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, Invulnerability, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, HeartOfDarkness, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, ThermalRadiation, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UHAFAttributeSet, BodyTemp, COND_None, REPNOTIFY_Always);
 	
 
 	// Vital Attributes
@@ -148,6 +151,10 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 	{
 		Properties.SourceAvatarActor = Properties.SourceASC->GetAvatarActor();
 		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
+		UE_LOG(LogTemp, Log, TEXT("Damage Source ASC: %s Actor: %s Controller: %s"),
+					*GetNameSafe(Properties.SourceASC),
+					*GetNameSafe(Properties.SourceAvatarActor),
+					*GetNameSafe(Properties.SourceController));
 		if (!Properties.SourceController && Properties.SourceAvatarActor)
 		{
 			if (APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
@@ -160,6 +167,10 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 	Properties.TargetASC = Data.Target.AbilityActorInfo->AbilitySystemComponent.Get();
 	Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
 	Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+	UE_LOG(LogTemp, Log, TEXT("Damage Target ASC: %s Actor: %s Controller: %s"),
+	   *GetNameSafe(Properties.TargetASC),
+	   *GetNameSafe(Properties.TargetAvatarActor),
+	   *GetNameSafe(Properties.TargetController));
 }
 
 void UHAFAttributeSet::AdjustAttributeForMaxChange(
@@ -222,7 +233,7 @@ void UHAFAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 
 
 void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
-{
+{	
 	Super::PostGameplayEffectExecute(Data);
 
 	FEffectProperties Props;
@@ -233,6 +244,7 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	// --- Clamp vitals ---
 	if (Attribute == GetHealthAttribute())
 	{
+        UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: Health changed to %f on %s"), GetHealth(), *Props.TargetAvatarActor->GetName());
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 	}
 	else if (Attribute == GetShieldAttribute())
@@ -250,6 +262,8 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	else if (Attribute == GetIncomingDamageAttribute())
 	{
 		const float Damage = GetIncomingDamage();
+		UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: IncomingDamage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
+
 		SetIncomingDamage(0.f);
 
 		if (Damage > 0.f)
@@ -261,25 +275,34 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 
 void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ApplyDamage called with Damage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
+
 	float RemainingDamage = Damage;
 
 	// --- Absorb by shield first ---
 	if (GetShield() > 0.f)
 	{
+		float ShieldBefore = GetShield();
 		const float NewShield = FMath::Max(0.f, GetShield() - RemainingDamage);
+		float ShieldAbsorbed = ShieldBefore - NewShield;
 		RemainingDamage -= (GetShield() - NewShield);
+		UE_LOG(LogTemp, Warning, TEXT("Shield absorbed %f damage, new Shield = %f"), ShieldAbsorbed, NewShield);
 		SetShield(NewShield);
 	}
 
 	// --- Apply leftover to health ---
 	if (RemainingDamage > 0.f)
 	{
-		SetHealth(FMath::Clamp(GetHealth() - RemainingDamage, 0.f, GetMaxHealth()));
+		float HealthBefore = GetHealth();
+        float NewHealth = FMath::Clamp(HealthBefore - RemainingDamage, 0.f, GetMaxHealth());
+		UE_LOG(LogTemp, Warning, TEXT("Health reduced by %f from %f to %f"), RemainingDamage, HealthBefore, NewHealth);
+		SetHealth(NewHealth);
 	}
 
 	// --- Handle death or hit reaction ---
 	if (GetHealth() <= 0.f)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s died due to damage application"), *Props.TargetAvatarActor->GetName());
 		if (ICombatInterface* Combat = Cast<ICombatInterface>(Props.TargetAvatarActor))
 		{
 			Combat->Die();
@@ -290,6 +313,7 @@ void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
 		Props.TargetASC->TryActivateAbilitiesByTag(Tags);
+		UE_LOG(LogTemp, Warning, TEXT("%s took damage and triggered hit react"), *Props.TargetAvatarActor->GetName());
 	}
 
 	// --- Floating text or damage numbers are optional ---
@@ -494,11 +518,6 @@ void UHAFAttributeSet::OnRep_ThermalRadiation(const FGameplayAttributeData& OldV
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, ThermalRadiation, OldValue);
 }
 
-void UHAFAttributeSet::OnRep_BodyTemp(const FGameplayAttributeData& OldValue) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, BodyTemp, OldValue);
-}
-
 void UHAFAttributeSet::OnRep_Shockproof(const FGameplayAttributeData& OldShockproof) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, Shockproof, OldShockproof);
@@ -532,6 +551,11 @@ void UHAFAttributeSet::OnRep_Unstoppable(const FGameplayAttributeData& OldUnstop
 void UHAFAttributeSet::OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldDexterityAgilityFlexibility) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, DexterityAgilityFlexibility, OldDexterityAgilityFlexibility);
+}
+
+void UHAFAttributeSet::OnRep_IncomingDamage(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UHAFAttributeSet, IncomingDamage, OldValue);
 }
 
 

@@ -123,48 +123,73 @@ void AHAFMajixProjectile::Destroyed()
 }
 
 
-void AHAFMajixProjectile::OnNewSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AHAFMajixProjectile::OnNewSphereOverlap(
+    UPrimitiveComponent* OverlappedComponent, 
+    AActor* OtherActor, 
+    UPrimitiveComponent* OtherComp, 
+    int32 OtherBodyIndex, 
+    bool bFromSweep, 
+    const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this && OtherActor != GetOwner())
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-		if (LoopingSoundComponent) LoopingSoundComponent->Stop();
+    UE_LOG(LogTemp, Warning, TEXT("🔥 Projectile overlap! Hit: %s"), *GetNameSafe(OtherActor));
 
-		if (HasAuthority())
-		{
-			if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
-			{
-				if (DamageEffectSpecHandle.IsValid())
-				{
-					// ✅ Extract the damage value from the spec (SetByCaller)
-					float DamageAmount = 0.f;
-					DamageEffectSpecHandle.Data->GetSetByCallerMagnitude(
-						FGameplayTag::RequestGameplayTag(FName("Damage")),
-						false,
-						DamageAmount
-					);
+    if (OtherActor && OtherActor != this && OtherActor != GetOwner())
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+        if (LoopingSoundComponent) LoopingSoundComponent->Stop();
 
-					UE_LOG(LogTemp, Warning, TEXT("Fireball hit %s at %s | Damage: %.2f"),
-						*OtherActor->GetName(),
-						*SweepResult.ImpactPoint.ToString(),
-						DamageAmount);
-					
-					// ✅ Apply damage effect to the target
-					TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Projectile: Invalid DamageEffectSpecHandle on overlap!"));
-				}
-			}
-
-			Destroy();
-		}
-		else
-		{
-			bHit = true;
-		}
-	}
+        if (HasAuthority())
+        {
+            if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("✅ Target %s has ASC"), *GetNameSafe(OtherActor));
+                
+                if (DamageEffectSpecHandle.IsValid())
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("✅ DamageEffectSpecHandle is VALID"));
+                    
+                    // ✅ Log all SetByCaller values in the spec
+                    const FGameplayEffectSpec* Spec = DamageEffectSpecHandle.Data.Get();
+                    if (Spec)
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("📋 Spec has %d SetByCaller magnitudes"), 
+                            Spec->SetByCallerTagMagnitudes.Num());
+                        
+                        for (const auto& Pair : Spec->SetByCallerTagMagnitudes)
+                        {
+                            UE_LOG(LogTemp, Warning, TEXT("  - Tag: %s | Value: %.1f"), 
+                                *Pair.Key.ToString(), Pair.Value);
+                        }
+                    }
+                    
+                    // ✅ Apply damage effect to the target
+                    FActiveGameplayEffectHandle ActiveHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*Spec);
+                    
+                    if (ActiveHandle.IsValid())
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("💥 Successfully applied damage effect!"));
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("❌ Failed to apply damage effect!"));
+                    }
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error, TEXT("❌ DamageEffectSpecHandle is INVALID!"));
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("⚠️ Hit actor %s has no AbilitySystemComponent"), *GetNameSafe(OtherActor));
+            }
+            Destroy();
+        }
+        else
+        {
+            bHit = true;
+        }
+    }
 }
 

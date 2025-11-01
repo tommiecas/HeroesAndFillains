@@ -204,6 +204,19 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 		UHAFAttributeSet::GetIncomingDamageAttribute(),
 		EGameplayModOp::Additive,
 		Damage));
+
+	UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f"), Damage);
+    
+	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+		UHAFAttributeSet::GetIncomingDamageAttribute(),
+		EGameplayModOp::Additive,
+		Damage));
+
+	UE_LOG(LogTemp, Log, TEXT("ExecutionCalculation_Damage: Calculated Damage = %f"), Damage);
+	// Apply damage output modifier...
+	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+		UHAFAttributeSet::GetIncomingDamageAttribute(), EGameplayModOp::Additive, Damage));
+	
 	/*float Damage = Spec.EffectSpec.GetMagnitude() * (1.f - (Armor / 100.f));
 	OutExecutionOutput.AddDamage(Damage);
 	//

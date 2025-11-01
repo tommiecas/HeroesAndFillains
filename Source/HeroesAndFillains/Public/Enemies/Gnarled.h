@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CombatCollisionsAmendedEnemyBaseClass.h"
+#include "Enemies/EnemyBase.h"
 #include "Gnarled.generated.h"
 
 UCLASS()
-class HEROESANDFILLAINS_API AGnarled : public ACombatCollisionsAmendedEnemyBaseClass
+class HEROESANDFILLAINS_API AGnarled : public AEnemyBase
 {
 
 	GENERATED_BODY()
@@ -25,11 +25,14 @@ public:
 	virtual void Dissolve() override;
 	virtual int32 PlayDeathMontage() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsGnarledMale = true;
+	
 protected:
-	virtual void EnableLeftSideMeleeAttack() override;
-	virtual void DisableLeftSideMeleeAttack() override;
-	virtual void EnableRightSideMeleeAttack() override;
-	virtual void DisableRightSideMeleeAttack() override;
+	virtual void EnableLeftSideMeleeAttack();
+	virtual void DisableLeftSideMeleeAttack();
+	virtual void EnableRightSideMeleeAttack();
+	virtual void DisableRightSideMeleeAttack();
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	UBoxComponent* LeftFistCollision;
