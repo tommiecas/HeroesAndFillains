@@ -85,13 +85,30 @@ public:
     UFUNCTION(BlueprintCallable)
     void RangedAttack();
     
+    // --- Ranged Weapon Firing System ---
+    
+    /** Check if enemy can fire weapon (all conditions met) */
+    bool CanFireWeapon() const;
+    
+    /** Check if enemy has clear line of sight to target */
+    bool HasLineOfSight(AActor* Target) const;
+    
+    /** Calculate aim target with accuracy variation */
+    FVector CalculateAimTarget() const;
+    
+    /** Fire the equipped ranged weapon at target */
+    void FireWeapon();
+    
+    /** Reset fire cooldown timer */
+    void ResetFireCooldown();
+    
     virtual void PlayAttackMontage() override;
     virtual void PlayRandomMeleeAttackMontage() override;
     virtual void PlayRandomMajixAttackMontage() override;
     virtual void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
     virtual bool CanAttack() override;
     virtual void AttackEnd() override;
-    virtual void InitializeDefaultAttributes() const override;
+    virtual void InitializeDefaultAttributes() override;
 
     void HideEnemyStatWidgets();
     void ShowEnemyStatWidgets();
@@ -194,11 +211,36 @@ public:
     UPROPERTY(EditAnywhere, Category = Combat)
     float DeathLifeSpan = 8.f;
     
+    // --- Ranged Combat Properties ---
+    
+    /** Time between shots (reload time) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Ranged")
+    float FireCooldownTime = 3.0f;
+    
+    /** Weapon accuracy (0.0 = always miss, 1.0 = perfect accuracy) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Ranged", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float WeaponAccuracy = 0.7f;
+    
+    /** Maximum range for firing weapon */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Ranged")
+    float MaxFiringRange = 2000.0f;
+    
+    /** Can the enemy fire right now (cooldown control) */
+    UPROPERTY(BlueprintReadOnly, Category = "Combat|Ranged")
+    bool bCanFire = true;
+    
+    /** Timer handle for fire cooldown */
+    FTimerHandle FireCooldownTimer;
+    
     UFUNCTION()
     void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
 
     // --- Weapons ---
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     void SpawnEnemyWeapon();
+    
+    // You don't need to manually declare _Implementation in the header
+    // Unreal's code generation will handle this
 
     // --- UI / Widgets ---
     void InitializeEnemyWidgets();
@@ -241,8 +283,11 @@ public:
     bool IsPatrolling() const;                         // [Restored]
     bool bHitReacting = false;
 
+    virtual void SetCombatTarget_Implementation(AActor* InCombatTarget) override;
+    virtual AActor* GetCombatTarget_Implementation() override;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-    float BaseWalkSpeed = 100.f;
+    float BaseWalkSpeed = 250.f;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
     EEnemyState EnemyState = EEnemyState::EES_Idle;
@@ -389,7 +434,7 @@ public:
     UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
     TArray<AActor*> PatrolTargets;
 
-    UPROPERTY(EditAnywhere, Category = Combat)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
     TSubclassOf<class AWeaponBase> BaseWeaponClass;
 
     UPROPERTY(EditAnywhere, Category = Combat)

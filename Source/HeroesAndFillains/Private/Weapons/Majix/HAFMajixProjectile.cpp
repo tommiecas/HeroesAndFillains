@@ -91,6 +91,9 @@ AHAFMajixProjectile::AHAFMajixProjectile()
 		WeaponBox->SetHiddenInGame(true);
 		WeaponBox->Deactivate();
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Projectile spawned at %s"), *GetActorLocation().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Projectile rotation: %s"), *GetActorRotation().ToString());
 }
 
 void AHAFMajixProjectile::BeginPlay()
@@ -109,6 +112,23 @@ void AHAFMajixProjectile::BeginPlay()
 	}
 	
 	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
+
+	UE_LOG(LogTemp, Warning, TEXT("Projectile spawned at %s"), *GetActorLocation().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Projectile rotation: %s"), *GetActorRotation().ToString());
+	if (LoopingSound && LoopingSoundComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Projectile has Looping Sound of %s"), *LoopingSound->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Projectile has Looping Sound Component of %s"), *LoopingSoundComponent->GetName());
+	}
+	if (ImpactEffect)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Projectile has Impact Effect of %s"), *ImpactEffect->GetName());
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Projectile spawned at %s with velocity %s"), *GetActorLocation().ToString(), *ProjectileMovement->Velocity.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Projectile BeginPlay Location: %s, Velocity: %s"), *GetActorLocation().ToString(), *ProjectileMovement->Velocity.ToString());
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + ProjectileMovement->Velocity * 0.1f, FColor::Green, false, 3.0f, 0, 5.0f);
+  
+
 }
 
 void AHAFMajixProjectile::Destroyed()

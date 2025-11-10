@@ -33,6 +33,8 @@
 #include "HAFComponents/BuffComponent.h"  
 #include "Components/CapsuleComponent.h"  
 #include <Kismet/KismetMathLibrary.h>
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "ASync/ASync.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
@@ -86,6 +88,7 @@
 #include "Components/CapsuleComponent.h"
 #include "HAFGameplayTags.h"
 #include "GameplayEffectTypes.h" // defines FGameplayEffectSpecHandle::Data and FGameplayEffectSpec
+#include "Enemies/SpectralBase.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -235,11 +238,6 @@ bool ABaseCharacter::IsAlive() const
 	return GetCurrentHealth() > KINDA_SMALL_NUMBER;
 }
 
-bool ABaseCharacter::IsDead() const
-{
-	return !IsAlive();
-}
-
 void ABaseCharacter::InitializeAbilityActorInfo()
 {
 	
@@ -298,13 +296,14 @@ void ABaseCharacter::MulticastHandleDeath_Implementation()
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	Dissolve();
+	bIsCharacterDead = true;
+
+	if (ASpectralBase* SpectralSoldier = Cast<ASpectralBase>(this))
+	{
+		SpectralSoldier->SpectralAssaultRifle->DestroyComponent();
+	}
 }
 
-void ABaseCharacter::Dissolve()
-{
-	if (bIsCharacterDead) return;
-	
-}
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	// Early exit if actor is pending kill or invalid
@@ -460,13 +459,13 @@ void ABaseCharacter::SpawnHitSpecialEffects(const FVector& ImpactPoint)
 
 void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (AttributeComponent)
+	/*if (AttributeComponent)
 	{
 		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	AActor* InstigatorActor = Cast<AActor>(EventInstigator);
-	MaybeTriggerCharm(this, InstigatorActor);
-}
+	MaybeTriggerCharm(this, InstigatorActor);*/
+} 
 
 void ABaseCharacter::MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator)
 {
@@ -607,11 +606,44 @@ void ABaseCharacter::DisableCapsule()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-FVector ABaseCharacter::GetSpellCastersSocketLocation()
+FVector ABaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
 {
-	check (GetMesh());
-	return GetMesh()->GetSocketLocation(SpellCastersSocketName);
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
+	{
+		return Weapon->GetSocketLocation(WeaponTipSocketName);check (GetMesh());return GetMesh()->GetSocketLocation(CombatSocketName);
+	}
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+	{
+		return GetMesh()->GetSocketLocation(LeftHandSocketName);
+	}
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+	{
+		return GetMesh()->GetSocketLocation(RightHandSocketName);
+	}
+	return FVector();
 }
+	
+	
+
+bool ABaseCharacter::IsDead_Implementation() const
+{
+	return bIsCharacterDead;
+}
+
+AActor* ABaseCharacter::GetAvatar_Implementation()
+{
+	return this;
+}
+
+TArray<FTaggedMontage> ABaseCharacter::GetAttackMontages_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Returning %d attack montages."), *GetName(), AttackMontages.Num());
+	for (auto& M : AttackMontages)
+	{
+		UE_LOG(LogTemp, Warning, TEXT(" - %s (%s)"), *GetNameSafe(M.Montage), *M.MontageTag.ToString());
+	}
+	return AttackMontages;}
 
 bool ABaseCharacter::CanAttack()
 {
@@ -623,14 +655,31 @@ bool ABaseCharacter::IsCharacterAlive() const
 	return GetCurrentHealth() > KINDA_SMALL_NUMBER;
 }
 
-void ABaseCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const
+void ABaseCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level)
 {
-	check(IsValid(GetAbilitySystemComponent()));
-	check(GameplayEffectClass);
-	FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	if (!IsValid(GetAbilitySystemComponent()) || !GameplayEffectClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ApplyEffectToSelf failed: Missing ASC or invalid GameplayEffectClass on %s"), *GetName());
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = GetAbilitySystemComponent();
+	if (!TargetASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ApplyEffectToSelf failed: Missing ASC on %s"), *GetName());
+		return;
+	}
+
+	// Build effect context safely using this ASC
+	FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
 	ContextHandle.AddSourceObject(this);
-	const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
-	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), GetAbilitySystemComponent());
+
+	FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
+	if (SpecHandle.IsValid())
+	{
+		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+
 }
 
 float ABaseCharacter::SafeGetNumeric(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS,
@@ -666,19 +715,19 @@ void ABaseCharacter::ApplyStartupEffects() const
     };
 
 	UHAFAttributeSet* HAFAS = Cast<UHAFAttributeSet>(AttributeSet);
-    ApplyGE(DefaultPrimaryAttributes);
+    // ApplyGE(DefaultPrimaryAttributes);
 
-	ApplyGE(DefaultSecondaryAttributes);
+	// ApplyGE(DefaultSecondaryAttributes);
 
 	ApplyGE(DefaultResistanceAttributes);
-	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+	// UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
 
 	ApplyGE(DefaultVitalAttributes);
-	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+	// UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
 
 	ApplyGE(DefaultInvisibleAttributes);
 
-	UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
+	/* UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
 	
     if (HasAuthority() && HAFAS)   // ← changed from AttributeSet
     {
@@ -704,10 +753,10 @@ void ABaseCharacter::ApplyStartupEffects() const
             HAFAS->GetMaxShield(),
             HAFAS->GetMaxStamina(),
             HAFAS->GetMaxMajix());
-    }
+    }*/
 }
 
-void ABaseCharacter::InitializeDefaultAttributes() const
+void ABaseCharacter::InitializeDefaultAttributes()
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
@@ -865,13 +914,14 @@ void ABaseCharacter::PlayAttackMontage()
 
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	CachedDamageAmount = DamageAmount;
+	/*CachedDamageAmount = DamageAmount;
 	CachedDamageEvent = DamageEvent;
 	CachedEventInstigator = EventInstigator;
 	CachedDamageCauser = DamageCauser;	
 		
 	HandleDamage(CachedDamageAmount, CachedDamageEvent, CachedEventInstigator, CachedDamageCauser);
-	return DamageAmount;
+	return DamageAmount;*/
+	return 0.f;
 }
 
 void ABaseCharacter::AddCharacterAbilities() const
@@ -892,9 +942,11 @@ UAttributeSet* ABaseCharacter::GetAttributeSet() const
 	// We only cache a const set on BaseCharacter; return a mutable pointer for legacy call sites.
 	return const_cast<UAttributeSet*>(AttributeSet.Get());
 }
-/*
+
 void ABaseCharacter::Dissolve()
 {
+	if (bIsCharacterDead) return;
+	
 	if (IsValid(DissolveMaterialInstance))
 	{
 		UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
@@ -909,7 +961,7 @@ void ABaseCharacter::Dissolve()
 
 		StartWeaponDissolveTimeline(WeaponDynamicMatInst);
 	}
-} */
+} 
 
 bool ABaseCharacter::IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const
 {

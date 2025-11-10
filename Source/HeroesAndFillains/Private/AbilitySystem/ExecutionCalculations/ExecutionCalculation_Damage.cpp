@@ -116,6 +116,7 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 
 	// PART ONE: Get Damage Set by Caller Magnitude
 	float Damage = 0.f;
+	UE_LOG(LogTemp, Warning, TEXT("TagsToResistances size: %d"), FHAFGameplayTags::Get().DamageTypesToResistances.Num());
 	for (const TTuple<FGameplayTag, FGameplayTag>& Pair : FHAFGameplayTags::Get().DamageTypesToResistances)
 	{
 		const FGameplayTag DamageTypeTag = Pair.Key;
@@ -125,6 +126,7 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 		const FGameplayEffectAttributeCaptureDefinition CaptureDef = HAFDamageStatics().TagsToCaptureDefs[ResistanceTypeTag];
 
 		float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key);
+		UE_LOG(LogTemp, Warning, TEXT("DamageType %s = %f"), *Pair.Key.ToString(), DamageTypeValue);
 
 		float Resistance = 0.f;
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
@@ -206,19 +208,5 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 		Damage));
 
 	UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f"), Damage);
-    
-	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-		UHAFAttributeSet::GetIncomingDamageAttribute(),
-		EGameplayModOp::Additive,
-		Damage));
-
-	UE_LOG(LogTemp, Log, TEXT("ExecutionCalculation_Damage: Calculated Damage = %f"), Damage);
-	// Apply damage output modifier...
-	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-		UHAFAttributeSet::GetIncomingDamageAttribute(), EGameplayModOp::Additive, Damage));
 	
-	/*float Damage = Spec.EffectSpec.GetMagnitude() * (1.f - (Armor / 100.f));
-	OutExecutionOutput.AddDamage(Damage);
-	//
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, )*/
 }

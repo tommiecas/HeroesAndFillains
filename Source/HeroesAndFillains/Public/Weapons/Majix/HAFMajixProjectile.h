@@ -25,7 +25,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AHAFMajixProjectile> FireBoltProjectileClass;
 	
 protected:
 	virtual void BeginPlay() override;

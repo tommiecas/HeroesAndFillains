@@ -24,7 +24,7 @@ public:
 	) override;
 	virtual void Dissolve() override;
 	virtual int32 PlayDeathMontage() override;
-
+	
 protected:
 	virtual void EnableLeftSideMeleeAttack();
 	virtual void DisableLeftSideMeleeAttack();

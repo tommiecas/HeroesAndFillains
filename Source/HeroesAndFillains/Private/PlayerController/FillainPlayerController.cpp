@@ -1011,19 +1011,39 @@ void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 
 void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
+	// --- Early return if not LMB/GamepadShoulder ---
 	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{
 		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
 		return;
 	}
+
+	// --- If we're targeting or Shift key is down ---
 	if (bTargeting || bShiftKeyDown)
 	{
-		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
+		if (GetASC())
+		{
+			// 🔒 Prevent spamming FireBolt (or any active ability)
+			FGameplayTag ActiveTag = FGameplayTag::RequestGameplayTag(TEXT("Abilities.FireBolt.Active"));
+			if (GetASC()->HasMatchingGameplayTag(ActiveTag))
+			{
+				// Optional debug log so you know it’s blocking correctly
+				UE_LOG(LogTemp, Warning, TEXT("Blocked reactivation: %s already active"), *InputTag.ToString());
+				return;
+			}
+
+			// ✅ If not active, try to activate normally
+			GetASC()->AbilityInputTagHeld(InputTag);
+		}
 	}
 	else
 	{
+		// --- Standard movement logic ---
 		FollowTime += GetWorld()->GetDeltaSeconds();
-		if (CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
+		if (CursorHit.bBlockingHit)
+		{
+			CachedDestination = CursorHit.ImpactPoint;
+		}
 
 		if (APawn* ControlledPawn = GetPawn())
 		{

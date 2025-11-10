@@ -67,7 +67,7 @@ void UEnemyWidgetControllerBase::BindCallbacksToDependencies()
 	if (OwningEnemy && OwningEnemy->EnemyAttributeInfoOverride)
 	{
 		EnemyAttributeInfo = OwningEnemy->EnemyAttributeInfoOverride;
-		UE_LOG(LogTemp, Warning, TEXT("[EnemyWC] AttributeInfo overridden by %s’s data asset."), *OwningEnemy->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("[EnemyWC] AttributeInfo overridden by %s’s data asset."), *OwningEnemy->GetName());
 	}
 
 	const UHAFAttributeSet* AS = CastChecked<UHAFAttributeSet>(EnemyAttributeSet);
@@ -83,8 +83,8 @@ void UEnemyWidgetControllerBase::BindCallbacksToDependencies()
 		);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("BindCallbacksToDependencies -> ASC: %s | AS: %s"),
-		*GetNameSafe(EnemyASC), *GetNameSafe(EnemyAttributeSet));
+	// UE_LOG(LogTemp, Warning, TEXT("BindCallbacksToDependencies -> ASC: %s | AS: %s"),
+	// 	*GetNameSafe(EnemyASC), *GetNameSafe(EnemyAttributeSet));
 }
 
 void UEnemyWidgetControllerBase::BroadcastInitialEnemyValues()
@@ -96,9 +96,9 @@ void UEnemyWidgetControllerBase::BroadcastInitialEnemyValues()
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ControllerClass = %s | EnemyAttributeInfo = %s"),
-		*GetClass()->GetName(),
-		*GetNameSafe(EnemyAttributeInfo));
+	// UE_LOG(LogTemp, Warning, TEXT("ControllerClass = %s | EnemyAttributeInfo = %s"),
+	// 	*GetClass()->GetName(),
+	// 	*GetNameSafe(EnemyAttributeInfo));
 
 	EnemyAttributeSet = Enemy->GetAttributeSet();
 	if (!EnemyAttributeSet)
@@ -113,7 +113,7 @@ void UEnemyWidgetControllerBase::BroadcastInitialEnemyValues()
 	if (OwningEnemy && OwningEnemy->EnemyAttributeInfoOverride)
 	{
 		EnemyAttributeInfo = OwningEnemy->EnemyAttributeInfoOverride;
-		UE_LOG(LogTemp, Warning, TEXT("[EnemyWC] AttributeInfo overridden by %s’s data asset."), *OwningEnemy->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("[EnemyWC] AttributeInfo overridden by %s’s data asset."), *OwningEnemy->GetName());
 	}
 
 	const UHAFAttributeSet* EnemyAS = CastChecked<UHAFAttributeSet>(EnemyAttributeSet);
@@ -135,13 +135,13 @@ void UEnemyWidgetControllerBase::BroadcastInitialEnemyValues()
 	OwningEnemy->OnEnemyMajixChanged.Broadcast(EnemyAS->GetMajix());
 	OwningEnemy->OnEnemyMaxMajixChanged.Broadcast(EnemyAS->GetMaxMajix());
 
-	UE_LOG(LogTemp, Warning, TEXT("[%s] BroadcastInitialEnemyValues() -> "
+	/* UE_LOG(LogTemp, Warning, TEXT("[%s] BroadcastInitialEnemyValues() -> "
 		"H=%f/%f | S=%f/%f | Stamina=%f/%f | Majix=%f/%f"),
 		*GetNameSafe(this),
 		EnemyAS->GetHealth(), EnemyAS->GetMaxHealth(),
 		EnemyAS->GetShield(), EnemyAS->GetMaxShield(),
 		EnemyAS->GetStamina(), EnemyAS->GetMaxStamina(),
-		EnemyAS->GetMajix(), EnemyAS->GetMaxMajix());
+		EnemyAS->GetMajix(), EnemyAS->GetMaxMajix());*/
 }
 
 void UEnemyWidgetControllerBase::BroadcastEnemyAttributeInfo(const FGameplayTag& EnemyAttributeTag,

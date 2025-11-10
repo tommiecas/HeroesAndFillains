@@ -26,4 +26,10 @@ public:
 
 	UFUNCTION()
 	virtual void OnHoverEnd() = 0;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void SetCombatTarget(AActor* InCombatTarget);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	AActor* GetCombatTarget();
 };

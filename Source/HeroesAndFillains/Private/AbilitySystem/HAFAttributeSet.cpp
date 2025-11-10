@@ -171,6 +171,38 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 	   *GetNameSafe(Properties.TargetASC),
 	   *GetNameSafe(Properties.TargetAvatarActor),
 	   *GetNameSafe(Properties.TargetController));
+
+	// ✅ Add this line at the very end:
+	LogEffectSourceTarget(Properties, TEXT(__FUNCTION__), Data.EffectSpec);
+}
+
+void UHAFAttributeSet::LogEffectSourceTarget(const FEffectProperties& Props, const FString& FunctionName, const FGameplayEffectSpec& Spec)
+{
+	const FString SourceName = GetNameSafe(Props.SourceAvatarActor);
+	const FString TargetName = GetNameSafe(Props.TargetAvatarActor);
+
+	// ✅ Extract the name of the GameplayEffect
+	const FString EffectName = Spec.Def ? Spec.Def->GetName() : TEXT("UnknownEffect");
+
+	if (Props.SourceASC == Props.TargetASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ⚠️ %s self-applied (%s)"),
+			*FunctionName, *SourceName, *EffectName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] ✅ %s ➜ %s (%s)"),
+			*FunctionName, *SourceName, *TargetName, *EffectName);
+	}
+
+	if (!Props.SourceController)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing SourceController for %s"), *FunctionName, *SourceName);
+	}
+	if (!Props.TargetController)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing TargetController for %s"), *FunctionName, *TargetName);
+	}
 }
 
 void UHAFAttributeSet::AdjustAttributeForMaxChange(
@@ -244,7 +276,7 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	// --- Clamp vitals ---
 	if (Attribute == GetHealthAttribute())
 	{
-        UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: Health changed to %f on %s"), GetHealth(), *Props.TargetAvatarActor->GetName());
+        // UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: Health changed to %f on %s"), GetHealth(), *Props.TargetAvatarActor->GetName());
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 	}
 	else if (Attribute == GetShieldAttribute())
@@ -262,7 +294,7 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	else if (Attribute == GetIncomingDamageAttribute())
 	{
 		const float Damage = GetIncomingDamage();
-		UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: IncomingDamage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: IncomingDamage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
 
 		SetIncomingDamage(0.f);
 
@@ -329,7 +361,13 @@ void UHAFAttributeSet::ShowFloatingText(const FEffectProperties& Properties, flo
 		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0)))
 		{
 			PC->ShowDamageNumber(Damage, Properties.TargetCharacter, bBlockedHit, bCriticalHit);
+			return;
 		}
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.TargetCharacter, 0)))
+		{
+			PC->ShowDamageNumber(Damage, Properties.TargetCharacter, bBlockedHit, bCriticalHit);
+		}
+		
 	}
 }
 

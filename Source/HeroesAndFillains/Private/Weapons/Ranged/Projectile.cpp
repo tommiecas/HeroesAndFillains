@@ -18,19 +18,19 @@ AProjectile::AProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
-	BulletMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BulletMesh"));
-	SetRootComponent(BulletMesh);
-	BulletMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-	
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	CollisionBox->SetupAttachment(RootComponent);
-	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
-	
+	SetRootComponent(CollisionBox); // ✅ now the projectile movement moves the collision box
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
+	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+	CollisionBox->SetGenerateOverlapEvents(true);
+
+	// then attach the mesh to the box
+	BulletMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BulletMesh"));
+	BulletMesh->SetupAttachment(CollisionBox);
+	BulletMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 void AProjectile::Tick(float DeltaTime)
@@ -41,16 +41,10 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::Destroyed()
 {
+	if (ImpactFX) ImpactFX->SetAutoDestroy(true);
 	Super::Destroyed();
 
-	if (ImpactNiagaraSystem)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAttached(ImpactNiagaraSystem, GetRootComponent(), FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
-	}
-	if (ImpactSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-	}
+
 }
 
 void AProjectile::BeginPlay()
@@ -70,6 +64,14 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,  FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (ImpactNiagaraSystem)
+	{
+		ImpactFX = UNiagaraFunctionLibrary::SpawnSystemAttached(ImpactNiagaraSystem, GetRootComponent(), FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+	}
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
 	Destroy();
 }
 

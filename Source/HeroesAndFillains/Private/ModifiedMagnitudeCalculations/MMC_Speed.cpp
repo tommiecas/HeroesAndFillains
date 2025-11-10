@@ -37,42 +37,64 @@ UMMC_Speed::UMMC_Speed()
 
 float UMMC_Speed::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
-	// Gather tags from source and target
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
 	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 
-	FAggregatorEvaluateParameters EvaluationParameters;
-	EvaluationParameters.SourceTags = SourceTags;
-	EvaluationParameters.TargetTags = TargetTags;
+	FAggregatorEvaluateParameters Params;
+	Params.SourceTags = SourceTags;
+	Params.TargetTags = TargetTags;
 
 	float Dexterity = 0.f;
-	GetCapturedAttributeMagnitude(DexterityDef, Spec, EvaluationParameters, Dexterity);
-	Dexterity = FMath::Max<float>(Dexterity, 0.f);
+	GetCapturedAttributeMagnitude(DexterityDef, Spec, Params, Dexterity);
+	Dexterity = FMath::Max(Dexterity, 0.f);
 
 	float Agility = 0.f;
-	GetCapturedAttributeMagnitude(AgilityDef, Spec, EvaluationParameters, Agility);
-	Agility = FMath::Max<float>(Agility, 0.f);
+	GetCapturedAttributeMagnitude(AgilityDef, Spec, Params, Agility);
+	Agility = FMath::Max(Agility, 0.f);
 
 	float Flexibility = 0.f;
-	GetCapturedAttributeMagnitude(FlexibilityDef, Spec, EvaluationParameters, Flexibility);
-	Flexibility = FMath::Max<float>(Flexibility, 0.f);
+	GetCapturedAttributeMagnitude(FlexibilityDef, Spec, Params, Flexibility);
+	Flexibility = FMath::Max(Flexibility, 0.f);
 
 	float Strength = 0.f;
-	GetCapturedAttributeMagnitude(StrengthDef, Spec, EvaluationParameters, Strength);
-	Strength = FMath::Max<float>(Strength, 0.f);
+	GetCapturedAttributeMagnitude(StrengthDef, Spec, Params, Strength);
+	Strength = FMath::Max(Strength, 0.f);
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	// ------------------------------------------------------------
+	// SAFE COMBAT INTERFACE HANDLING
+	// ------------------------------------------------------------
+	int32 PlayerLevel = 1; // Safe default
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	if (Dexterity > Strength)
+	if (SourceObj == nullptr)
 	{
-		return (((Dexterity - Strength) / (Agility + Flexibility)) + 2.f) / 5.f;
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_Speed: SourceObject is NULL (likely during respawn)."));
+	}
+	else if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(SourceObj))
+	{
+		PlayerLevel = CombatInterface->GetPlayerLevel();
 	}
 	else
 	{
-		float DexStrenDiff = Dexterity - Strength; // This will be negative
-		float PositiveDexStrenDiff = DexStrenDiff - DexStrenDiff - DexStrenDiff; // Converts negative to positive
-		return (PositiveDexStrenDiff / (Agility + Flexibility)) + 2.f;
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_Speed: SourceObject %s does not implement CombatInterface."),
+			*SourceObj->GetName());
 	}
+
+	// Prevent divide-by-zero if Agility + Flexibility == 0
+	const float Denominator = FMath::Max(Agility + Flexibility, KINDA_SMALL_NUMBER);
+
+	float BaseSpeed = 0.f;
+	if (Dexterity >= Strength)
+	{
+		BaseSpeed = (((Dexterity - Strength) / Denominator) + 2.f) / 5.f;
+	}
+	else
+	{
+		const float PositiveDiff = FMath::Abs(Dexterity - Strength);
+		BaseSpeed = (PositiveDiff / Denominator) + 2.f;
+	}
+
+	return BaseSpeed;
 }
+
 

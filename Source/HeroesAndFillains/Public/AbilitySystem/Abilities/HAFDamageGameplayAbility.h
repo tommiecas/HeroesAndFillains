@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HAFGameplayAbility.h"
 #include "Abilities/GameplayAbility.h"
+#include "Interfaces/CombatInterface.h"
 #include "HAFDamageGameplayAbility.generated.h"
 
 /**
@@ -16,12 +17,17 @@ class HEROESANDFILLAINS_API UHAFDamageGameplayAbility : public UHAFGameplayAbili
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void CauseDamage(AActor* Target);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages);
 
 protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	TMap<FGameplayTag, FScalableFloat> DamageTypes;
 };

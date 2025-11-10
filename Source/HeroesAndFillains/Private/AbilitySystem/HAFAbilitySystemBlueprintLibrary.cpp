@@ -6,6 +6,7 @@
 #include "HAFAbilityTypes.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Enemies/EnemyBase.h"
+#include "Engine/OverlapResult.h"
 #include "GameMode/HaFGameMode.h"
 #include "UI/FillainHUD.h"
 #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
@@ -119,14 +120,25 @@ void UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(const UObjec
 }
 
 void UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(const UObject* WorldContextObject,
-	UAbilitySystemComponent* ASC)
+	UAbilitySystemComponent* ASC, ECharacterClass CharacterClass)
 {
 	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject); 
+	if (CharacterClassInfo == nullptr) return;
 	for (TSubclassOf<UGameplayAbility> AbilityClass : CharacterClassInfo->CommonAbilities)
 	{	
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
 		ASC->GiveAbility(AbilitySpec);
 	}
+	const FCharacterClassDefaultInfo& DefaultInfo = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
+    for (TSubclassOf<UGameplayAbility> AbilityClass : DefaultInfo.ClassAbilities)
+    {
+	    ICombatInterface* CombatInterface = Cast<ICombatInterface>(Cast<ICombatInterface>(ASC->GetAvatarActor()));
+    	if (CombatInterface)
+    	{
+			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, CombatInterface->GetPlayerLevel());		
+			ASC->GiveAbility(AbilitySpec);
+    	}
+    }
 }
 
 UCharacterClassInfo* UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
@@ -185,6 +197,36 @@ void UHAFAbilitySystemBlueprintLibrary::SetIsCriticalHit(FGameplayEffectContextH
 	{
 		HAFGameplayEffectContext->SetIsCriticalHit(bInIsCriticalHit);
 	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::GetLivePlayersWithinRadius(const UObject* WorldContextObject,
+	TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius,
+	const FVector& SphereOrigin)
+{
+	FCollisionQueryParams SphereParams;
+
+	SphereParams.AddIgnoredActors(ActorsToIgnore);
+
+	// query scene to see what we hit
+	TArray<FOverlapResult> Overlaps;
+	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{
+		World->OverlapMultiByObjectType(Overlaps, SphereOrigin, FQuat::Identity, FCollisionObjectQueryParams(FCollisionObjectQueryParams::InitType::AllDynamicObjects), FCollisionShape::MakeSphere(Radius), SphereParams);
+	}
+	for (FOverlapResult& Overlap : Overlaps)
+	{
+		if (Overlap.GetActor()->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsDead(Overlap.GetActor()))
+		{
+			OutOverlappingActors.AddUnique(ICombatInterface::Execute_GetAvatar(Overlap.GetActor()));
+		}
+	}
+}
+
+bool UHAFAbilitySystemBlueprintLibrary::IsNotFriend(AActor* FirstActor, AActor* SecondActor)
+{
+	const bool bFriends = FirstActor->ActorHasTag(FName("Player")) && SecondActor->ActorHasTag(FName("Player")) ||
+			FirstActor->ActorHasTag(FName("Enemy")) && SecondActor->ActorHasTag(FName("Enemy"));
+	return !bFriends;
 }
 
 	

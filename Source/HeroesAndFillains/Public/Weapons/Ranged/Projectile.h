@@ -54,7 +54,7 @@ protected:
 	class UNiagaraSystem* ImpactNiagaraSystem;
 
 	UPROPERTY(EditAnywhere)
-	class USoundCue* ImpactSound;
+	class USoundBase* ImpactSound;
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
@@ -77,9 +77,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float DamageOuterRadius = 600.f;
 
-
-private:	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMeshComponent* BulletMesh;
 
 	UPROPERTY(EditAnywhere)
@@ -92,9 +90,14 @@ private:
 	UPROPERTY()
 	ERangedType RangedType;;
 
+	UPROPERTY()
+	UNiagaraComponent* ImpactFX;
+
 	UPROPERTY(EditAnywhere)
 	float DestroyTime = 3.f;
 
+private:	
+	
 public:
 	FORCEINLINE ERangedType GetRangedType() const{ return RangedType; }
 	FORCEINLINE float GetDamage() const { return Damage; }

@@ -26,6 +26,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Enemies/EnemyBase.h"
 #include "UI/ItemInfoWidgetBase.h"
 
 ARangedWeapon::ARangedWeapon()
@@ -425,14 +426,27 @@ void ARangedWeapon::Equip(USceneComponent* InParent, FName InSocketName,  AActor
 	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
 	{
 		if (!SkeletalMesh->DoesSocketExist(InSocketName)) return;
-		Character = Cast<AFillainCharacter>(NewOwner);;
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RangedSocket"));
-		if (HandSocket)
+		if (NewOwner->ActorHasTag(FName("Player")))
 		{
-			HandSocket->AttachActor(Character->CombatComponent->GetEquippedRangedWeapon(), Character->GetMesh());
+			const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RangedSocket"));
+			if (HandSocket)
+			{
+				HandSocket->AttachActor(Character->CombatComponent->GetEquippedRangedWeapon(), Character->GetMesh());
+				Super::Equip(Character->GetMesh(), FName("RangedSocket"), NewOwner, NewInstigator);
+			}
+		}
+		else if (NewOwner->ActorHasTag(FName("Enemy")))
+		{
+			ABaseCharacter* BaseChar = Cast<ABaseCharacter>(NewOwner);
+			const USkeletalMeshSocket* HandSocket = BaseChar->GetMesh()->GetSocketByName(FName("RangedSocket"));
+			if (HandSocket)
+			{
+				AEnemyBase* EnChar = Cast<AEnemyBase>(BaseChar);
+				HandSocket->AttachActor(EnChar->EquippedEnemyRangedWeapon, EnChar->GetMesh());
+				Super::Equip(EnChar->GetMesh(), FName("RangedSocket"), NewOwner, NewInstigator);
+			}
 		}
 	}
-	Super::Equip(InParent, InSocketName, NewOwner, NewInstigator);
 }
 
 

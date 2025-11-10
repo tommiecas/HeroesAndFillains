@@ -150,59 +150,55 @@ void AMeleeWeapon::OnEquippedOneHanded()
 }
 void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
-	ItemState = EItemState::EIS_Equipped;
-    SetOwner(NewOwner);
-    SetInstigator(NewInstigator);
-    ShowPickupAndInfoWidgets(false);
-    PlayEquipSound();
-    DisableSphereCollision();
-    SetHandsNeeded(this);
-    SetEquippedWeaponState();
-    if (HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) OnEquippedOneHanded();
-    if (HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) OnEquippedTwoHanded();
-    SetOneOrTwoHandedWeapon(this);
-    DeactivateEmbers();
-    bShouldHover = false;
-    bShouldFloatSpin = false;
-
-    // ---- Attach using the validated skeletal mesh + socket ----
-    {
-        // If your Super::Equip didn’t attach, do it here; otherwise, remove one of them.
-        const FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
-		AFillainCharacter* FillCharacter = Cast<AFillainCharacter>(GetOwner());
-        if (FillCharacter) AttachToComponent(FillCharacter->GetMesh(), Rules, InSocketName);
-    }
-
-    // Optional: if you really want to use USkeletalMeshSocket API, do NOT pull from Character->GetMesh().
-    // Use the SAME parent we've validated above:
-    // if (const USkeletalMeshSocket* Socket = SkelParent->GetSocketByName(InSocketName)) {
-    //     Socket->AttachActor(this, SkelParent);
-    // }
+	if (!InParent) return;
+    
+	// Make sure we're attaching to the skeletal mesh
+	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
+	{
+		if (!SkeletalMesh->DoesSocketExist(InSocketName)) return;
+		if (NewOwner->ActorHasTag(FName("Player")))
+		{
+			Character = Cast<AFillainCharacter>(NewOwner);
+			const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("MeleeSocket"));
+			if (HandSocket)
+			{
+				HandSocket->AttachActor(Character->CombatComponent->GetEquippedMeleeWeapon(), Character->GetMesh());
+				Super::Equip(Character->GetMesh(), FName("MeleeSocket"), NewOwner, NewInstigator);
+			}
+		}
+		else if (NewOwner->ActorHasTag(FName("Enemy")))
+		{
+			ABaseCharacter* BaseChar = Cast<ABaseCharacter>(NewOwner);
+			const USkeletalMeshSocket* HandSocket = BaseChar->GetMesh()->GetSocketByName(FName("MeleeSocket"));
+			if (HandSocket)
+			{
+				AEnemyBase* EnChar = Cast<AEnemyBase>(BaseChar);
+				HandSocket->AttachActor(EnChar->EquippedEnemyMeleeWeapon, EnChar->GetMesh());
+				Super::Equip(EnChar->GetMesh(), FName("MeleeSocket"), NewOwner, NewInstigator);
+			}
+		}
+	}
 
     // ---- Collision setup (after attach & owner set) ----
     WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    if (AActor* OwnerActor = GetOwner())
-    {
-        if (OwnerActor->IsA(AFillainCharacter::StaticClass()))
-        {
-            WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
-            WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-            WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
-            WeaponBox->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECR_Overlap);
-            WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        }
-        else if (OwnerActor->IsA(AEnemyBase::StaticClass()))
-        {
-            WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
-            WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-            WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-            WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
-            WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        }
-    }
-
-    // (Your trace params setup can stay, but it’s unrelated to Equip and can move elsewhere.)
+    
+	if (NewOwner->IsA(AFillainCharacter::StaticClass()))
+	{
+		WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECR_Overlap);
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else if (NewOwner->IsA(AEnemyBase::StaticClass()))
+	{
+		WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 
@@ -311,47 +307,57 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
         ActorsToIgnore,
         EDrawDebugTrace::None,
         Hits,
-        /*bIgnoreSelf=*/ true
+        true
     );
 
     if (bHitAny)
     {
-        for (const FHitResult& Hit : Hits)
-        {
-            AActor* HitActor = Hit.GetActor();
-            if (!HitActor) continue;
+	    for (const FHitResult& Hit : Hits)
+	    {
+	    	AActor* HitActor = Hit.GetActor();
+	    	if (!HitActor) continue;
 
-            // Skip self/owner just in case
-            if (HitActor == this || HitActor == GetOwner()) continue;
+	    	// Skip self/owner just in case
+	    	if (HitActor == this || HitActor == GetOwner()) continue;
 
-            // Don’t multi-hit same actor this swing
-            if (IgnoreActors.Contains(HitActor)) continue;
+	    	// Don’t multi-hit same actor this swing
+	    	if (IgnoreActors.Contains(HitActor)) continue;
 
-            // Only process characters (avoid world clutter)
-            if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
-            {
-                HitBase->CachedDamageAmount      = MeleeDamage;
-                HitBase->CachedDamageEvent       = FDamageEvent(UDamageType::StaticClass());
-                HitBase->CachedEventInstigator   = GetInstigator()->GetController();
-                HitBase->CachedDamageCauser      = this;
+	    	// Only process characters (avoid world clutter)
+	    	if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
+	    	{
+	    		HitBase->CachedDamageAmount      = MeleeDamage;
+	    		HitBase->CachedDamageEvent       = FDamageEvent(UDamageType::StaticClass());
+	    		HitBase->CachedEventInstigator   = GetInstigator()->GetController();
+	    		HitBase->CachedDamageCauser      = this;
 
-                HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
-                ImplementLineTraceGetHit(Hit); // your extra handling is fine
+	    		HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
+	    		ImplementLineTraceGetHit(Hit); // your extra handling is fine
 
-                IgnoreActors.AddUnique(HitActor);
-                CreateFields(Hit.ImpactPoint);
-            }
-        }
+	    		IgnoreActors.AddUnique(HitActor);
+	    		CreateFields(Hit.ImpactPoint);
+	    		if (HitActor->IsA(AFillainCharacter::StaticClass()))
+	    		{
+	    			AFillainCharacter* HitFillain = Cast<AFillainCharacter>(HitActor);
+	    			HitFillain->GetHit_Implementation(Hit.ImpactPoint, this);
+	    		}
+	    		else if (HitActor->IsA(AEnemyBase::StaticClass()))
+	    		{
+	    			AEnemyBase* HitEnemy = Cast<AEnemyBase>(HitActor);
+	    			HitEnemy->TakeDamage(HitBase->CachedDamageAmount, HitBase->CachedDamageEvent, HitBase->CachedEventInstigator, this);
+				}
+	    	}
+	    }
     }
 
-#if !(UE_BUILD_SHIPPING)
+	#if !(UE_BUILD_SHIPPING)
     // Visualize the Vision-assisted sweep for debugging
     const FVector Mid = (LastLocation + CurrentLocation) * 0.5f;
     const FVector Delta = CurrentLocation - LastLocation;
     const float HalfLen = Delta.Size() * 0.5f;
     const FQuat Rot = FRotationMatrix::MakeFromZ(Delta.GetSafeNormal()).ToQuat();
     DrawDebugCapsule(GetWorld(), Mid, HalfLen, TraceRadius, Rot, FColor::Cyan, false, 0.05f, 0, 0.75f);
-#endif
+	#endif
 
     // Advance
     LastLocation = CurrentLocation;

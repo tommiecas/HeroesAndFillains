@@ -98,6 +98,9 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	}
 	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
 
+	UE_LOG(LogTemp, Warning, TEXT("[OverlayWidgetController] Successfully binding attribute delegates for ASC=%s, AS=%s"),
+		  *GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
+	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetHealthAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)

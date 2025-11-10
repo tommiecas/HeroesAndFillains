@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ModifiedMagnitudeCalculations/MMC_MaxHealth.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
@@ -21,16 +18,35 @@ float UMMC_MaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffec
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
 	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 
-	FAggregatorEvaluateParameters EvaluationParameters;
-	EvaluationParameters.SourceTags = SourceTags;
-	EvaluationParameters.TargetTags = TargetTags;
+	FAggregatorEvaluateParameters EvaluationParams;
+	EvaluationParams.SourceTags = SourceTags;
+	EvaluationParams.TargetTags = TargetTags;
 
+	// --- Capture Vigor safely ---
 	float Vigor = 0.f;
-	GetCapturedAttributeMagnitude(VigorDef, Spec, EvaluationParameters, Vigor);
-	Vigor = FMath::Max<float>(Vigor, 0.f);
+	GetCapturedAttributeMagnitude(VigorDef, Spec, EvaluationParams, Vigor);
+	Vigor = FMath::Max(Vigor, 0.f);
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	// --- Safe CombatInterface access ---
+	int32 PlayerLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	return 80.f + 2.5f * Vigor + 10.f * PlayerLevel;
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxHealth: SourceObject is NULL (likely during respawn)."));
+	}
+	else if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(SourceObj))
+	{
+		PlayerLevel = CombatInterface->GetPlayerLevel();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxHealth: SourceObject %s does not implement CombatInterface."),
+			*SourceObj->GetName());
+	}
+
+	// --- Your original formula (unchanged functionality) ---
+	const float MaxHealth = 80.f + (2.5f * Vigor) + (10.f * PlayerLevel);
+
+	return MaxHealth;
 }

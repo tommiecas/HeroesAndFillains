@@ -328,9 +328,11 @@ public:
 	
 	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldValue) const;
 
+protected:
+	static void LogEffectSourceTarget(const FEffectProperties& Props, const FString& FunctionName, const FGameplayEffectSpec& Spec);
+
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const;
-
 	// Proportionally adjust current attribute when its Max changes
 	void AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute,
 	const FGameplayAttributeData& MaxAttribute,

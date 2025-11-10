@@ -739,7 +739,7 @@ void AFillainCharacter::Eliminate(bool bPlayerLeftGame)
 	
 }
 
-/* void AFillainCharacter::StartDissolveEffect()
+void AFillainCharacter::StartDissolveEffect()
 {
 	if (DissolveMaterialInstance)
 	{
@@ -750,7 +750,7 @@ void AFillainCharacter::Eliminate(bool bPlayerLeftGame)
 	}
 	StartDissolve();
 }
-*/
+
 
 void AFillainCharacter::DisableAllComponents()
 {
@@ -808,7 +808,7 @@ void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 	bIsEliminated = true;
 	UAnimInstance* AnimBlueprint = Cast<UAnimInstance>(GetMesh()->GetAnimInstance()); 
 	PlayEliminatedMontage();
-	// StartDissolveEffect();
+	StartDissolveEffect();
 	DisableAllComponents();
 	SpawnEliminationBotEffect();
 	PlayEliminationSound();
@@ -947,7 +947,7 @@ void AFillainCharacter::OnPlayerStateInitialized()
 {
 	HAFPlayerState->AddToScore(0.f);
 	HAFPlayerState->AddToDefeats(0);
-	// SetTeamColor(HAFPlayerState->GetTeam());
+	SetTeamColor(HAFPlayerState->GetTeam());
 	SetSpawnPoint();
 }
 
@@ -955,7 +955,6 @@ bool AFillainCharacter::CanDisarm()
 {
 	return CombatComponent &&
 		   EquippedWeapon &&
-		   IfPlayerIsReadyToFightAgain() &&
 		   IfPlayerHasEquippedAWeapon();
 }
 
@@ -972,7 +971,6 @@ bool AFillainCharacter::CanArm()
 		// *UEnum::GetValueAsString(BattlePrepped));
 	return CombatComponent &&
 		   EquippedWeapon &&
-		   IfPlayerIsReadyToFightAgain() &&
 		   IfPlayerIsDisarmed();
 }
 
@@ -1421,20 +1419,29 @@ void AFillainCharacter::PlaySwapMontage()
 
 void AFillainCharacter::AttackButtonPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("🎯 AttackButtonPressed — EquippedWeapon: %s"),
-	CombatComponent->EquippedWeapon ? *CombatComponent->EquippedWeapon->GetName() : TEXT("nullptr"));
+	// Don't re-equip in the attack function!
 	ResetToFightAgain();
-	if (CombatComponent->EquippedWeapon)
+    
+	if (!CombatComponent || !CombatComponent->EquippedWeapon)
+		return;
+
+	// Simple type checks using Cast - no side effects
+	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(CombatComponent->EquippedWeapon))
 	{
-		if (EquippedWeaponIsARangedWeapon())
-		{
-			FireButtonPressed();
-		}
-		if (EquippedWeaponIsAMeleeWeapon()) MeleeAttack();
-		if (EquippedWeapon && BattlePrepped == EBattlePrepped::EBP_Disarmed)
-		{
-			if (EquippedWeaponIsAMajixWeapon()) MajixAttack();
-		}
+		FireButtonPressed();
+		return;
+	}
+    
+	if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(CombatComponent->EquippedWeapon))
+	{
+		MeleeAttack();
+		return;
+	}
+    
+	if (AMajixWeapon* MajixWeapon = Cast<AMajixWeapon>(CombatComponent->EquippedWeapon))
+	{
+		MajixAttack();
+		return;
 	}
 }
 
@@ -1625,11 +1632,6 @@ void AFillainCharacter::DodgeEnd()
 	CombatComponent->ActionState = EActionState::EAS_Unoccupied;
 }
 
-bool AFillainCharacter::IfPlayerIsReadyToFightAgain()
-{
-	return CombatComponent->ActionState == EActionState::EAS_Unoccupied;
-}
-
 bool AFillainCharacter::IfPlayerHasEquippedAWeapon()
 {
 	return CombatComponent->FightingStyle != EFightingStyle::EFS_Unequipped;
@@ -1640,9 +1642,11 @@ bool AFillainCharacter::CanAttack()
 	UE_LOG(LogTemp, Warning, TEXT("CanAttack: ActionState = %d | FightingStyle = %d"), (int32)CombatComponent->ActionState, (int32)CombatComponent->FightingStyle);
 	UE_LOG(LogTemp, Warning, TEXT("Checking CanAttack for: %s"), *GetName());
 
-	return IfPlayerIsReadyToFightAgain() && IfPlayerHasEquippedAWeapon();
+	if (CombatComponent->EquippedWeapon && CombatComponent->ActionState == EActionState::EAS_Unoccupied) return true;
 
+	return false;
 }
+
 
 void AFillainCharacter::GrenadeButtonPressed()
 {
@@ -1763,7 +1767,7 @@ void AFillainCharacter::MulticastLostTheLead_Implementation()
 {
 	DestroyCrown();
 }
-/*
+
 void AFillainCharacter::SetTeamColor(ETeam Team)
 {
 	if (GetMesh() == nullptr || OriginalMaterial == nullptr) return;
@@ -1783,7 +1787,7 @@ void AFillainCharacter::SetTeamColor(ETeam Team)
 		break;
 	}
 }
-*/
+
 
 bool AFillainCharacter::IsUsingGamepad() const
 {
@@ -2541,49 +2545,20 @@ bool AFillainCharacter::IfPlayerAlreadyEquippedAnyWeapon()
 
 ARangedWeapon* AFillainCharacter::EquippedWeaponIsARangedWeapon()
 {
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	UE_LOG(LogTemp, Warning, TEXT("CamParent=%s Arm=%.1f CamZ=%.1f CapZ=%.1f"),
-	*GetNameSafe(FollowCamera ? FollowCamera->GetAttachParent() : nullptr),
-	CameraBoom ? CameraBoom->TargetArmLength : -1.f,
-	FollowCamera ? FollowCamera->GetComponentLocation().Z : -1.f,
-	GetCapsuleComponent() ? GetCapsuleComponent()->GetComponentLocation().Z : -1.f);
-	if (FollowCamera)
-	{
-		FollowCamera->SetFieldOfView(DefaultFOV);
-		bFOVLock = true;
-		FOVLockTimeLeft = 0.75f; // hold for ~¾s; tweak if needed
-	}
-	ARangedWeapon* Ranged = Cast<ARangedWeapon>(EquippedWeapon);
-	StartCamWatchdog(2.0f);
-	if (Ranged == nullptr) return nullptr;
-	else return Ranged;
-
-
+	// Just cast and return - no side effects
+	return Cast<ARangedWeapon>(EquippedWeapon);
 }
 
 AMeleeWeapon* AFillainCharacter::EquippedWeaponIsAMeleeWeapon()
 {
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	if (CharactersMeleeWeapon)
-	{
-		CharactersMeleeWeapon->SetHandsNeeded(CharactersMeleeWeapon);
-		if (CharactersMeleeWeapon && CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) EquipOneHandedMeleeWeapon(CharactersMeleeWeapon);
-		if (CharactersMeleeWeapon && CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) EquipTwoHandedMeleeWeapon(CharactersMeleeWeapon);
-		if (!CharactersMeleeWeapon && (CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_None || CharactersMeleeWeapon->HandsNeeded == EHandsNeeded::EHN_MAX)) return nullptr;
-		return CharactersMeleeWeapon;
-	}	return nullptr; // Ensure all control paths return a value
+	// Just cast and return - no side effects
+	return Cast<AMeleeWeapon>(CharactersMeleeWeapon);
 }
 
 AMajixWeapon* AFillainCharacter::EquippedWeaponIsAMajixWeapon()
 {
-	AMajixWeapon* Majix = Cast<AMajixWeapon>(EquippedWeapon);
-	if (Majix) Majix->SetHandsNeeded(Majix);
-	if (Majix && Majix->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) EquipOneHandedMajixWeapon(Majix);
-	if (Majix && Majix->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) EquipTwoHandedMajixWeapon(Majix);
-	if (Majix == nullptr) return nullptr;
-	else return Majix;
+	// Just cast and return - no side effects
+	return Cast<AMajixWeapon>(CharactersMajixWeapon);
 }
 
 bool AFillainCharacter::WeaponIsUnclaimedFirearm(ARangedWeapon* Ranged)
@@ -3531,7 +3506,7 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	}
 }
 
-void AFillainCharacter::InitializeDefaultAttributes() const
+void AFillainCharacter::InitializeDefaultAttributes()
 {
 	Super::InitializeDefaultAttributes();
 	
@@ -3615,20 +3590,20 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 
 	// Use the PS-owned ASC & AttributeSet (don’t call GetSet here)
 	AbilitySystemComponent = PS->GetAbilitySystemComponent();
-	AttributeSet        = PS->GetHAFAttributeSet();
-
-	// Owner = PlayerState, Avatar = Character
+	AttributeSet = PS->GetHAFAttributeSet();
 	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	AddCharacterAbilities();
 
-	// Apply your init GameplayEffects on the SERVER
 	if (HasAuthority())
 	{
-		ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
-		ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
-		ApplyEffectToSelf(DefaultResistanceAttributes, 1);
-		ApplyEffectToSelf(DefaultVitalAttributes, 1);
-		ApplyEffectToSelf(DefaultInvisibleAttributes, 1);
+		// Delay applying default effects until ASC and AttributeSets are fully ready
+		FTimerHandle InitAttrTimer;
+		GetWorldTimerManager().SetTimer(
+			InitAttrTimer,
+			FTimerDelegate::CreateUObject(this, &AFillainCharacter::ApplyDefaultAttributes),
+			0.1f, // delay
+			false
+		);
 	}
 
 	// Optional: quick pointer sanity
@@ -3650,6 +3625,15 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 	BindHiddenTreasureCapsuleHooksOnce();
 }
 
+void AFillainCharacter::ApplyDefaultAttributes()
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
+	ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
+	ApplyEffectToSelf(DefaultResistanceAttributes, 1);
+	ApplyEffectToSelf(DefaultVitalAttributes, 1);
+	ApplyEffectToSelf(DefaultInvisibleAttributes, 1);
+}
+
 
 void AFillainCharacter::OnRep_PlayerState()
 {
@@ -3668,6 +3652,16 @@ void AFillainCharacter::OnRep_PlayerState()
 
 	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
 	BindHiddenTreasureCapsuleHooksOnce();
+}
+
+void AFillainCharacter::Die()
+{
+	Super::Die();
+}
+
+void AFillainCharacter::MulticastHandleDeath_Implementation()
+{
+	MulticastEliminate_Implementation(false);
 }
 
 void AFillainCharacter::ApplyFillainCharacterCapsuleSize_FeetPlanted(float TargetUnscaledHalf, float TargetUnscaledRadius)

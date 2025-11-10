@@ -68,6 +68,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	virtual void Die() override;
+	virtual void MulticastHandleDeath_Implementation();
+	virtual void ApplyStartupEffects() const override;
 	void FixSelfCameraCollision();
 
 	UFUNCTION()
@@ -75,7 +78,7 @@ public:
 
 	void RestoreThirdPersonCameraSafe();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-	virtual void InitializeDefaultAttributes() const override;
+	virtual void InitializeDefaultAttributes() override;
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -212,12 +215,12 @@ public:
 	void Eliminate(bool bPlayerLeftGame);
 	void HideSniperScope();
 	void ShowSniperScope();
-	// void StartDissolveEffect();
+	void StartDissolveEffect();
 	void DisableAllComponents();
 	void SpawnEliminationBotEffect();
 	void PlayEliminationSound();
 	void DestroyCrown();
-	// void FinishElimination();
+	void FinishElimination();
 	virtual void Destroyed() override;
 	void HideAttachedGrenade();
 	// void OnFillainDying(AFillainCharacter* InstigatorFillain, AFillainCharacter* DyingFillain, class AFillainPlayerController* InstigatorController);
@@ -309,7 +312,6 @@ public:
 
 	virtual void AttackEnd() override;
 	virtual void DodgeEnd() override;
-	bool IfPlayerIsReadyToFightAgain();
 	bool IfPlayerHasEquippedAWeapon();
 
 	virtual bool CanAttack() override;
@@ -344,7 +346,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
 
-	// void SetTeamColor(ETeam Team);
+	void SetTeamColor(ETeam Team);
 	
 	/****************** 
 	** Moving Around **
@@ -633,7 +635,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
 
-	virtual void ApplyStartupEffects() const override;
+	UFUNCTION(BlueprintCallable)
+	void ApplyDefaultAttributes();
+
+
 	
 private:
 	UPROPERTY(VisibleInstanceOnly, Category="Camera")

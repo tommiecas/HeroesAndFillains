@@ -3,47 +3,73 @@
 #include "Enemies/EnemyBase.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 
 UTargetDataUnderMouse* UTargetDataUnderMouse::CreateTargetDataUnderMouse(UGameplayAbility* OwningAbility)
 {
     UTargetDataUnderMouse* MyObj = NewAbilityTask<UTargetDataUnderMouse>(OwningAbility);
+    MyObj->ReadyForActivation();   // ✅ Activate immediately so it’s properly registered
     return MyObj;
 }
 
 void UTargetDataUnderMouse::Activate()
 {
     const bool bIsLocallyControlled = Ability->GetCurrentActorInfo()->IsLocallyControlled();
-    if (bIsLocallyControlled)
+    APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
+
+    if (!AbilitySystemComponent.IsValid() || !PC)
     {
-        // Start continuous hover checks every 0.05s (~20 FPS)
-        GetWorld()->GetTimerManager().SetTimer(HoverTimerHandle, this, &UTargetDataUnderMouse::SendMouseCursorData, 0.05f, true);
+        UE_LOG(LogTemp, Warning, TEXT("❌ AbilitySystem or PC invalid in TargetDataUnderMouse::Activate"));
+        EndTask();
+        return;
     }
-    else
+
+    // --- Initial cursor trace (one-shot broadcast when task starts) ---
+    FHitResult CursorHit;
+    PC->GetHitResultUnderCursor(ECC_Enemy, false, CursorHit);
+
+    FGameplayAbilityTargetDataHandle DataHandle;
+    FGameplayAbilityTargetData_SingleTargetHit* Data = new FGameplayAbilityTargetData_SingleTargetHit();
+    Data->HitResult = CursorHit;
+    DataHandle.Add(Data);
+
+    AbilitySystemComponent->ServerSetReplicatedTargetData(
+        GetAbilitySpecHandle(),
+        GetActivationPredictionKey(),
+        DataHandle,
+        FGameplayTag(),
+        AbilitySystemComponent->ScopedPredictionKey);
+
+    if (ShouldBroadcastAbilityTaskDelegates())
     {
-        const FGameplayAbilitySpecHandle SpecHandle = GetAbilitySpecHandle();
-        const FPredictionKey ActivationPredictionKey = GetActivationPredictionKey();
-        AbilitySystemComponent.Get()->AbilityTargetDataSetDelegate(SpecHandle, ActivationPredictionKey)
-            .AddUObject(this, &UTargetDataUnderMouse::OnTargetDataReplicatedCallback);
-        const bool bCalledDelegate = AbilitySystemComponent.Get()->CallReplicatedTargetDataDelegatesIfSet(SpecHandle, ActivationPredictionKey);
-        if (!bCalledDelegate)
-        {
-            SetWaitingOnRemotePlayerData();
-        }
+        ValidData.Broadcast(DataHandle);
     }
+
+    UE_LOG(LogTemp, Warning, TEXT("✅ TargetDataUnderMouse broadcasting ValidData now"));
+
+    // ✅ Keep task alive — do NOT EndTask() here
+    // Optionally start a repeating hover update
+    const float HoverUpdateRate = 0.05f; // 20 Hz
+    GetWorld()->GetTimerManager().SetTimer(
+        HoverTimerHandle,
+        this,
+        &UTargetDataUnderMouse::SendMouseCursorData,
+        HoverUpdateRate,
+        true);
 }
 
 void UTargetDataUnderMouse::SendMouseCursorData()
 {
-    if (!AbilitySystemComponent.IsValid())
-        return;
+    if (!AbilitySystemComponent.IsValid()) return;
 
     APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
     if (!PC) return;
 
     FHitResult CursorHit;
-    PC->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Enemy, false, CursorHit);
     AEnemyBase* HitEnemy = Cast<AEnemyBase>(CursorHit.GetActor());
 
+    // Handle hover highlighting
     if (HitEnemy != LastHoveredEnemy)
     {
         if (LastHoveredEnemy)
@@ -61,7 +87,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
         LastHoveredEnemy = HitEnemy;
     }
 
-    // --- TargetData logic for your ability (still valid) ---
+    // Send updated target data each tick if you want continuous aiming
     FGameplayAbilityTargetDataHandle DataHandle;
     FGameplayAbilityTargetData_SingleTargetHit* Data = new FGameplayAbilityTargetData_SingleTargetHit();
     Data->HitResult = CursorHit;
@@ -72,8 +98,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
         GetActivationPredictionKey(),
         DataHandle,
         FGameplayTag(),
-        AbilitySystemComponent->ScopedPredictionKey
-    );
+        AbilitySystemComponent->ScopedPredictionKey);
 
     if (ShouldBroadcastAbilityTaskDelegates())
     {
@@ -100,6 +125,8 @@ void UTargetDataUnderMouse::OnDestroy(bool bInOwnerFinished)
         LastHoveredEnemy->UnHighlightActor();
         LastHoveredEnemy = nullptr;
     }
+
+    UE_LOG(LogTemp, Warning, TEXT("🧹 TargetDataUnderMouse cleaned up in OnDestroy"));
 
     Super::OnDestroy(bInOwnerFinished);
 }

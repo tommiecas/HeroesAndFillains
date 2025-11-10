@@ -18,7 +18,6 @@ FHAFGameplayTags FHAFGameplayTags::GameplayTags;
 
 void FHAFGameplayTags::InitializeNativeGameplayTags()
 {
-
 	/*********************************
 	**********************************
 	****    PRIMARY ATTRIBUTES    ****
@@ -388,4 +387,37 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("Damage that is being dealt to you") 
 		);
 
+	/************************
+	*************************
+	****    ABILITIES    ****
+	*************************
+	************************/
+	
+	GameplayTags.Abilities_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Attack"),
+		FString("When You're Pissed Off Enough to Fight Back") 
+		);
+
+	/***********************
+	************************
+	****    MONTAGES    ****
+	************************
+	***********************/
+	
+	GameplayTags.Montage_Attack_Weapon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Montage.Attack.Weapon"),
+	FString("When Your Weapon Is All You've Got") 
+	);
+
+	GameplayTags.Montage_Attack_LeftHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Montage.Attack.LeftHand"),
+	FString("When Your Left Hand Is All You've... Wait a Minute...") 
+	);
+
+	GameplayTags.Montage_Attack_RightHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Montage.Attack.RightHand"),
+	FString("When Your Right Hand Is All You've Okay, There's GOT To Be A Better Way To Phrase This...") 
+	);
+
+	
 }

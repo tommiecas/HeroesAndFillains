@@ -2,6 +2,8 @@
 
 
 #include "Items/PrePackagedPCPickupItem.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/FillainCharacter.h"
@@ -117,11 +119,38 @@ void APrePackagedPCPickupItem::EnableCustomDepth(bool bEnable)
 void APrePackagedPCPickupItem::ApplyPickupEffect_Implementation(class AFillainCharacter* PlayerChar)
 {
 	if (!PlayerChar || !EffectToApply) return;
-	if (auto* ASC = PlayerChar->FindComponentByClass<UAbilitySystemComponent>())
+
+	UAbilitySystemComponent* TargetASC = PlayerChar->FindComponentByClass<UAbilitySystemComponent>();
+	if (!TargetASC) return;
+
+	// Get the source ASC (the pickup’s instigator or owner)
+	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
+	if (!SourceASC) SourceASC = TargetASC; // fallback
+
+	// Optional: prevent self-application if you only want external effects
+	// Allow same-ASC application for pickups (normal behavior when player collects).
+	if (SourceASC == TargetASC)
 	{
-		ASC->ApplyGameplayEffectToSelf(EffectToApply->GetDefaultObject<UGameplayEffect>(), 1.f, ASC->MakeEffectContext());
+		UE_LOG(LogTemp, Verbose, TEXT("Pickup %s applying effect to player ASC (expected)."), *GetName());
 	}
-	if (ItemEffect) ItemEffect->Activate(true);
+
+
+	// Build the effect context from the *source* ASC
+	FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
+	ContextHandle.AddSourceObject(this);
+	ContextHandle.AddInstigator(GetInstigator(), this);
+
+	// Apply the GameplayEffect
+	TargetASC->ApplyGameplayEffectToSelf(
+		EffectToApply->GetDefaultObject<UGameplayEffect>(),
+		1.f,
+		ContextHandle
+	);
+
+	if (ItemEffect)
+	{
+		ItemEffect->Activate(true);
+	}
 }
 
 void APrePackagedPCPickupItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

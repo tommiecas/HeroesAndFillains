@@ -106,16 +106,16 @@ void AHAFPlayerState::SetTeam(ETeam TeamToSet)
 {
 	Team = TeamToSet;
 
-	/*if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
+	if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
 	{
 		BCharacter->SetTeamColor(Team);
-	}*/
+	}
 }
 
 void AHAFPlayerState::OnRep_Team()
 {
-	/*if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
+	if (AFillainCharacter* BCharacter = Cast<AFillainCharacter>(GetPawn()))
 	{
 		BCharacter->SetTeamColor(Team);
-	}*/
+	}
 }

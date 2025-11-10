@@ -1,41 +1,41 @@
-#include "UI/FillainHUD.h"
-#include "UI/WidgetControllers/OverlayWidgetController.h"
-#include "UI/WidgetControllers/AttributeMenuWidgetController.h"
-#include "UI/Widgets/HAFUserWidget.h"
-#include "UI/Widgets/EnemyAttributeMenuWidget.h"
-#include "UI/CharacterOverlayFixed.h"
-#include "UI/Announcement.h"
-#include "UI/EliminationAnnouncement.h"
-#include "AbilitySystem/HAFAttributeSet.h"
-#include "PlayerState/HAFPlayerState.h"
-#include "Kismet/GameplayStatics.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Components/CanvasPanelSlot.h"
-#include "Components/HorizontalBox.h"
-#include "GameFramework/PlayerController.h"
-#include "GameFramework/PlayerState.h"
-#include "Engine/Canvas.h"
-#include "Engine/Texture2D.h"
-#include "UI/WidgetControllers/HAFWidgetController.h"
-#include "UI/WidgetControllers/HAFWidgetController.h"
-
-
-void AFillainHUD::BeginPlay()
-{
-	Super::BeginPlay();
-
-	APlayerController* PC = GetOwningPlayerController();
-	if (!PC)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AFillainHUD::BeginPlay - No valid PlayerController found"));
-		return;
-	}
-
-	// Optionally pre-create an Enemy Hover widget pool later here if needed
-}
-
+	#include "UI/FillainHUD.h"
+    #include "UI/WidgetControllers/OverlayWidgetController.h"
+    #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
+    #include "UI/Widgets/HAFUserWidget.h"
+    #include "UI/Widgets/EnemyAttributeMenuWidget.h"
+    #include "UI/CharacterOverlayFixed.h"
+    #include "UI/Announcement.h"
+    #include "UI/EliminationAnnouncement.h"
+    #include "AbilitySystem/HAFAttributeSet.h"
+    #include "PlayerState/HAFPlayerState.h"
+    #include "Kismet/GameplayStatics.h"
+    #include "Blueprint/WidgetLayoutLibrary.h"
+    #include "Components/CanvasPanelSlot.h"
+    #include "Components/HorizontalBox.h"
+    #include "GameFramework/PlayerController.h"
+    #include "GameFramework/PlayerState.h"
+    #include "Engine/Canvas.h"
+    #include "Engine/Texture2D.h"
+    #include "UI/WidgetControllers/HAFWidgetController.h"
+    #include "UI/WidgetControllers/HAFWidgetController.h"
+    
+    
+    void AFillainHUD::BeginPlay()
+    {
+    	Super::BeginPlay();
+    
+    	APlayerController* PC = GetOwningPlayerController();
+    	if (!PC)
+    	{
+    		UE_LOG(LogTemp, Error, TEXT("AFillainHUD::BeginPlay - No valid PlayerController found"));
+    		return;
+    	}
+    
+    	// Optionally pre-create an Enemy Hover widget pool later here if needed
+    }
+    
 void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, 
-									UAbilitySystemComponent* ASC, UAttributeSet* AS)
+								UAbilitySystemComponent* ASC, UAttributeSet* AS)
 {
 	checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not set on BP_FillainHUD"));
 	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not set on BP_FillainHUD"));
@@ -44,6 +44,7 @@ void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS,
 	{
 		const FWidgetControllerParams Params(PC, PS, ASC, AS);
 		OverlayWidgetController = GetOverlayWidgetController(Params);
+		OverlayWidgetController->SetWidgetControllerParams(Params);
 		OverlayWidgetController->BindCallbacksToDependencies();
 		WidgetControllerParams = Params;
 	}
@@ -60,7 +61,7 @@ void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS,
 
 	if (OverlayWidget && OverlayWidgetController)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OverlayWidgetController valid? %s"), *GetNameSafe(OverlayWidgetController));
+		// UE_LOG(LogTemp, Warning, TEXT("OverlayWidgetController valid? %s"), *GetNameSafe(OverlayWidgetController));
 
 		OverlayWidget->SetWidgetController(OverlayWidgetController);
 

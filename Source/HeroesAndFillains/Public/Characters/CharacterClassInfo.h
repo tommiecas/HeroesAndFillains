@@ -32,7 +32,12 @@ struct FCharacterClassDefaultInfo
 	TSubclassOf<UGameplayEffect> SecondaryAttributes;
 
 	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
-	TSubclassOf<UGameplayEffect> VitalAttributes;;
+	TSubclassOf<UGameplayEffect> VitalAttributes;
+
+	UPROPERTY(EditDefaultsOnly, Category="ClassDefaults")
+	TArray<TSubclassOf<UGameplayAbility>> ClassAbilities;
+
+	
 	
 };
 /**
@@ -44,7 +49,7 @@ class HEROESANDFILLAINS_API UCharacterClassInfo : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")
+	UPROPERTY()
 	ECharacterClass CharacterClass = ECharacterClass::None;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")

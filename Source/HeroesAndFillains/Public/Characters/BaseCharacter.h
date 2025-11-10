@@ -103,11 +103,10 @@ public:
     virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	FName SpellCastersSocketName;
+	FName CombatSocketName;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	double Theta = 5.123221212212;
-	virtual FVector GetSpellCastersSocketLocation() override;
 	
     virtual bool CanAttack();
     
@@ -300,16 +299,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName WeaponTipSocketName;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName LeftHandSocketName;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName RightHandSocketName;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	bool WasBaseCharacterHit = false;
 
 	UFUNCTION(BlueprintPure, Category="Character|State")
 	bool IsAlive() const;
-
-	UFUNCTION(BlueprintPure, Category="Character|State")
-	bool IsDead() const;
-
+	
 	UFUNCTION(BlueprintPure, Category="Character|Attributes")
 	float GetCurrentHealth() const;
 
@@ -331,6 +333,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="Costs")
 	float GetDodgeCost() const { return DodgeStaminaCost; }
 
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
+	virtual bool IsDead_Implementation() const override;
+	virtual AActor* GetAvatar_Implementation() override;
+	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TArray<FTaggedMontage> AttackMontages;
+	
+	UPROPERTY(EditAnywhere, Category="Character")
+	int32 CharacterLevel = 1;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
@@ -377,9 +389,9 @@ protected:
 	virtual void ApplyStartupEffects() const;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void InitializeDefaultAttributes() const;
+	virtual void InitializeDefaultAttributes();
 
-	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level);
 
 	void AddCharacterAbilities() const;
 
@@ -388,9 +400,7 @@ protected:
 	*****     DISSOLVE MATERIALS     *****
 	*****                            *****
 	*************************************/
-
-	/* UFUNCTION(BlueprintCallable)
-	 virtual void Dissolve();
+	
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void StartCharacterDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
@@ -403,8 +413,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance; 
-*/
-	
+
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
@@ -413,6 +423,8 @@ public:
 	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	FORCEINLINE AMeleeWeapon* GetEquippedMeleeWeapon() const { return EquippedMeleeWeapon; }
 	FORCEINLINE ARangedWeapon* GetEquippedRangedWeapon() const { return EquippedRangedWeapon; }
+	FORCEINLINE int32 GetCharacterLevel() const { return CharacterLevel; }
+	FORCEINLINE void SetCharacterLevel(const int32 NewLevel) { CharacterLevel = FMath::Clamp(NewLevel, 1, 100); }
 	static float SafeGetNumeric(const UAbilitySystemComponent* ASC,
 							const UHAFAttributeSet* AS,
 							const FGameplayAttribute& Attr);

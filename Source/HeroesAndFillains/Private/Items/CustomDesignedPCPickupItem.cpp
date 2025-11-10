@@ -193,42 +193,44 @@ UAbilitySystemComponent* ACustomDesignedPCPickupItem::GetASCFromCharacter(AFilla
 
 void ACustomDesignedPCPickupItem::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
 {
+    if (!TargetActor || !GameplayEffectClass) return;
     if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
-    
-    if (!GameplayEffectClass) return;
 
     UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
     if (!TargetASC) return;
 
-    check(GameplayEffectClass);
-    FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+    // ✅ Get a *true* Source ASC (pickup’s instigator or owner)
+    UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
+    if (!SourceASC) SourceASC = TargetASC; // fallback for safety
+
+    // Optional: Prevent accidental self-application if the pickup’s ASC = target’s ASC
+    // Allow self-application for pickups; only warn if debugging.
+    if (SourceASC == TargetASC)
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("Pickup %s applying %s to same ASC (expected for player pickups)."),
+            *GetName(), *GetNameSafe(GameplayEffectClass));
+    }
+
+
+    // ✅ Build effect context
+    FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
     EffectContextHandle.AddSourceObject(this);
-    const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, ActorLevel, EffectContextHandle);
-    const FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+    EffectContextHandle.AddInstigator(GetInstigator(), this);
 
-    const bool bIsInfinite = EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
-    if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
+    // ✅ Build and validate outgoing spec
+    FGameplayEffectSpecHandle EffectSpecHandle = SourceASC->MakeOutgoingSpec(GameplayEffectClass, ActorLevel, EffectContextHandle);
+    if (!EffectSpecHandle.IsValid() || !EffectSpecHandle.Data.IsValid() || !EffectSpecHandle.Data.Get()->Def)
     {
-        ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+        UE_LOG(LogTemp, Warning, TEXT("Invalid GameplayEffectSpec for %s"), *GetName());
+        return;
     }
 
-    if (!bIsInfinite)
-    {
-        Destroy();
-    }
-    
-    UAbilitySystemComponent* SourceASC = TargetASC; // or your true source ASC
-    FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
-    Ctx.AddSourceObject(this);
-    Ctx.AddInstigator(GetInstigator(), this);
+    // ✅ Apply to target
+    SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
 
-    FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GameplayEffectClass, 1.f, Ctx);
-    if (SpecHandle.IsValid())
-    {
-        SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-    }
-
-    if (bDestroyOnEffectApplication && EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Instant)
+    // ✅ Destroy pickup if it's an instant effect and policy allows it
+    const bool bIsInstant = EffectSpecHandle.Data->Def->DurationPolicy == EGameplayEffectDurationType::Instant;
+    if (bDestroyOnEffectApplication && bIsInstant)
     {
         Destroy();
     }

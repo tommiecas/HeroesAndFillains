@@ -32,9 +32,11 @@
 #include "UI/WidgetControllers/EnemyWidgetControllerBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "MotionWarpingComponent.h"
+#include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Characters/CharacterClassInfo.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "HAFComponents/AttributeComponent.h"
 #include "HAFComponents/CombatComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -190,6 +192,8 @@ void AEnemyBase::BeginPlay()
     // --- GAS setup ---
     InitializeAbilityActorInfo();
     InitializeDefaultAttributes();
+
+    if (HasAuthority()) UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(this, EnemyAbilitySystemComponent, CharacterClass);
     FGameplayTagContainer OwnedTags;
     if (EnemyAbilitySystemComponent) 
     {
@@ -266,8 +270,8 @@ void AEnemyBase::BeginPlay()
     {
         float Health = EnemyAttributeSet->GetHealth();
         float MaxHealth = EnemyAttributeSet->GetMaxHealth();
-        UE_LOG(LogTemp, Error, TEXT("🟢 %s SPAWNED - Health: %.1f / %.1f"), 
-            *GetName(), Health, MaxHealth);
+        // UE_LOG(LogTemp, Error, TEXT("🟢 %s SPAWNED - Health: %.1f / %.1f"), 
+        //    *GetName(), Health, MaxHealth);
     }
     else
     {
@@ -287,9 +291,10 @@ void AEnemyBase::BeginPlay()
         EnemyAbilitySystemComponent->GetOwnedGameplayTags(OwnedTagsAgain);
         UE_LOG(LogTemp, Log, TEXT("Target Tags: %s"), *OwnedTagsAgain.ToString());
     }
+    InitializeEnemy();
 }
 
-void AEnemyBase::InitializeDefaultAttributes() const
+void AEnemyBase::InitializeDefaultAttributes()
 {
     Super::InitializeDefaultAttributes();
 }
@@ -298,7 +303,7 @@ void AEnemyBase::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (IsDead()) return;
+    if (Execute_IsDead(this)) return;
     if (EnemyState > EEnemyState::EES_Patrolling)
     {
         CheckCombatTarget();
@@ -511,22 +516,43 @@ void AEnemyBase::InitializeEnemy()
 {
     // Spawn default weapon, initialize AI state, etc.
     EnemyController = Cast<AHAFAIController>(GetController());
-    MoveToTarget(PatrolTarget);
     SpawnEnemyWeapon();
     UE_LOG(LogTemp, Log, TEXT("Enemy %s initialized."), *GetName());
 }
 
-void AEnemyBase::SpawnEnemyWeapon()
+void AEnemyBase::SpawnEnemyWeapon_Implementation()
 {
-
     UWorld* World = GetWorld();
     if (World && BaseWeaponClass)
     {
-        AWeaponBase* DefaultWeapon = World->SpawnActor<AWeaponBase>(BaseWeaponClass);
-        DefaultWeapon->Equip(GetMesh(), FName("WeaponSocket"), this, this);
-        EquippedWeapon = DefaultWeapon;
+        // Check if BaseWeaponClass is a RangedWeapon subclass
+        if (BaseWeaponClass->IsChildOf(ARangedWeapon::StaticClass()))
+        {
+            ARangedWeapon* DefaultWeapon = World->SpawnActor<ARangedWeapon>(BaseWeaponClass);
+            if (DefaultWeapon)
+            {
+                EquippedWeapon = DefaultWeapon;
+                EquippedEnemyRangedWeapon = DefaultWeapon;
+                EquippedWeapon->Equip(GetMesh(), FName("RangedSocket"), this, this);
+            }
+        }
+        // Check if BaseWeaponClass is a MeleeWeapon subclass
+        else if (BaseWeaponClass->IsChildOf(AMeleeWeapon::StaticClass()))
+        {
+            AMeleeWeapon* DefaultWeapon = World->SpawnActor<AMeleeWeapon>(BaseWeaponClass);
+            if (DefaultWeapon)
+            {
+                EquippedWeapon = DefaultWeapon;
+                EquippedEnemyMeleeWeapon = DefaultWeapon;
+                DefaultWeapon->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+                
+            }
+        }
     }
 }
+
+
+
 
 void AEnemyBase::CheckPatrolTarget()
 {
@@ -763,7 +789,7 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
 
     if (IsInsideAttackRadius())
     {
-        if (!IsDead()) StartAttackTimer();
+        if (!Execute_IsDead(this)) StartAttackTimer();
     }
     // Set combat target
     if (!CombatTarget)
@@ -845,6 +871,7 @@ void AEnemyBase::Destroyed()
         EquippedEnemyRangedWeapon->Destroy();
     }
 }
+
 void AEnemyBase::Die()
 {
     if (bDead) return;
@@ -860,25 +887,24 @@ void AEnemyBase::Die()
             BlackboardComp->ClearValue(FName("CombatTarget"));
             BlackboardComp->SetValueAsBool(FName("IsDead"), true);
         }   
-    }
     
-    // Immediately stop AI movement and blackboard logic
-    if (EnemyController)
-    {
-        EnemyController->StopMovement();
-
-        if (UBlackboardComponent* BlackboardComp = EnemyController->GetBlackboardComponent())
+        // Immediately stop AI movement and blackboard logic
+        if (EnemyController)
         {
-            BlackboardComp->ClearValue(FName("CombatTarget"));
-            BlackboardComp->SetValueAsBool(FName("IsDead"), true);
-        }
+            EnemyController->StopMovement();
 
-        if (EnemyController->BrainComponent)
-        {
-            EnemyController->BrainComponent->StopLogic(TEXT("Enemy died"));
+            if (UBlackboardComponent* BlackboardComp = EnemyController->GetBlackboardComponent())
+            {
+                BlackboardComp->ClearValue(FName("CombatTarget"));
+                BlackboardComp->SetValueAsBool(FName("IsDead"), true);
+            }
+        
+            if (EnemyController->BrainComponent)
+            {
+                EnemyController->BrainComponent->StopLogic(TEXT("Enemy died"));
+            }
         }
     }
-
     // Stop character movement and tick to avoid further pathfinding updates
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
     {
@@ -1040,12 +1066,205 @@ void AEnemyBase::MajixAttack()
 
 void AEnemyBase::RangedAttack()
 {
-    if (EquippedRangedWeapon)
+    if (!CanFireWeapon())
     {
-        UCombatComponent* EnemyCombatComponent = NewObject<UCombatComponent>(this, CombatComponentClass);
-        EnemyCombatComponent->SetIsReplicated(true);
-        EnemyCombatComponent->Fire();
+        UE_LOG(LogTemp, Warning, TEXT("%s cannot fire weapon"), *GetName());
+        return;
     }
+    
+    UE_LOG(LogTemp, Log, TEXT("🔫 %s initiating ranged attack"), *GetName());
+    
+    // Fire the weapon
+    FireWeapon();
+    
+    // Start cooldown timer (3 seconds reload)
+    bCanFire = false;
+    GetWorldTimerManager().SetTimer(
+        FireCooldownTimer,
+        this,
+        &AEnemyBase::ResetFireCooldown,
+        FireCooldownTime,
+        false
+    );
+    
+    UE_LOG(LogTemp, Log, TEXT("🔫 %s fired weapon, cooldown started (%.1fs)"), *GetName(), FireCooldownTime);
+}
+
+bool AEnemyBase::CanFireWeapon() const
+{
+    // Check if weapon exists
+    if (!EquippedEnemyRangedWeapon)
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("%s: No ranged weapon equipped"), *GetName());
+        return false;
+    }
+    
+    // Check if can fire (cooldown)
+    if (!bCanFire)
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("%s: Weapon on cooldown"), *GetName());
+        return false;
+    }
+    
+    // Check if has combat target
+    if (!CombatTarget)
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("%s: No combat target"), *GetName());
+        return false;
+    }
+    
+    // Check if in range
+    const float DistanceToTarget = FVector::Dist(GetActorLocation(), CombatTarget->GetActorLocation());
+    if (DistanceToTarget > MaxFiringRange)
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("%s: Target out of range (%.1f > %.1f)"), 
+            *GetName(), DistanceToTarget, MaxFiringRange);
+        return false;
+    }
+    
+    // Check line of sight
+    if (!HasLineOfSight(CombatTarget))
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("%s: No line of sight to target"), *GetName());
+        return false;
+    }
+    
+    return true;
+}
+
+bool AEnemyBase::HasLineOfSight(AActor* Target) const
+{
+    if (!Target) return false;
+    
+    UWorld* World = GetWorld();
+    if (!World) return false;
+    
+    // Get weapon muzzle location if available, otherwise use actor location
+    FVector StartLocation = GetActorLocation();
+    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetWeaponMesh())
+    {
+        const USkeletalMeshSocket* MuzzleSocket = EquippedEnemyRangedWeapon->GetWeaponMesh()->GetSocketByName(FName("MuzzleFlashSocket"));
+        if (MuzzleSocket)
+        {
+            StartLocation = MuzzleSocket->GetSocketLocation(EquippedEnemyRangedWeapon->GetWeaponMesh());
+        }
+    }
+    
+    // Aim at target's center mass (chest height)
+    FVector TargetLocation = Target->GetActorLocation();
+    if (APawn* TargetPawn = Cast<APawn>(Target))
+    {
+        // Aim at chest height for better hit chance
+        TargetLocation.Z += 50.0f;
+    }
+    
+    // Perform line trace
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    QueryParams.AddIgnoredActor(EquippedEnemyRangedWeapon);
+    QueryParams.bTraceComplex = false;
+    
+    bool bHit = World->LineTraceSingleByChannel(
+        HitResult,
+        StartLocation,
+        TargetLocation,
+        ECC_Visibility,
+        QueryParams
+    );
+    
+    // If we hit something, check if it's the target or if nothing is blocking
+    if (bHit)
+    {
+        // If we hit the target directly, we have line of sight
+        if (HitResult.GetActor() == Target)
+        {
+            return true;
+        }
+        
+        // If we hit something else, no line of sight
+        UE_LOG(LogTemp, Verbose, TEXT("%s: Line of sight blocked by %s"), 
+            *GetName(), *GetNameSafe(HitResult.GetActor()));
+        return false;
+    }
+    
+    // No hit means clear line of sight
+    return true;
+}
+
+FVector AEnemyBase::CalculateAimTarget() const
+{
+    if (!CombatTarget)
+    {
+        return GetActorForwardVector() * 1000.0f + GetActorLocation();
+    }
+    
+    // Get target's location (aim at chest height)
+    FVector TargetLocation = CombatTarget->GetActorLocation();
+    if (APawn* TargetPawn = Cast<APawn>(CombatTarget))
+    {
+        TargetLocation.Z += 50.0f; // Chest height
+    }
+    
+    // Calculate base direction to target
+    FVector DirectionToTarget = (TargetLocation - GetActorLocation()).GetSafeNormal();
+    
+    // Add accuracy variation (inaccuracy increases with distance)
+    const float DistanceToTarget = FVector::Dist(GetActorLocation(), TargetLocation);
+    const float DistanceFactor = FMath::Clamp(DistanceToTarget / MaxFiringRange, 0.0f, 1.0f);
+    
+    // Calculate spread based on accuracy (lower accuracy = more spread)
+    // At 70% accuracy, max spread is about 30 degrees at max range
+    const float MaxSpreadDegrees = (1.0f - WeaponAccuracy) * 30.0f * DistanceFactor;
+    const float SpreadRadians = FMath::DegreesToRadians(MaxSpreadDegrees);
+    
+    // Add random offset within spread cone
+    const float RandomYaw = FMath::FRandRange(-SpreadRadians, SpreadRadians);
+    const float RandomPitch = FMath::FRandRange(-SpreadRadians, SpreadRadians);
+    
+    // Apply rotation to direction
+    FRotator DirectionRotation = DirectionToTarget.Rotation();
+    DirectionRotation.Yaw += FMath::RadiansToDegrees(RandomYaw);
+    DirectionRotation.Pitch += FMath::RadiansToDegrees(RandomPitch);
+    
+    // Calculate final aim point far in the distance
+    const FVector AimDirection = DirectionRotation.Vector();
+    const FVector AimTarget = GetActorLocation() + (AimDirection * 10000.0f); // Far point for trace
+    
+    UE_LOG(LogTemp, Verbose, TEXT("%s: Aim spread = %.2f degrees (accuracy: %.2f, distance: %.1f)"), 
+        *GetName(), MaxSpreadDegrees, WeaponAccuracy, DistanceToTarget);
+    
+    return AimTarget;
+}
+
+void AEnemyBase::FireWeapon()
+{
+    if (!EquippedEnemyRangedWeapon || !CombatTarget)
+    {
+        UE_LOG(LogTemp, Error, TEXT("%s: Cannot fire - missing weapon or target"), *GetName());
+        return;
+    }
+    
+    // Calculate aim target with accuracy variation
+    FVector AimTarget = CalculateAimTarget();
+    
+    // Make enemy face the target
+    FVector DirectionToTarget = (CombatTarget->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+    FRotator TargetRotation = DirectionToTarget.Rotation();
+    TargetRotation.Pitch = 0.0f; // Keep enemy upright
+    SetActorRotation(TargetRotation);
+    
+    // Fire the weapon
+    EquippedEnemyRangedWeapon->Fire(AimTarget);
+    
+    UE_LOG(LogTemp, Warning, TEXT("💥 %s FIRED at %s!"), 
+        *GetName(), *GetNameSafe(CombatTarget));
+}
+
+void AEnemyBase::ResetFireCooldown()
+{
+    bCanFire = true;
+    UE_LOG(LogTemp, Log, TEXT("🔫 %s weapon reloaded, ready to fire"), *GetName());
 }
 
 void AEnemyBase::PlayAttackMontage()
@@ -1267,7 +1486,7 @@ bool AEnemyBase::CanAttack()
     bool bCanAttack = IsInsideAttackRadius() &&
         !IsAttacking() &&
             !IsEnemyEngaged() &&
-                !IsDead();
+                !Execute_IsDead(this);
     return bCanAttack;
 }
 
@@ -1711,6 +1930,16 @@ bool AEnemyBase::IsAttacking() const // [Restored]
 bool AEnemyBase::IsPatrolling() const // [Restored]
 {
     return EnemyState == EEnemyState::EES_Patrolling;
+}
+
+void AEnemyBase::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+    CombatTarget = InCombatTarget;
+}
+
+AActor* AEnemyBase::GetCombatTarget_Implementation()
+{
+    return CombatTarget;
 }
 
 void AEnemyBase::SetEnemyState(EEnemyState NewState) // [Restored]

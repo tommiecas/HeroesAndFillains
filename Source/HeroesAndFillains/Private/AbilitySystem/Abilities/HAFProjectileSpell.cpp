@@ -8,10 +8,24 @@
 #include "Weapons/Majix/HAFMajixProjectile.h"
 #include "Interfaces/CombatInterface.h"
 #include "HAFGameplayTags.h"
+#include "Characters/BaseCharacter.h"
 
 
 void UHAFProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	// Only the server actually spawns the authoritative projectile,
+	// but clients should still see a predicted version.
+	if (!GetAvatarActorFromActorInfo()->HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client predicting projectile spawn"));
+	}
+	UE_LOG(LogTemp, Warning, TEXT("🔥 FireBolt Ability Activated!"));
+
+	// if (IsActive())
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("FireBolt already active — skipping duplicate activation"));
+	// 	return;
+	// }
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	
@@ -25,30 +39,98 @@ FGameplayEffectContextHandle UHAFProjectileSpell::AddSourceObjectToContext(const
 	return NewContext;
 }
 
-void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayEffectSpecHandle& DamageSpecHandle)
+void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
 {
-	if (!GetAvatarActorFromActorInfo()->HasAuthority()) return;
-	if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetAvatarActorFromActorInfo()))
+	AActor* Avatar = GetAvatarActorFromActorInfo();
+	if (!Avatar) return;
+
+	if (GetAvatarActorFromActorInfo()->ActorHasTag(FName("Enemy")))
 	{
-		const FVector SocketLocation = CombatInterface->GetSpellCastersSocketLocation();
-		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-		Rotation.Pitch = 0.f;
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+			GetAvatarActorFromActorInfo(),
+			FHAFGameplayTags::Get().Montage_Attack_Weapon);
+		const FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation(SocketLocation);
 		SpawnTransform.SetRotation(Rotation.Quaternion());
+
+		if (!HAFMajixProjectileClass) return;
+
 		AHAFMajixProjectile* Projectile = GetWorld()->SpawnActorDeferred<AHAFMajixProjectile>(
 			HAFMajixProjectileClass,
 			SpawnTransform,
 			GetOwningActorFromActorInfo(),
 			Cast<APawn>(GetOwningActorFromActorInfo()),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-		// ✅ USE THE SPEC HANDLE PASSED FROM BLUEPRINT
-		Projectile->DamageEffectSpecHandle = DamageSpecHandle;
-        
-		// ✅ DEBUG LOG
-		UE_LOG(LogTemp, Warning, TEXT("✅ Projectile spawned with DamageSpecHandle. Valid: %d"), 
-			DamageSpecHandle.IsValid());
-        
+
+		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+		FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+		EffectContextHandle.SetAbility(this);
+		EffectContextHandle.AddSourceObject(Projectile);
+		TArray<TWeakObjectPtr<AActor>> Actors;
+		Actors.Add(Projectile);
+		EffectContextHandle.AddActors(Actors);
+		FHitResult HitResult;
+		HitResult.Location = ProjectileTargetLocation;
+		EffectContextHandle.AddHitResult(HitResult);
+		
+		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
+
+		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
+
+		for (auto& Pair : DamageTypes)
+		{
+			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+		}
+		
+		Projectile->DamageEffectSpecHandle = SpecHandle;
+		
+		Projectile->FinishSpawning(SpawnTransform);
+	}
+	else if (GetAvatarActorFromActorInfo()->ActorHasTag(FName("Player")))
+	{
+		FName SocketName = "SpellSocket";
+		USkeletalMeshComponent* Mesh = Avatar->FindComponentByClass<USkeletalMeshComponent>();
+		if (!Mesh || !Mesh->DoesSocketExist(SocketName)) return;
+		const FVector SocketLocation = Mesh->GetSocketLocation(SocketName);
+		const FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(SocketLocation);
+		SpawnTransform.SetRotation(Rotation.Quaternion());
+
+		if (!HAFMajixProjectileClass) return;
+
+		AHAFMajixProjectile* Projectile = GetWorld()->SpawnActorDeferred<AHAFMajixProjectile>(
+			HAFMajixProjectileClass,
+			SpawnTransform,
+			GetOwningActorFromActorInfo(),
+			Cast<APawn>(GetOwningActorFromActorInfo()),
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+		FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+		EffectContextHandle.SetAbility(this);
+		EffectContextHandle.AddSourceObject(Projectile);
+		TArray<TWeakObjectPtr<AActor>> Actors;
+		Actors.Add(Projectile);
+		EffectContextHandle.AddActors(Actors);
+		FHitResult HitResult;
+		HitResult.Location = ProjectileTargetLocation;
+		EffectContextHandle.AddHitResult(HitResult);
+		
+		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
+
+		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
+
+		for (auto& Pair : DamageTypes)
+		{
+			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+		}
+		
+		Projectile->DamageEffectSpecHandle = SpecHandle;
+		
 		Projectile->FinishSpawning(SpawnTransform);
 	}
 }
