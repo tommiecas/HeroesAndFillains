@@ -5,5 +5,11 @@
 
 FCharacterClassDefaultInfo UCharacterClassInfo::GetClassDefaultInfo(ECharacterClass CharClass)
 {
-	return CharacterClassInformation.FindChecked(CharClass);
+    if (const FCharacterClassDefaultInfo* FoundInfo = CharacterClassInformation.Find(CharClass))
+    {
+        return *FoundInfo;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("⚠️ CharacterClassInfo: Missing entry for class %d"), static_cast<int32>(CharClass));
+    return FCharacterClassDefaultInfo(); // return empty, safe default
 }

@@ -18,6 +18,10 @@ class HEROESANDFILLAINS_API AHAFAIController : public AAIController
 public:
 	AHAFAIController();
 
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
+
+
 protected:
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;

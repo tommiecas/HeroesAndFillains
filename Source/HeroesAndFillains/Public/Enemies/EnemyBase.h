@@ -55,8 +55,13 @@ public:
     AEnemyBase();
 
     virtual void BeginPlay() override;
+    void DeferredGASSetup();
+
     virtual void Tick(float DeltaTime) override;
+    virtual void InitializeDefaultTags() override;
+    virtual void InitializeDefaultAttributes() override;
     virtual void PossessedBy(AController* NewController) override;
+    void SafeInitializeAttributes();
     virtual void OnRep_PlayerState() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -102,13 +107,12 @@ public:
     /** Reset fire cooldown timer */
     void ResetFireCooldown();
     
-    virtual void PlayAttackMontage() override;
-    virtual void PlayRandomMeleeAttackMontage() override;
-    virtual void PlayRandomMajixAttackMontage() override;
+    void PlayAttackMontage();
+    void PlayRandomMeleeAttackMontage();
+    void PlayRandomMajixAttackMontage();
     virtual void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
     virtual bool CanAttack() override;
     virtual void AttackEnd() override;
-    virtual void InitializeDefaultAttributes() override;
 
     void HideEnemyStatWidgets();
     void ShowEnemyStatWidgets();
@@ -235,6 +239,9 @@ public:
     UFUNCTION()
     void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
 
+    UFUNCTION()
+    void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
     // --- Weapons ---
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     void SpawnEnemyWeapon();
@@ -261,16 +268,11 @@ public:
 
     // --- GAS ---
     virtual void InitializeAbilityActorInfo() override;
-    virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-                      class AController* EventInstigator, AActor* DamageCauser) override;
+    void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                      class AController* EventInstigator, AActor* DamageCauser);
 
-    // --- Soul / Charm / Flee ---
+    // --- Soul ---
     void SpawnSoul();
-    void TriggerCharm(AActor* InPlayerActor);
-    void BeginFlee();
-    void DoNextFleeHop();
-    void AddStateTag(const FGameplayTag& Tag);
-    void RemoveStateTag(const FGameplayTag& Tag);
     FGenericTeamId GetGenericTeamId() const;
 
     // --- Helpers ---
@@ -337,16 +339,6 @@ public:
     // --- AI ---
     UPROPERTY()
     AHAFAIController* EnemyController;
-
-    // --- Flee / Charm ---
-    UPROPERTY()
-    AActor* CachedPlayer;
-
-    bool bIsCharmed = false;
-    bool bIsFleeing = false;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Flee")
-    float FleeHopDistance = 800.f;
 
     // --- Gameplay Data ---
     UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -443,8 +435,9 @@ public:
     // Add this override
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float LifeSpan = 5.0f;
     
-protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     TObjectPtr<UBehaviorTree> BehaviorTree;
 
@@ -474,66 +467,40 @@ protected:
     UPROPERTY()
     bool bCanDamage = true;
 
-   
-
-    
-
     FTimerHandle DamageResetTimer;
-    
 
-    // ✅ How much base damage a single melee hit deals
+    // Base damage for melee attacks
+    UPROPERTY(EditAnywhere, Category = "Combat")
     float BaseDamage = 20.f;
 
-
-   
-
-    // Death
-   
-
-   
-
+    // Death effects
     UPROPERTY(EditAnywhere, Category = "Combat")
     UParticleSystem* DeathParticles;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     USoundBase* DeathSound;
 
-   
-    // Soul
+    // Soul spawning
     UPROPERTY(EditAnywhere, Category = "Soul")
     int32 SoulValue = 10;
 
-    // Dissolve
+    // Dissolve effect
     UPROPERTY()
     UTimelineComponent* DissolveTimeline;
-    // Damage effect
 
+    // GAS damage effect class
     UPROPERTY(EditAnywhere, Category = "Combat|Damage")
     TSubclassOf<UGameplayEffect> DamageEffectClass;
-   
-    // Movement
-   
-
-    // Combat state
-
-   
-    // Cached player controller for UI
-    UPROPERTY()
-    APlayerController* CachedPC;
 
     // Hover state for UI
     UPROPERTY()
     bool bIsHovered = false;
 
-    // Last hovered enemy for perception system
-    UPROPERTY()
-    AEnemyBase* LastHoveredEnemy = nullptr;
-
-    // Weapons
+    // Hit effects
     UPROPERTY(EditAnywhere, Category = "Combat")
     UParticleSystem* HitParticles;
-   
-    /** Currently active hover menu widget instance */
+
+    // Currently active hover menu widget instance
     UPROPERTY()
     UEnemyAttributeMenuWidget* ActiveAttributeMenuWidget = nullptr;
 

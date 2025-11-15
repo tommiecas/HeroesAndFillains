@@ -144,35 +144,55 @@ void UHAFAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const
 {
+	// --- Extract the context safely ---
 	Properties.EffectContextHandle = Data.EffectSpec.GetEffectContext();
 	Properties.SourceASC = Properties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 
-	if (Properties.SourceASC)
+	// --- Validate Source ASC and its info ---
+	if (IsValid(Properties.SourceASC))
 	{
-		Properties.SourceAvatarActor = Properties.SourceASC->GetAvatarActor();
-		Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
-		UE_LOG(LogTemp, Log, TEXT("Damage Source ASC: %s Actor: %s Controller: %s"),
-					*GetNameSafe(Properties.SourceASC),
-					*GetNameSafe(Properties.SourceAvatarActor),
-					*GetNameSafe(Properties.SourceController));
-		if (!Properties.SourceController && Properties.SourceAvatarActor)
+		if (Properties.SourceASC->AbilityActorInfo.IsValid())
 		{
-			if (APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
-			{
-				Properties.SourceController = Pawn->GetController();
-			}
+			Properties.SourceAvatarActor = Properties.SourceASC->GetAvatarActor();
+			Properties.SourceController = Properties.SourceASC->AbilityActorInfo->PlayerController.Get();
 		}
 	}
 
-	Properties.TargetASC = Data.Target.AbilityActorInfo->AbilitySystemComponent.Get();
-	Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
-	Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
-	UE_LOG(LogTemp, Log, TEXT("Damage Target ASC: %s Actor: %s Controller: %s"),
-	   *GetNameSafe(Properties.TargetASC),
-	   *GetNameSafe(Properties.TargetAvatarActor),
-	   *GetNameSafe(Properties.TargetController));
+	// --- Secondary fallback if controller missing but avatar still exists ---
+	if (!IsValid(Properties.SourceController) && IsValid(Properties.SourceAvatarActor))
+	{
+		if (APawn* Pawn = Cast<APawn>(Properties.SourceAvatarActor))
+		{
+			Properties.SourceController = Pawn->GetController();
+		}
+	}
 
-	// ✅ Add this line at the very end:
+	// --- Target info guarded the same way ---
+	if (Data.Target.AbilityActorInfo.IsValid())
+	{
+		Properties.TargetASC = Data.Target.AbilityActorInfo->AbilitySystemComponent.Get();
+		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+	}
+
+	// --- Logging (safe) ---
+	UE_LOG(LogTemp, Log, TEXT("Source ASC: %s | Avatar: %s | Controller: %s"),
+		*GetNameSafe(Properties.SourceASC),
+		*GetNameSafe(Properties.SourceAvatarActor),
+		*GetNameSafe(Properties.SourceController));
+
+	UE_LOG(LogTemp, Log, TEXT("Target ASC: %s | Avatar: %s | Controller: %s"),
+		*GetNameSafe(Properties.TargetASC),
+		*GetNameSafe(Properties.TargetAvatarActor),
+		*GetNameSafe(Properties.TargetController));
+
+	// --- Optional: sanity warning ---
+	if (!IsValid(Properties.SourceController))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing or invalid SourceController for %s"),
+			TEXT(__FUNCTION__), *GetNameSafe(Properties.SourceAvatarActor));
+	}
+
 	LogEffectSourceTarget(Properties, TEXT(__FUNCTION__), Data.EffectSpec);
 }
 

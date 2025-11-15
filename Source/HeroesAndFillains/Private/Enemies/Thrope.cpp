@@ -6,6 +6,7 @@
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/HitInterface.h"
 
 AThrope::AThrope()
 {
@@ -85,26 +86,23 @@ void AThrope::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent,
 
     DamagedActors.Add(Player);
 
-    // Apply damage
-    const float FootDamageAmount = FootClawsDamage > 0.f ? FootClawsDamage : 25.f;
-    UGameplayStatics::ApplyDamage(Player, FootDamageAmount, GetController(), this, nullptr);
-    const float HandDamageAmount = HandClawsDamage > 0.f ? HandClawsDamage : 35.f;
-    UGameplayStatics::ApplyDamage(Player, HandDamageAmount, GetController(), this, nullptr);
-
-    // Debug visuals
+    // Damage is now handled through GAS via GetHit_Implementation
     FVector HitLocation = OtherActor->GetActorLocation();
-
     if (!SweepResult.ImpactPoint.IsNearlyZero())
     {
         HitLocation = SweepResult.ImpactPoint;
     }
 
-    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
-    UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s for %.1f foot damage!"), *GetName(), *GetNameSafe(Player), FootDamageAmount);
-    UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s for %.1f hand damage!"), *GetName(), *GetNameSafe(Player), HandDamageAmount);
+    if (IHitInterface* HitInterface = Cast<IHitInterface>(Player))
+    {
+        // Note: Thrope has different damage for hands vs feet, but GAS will handle the actual damage calculation
+        // The damage amount will be determined by the GameplayEffect applied in GetHit_Implementation
+        HitInterface->Execute_GetHit(Player, HitLocation, this);
+        UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s via GAS!"), *GetName(), *GetNameSafe(Player));
+    }
 
-    // Optional: temporary blood Niagara
-    // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodFX, HitLocation);
+    // Debug visuals
+    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
 
     // Reset damage after a short delay
     bCanDamage = false;

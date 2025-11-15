@@ -9,6 +9,7 @@
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/HitInterface.h"
 
 
 ASpectralBase::ASpectralBase()
@@ -56,23 +57,21 @@ void ASpectralBase::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComp
 
     DamagedActors.Add(Player);
 
-    // Apply damage
-    const float DamageAmount = BaseDamage > 0.f ? BaseDamage : 15.f;
-    UGameplayStatics::ApplyDamage(Player, DamageAmount, GetController(), this, nullptr);
-
-    // Debug visuals
+    // Damage is now handled through GAS via GetHit_Implementation
     FVector HitLocation = OtherActor->GetActorLocation();
-
     if (!SweepResult.ImpactPoint.IsNearlyZero())
     {
         HitLocation = SweepResult.ImpactPoint;
     }
 
-    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
-    UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s for %.1f damage!"), *GetName(), *GetNameSafe(Player), DamageAmount);
+    if (IHitInterface* HitInterface = Cast<IHitInterface>(Player))
+    {
+        HitInterface->Execute_GetHit(Player, HitLocation, this);
+        UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s via GAS!"), *GetName(), *GetNameSafe(Player));
+    }
 
-    // Optional: temporary blood Niagara
-    // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodFX, HitLocation);
+    // Debug visuals
+    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
 
     // Reset damage after a short delay
     bCanDamage = false;

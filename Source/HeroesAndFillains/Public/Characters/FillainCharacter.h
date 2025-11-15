@@ -66,22 +66,20 @@ public:
 	AFillainCharacter();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void InitializeDefaultTags() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	virtual void Die() override;
 	virtual void MulticastHandleDeath_Implementation();
 	virtual void ApplyStartupEffects() const override;
-	void FixSelfCameraCollision();
-
-	UFUNCTION()
-	void Debug_ProbeSpringArmBlocker();
-
-	void RestoreThirdPersonCameraSafe();
+	
+	// Override legacy damage system (TODO: Remove after migrating to pure GAS)
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void InitializeDefaultAttributes() override;
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
 	void InitASC();
@@ -122,58 +120,13 @@ public:
 	
 	
 	virtual void PlayAttackMontage(const FGameplayTag& InputTag) override;
-	virtual void PlayRandomMeleeAttackMontage() override;
-	virtual void PlayRandomMajixAttackMontage() override;
-
-	
-
-	FTimerHandle CamWatchdogTimer;
-
-	bool IsCameraWeird(FString& OutWhy) const;
-	void CamWatchdogTick();
-	void StartCamWatchdog(float DurationSec = 2.0f, float TickSec = 0.05f);
-	void FixCameraIfWeird(const TCHAR* Tag);
-
-	UFUNCTION()
-	void ResetCameraRig();
-
-	UFUNCTION(Client, Reliable)
-	void Client_PostEquipCameraFix();
-
-	UFUNCTION(Client, Reliable)
-	void Client_OnEquipped();
-
-	UFUNCTION(Client, Reliable)
-	void Client_SafeViewAfterEquip();
-
-	UFUNCTION(Client, Reliable)
-	void Client_ForceFollowCamera();
-	
-	
-
-	FTimerHandle CamFixCooldownHandle;
-	bool bCamFixCooldown = false;
-	
-	UFUNCTION() void CamWatchdogCooldownOff();
-
-	UFUNCTION(Client, Reliable)
-	void Client_NukeScreenOverlays();
-	
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
-	float DefaultArmLength = 300.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
-	FVector DefaultTargetOffset = FVector(0.f, 0.f, 60.f);
+	void PlayRandomMeleeAttackMontage();
+	void PlayRandomMajixAttackMontage();
 	
 	// Prevent re-entrancy / double-trigger
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Equip")
-	bool bEquipInProgress = false;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipWeapon(class AWeaponBase* WeaponToEquip);
-	
-	UPROPERTY()
-	UHAFAttributeSet* HAFAS = nullptr;
 
 	
 	/*******************************
@@ -254,13 +207,7 @@ public:
 	class UCombatComponent* CombatComponent;
 
 	UPROPERTY()
-	AFillainPlayerController* VictimController;
-
-	UPROPERTY()
 	class AHAFPlayerState* HAFPlayerState;
-
-	UPROPERTY()
-	AFillainCharacter* VictimCharacter = nullptr;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate(bool bPlayerLeftGame);
@@ -278,8 +225,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class ULagCompensationComponent* LagCompensation;
 
-	void CacheDamageParameters(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
-	void ResetCachedDamageParameters();
 
 	UPROPERTY(BlueprintAssignable, Category="UI|Events")
 	FOnMessageWidget OnMessageWidget;
@@ -319,7 +264,6 @@ public:
 	UPROPERTY()
 	class AProjectile* Projectile;
 
-	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
@@ -440,10 +384,6 @@ public:
 	/*************************
 	**  Swinging the Stick  **
 	*************************/
-	
-
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeaponBase* CharactersWeapon;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AMeleeWeapon* CharactersMeleeWeapon;
@@ -454,13 +394,27 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AMajixWeapon* CharactersMajixWeapon;
 
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AWeaponBase* CharactersWeapon;
+
+	UPROPERTY()
+	bool bIsTogglingWeapon = false;
+
+	UPROPERTY()
+	bool bEquipInProgress = false;
+
+	UPROPERTY(EditAnywhere, Category = Eliminations)
+	UMaterialInstance* DissolveMaterialInstance;
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnEquipped();
+
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
 
 	bool CanDisarm();
 	bool IfPlayerIsDisarmed();
 	bool CanArm();
-	bool bIsTogglingWeapon = false;
 
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToSpineSocket();
@@ -646,6 +600,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float CameraSelfOcclusionThreshold = 160.f; // tweakable
+
+	void FixSelfCameraCollision();
+	void ResetCameraRig();
 
 	UFUNCTION()
 	void HideCharacterIfCameraClose();
@@ -916,7 +873,6 @@ public:
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	ETeam GetTeam();
-	FORCEINLINE AController* GetCachedEventInstigator() const { return CachedEventInstigator; }
 	FORCEINLINE void SetHealth(const float Amount) const { if (HAFAttributes) HAFAttributes->SetHealth(Amount); }
 	FORCEINLINE void SetShield(const float Amount) const { if (HAFAttributes) HAFAttributes->SetShield(Amount); }
 	FORCEINLINE void SetStamina(const float Amount) const { if (HAFAttributes) HAFAttributes->SetStamina(Amount); }
@@ -925,3 +881,7 @@ public:
 	FORCEINLINE EBattlePrepped GetBattlePrepped() const { return BattlePrepped; }
 	FORCEINLINE AFillainHUD* GetHUD() const { return FillainHUD; }
 };
+
+
+
+

@@ -16,6 +16,7 @@
 #include "PlayerController/FillainPlayerController.h"
 #include "Sound/SoundCue.h"
 #include "Weapons/Ranged/RangedWeapon.h"
+#include "Interfaces/HitInterface.h"
 
 void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 {
@@ -96,7 +97,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 			}
 		}
 
-		// Loop through DamageMap to get total damage for each character
+		// Loop through DamageMap to apply damage to each character
 		for (auto DamagePair : DamageMap)
 		{
 			if (DamagePair.Key && InstigatorController)
@@ -104,13 +105,15 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 				bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 				if (HasAuthority() && bCauseAuthDamage)
 				{
-					UGameplayStatics::ApplyDamage(
-						DamagePair.Key, // Character that was hit
-						DamagePair.Value, // Damage calculated in the two for loops above
-						InstigatorController,
-						this,
-						UDamageType::StaticClass()
-					);
+					// Damage is now handled through GAS via GetHit_Implementation
+					// which will apply the appropriate GameplayEffect
+					// Note: For shotgun, we still track multiple hits but GAS will handle the actual damage
+					if (IHitInterface* HitInterface = Cast<IHitInterface>(DamagePair.Key))
+					{
+						// Use the first hit location from HitTargets as impact point
+						FVector ImpactPoint = HitTargets.Num() > 0 ? HitTargets[0] : FVector::ZeroVector;
+						HitInterface->Execute_GetHit(DamagePair.Key, ImpactPoint, GetOwner());
+					}
 				}
 			}
 		}

@@ -39,10 +39,33 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	UBoxComponent* RightFistCollision;
+
+	UPROPERTY(VisibleAnywhere, Category="Combat")
+	UBoxComponent* LeftFootCollision;
+
+	UPROPERTY(VisibleAnywhere, Category="Combat")
+	UBoxComponent* RightFootCollision;
 	
 	// Only Gnarled-specific settings remain
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float FistDamage = 25.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float FootDamage = 25.f;
+
 	FTimerHandle FistDamageResetTimer;
+	FTimerHandle FootDamageResetTimer;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartCharacterDissolveTimelineOne(UMaterialInstanceDynamic* DynamicMaterialInstanceOne);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartCharacterDissolveTimelineTwo(UMaterialInstanceDynamic* DynamicMaterialInstanceTwo);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceOne;
+        
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstanceTwo;
+
 };

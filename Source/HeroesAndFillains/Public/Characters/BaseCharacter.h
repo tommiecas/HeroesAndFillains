@@ -11,6 +11,7 @@
 #include "Interfaces/CapsuleInterface.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystemComponent.h"
+#include "CharacterClassInfo.h"
 #include "BaseCharacter.generated.h"
 
 class AHAFGameMode;
@@ -23,10 +24,12 @@ class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
 class UAbilitySystemComponent;
 class UAttributeSet;
-class AHAFGameMode;
 class UMotionWarpingComponent;
 class UAnimMontage;
 class AFillainCharacter;
+class AWeaponBase;
+class AMeleeWeapon;
+class ARangedWeapon;
 
 UENUM(BlueprintType, Blueprintable)
 enum EDeathPose
@@ -71,6 +74,19 @@ public:
 	virtual void MeleeAttack();
 	virtual void MajixAttack();
 	virtual void Die() override;
+	
+	// Legacy damage system - kept as virtual stubs for FillainCharacter compatibility
+	// TODO: Remove after FillainCharacter is migrated to pure GAS
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
+	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
+
+	UFUNCTION(BlueprintCallable)
+	virtual void InitializeDefaultTags();
+
+	/** Safely initializes attributes — waits until ASC is valid before calling InitializeDefaultAttributes */
+	UFUNCTION()
+	void SafeInitializeAttributes();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void Dissolve();
@@ -78,27 +94,19 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastHandleDeath();
 
+	/** 
+	 * Called by GAS when damage is applied through GameplayEffects
+	 * This is the primary entry point for damage visualization (hit reactions, effects, etc.)
+	 */
 	UFUNCTION(BlueprintCallable)
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 	UFUNCTION(BlueprintCallable, Category="HitReaction")
 	FDirectionalHitResult DirectionalHitReact(const FVector& ImpactPoint);
-	
-	UFUNCTION(BlueprintCallable)
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	UFUNCTION(BlueprintCallable)
-	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
-
-	UFUNCTION(BlueprintCallable)
-	virtual void ReceiveDamage(AActor* DamagedPawn, float DamageAmount, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
 	virtual void PlayRandomMeleeAttackMontage();
-
-	UFUNCTION(BlueprintCallable)
 	virtual void PlayRandomMajixAttackMontage();
-	
-	virtual void PlayAttackMontage();
-	
+
 	UFUNCTION(BlueprintCallable)
     virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
@@ -160,7 +168,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> MajixAttackMontageSections;
 
-	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Setup")
+	UCharacterClassInfo* CharacterClassInfo;
 	
 	/*********************************
 	***                            ***
@@ -195,10 +204,35 @@ public:
 	void SpawnHitSpecialEffects(const FVector& ImpactPoint);
 
 	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<EDeathPose> DeathPose = EDeathPose::EDP_NotDead;                   	
+	TEnumAsByte<EDeathPose> DeathPose = EDeathPose::EDP_NotDead;
 
 	void DisableCapsule();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* CoreComponent;
+	
+	// Primary weapon reference
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	AWeaponBase* EquippedWeapon;
+
+	// Typed weapon references for convenience
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	AMeleeWeapon* EquippedMeleeWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	ARangedWeapon* EquippedRangedWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AFillainPlayerController* KillerPlayerController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AController* CachedInstigatorController;
+
+	// Legacy AttributeComponent - TODO: Remove after migrating all code to GAS
+	UPROPERTY(VisibleAnywhere)
+	class UAttributeComponent* AttributeComponent;
+
+	// Legacy cached damage parameters - TODO: Remove after migrating to GAS-only damage
 	UPROPERTY()
 	float CachedDamageAmount = 0.f;
 
@@ -221,37 +255,7 @@ public:
 	const UDamageType* CachedDamageType;
 
 	UPROPERTY()
-	AController* CachedInstigatorController;
-
-	UPROPERTY()
 	AActor* CachedCauser;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* CoreComponent;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	class  AWeaponBase* EquippedWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	class  AMeleeWeapon* EquippedMeleeWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	class  ARangedWeapon* EquippedRangedWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class AFillainPlayerController* KillerPlayerController;
-
-	UPROPERTY(VisibleAnywhere)
-	class UAttributeComponent* AttributeComponent;
-
-	float LastHitReactTime = 0.f;
-	float HitReactCooldown = 0.4f; // seconds
-
-	// Prevents hit react spam
-	FTimerHandle HitReactTimer;
-	bool bCanReact = true;
-
-	void ResetHitReact();
 
 	UFUNCTION(BlueprintCallable)
 	FVector GetTranslationWarpTarget();
@@ -275,7 +279,9 @@ public:
 
 	void DisableMeshCollision();
 
-	// --- GAS pointers (BaseCharacter only holds them; it doesn't create them) ---
+	// --- GAS Components ---
+	// Note: BaseCharacter holds these pointers but doesn't create them
+	// FillainCharacter gets ASC from PlayerState, EnemyBase creates its own
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 
@@ -288,11 +294,8 @@ public:
 	// Legacy-friendly getter used elsewhere in your project
 	virtual UAttributeSet* GetAttributeSet() const;
 
-	// Convenience (optional to keep your call sites tidy)
 	UFUNCTION(BlueprintPure, Category="GAS|Attributes")
 	virtual bool IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const;
-
-	void MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator);
 
 	void LogSecondaries_Client() const;
 	void LogSecondaries_Server() const;
@@ -301,10 +304,16 @@ public:
 	FName WeaponTipSocketName;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	FName LeftHandSocketName;
+	FName LeftHandSocketName = FName("LeftHandSocket");
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	FName RightHandSocketName;
+	FName RightHandSocketName = FName("RightHandSocket");
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName LeftFootSocketName = FName("LeftFootSocket");
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName RightFootSocketName = FName("RightFootSocket");
 	
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	bool WasBaseCharacterHit = false;
@@ -333,10 +342,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Costs")
 	float GetDodgeCost() const { return DodgeStaminaCost; }
 
-	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
+	virtual TArray<FVector> GetCombatSocketLocations_Implementation(const FGameplayTag& MontageTag) override;
 	virtual bool IsDead_Implementation() const override;
 	virtual AActor* GetAvatar_Implementation() override;
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
+	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
+	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TArray<FTaggedMontage> AttackMontages;
 	
@@ -352,18 +363,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	bool bRequiresASC = true;
 
-	// Call this instead of asserting in BeginPlay.
+	// ASC initialization helpers
 	void SafeInitASC_ForPawnOwner();          // For NPCs: ASC on Pawn
 	void SafeInitASC_FromPlayerState();       // For players: ASC on PlayerState
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-
-
-	
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	TObjectPtr<USkeletalMeshComponent> Weapon;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* CurrentAttackMontage;
@@ -400,20 +405,21 @@ protected:
 	*****     DISSOLVE MATERIALS     *****
 	*****                            *****
 	*************************************/
-	
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void StartCharacterDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+	void StartCharacterDissolveTimelineZero(UMaterialInstanceDynamic* CharacterDynamicMaterialInstanceZero);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void StartWeaponDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+	void StartWeaponDissolveTimelineZero(UMaterialInstanceDynamic* WeaponDynamicMaterialInstanceZero);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
+	TObjectPtr<UMaterialInstance> CharacterDissolveMaterialInstanceZero;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance; 
+	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstanceZero; 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UNiagaraSystem* BloodEffect;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
@@ -425,11 +431,9 @@ public:
 	FORCEINLINE ARangedWeapon* GetEquippedRangedWeapon() const { return EquippedRangedWeapon; }
 	FORCEINLINE int32 GetCharacterLevel() const { return CharacterLevel; }
 	FORCEINLINE void SetCharacterLevel(const int32 NewLevel) { CharacterLevel = FMath::Clamp(NewLevel, 1, 100); }
+	
 	static float SafeGetNumeric(const UAbilitySystemComponent* ASC,
 							const UHAFAttributeSet* AS,
 							const FGameplayAttribute& Attr);
 	static float SafeGet(const UAbilitySystemComponent* ASC, const UHAFAttributeSet* AS, const FGameplayAttribute& Attr);
-	
-
-
 };

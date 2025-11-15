@@ -41,6 +41,7 @@
 #include "HAFComponents/CombatComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "UI/Widgets/EnemyProgressBarBaseWidget.h"
+#include "Interfaces/HitInterface.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -67,7 +68,12 @@ AEnemyBase::AEnemyBase()
     EnemyAbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     EnemyAbilitySystemComponent->SetIsReplicated(true);
     EnemyAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
     EnemyAttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("AttributeSet"));
+    
+    // Set base class pointers so BaseCharacter methods can access them
+    AbilitySystemComponent = EnemyAbilitySystemComponent;
+    AttributeSet = EnemyAttributeSet;
 
     // --- Perception ---
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
@@ -294,6 +300,14 @@ void AEnemyBase::BeginPlay()
     InitializeEnemy();
 }
 
+void AEnemyBase::InitializeDefaultTags()
+{
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.EnemyAI")));
+    }
+}
+
 void AEnemyBase::InitializeDefaultAttributes()
 {
     Super::InitializeDefaultAttributes();
@@ -433,25 +447,22 @@ void AEnemyBase::InitializeEnemyAttributeMenu()
 
 void AEnemyBase::OnHoverStart()
 {
-    if (bIsHovered) return; // 👈 Prevent re-triggering
+    if (bIsHovered) return;
     bIsHovered = true;
 
-    if (!CachedPC)
-        CachedPC = UGameplayStatics::GetPlayerController(this, 0);
-
-    if (!CachedPC || !EnemyAttributeMenuWidgetClass)
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC || !EnemyAttributeMenuWidgetClass)
         return;
 
-    // ✅ Create the widget once
-    ActiveAttributeMenuWidget = CreateWidget<UEnemyAttributeMenuWidget>(CachedPC, EnemyAttributeMenuWidgetClass);
+    ActiveAttributeMenuWidget = CreateWidget<UEnemyAttributeMenuWidget>(PC, EnemyAttributeMenuWidgetClass);
     if (!ActiveAttributeMenuWidget) return;
 
     ActiveAttributeMenuWidget->AddToViewport(10);
     ActiveAttributeMenuWidget->SetWidgetController(EnemyWidgetController);
-    ActiveAttributeMenuWidget->FadeIn(0.2f); // smoother than ShowTemporarily
+    ActiveAttributeMenuWidget->FadeIn(0.2f);
 
     FVector2D MousePos;
-    CachedPC->GetMousePosition(MousePos.X, MousePos.Y);
+    PC->GetMousePosition(MousePos.X, MousePos.Y);
     ActiveAttributeMenuWidget->SetPositionInViewport(MousePos + FVector2D(20.f, 20.f), true);
 
     UE_LOG(LogTemp, Log, TEXT("%s: Hover menu opened once"), *GetName());
@@ -1415,9 +1426,9 @@ void AEnemyBase::RegisterAttackCollision(UBoxComponent* CollisionBox)
     if (!CollisionBox) return;
 
     CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    CollisionBox->SetCollisionObjectType(ECC_Pawn);
+    CollisionBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
     CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-    CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    CollisionBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
     CollisionBox->SetGenerateOverlapEvents(true);
     CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnAttackCollisionOverlap);
 
@@ -1462,11 +1473,49 @@ void AEnemyBase::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedCompone
     
     DamagedActors.Add(OtherActor);
 
-    // Apply damage
-    UGameplayStatics::ApplyDamage(OtherActor, BaseDamage, GetController(), this, nullptr);
-    
-    UE_LOG(LogTemp, Warning, TEXT("💥 %s damaged %s for %.1f!"), 
-        *GetName(), *GetNameSafe(OtherActor), BaseDamage);
+    // ✅ Apply damage through GAS instead of old UGameplayStatics::ApplyDamage
+    if (IAbilitySystemInterface* TargetASI = Cast<IAbilitySystemInterface>(OtherActor))
+    {
+        if (UAbilitySystemComponent* TargetASC = TargetASI->GetAbilitySystemComponent())
+        {
+            if (DamageEffectClass && EnemyAbilitySystemComponent)
+            {
+                FGameplayEffectContextHandle EffectContext = EnemyAbilitySystemComponent->MakeEffectContext();
+                EffectContext.AddSourceObject(this);
+                EffectContext.AddInstigator(this, this);
+
+                FGameplayEffectSpecHandle SpecHandle = EnemyAbilitySystemComponent->MakeOutgoingSpec(
+                    DamageEffectClass, 
+                    1.0f, 
+                    EffectContext
+                );
+
+                if (SpecHandle.IsValid())
+                {
+                    // Set damage magnitude using SetByCaller
+                    SpecHandle.Data->SetSetByCallerMagnitude(
+                        FGameplayTag::RequestGameplayTag(FName("Data.Damage")), 
+                        BaseDamage
+                    );
+
+                    TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+                    
+                    UE_LOG(LogTemp, Warning, TEXT("💥 %s damaged %s for %.1f through GAS!"), 
+                        *GetName(), *GetNameSafe(OtherActor), BaseDamage);
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("❌ %s: No DamageEffectClass assigned!"), *GetName());
+            }
+        }
+    }
+    else
+    {
+        // Fallback for non-GAS actors (shouldn't happen for players/enemies)
+        UGameplayStatics::ApplyDamage(OtherActor, BaseDamage, GetController(), this, nullptr);
+        UE_LOG(LogTemp, Warning, TEXT("⚠️ %s used fallback damage on %s"), *GetName(), *GetNameSafe(OtherActor));
+    }
 
     // Reset damage cooldown
     bCanDamage = false;
@@ -1572,18 +1621,15 @@ void AEnemyBase::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCou
 
     if (bHitReacting)
     {
-        if (bIsCharmed)
+        if (AAIController* AIC = Cast<AAIController>(GetController()))
         {
-            if (AAIController* AIC = Cast<AAIController>(GetController()))
+            if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
             {
-                if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
-                {
-                    BB->SetValueAsBool(TEXT("IsHitReacting"), true);
-                }
+                BB->SetValueAsBool(TEXT("IsHitReacting"), true);
             }
         }
     }
-} 
+}
 
 void AEnemyBase::HandleChangeInHealth(const FOnAttributeChangeData& Data)
 {
@@ -1725,6 +1771,14 @@ void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
     }
 }
 
+void AEnemyBase::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+    if (Stimulus.WasSuccessfullySensed())
+    {
+        SetCombatTarget(Actor);
+    }
+}
+
 FGenericTeamId AEnemyBase::GetGenericTeamId() const
 {
     return TeamId;
@@ -1762,41 +1816,6 @@ void AEnemyBase::SpawnSoul()
 }
 
 
-void AEnemyBase::TriggerCharm(AActor* InPlayerActor)
-{
-    CachedPlayer = InPlayerActor;
-    bIsCharmed = true;
-    UE_LOG(LogTemp, Log, TEXT("%s charmed by %s"), *GetName(), *GetNameSafe(InPlayerActor));
-}
-
-void AEnemyBase::BeginFlee()
-{
-    if (bIsFleeing) return;
-    bIsFleeing = true;
-    UE_LOG(LogTemp, Log, TEXT("%s fleeing!"), *GetName());
-    DoNextFleeHop();
-}
-
-void AEnemyBase::DoNextFleeHop()
-{
-    if (!CachedPlayer) return;
-
-    const FVector Dir = (GetActorLocation() - CachedPlayer->GetActorLocation()).GetSafeNormal();
-    const FVector Dest = GetActorLocation() + Dir * FleeHopDistance;
-    UE_LOG(LogTemp, Log, TEXT("%s hopping away to %s"), *GetName(), *Dest.ToString());
-
-    SetActorLocation(Dest, true);
-}
-
-void AEnemyBase::AddStateTag(const FGameplayTag& Tag)
-{
-    UE_LOG(LogTemp, Verbose, TEXT("%s adding tag %s"), *GetName(), *Tag.ToString());
-}
-
-void AEnemyBase::RemoveStateTag(const FGameplayTag& Tag)
-{
-    UE_LOG(LogTemp, Verbose, TEXT("%s removing tag %s"), *GetName(), *Tag.ToString());
-}
 
 // -----------------------------------------------------------------------------
 // Miscellaneous helpers

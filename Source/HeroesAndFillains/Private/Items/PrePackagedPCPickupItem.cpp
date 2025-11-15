@@ -116,42 +116,57 @@ void APrePackagedPCPickupItem::EnableCustomDepth(bool bEnable)
 	}
 }
 
-void APrePackagedPCPickupItem::ApplyPickupEffect_Implementation(class AFillainCharacter* PlayerChar)
+void APrePackagedPCPickupItem::ApplyPickupEffect_Implementation(AFillainCharacter* PlayerChar)
 {
-	if (!PlayerChar || !EffectToApply) return;
-
-	UAbilitySystemComponent* TargetASC = PlayerChar->FindComponentByClass<UAbilitySystemComponent>();
-	if (!TargetASC) return;
-
-	// Get the source ASC (the pickup’s instigator or owner)
-	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
-	if (!SourceASC) SourceASC = TargetASC; // fallback
-
-	// Optional: prevent self-application if you only want external effects
-	// Allow same-ASC application for pickups (normal behavior when player collects).
-	if (SourceASC == TargetASC)
+	if (!PlayerChar || !EffectToApply)
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("Pickup %s applying effect to player ASC (expected)."), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Pickup %s: Missing PlayerChar or EffectToApply!"), *GetName());
+		return;
 	}
 
+	// ✅ Get target ASC (the player's)
+	UAbilitySystemComponent* TargetASC = PlayerChar->FindComponentByClass<UAbilitySystemComponent>();
+	if (!TargetASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pickup %s: Player %s has no ASC!"), *GetName(), *GetNameSafe(PlayerChar));
+		return;
+	}
 
-	// Build the effect context from the *source* ASC
+	// ✅ Try to get a source ASC (the pickup’s instigator)
+	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
+	if (!SourceASC)
+	{
+		// If pickup has no ASC (typical), use target ASC as fallback
+		SourceASC = TargetASC;
+	}
+
+	// ✅ Build a valid effect context from whichever ASC we have
 	FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
 	ContextHandle.AddSourceObject(this);
 	ContextHandle.AddInstigator(GetInstigator(), this);
 
-	// Apply the GameplayEffect
-	TargetASC->ApplyGameplayEffectToSelf(
-		EffectToApply->GetDefaultObject<UGameplayEffect>(),
-		1.f,
-		ContextHandle
-	);
+	// ✅ Create the outgoing spec properly (never use GetDefaultObject)
+	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(EffectToApply, 1.f, ContextHandle);
+	if (!SpecHandle.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pickup %s: Failed to create spec for %s"), *GetName(), *GetNameSafe(EffectToApply.Get()));
+		return;
+	}
 
+	// ✅ Apply it safely
+	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	UE_LOG(LogTemp, Log, TEXT("Pickup %s applied %s to %s"),
+		*GetNameSafe(this),
+		*GetNameSafe(EffectToApply.Get()),
+		*GetNameSafe(PlayerChar));
+
+	// ✅ Optional: trigger pickup FX
 	if (ItemEffect)
 	{
 		ItemEffect->Activate(true);
 	}
 }
+
 
 void APrePackagedPCPickupItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

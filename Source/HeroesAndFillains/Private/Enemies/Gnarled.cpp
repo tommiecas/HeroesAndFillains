@@ -5,6 +5,7 @@
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/HitInterface.h"
 
 AGnarled::AGnarled()
 {
@@ -28,8 +29,26 @@ AGnarled::AGnarled()
     LeftFistCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
     LeftFistCollision->SetGenerateOverlapEvents(true);
 
+    // --- Right Foot ---
+    RightFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFootCollision"));
+    RightFootCollision->SetupAttachment(GetMesh(), FName("RightFootSocket"));
+    RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RightFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
+    RightFootCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+    RightFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+    RightFootCollision->SetGenerateOverlapEvents(true);
+
+    // --- Left Foot ---
+    LeftFootCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftFootCollision"));
+    LeftFootCollision->SetupAttachment(GetMesh(), FName("LeftFootSocket"));
+    LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    LeftFootCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
+    LeftFootCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+    LeftFootCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+    LeftFootCollision->SetGenerateOverlapEvents(true);
+
     // Optional: initial display name
-    EnemyDisplayName = FText::FromString(TEXT("a Gnarled"));
+    EnemyDisplayName = FText::FromString(TEXT("a ginormous Gnarled! Don't piss off Papa!"));
 }
 
 void AGnarled::BeginPlay()
@@ -39,8 +58,11 @@ void AGnarled::BeginPlay()
     // ✅ Register these colliders with the inherited attack system
     RegisterAttackCollision(RightFistCollision);
     RegisterAttackCollision(LeftFistCollision);
+    RegisterAttackCollision(RightFootCollision);
+    RegisterAttackCollision(LeftFootCollision);
 
     Tags.Add(FName("Gnarled"));
+    Tags.Add(FName("Enemy"));
 }
 
 void AGnarled::Tick(float DeltaTime)
@@ -63,23 +85,21 @@ void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent
 
     DamagedActors.Add(Player);
 
-    // Apply damage
-    const float DamageAmount = BaseDamage > 0.f ? BaseDamage : 15.f;
-    UGameplayStatics::ApplyDamage(Player, DamageAmount, GetController(), this, nullptr);
-
-    // Debug visuals
+    // Damage is now handled through GAS via GetHit_Implementation
     FVector HitLocation = OtherActor->GetActorLocation();
-
     if (!SweepResult.ImpactPoint.IsNearlyZero())
     {
         HitLocation = SweepResult.ImpactPoint;
     }
 
-    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
-    UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s for %.1f damage!"), *GetName(), *GetNameSafe(Player), DamageAmount);
+    if (IHitInterface* HitInterface = Cast<IHitInterface>(Player))
+    {
+        HitInterface->Execute_GetHit(Player, HitLocation, this);
+        UE_LOG(LogTemp, Warning, TEXT("💥 %s hit %s via GAS!"), *GetName(), *GetNameSafe(Player));
+    }
 
-    // Optional: temporary blood Niagara
-    // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodFX, HitLocation);
+    // Debug visuals
+    DrawDebugSphere(GetWorld(), HitLocation, 20.f, 12, FColor::Red, false, 0.3f, 0, 2);
 
     // Reset damage after a short delay
     bCanDamage = false;
@@ -88,8 +108,21 @@ void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent
 
 void AGnarled::Dissolve()
 {
-    // --- optional visual dissolve code here ---
-    // e.g. spawn dynamic material instances and run dissolve timelines
+    Super::Dissolve();
+    UE_LOG(LogTemp, Log, TEXT("%s dissolving with custom materials."), *GetName());
+
+    auto ApplyDissolve = [&](UMaterialInterface* Source, void(AGnarled::*StartFunc)(UMaterialInstanceDynamic*))
+    {
+        if (IsValid(Source))
+        {
+            UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(Source, this);
+            GetMesh()->SetMaterial(0, DynMat);
+            (this->*StartFunc)(DynMat);
+        }
+    };
+
+    ApplyDissolve(DissolveMaterialInstanceOne, &AGnarled::StartCharacterDissolveTimelineOne);
+    ApplyDissolve(DissolveMaterialInstanceTwo, &AGnarled::StartCharacterDissolveTimelineTwo);
 }
 
 int32 AGnarled::PlayDeathMontage()
@@ -113,6 +146,15 @@ void AGnarled::EnableLeftSideMeleeAttack()
                      LeftFistCollision->GetScaledBoxExtent(),
                      FColor::Green, false, 0.25f, 0, 2);
     }
+    
+    if (LeftFootCollision)
+    {
+        LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Left Foot Enabled"));
+        DrawDebugBox(GetWorld(), LeftFootCollision->GetComponentLocation(),
+            LeftFootCollision->GetScaledBoxExtent(),
+            FColor::Green, false, 0.25f, 0, 2);
+    }
 }
 
 void AGnarled::DisableLeftSideMeleeAttack()
@@ -121,6 +163,12 @@ void AGnarled::DisableLeftSideMeleeAttack()
     {
         LeftFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         UE_LOG(LogTemp, Warning, TEXT("🔴 Left Fist Disabled"));
+    }
+
+    if (LeftFootCollision)
+    {
+        LeftFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Foot Disabled"));
     }
 }
 
@@ -134,6 +182,15 @@ void AGnarled::EnableRightSideMeleeAttack()
                      RightFistCollision->GetScaledBoxExtent(),
                      FColor::Cyan, false, 0.25f, 0, 2);
     }
+
+    if (RightFootCollision)
+    {
+        RightFootCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Right Foot Enabled"));
+        DrawDebugBox(GetWorld(), RightFootCollision->GetComponentLocation(),
+                     RightFootCollision->GetScaledBoxExtent(),
+                     FColor::Cyan, false, 0.25f, 0, 2);
+    }
 }
 
 void AGnarled::DisableRightSideMeleeAttack()
@@ -142,5 +199,11 @@ void AGnarled::DisableRightSideMeleeAttack()
     {
         RightFistCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         UE_LOG(LogTemp, Warning, TEXT("🔴 Right Fist Disabled"));
+    }
+
+    if (RightFootCollision)
+    {
+        RightFootCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Foot Disabled"));
     }
 }

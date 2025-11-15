@@ -62,5 +62,12 @@ public:
 
 	UPROPERTY()
 	AEnemyBase* OwningEnemy = nullptr;
+	
+    	UPROPERTY()
+    	TObjectPtr<UAbilitySystemComponent> CachedASC;
+    
+    	UPROPERTY()
+    	TObjectPtr<const UAttributeSet> CachedAttributeSet;
+
 
 };

@@ -34,6 +34,12 @@ struct FCharacterClassDefaultInfo
 	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
 	TSubclassOf<UGameplayEffect> VitalAttributes;
 
+	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
+	TSubclassOf<UGameplayEffect> ResistanceAttributes;
+
+	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
+	TSubclassOf<UGameplayEffect> InvisibleAttributes; //( InvisibleAttributes
+
 	UPROPERTY(EditDefaultsOnly, Category="ClassDefaults")
 	TArray<TSubclassOf<UGameplayAbility>> ClassAbilities;
 

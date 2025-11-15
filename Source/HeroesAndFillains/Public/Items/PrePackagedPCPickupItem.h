@@ -7,6 +7,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "PrePackagedPCPickupItem.generated.h"
 
+class UGameplayEffect;
 class USphereComponent;
 
 UCLASS(Blueprintable, BlueprintType)
@@ -54,8 +55,8 @@ public:
 
 		
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Pickup|Effects")
-	TSubclassOf<class UGameplayEffect> EffectToApply;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup")
+	TSubclassOf<UGameplayEffect> EffectToApply;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Khristel", meta=(AllowPrivateAccess="true"))
 	class UStaticMeshComponent* ItemMesh;

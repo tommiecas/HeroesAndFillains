@@ -419,5 +419,31 @@ FString("How the Sausage Gets Made...Go Away")
 	FString("When Your Right Hand Is All You've Okay, There's GOT To Be A Better Way To Phrase This...") 
 	);
 
+	GameplayTags.Montage_Attack_LeftFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.LeftFoot"),
+		FString("When Your Left Foot Is All You've Got") 
+		);
+	
+	GameplayTags.Montage_Attack_RightFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.RightFoot"),
+		FString("When Your Right Foot Is All You've Got")  
+		);
+
+	GameplayTags.Montage_Attack_BothHands = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.BothHands"),
+		FString("When Your Hands Are All You've Got")  
+		);
+		
+	GameplayTags.Montage_Attack_BothFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.BothFeet"),
+		FString("When Your Feet Are All You've Got")  
+		);
+
+	GameplayTags.Montage_Attack_HandsAndFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.HandsAndFeet"),
+		FString("When Your Hands and Feet Are All You've Got... then you pretty much have it all, so what's the problem...?")  
+		);
+
+
 	
 }

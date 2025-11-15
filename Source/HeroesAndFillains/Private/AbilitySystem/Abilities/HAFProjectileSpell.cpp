@@ -46,9 +46,12 @@ void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocatio
 
 	if (GetAvatarActorFromActorInfo()->ActorHasTag(FName("Enemy")))
 	{
-		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+		TArray<FVector> SocketLocations = ICombatInterface::Execute_GetCombatSocketLocations(
 			GetAvatarActorFromActorInfo(),
 			FHAFGameplayTags::Get().Montage_Attack_Weapon);
+		
+		// Use the first socket location (or average them for multi-socket attacks)
+		const FVector SocketLocation = SocketLocations.Num() > 0 ? SocketLocations[0] : GetAvatarActorFromActorInfo()->GetActorLocation();
 		const FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation(SocketLocation);

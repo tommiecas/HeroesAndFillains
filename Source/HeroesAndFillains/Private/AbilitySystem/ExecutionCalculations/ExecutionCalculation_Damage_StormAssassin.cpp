@@ -8,72 +8,10 @@
 #include "HAFGameplayTags.h"
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "AbilitySystem/ExecutionCalculations/HAFDamageStatics.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 
-struct HAFDamageStatics
-{
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ArmorPenetration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(BlockChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance);
-	
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Fireproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Shockproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ChaosIncorruptible);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Invulnerability);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HeartOfDarkness);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ThermalRadiation);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Immunity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Unstoppable);
-	
-	TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition> TagsToCaptureDefs;
-	
-	HAFDamageStatics()
-	{
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Armor, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ArmorPenetration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, BlockChance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitChance, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitDamage, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitResistance, Target, false);
-		
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Fireproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Shockproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ChaosIncorruptible, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Invulnerability, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HeartOfDarkness, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ThermalRadiation, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
-
-		const FHAFGameplayTags& Tags = FHAFGameplayTags::Get();
-		
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_Armor, ArmorDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_ArmorPenetration, ArmorPenetrationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_BlockChance, BlockChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitChance, CriticalHitChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitDamage, CriticalHitDamageDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitResistance, CriticalHitResistanceDef);
-
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Fire, FireproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Lightning, ShockproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ChaosMajix, ChaosIncorruptibleDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_MeleeAttacks, InvulnerabilityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_RuleOfOrder, HeartOfDarknessDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Ice, ThermalRadiationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Toxicity, ImmunityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Stun, UnstoppableDef);
-	}
-};
-
-static const HAFDamageStatics& DamageStatics()
-{
-	static HAFDamageStatics DStatics;
-	return DStatics;
-}
 
 
 void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
@@ -83,11 +21,33 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 	const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
 	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
 
-	AActor* SourceAvatar = SourceASC ? SourceASC->GetAvatarActor() : nullptr;
-	AActor* TargetAvatar = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
+	// ✅ Validate ASC components
+	if (!SourceASC || !TargetASC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: Invalid ASC components!"));
+		return;
+	}
+
+	AActor* SourceAvatar = SourceASC->GetAvatarActor();
+	AActor* TargetAvatar = TargetASC->GetAvatarActor();
+
+	// ✅ Validate avatars
+	if (!SourceAvatar || !TargetAvatar)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: Invalid avatar actors!"));
+		return;
+	}
+
 	ICombatInterface* SourceCombatInterface = Cast<ICombatInterface>(SourceAvatar);
 	ICombatInterface* TargetCombatInterface = Cast<ICombatInterface>(TargetAvatar);
 	
+	// ✅ Validate combat interfaces
+	if (!SourceCombatInterface || !TargetCombatInterface)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: Actors don't implement CombatInterface!"));
+		return;
+	}
+
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
@@ -98,15 +58,22 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 
 	// PART ONE: Get Damage Set by Caller Magnitude
 	float Damage = 10.f;
+	
+	// ✅ FIX: Get the static instance properly using DamageStatics() each time
 	for (const TTuple<FGameplayTag, FGameplayTag>& Pair : FHAFGameplayTags::Get().DamageTypesToResistances)
 	{
 		const FGameplayTag DamageTypeTag = Pair.Key;
 		const FGameplayTag ResistanceTypeTag = Pair.Value;
 
-		checkf(HAFDamageStatics().TagsToCaptureDefs.Contains(ResistanceTypeTag), TEXT("TagsToCaptureDefs doesn't contain Tag: [%s] in ExecCalc_Damage"), *ResistanceTypeTag.ToString());
+		if (!HAFDamageStatics().TagsToCaptureDefs.Contains(ResistanceTypeTag))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("TagsToCaptureDefs doesn't contain Tag: [%s]"), *ResistanceTypeTag.ToString());
+			continue;
+		}
+
 		const FGameplayEffectAttributeCaptureDefinition CaptureDef = HAFDamageStatics().TagsToCaptureDefs[ResistanceTypeTag];
 
-		float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key);
+		float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key, false, 0.f);
 
 		float Resistance = 0.f;
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
@@ -120,9 +87,8 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 
 	// PART TWO: Capture BLOCKCHANCE on Target and determine if there was a successful BLOCK
 	float TargetBlockChance = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().BlockChanceDef, EvaluationParameters, TargetBlockChance);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().BlockChanceDef, EvaluationParameters, TargetBlockChance);
 	TargetBlockChance = FMath::Max<float>(TargetBlockChance, 0.f);
-	// If it was blocked, cut the damage by 50%.
 	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
 
 	FGameplayEffectContextHandle EffectContextHandle = Spec.GetContext();
@@ -130,77 +96,88 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 	
 	Damage = bBlocked ? Damage / 2.f : Damage;
 
-	//PART THREE: Capture Armor on Target, but Armor Penetration on Source.
+	// PART THREE: Capture Armor on Target, but Armor Penetration on Source.
 	float TargetArmor = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, TargetArmor);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().ArmorDef, EvaluationParameters, TargetArmor);
 	TargetArmor = FMath::Max<float>(TargetArmor, 0.f);
 
 	float SourceArmorPenetration = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorPenetrationDef, EvaluationParameters, SourceArmorPenetration);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().ArmorPenetrationDef, EvaluationParameters, SourceArmorPenetration);
 	SourceArmorPenetration = FMath::Max<float>(SourceArmorPenetration, 0.f);
 
+	// ✅ Validate CharacterClassInfo
 	const UCharacterClassInfo* CharacterClassInfo = UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(SourceAvatar);
+	if (!CharacterClassInfo)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: CharacterClassInfo is null!"));
+		return;
+	}
+
+	// ✅ Validate DamageCalculationCoefficients
+	if (!CharacterClassInfo->DamageCalculationCoefficients)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: DamageCalculationCoefficients is null!"));
+		return;
+	}
+
 	const FRealCurve* ArmorPenetrationCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("ArmorPenetrationCoefficient"), FString());
+	if (!ArmorPenetrationCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: ArmorPenetrationCurve not found!"));
+		return;
+	}
+
 	const float ArmorPenetrationCoefficient = ArmorPenetrationCurve->Eval(SourceCombatInterface->GetPlayerLevel());
-	//ArmorPenetration ignores a portion of the target's armor... 
 	const float EffectiveArmor = TargetArmor * (100 - SourceArmorPenetration * ArmorPenetrationCoefficient) / 100.f;
 
-	//...while Armor removes part of the damage from the source.
 	const FRealCurve* EffectiveArmorCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("EffectiveArmorCoefficient"), FString());
-	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCombatInterface->GetPlayerLevel());
-	//Armor is a percentage of the damage taken.
-	Damage *= (100 - EffectiveArmor * EffectiveArmorCoefficient) / 100.f;
-	
-	const FGameplayModifierEvaluatedData EvaluatedData(UHAFAttributeSet::GetIncomingDamageAttribute(), EGameplayModOp::Additive, Damage);
-	OutExecutionOutput.AddOutputModifier(EvaluatedData);
+	if (!EffectiveArmorCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: EffectiveArmorCurve not found!"));
+		return;
+	}
 
-	//PART FOUR: Critical Hit Resistance reduces Critical Hit Chance, while Double Damage Plus Bonus if a Critical Hit is made
-	// Critical hit calculation
+	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCombatInterface->GetPlayerLevel());
+	Damage *= (100 - EffectiveArmor * EffectiveArmorCoefficient) / 100.f;
+
+	// PART FOUR: Critical Hit Resistance reduces Critical Hit Chance, Double Damage Plus Bonus if Critical Hit
 	float SourceCriticalHitChance = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitChanceDef, EvaluationParameters, SourceCriticalHitChance);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitChanceDef, EvaluationParameters, SourceCriticalHitChance);
 	SourceCriticalHitChance = FMath::Max<float>(SourceCriticalHitChance, 0.f);
 
 	float SourceCriticalHitDamage = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitDamageDef, EvaluationParameters, SourceCriticalHitDamage);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitDamageDef, EvaluationParameters, SourceCriticalHitDamage);
 	SourceCriticalHitDamage = FMath::Max<float>(SourceCriticalHitDamage, 0.f);
 
 	float TargetCriticalHitResistance = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitResistanceDef, EvaluationParameters, TargetCriticalHitResistance);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitResistanceDef, EvaluationParameters, TargetCriticalHitResistance);
 	TargetCriticalHitResistance = FMath::Max<float>(TargetCriticalHitResistance, 0.f);
 
-	const FRealCurve* CriticalHitResistanceCurve =
-		CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("CriticalHitResistanceCoefficient"), FString());
+	const FRealCurve* CriticalHitResistanceCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("CriticalHitResistanceCoefficient"), FString());
+	if (!CriticalHitResistanceCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: CriticalHitResistanceCurve not found!"));
+		return;
+	}
+
 	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetCombatInterface->GetPlayerLevel());
 
 	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
 
 	UHAFAbilitySystemBlueprintLibrary::SetIsCriticalHit(EffectContextHandle, bCriticalHit);
+	
 	if (bCriticalHit)
 	{
 		Damage = 2.f * Damage + SourceCriticalHitDamage;
 	}
 
-	// ✅ NOW apply final damage to IncomingDamage
+	// ✅ Final damage output
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
 		UHAFAttributeSet::GetIncomingDamageAttribute(),
 		EGameplayModOp::Additive,
 		Damage));
 
-	UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f"), Damage);
-    
-	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-		UHAFAttributeSet::GetIncomingDamageAttribute(),
-		EGameplayModOp::Additive,
-		Damage));
-
-	UE_LOG(LogTemp, Log, TEXT("ExecutionCalculation_Damage: Calculated Damage = %f"), Damage);
-	// Apply damage output modifier...
-	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-		UHAFAttributeSet::GetIncomingDamageAttribute(), EGameplayModOp::Additive, Damage));
-	
-	/*float Damage = Spec.EffectSpec.GetMagnitude() * (1.f - (Armor / 100.f));
-	OutExecutionOutput.AddDamage(Damage);
-	//
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, )*/
+	UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f (Critical: %s, Blocked: %s)"), 
+		Damage, bCriticalHit ? TEXT("YES") : TEXT("NO"), bBlocked ? TEXT("YES") : TEXT("NO"));
 }

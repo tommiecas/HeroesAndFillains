@@ -36,6 +36,21 @@ void UEnemyWidgetControllerBase::Initialize(AEnemyBase* InEnemy)
 
 	// ✅ Bind but don't broadcast yet
 	AssignEnemyAttributeInfoDelegate();
+
+	if (!InEnemy)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] Initialize() failed — InEnemy is null"), *GetNameSafe(this));
+		return;
+	}
+
+	CachedASC = InEnemy->GetAbilitySystemComponent();
+	CachedAttributeSet = InEnemy->GetAttributeSet();
+
+	if (!CachedASC || !CachedAttributeSet)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] Enemy missing ASC or AttributeSet — skipping widget setup"), *GetNameSafe(this));
+		return;
+	}
 }
 
 void UEnemyWidgetControllerBase::AssignEnemyAttributeInfoDelegate()
@@ -89,60 +104,71 @@ void UEnemyWidgetControllerBase::BindCallbacksToDependencies()
 
 void UEnemyWidgetControllerBase::BroadcastInitialEnemyValues()
 {
-	if (!EnemyAttributeInfo)
+	if (CachedASC.Get() == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s: EnemyAttributeInfo is null! Likely using base class instead of BP subclass."),
-			*GetNameSafe(this));
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ CachedASC invalid during BroadcastInitialEnemyValues"), *GetNameSafe(this));
+		return;
+	}
+	if (CachedAttributeSet.Get() == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ CachedAttributeSet invalid during BroadcastInitialEnemyValues"), *GetNameSafe(this));
+		return;
+	}
+	if (EnemyAttributeInfo == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ EnemyAttributeInfo is null!"), *GetNameSafe(this));
+		return;
+	}
+	if (Enemy == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ Enemy reference invalid!"), *GetNameSafe(this));
 		return;
 	}
 
-	// UE_LOG(LogTemp, Warning, TEXT("ControllerClass = %s | EnemyAttributeInfo = %s"),
-	// 	*GetClass()->GetName(),
-	// 	*GetNameSafe(EnemyAttributeInfo));
-
-	EnemyAttributeSet = Enemy->GetAttributeSet();
-	if (!EnemyAttributeSet)
+	const UHAFAttributeSet* EnemyAS = Cast<UHAFAttributeSet>(CachedAttributeSet.Get());
+	if (EnemyAS == nullptr)
 	{
-		UAbilitySystemComponent* EnAbSyCo = Enemy->GetEnemyASC();
-		if (EnAbSyCo)
-		{
-			EnemyAttributeSet = EnAbSyCo->GetSet<UAttributeSet>();
-		}
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ CachedAttributeSet is not UHAFAttributeSet!"), *GetNameSafe(this));
+		return;
 	}
 
-	if (OwningEnemy && OwningEnemy->EnemyAttributeInfoOverride)
-	{
-		EnemyAttributeInfo = OwningEnemy->EnemyAttributeInfoOverride;
-		// UE_LOG(LogTemp, Warning, TEXT("[EnemyWC] AttributeInfo overridden by %s’s data asset."), *OwningEnemy->GetName());
-	}
-
-	const UHAFAttributeSet* EnemyAS = CastChecked<UHAFAttributeSet>(EnemyAttributeSet);
-	check(EnemyAttributeInfo);
-
-	// ✅ Broadcast generic tag-based info for Attribute Menus
-	for (auto& Pair : EnemyAS->TagsToAttributes)
+	// ✅ Broadcast generic tag-based info
+	for (const auto& Pair : EnemyAS->TagsToAttributes)
 	{
 		BroadcastEnemyAttributeInfo(Pair.Key, Pair.Value());
 	}
 
-	// ✅ Also broadcast typed stat values for health/shield bar widgets
-	OwningEnemy->OnEnemyHealthChanged.Broadcast(EnemyAS->GetHealth());
-	OwningEnemy->OnEnemyMaxHealthChanged.Broadcast(EnemyAS->GetMaxHealth());
-	OwningEnemy->OnEnemyShieldChanged.Broadcast(EnemyAS->GetShield());
-	OwningEnemy->OnEnemyMaxShieldChanged.Broadcast(EnemyAS->GetMaxShield());
-	OwningEnemy->OnEnemyStaminaChanged.Broadcast(EnemyAS->GetStamina());
-	OwningEnemy->OnEnemyMaxStaminaChanged.Broadcast(EnemyAS->GetMaxStamina());
-	OwningEnemy->OnEnemyMajixChanged.Broadcast(EnemyAS->GetMajix());
-	OwningEnemy->OnEnemyMaxMajixChanged.Broadcast(EnemyAS->GetMaxMajix());
+	if (!IsValid(Enemy))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] ❌ Enemy destroyed before broadcasting"), *GetNameSafe(this));
+		return;
+	}
+	
+	auto SafeBroadcast = [](auto& Delegate, auto Value, const FString& Label)
+	{
+		if (Delegate.IsBound())
+		{
+			Delegate.Broadcast(Value);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Skipped broadcast: %s not bound"), *Label);
+		}
+	};
 
-	/* UE_LOG(LogTemp, Warning, TEXT("[%s] BroadcastInitialEnemyValues() -> "
-		"H=%f/%f | S=%f/%f | Stamina=%f/%f | Majix=%f/%f"),
-		*GetNameSafe(this),
-		EnemyAS->GetHealth(), EnemyAS->GetMaxHealth(),
-		EnemyAS->GetShield(), EnemyAS->GetMaxShield(),
-		EnemyAS->GetStamina(), EnemyAS->GetMaxStamina(),
-		EnemyAS->GetMajix(), EnemyAS->GetMaxMajix());*/
+	SafeBroadcast(Enemy->OnEnemyHealthChanged, EnemyAS->GetHealth(), TEXT("Health"));
+	SafeBroadcast(Enemy->OnEnemyMaxHealthChanged, EnemyAS->GetMaxHealth(), TEXT("MaxHealth"));
+	SafeBroadcast(Enemy->OnEnemyShieldChanged, EnemyAS->GetShield(), TEXT("Shield"));
+	SafeBroadcast(Enemy->OnEnemyMaxShieldChanged, EnemyAS->GetMaxShield(), TEXT("MaxShield"));
+	SafeBroadcast(Enemy->OnEnemyStaminaChanged, EnemyAS->GetStamina(), TEXT("Stamina"));
+	SafeBroadcast(Enemy->OnEnemyMaxStaminaChanged, EnemyAS->GetMaxStamina(), TEXT("MaxStamina"));
+	SafeBroadcast(Enemy->OnEnemyMajixChanged, EnemyAS->GetMajix(), TEXT("Majix"));
+	SafeBroadcast(Enemy->OnEnemyMaxMajixChanged, EnemyAS->GetMaxMajix(), TEXT("MaxMajix"));
+
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] ✅ BroadcastInitialEnemyValues() succeeded."), *GetNameSafe(this));
 }
+
 
 void UEnemyWidgetControllerBase::BroadcastEnemyAttributeInfo(const FGameplayTag& EnemyAttributeTag,
 	const FGameplayAttribute& EnemyAttribute) const

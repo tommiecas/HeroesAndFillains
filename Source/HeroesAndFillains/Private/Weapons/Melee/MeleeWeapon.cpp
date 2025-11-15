@@ -98,7 +98,8 @@ void AMeleeWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	{
 		if (ActorIsSameType(BoxHit.GetActor())) return;
 
-		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		// Damage is now handled through GAS via GetHit_Implementation
+		// which will apply the appropriate GameplayEffect
 		ExecuteGetHit(BoxHit);
 		CreateFields(BoxHit.ImpactPoint);	
 	}
@@ -159,22 +160,21 @@ void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* 
 		if (NewOwner->ActorHasTag(FName("Player")))
 		{
 			Character = Cast<AFillainCharacter>(NewOwner);
-			const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("MeleeSocket"));
-			if (HandSocket)
+			if (Character && Character->GetMesh())
 			{
-				HandSocket->AttachActor(Character->CombatComponent->GetEquippedMeleeWeapon(), Character->GetMesh());
-				Super::Equip(Character->GetMesh(), FName("MeleeSocket"), NewOwner, NewInstigator);
+				// Just call Super::Equip - it will handle the attachment
+				Super::Equip(Character->GetMesh(), InSocketName, NewOwner, NewInstigator);
 			}
 		}
 		else if (NewOwner->ActorHasTag(FName("Enemy")))
 		{
-			ABaseCharacter* BaseChar = Cast<ABaseCharacter>(NewOwner);
-			const USkeletalMeshSocket* HandSocket = BaseChar->GetMesh()->GetSocketByName(FName("MeleeSocket"));
-			if (HandSocket)
+			if (AEnemyBase* EnChar = Cast<AEnemyBase>(NewOwner))
 			{
-				AEnemyBase* EnChar = Cast<AEnemyBase>(BaseChar);
-				HandSocket->AttachActor(EnChar->EquippedEnemyMeleeWeapon, EnChar->GetMesh());
-				Super::Equip(EnChar->GetMesh(), FName("MeleeSocket"), NewOwner, NewInstigator);
+				if (EnChar->GetMesh())
+				{
+					// Just call Super::Equip - it will handle the attachment
+					Super::Equip(EnChar->GetMesh(), InSocketName, NewOwner, NewInstigator);
+				}
 			}
 		}
 	}
@@ -265,13 +265,7 @@ void AMeleeWeapon::BeginAttack()
 
 void AMeleeWeapon::ImplementLineTraceGetHit(FHitResult Hit)
 {
-	if (AFillainCharacter* HitChar = Cast<AFillainCharacter>(Hit.GetActor()))
-	{
-		HitChar->CachedDamageAmount = MeleeDamage;
-		HitChar->CachedDamageEvent = FDamageEvent(UDamageType::StaticClass());
-		HitChar->CachedEventInstigator = GetInstigator()->GetController();
-		HitChar->CachedDamageCauser = this;
-	}
+	// Damage is now handled through GAS in GetHit_Implementation
 	if (IHitInterface* HitInterface = Cast<IHitInterface>(Hit.GetActor()))
 	{
 		if (HitInterface)
@@ -326,26 +320,12 @@ void AMeleeWeapon::TraceBetweenPoints(FVector& LastLocation, USceneComponent* Tr
 	    	// Only process characters (avoid world clutter)
 	    	if (ABaseCharacter* HitBase = Cast<ABaseCharacter>(HitActor))
 	    	{
-	    		HitBase->CachedDamageAmount      = MeleeDamage;
-	    		HitBase->CachedDamageEvent       = FDamageEvent(UDamageType::StaticClass());
-	    		HitBase->CachedEventInstigator   = GetInstigator()->GetController();
-	    		HitBase->CachedDamageCauser      = this;
-
+	    		// Damage is now handled through GAS in GetHit_Implementation
 	    		HitBase->Execute_GetHit(HitBase, Hit.ImpactPoint, GetOwner());
-	    		ImplementLineTraceGetHit(Hit); // your extra handling is fine
+	    		ImplementLineTraceGetHit(Hit);
 
 	    		IgnoreActors.AddUnique(HitActor);
 	    		CreateFields(Hit.ImpactPoint);
-	    		if (HitActor->IsA(AFillainCharacter::StaticClass()))
-	    		{
-	    			AFillainCharacter* HitFillain = Cast<AFillainCharacter>(HitActor);
-	    			HitFillain->GetHit_Implementation(Hit.ImpactPoint, this);
-	    		}
-	    		else if (HitActor->IsA(AEnemyBase::StaticClass()))
-	    		{
-	    			AEnemyBase* HitEnemy = Cast<AEnemyBase>(HitActor);
-	    			HitEnemy->TakeDamage(HitBase->CachedDamageAmount, HitBase->CachedDamageEvent, HitBase->CachedEventInstigator, this);
-				}
 	    	}
 	    }
     }

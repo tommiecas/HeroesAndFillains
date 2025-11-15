@@ -8,6 +8,7 @@
 #include "HAFGameplayTags.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/DecalComponent.h"
@@ -151,6 +152,10 @@ void AHAFMajixProjectile::OnNewSphereOverlap(
     bool bFromSweep, 
     const FHitResult& SweepResult)
 {
+	if (!DamageEffectSpecHandle.Data.IsValid() || DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser() == OtherActor) return;
+
+	if (!UHAFAbilitySystemBlueprintLibrary::IsNotFriend(DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser(), OtherActor)) return;
+	
     UE_LOG(LogTemp, Warning, TEXT("🔥 Projectile overlap! Hit: %s"), *GetNameSafe(OtherActor));
 
     if (OtherActor && OtherActor != this && OtherActor != GetOwner())

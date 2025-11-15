@@ -260,66 +260,6 @@ AFillainCharacter::AFillainCharacter()
 }
 
 
-
-void AFillainCharacter::FixSelfCameraCollision()
-{
-	// Your pawn should never block the camera probe
-	if (UCapsuleComponent* Cap = GetCapsuleComponent())
-		Cap->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-
-	if (USkeletalMeshComponent* SkelMesh = GetMesh())
-		SkelMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore); // covers backpack bone
-
-	// Any other primitives on the pawn (quads/widgets/etc.)
-	TArray<UPrimitiveComponent*> Prims;
-	GetComponents<UPrimitiveComponent>(Prims);              // <— correct API
-	for (UPrimitiveComponent* P : Prims)
-		if (P) P->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-
-	if (CameraBoom)
-		CameraBoom->ProbeChannel = ECC_Camera;
-}
-
-void AFillainCharacter::Debug_ProbeSpringArmBlocker()
-{
-	if (!CameraBoom || !FollowCamera) return;
-
-	const FVector Pivot   = CameraBoom->GetComponentLocation();
-	const FRotator Rot    = CameraBoom->GetComponentRotation();
-	const FVector Desired = Pivot - Rot.Vector() * CameraBoom->TargetArmLength;
-
-	const float Target = CameraBoom->TargetArmLength;
-	const float Actual = (FollowCamera->GetComponentLocation() - Pivot).Size();
-
-	UE_LOG(LogTemp, Warning, TEXT("[ArmDbg] Target=%.1f  Actual=%.1f  ProbeSize=%.1f  Channel=%d"),
-		Target, Actual, CameraBoom->ProbeSize, (int32)CameraBoom->ProbeChannel);
-
-	FHitResult Hit;
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(ArmDbg), /*bTraceComplex=*/false, this);
-	// Do NOT ignore anything; we want to catch the culprit (even if attached to us)
-	bool bHit = GetWorld()->SweepSingleByChannel(
-	Hit, Pivot, Desired, FQuat::Identity,
-		CameraBoom->ProbeChannel,
-		FCollisionShape::MakeSphere(CameraBoom->ProbeSize),
-		Params);
-
-	if (bHit && Hit.bBlockingHit)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[ArmDbg] BLOCKED by Actor=%s  Comp=%s  Profile=%s  Dist=%.1f"),
-			*GetNameSafe(Hit.GetActor()),
-			*GetNameSafe(Hit.GetComponent()),
-			Hit.Component.IsValid() ? *Hit.Component->GetCollisionProfileName().ToString() : TEXT("None"),
-			Hit.Distance);
-
-		// Uncomment for a visible line in PIE:
-		// DrawDebugLine(GetWorld(), Pivot, Hit.ImpactPoint, FColor::Red, false, 2.f, 0, 1.f);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ArmDbg] No blocker found (Actual may be reduced by other code)."));
-	}	
-}
-
 void AFillainCharacter::Client_OnEquipped_Implementation()
 {
 
@@ -403,11 +343,8 @@ void AFillainCharacter::BeginPlay()
 	// --- Spawn default weapon AFTER GAS init so attributes/effects apply immediately ---
 	SpawnDefaultWeapon();
 
-	// --- Damage delegate (server only) ---
-	if (HasAuthority())
-	{
-		OnTakeAnyDamage.AddDynamic(this, &AFillainCharacter::ReceiveDamage);
-	}
+	// Damage is now handled through GAS GameplayEffects only
+	// No need for OnTakeAnyDamage delegate binding
 
 	HideAttachedGrenade();
 
@@ -450,105 +387,13 @@ void AFillainCharacter::BeginPlay()
 	}, 0.05f, false); // 50 ms delay
 }
 
-bool AFillainCharacter::IsCameraWeird(FString& OutWhy) const
+
+void AFillainCharacter::InitializeDefaultTags()
 {
-    if (!FollowCamera || !CameraBoom || !GetCapsuleComponent()) return false;
-
-    const float CapZ  = GetCapsuleComponent()->GetComponentLocation().Z;
-    const float CamZ  = FollowCamera->GetComponentLocation().Z;
-    const float dZ    = CamZ - CapZ;
-
-    if (FollowCamera->GetAttachParent() != CameraBoom) { OutWhy = TEXT("Camera parent != CameraBoom"); return true; }
-    if (dZ < -40.f)                                     { OutWhy = FString::Printf(TEXT("Camera below capsule ΔZ=%.1f"), dZ); return true; }
-    if (CameraBoom->TargetArmLength < 10.f)             { OutWhy = FString::Printf(TEXT("Arm collapsed=%.1f"), CameraBoom->TargetArmLength); return true; }
-
-	static float PrevArm = -1.f;
-	static USceneComponent* PrevParent = nullptr;
-
-	const bool bParentChanged  = PrevParent && FollowCamera->GetAttachParent() != PrevParent;
-	const bool bArmSuddenDrop  = PrevArm >= 0.f && (PrevArm - CameraBoom->TargetArmLength) >= 100.f;
-	const bool bFirstPersonish = CameraBoom->TargetArmLength <= 5.f;
-
-	PrevArm = CameraBoom->TargetArmLength;
-	PrevParent = FollowCamera->GetAttachParent();
-
-	if (bParentChanged)      { OutWhy = TEXT("Camera parent CHANGED this tick"); return true; }
-	if (bArmSuddenDrop)      { OutWhy = FString::Printf(TEXT("Arm sudden drop to %.1f"), CameraBoom->TargetArmLength); return true; }
-	if (bFirstPersonish)     { OutWhy = FString::Printf(TEXT("Arm ~0 (FP) %.1f"), CameraBoom->TargetArmLength); return true; }
-	
-    return false;
+    Super::InitializeDefaultTags();
+    // FillainCharacter-specific tag initialization can go here if needed
 }
 
-void AFillainCharacter::CamWatchdogTick()
-{
-	if (!IsValid(this) || IsPendingKillPending()) return;
-	if (!IsValid(GetWorld()) || !IsLocallyControlled()) return;
-
-	const UCapsuleComponent* Cap = GetCapsuleComponent();
-	if (!IsValid(Cap) || !IsValid(CameraBoom) || !IsValid(FollowCamera)) return;
-	if (bCamFixCooldown) return;
-
-	const float CapZ   = Cap->GetComponentLocation().Z;
-	const float CamZ   = FollowCamera->GetComponentLocation().Z;
-	const float DeltaZ = CamZ - CapZ;                 // <— define it here
-
-	if (DeltaZ < -50.f)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("⚠️ CamWatchdog: Camera below capsule ΔZ=%.1f — resetting"), DeltaZ);
-		Client_NukeScreenOverlays();
-		ResetCameraRig();
-		bEquipInProgress = false;
-
-		// throttle to avoid immediate re-trigger while transforms settle
-		bCamFixCooldown = true;
-		GetWorldTimerManager().SetTimer(CamFixCooldownHandle, this, &AFillainCharacter::CamWatchdogCooldownOff, 0.25f, false);
-	}
-}
-
-void AFillainCharacter::StartCamWatchdog(float DurationSec, float TickSec)
-{
-    GetWorldTimerManager().SetTimer(CamWatchdogTimer, this, &AFillainCharacter::CamWatchdogTick, TickSec, true);
-
-    FTimerHandle StopHandle;
-    GetWorldTimerManager().SetTimer(StopHandle, [this]()
-    {
-        GetWorldTimerManager().ClearTimer(CamWatchdogTimer);
-    }, DurationSec, false);
-}
-
-void AFillainCharacter::FixCameraIfWeird(const TCHAR* Tag)
-{
-	// no delay, no logging; just fix it now
-	ResetCameraRig();
-}
-
-void AFillainCharacter::RestoreThirdPersonCameraSafe()
-{
-	if (!CameraBoom || !FollowCamera) return;
-
-	// Temporarily disable collision so the boom can't push us into the floor mid-attach
-	const bool bPrevCollision = CameraBoom->bDoCollisionTest;
-	CameraBoom->bDoCollisionTest = false;
-
-	// Make sure the camera is parented to the boom (not the weapon or mesh)
-	FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale, USpringArmComponent::SocketName);
-
-	// Restore a sane default
-	CameraBoom->TargetArmLength = FMath::Max(CameraBoom->TargetArmLength, 250.f);
-	CameraBoom->SetRelativeLocation(FVector::ZeroVector);
-	CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);
-	CameraBoom->bUsePawnControlRotation = true;
-
-	// Ensure pawn uses controller yaw (typical 3P setup)
-	if (APawn* P = Cast<APawn>(this)) { P->bUseControllerRotationYaw = false; }
-
-	// Re-enable boom collision next tick (prevents immediate shove underground)
-	GetWorldTimerManager().SetTimerForNextTick([this, bPrevCollision]()
-	{
-		if (CameraBoom) { CameraBoom->bDoCollisionTest = bPrevCollision; }
-	});
-}
 
 void AFillainCharacter::RequestFillainCharacterCapsuleUpdate()
 {
@@ -801,9 +646,9 @@ void AFillainCharacter::DestroyCrown()
 void AFillainCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 {
 	bLeftGame = bPlayerLeftGame;
-	if (VictimController)
+	if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(GetController()))
 	{
-		VictimController->SetHUDWeaponAmmo(0);
+		PC->SetHUDWeaponAmmo(0);
 	}
 	bIsEliminated = true;
 	UAnimInstance* AnimBlueprint = Cast<UAnimInstance>(GetMesh()->GetAnimInstance()); 
@@ -1491,8 +1336,8 @@ void AFillainCharacter::Dodge()
 												 : AbilitySystemComponent->GetSet<UHAFAttributeSet>();
 	if (!AS) { UE_LOG(LogTemp, Warning, TEXT("AttributeSet null in Dodge")); return; }
 
-	const UHAFAttributeSet* HAFASet = Cast<UHAFAttributeSet>(AS);
-	const float Stamina = HAFASet->GetStamina();  // now safe
+	const UHAFAttributeSet* HAFAttributeset = Cast<UHAFAttributeSet>(AS);
+	const float Stamina = HAFAttributeset->GetStamina();  // now safe
 	if (IsOccupied() || !HasEnoughStamina(AttributeComponent->GetDodgeCost())) return;
 
 	PlayDodgeMontage();
@@ -1985,12 +1830,12 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	CombatComponent->EquipWeapon(OverlappingWeapon);
 	Weap = OverlappingWeapon;
 	Client_OnEquipped();
-	FixSelfCameraCollision();
+// FixSelfCameraCollision(); // Removed as part of camera watchdog cleanup
 
 	
 
 	// After the weapon is attached/owned:
-	{
+	
 		// 1) Lights (HoverLight / flare lights)
 		TArray<ULightComponent*> Lights;
 		Weap->GetComponents(Lights);
@@ -2022,14 +1867,15 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 
 		// (Optional) If you have a specific HoverLight pointer, just disable/destroy it:
 		// if (WeaponToEquip->HoverLight) WeaponToEquip->HoverLight->DestroyComponent();
-	}
+	
 
 	// Option A: clear on montage end via delegate
 	// Option B: clear now and reset the flag
 	bEquipInProgress = false;
 
 	UE_LOG(LogTemp, Warning, TEXT("✅ Cleared overlapping references after successful equip"));
-	Client_PostEquipCameraFix();
+	// TODO: Camera watchdog system removed - verify camera works correctly after equip
+	// Client_PostEquipCameraFix();
 
 	// Actual equip logic
 	if (Weap->IsA(ARangedWeapon::StaticClass()))
@@ -2065,7 +1911,8 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 	{
 		UE_LOG(LogTemp, Warning, TEXT("❌ Weapon not marked equipped after Equip call"));
 	}
-	StartCamWatchdog(2.0f);
+	// TODO: Camera watchdog system removed
+	// StartCamWatchdog(2.0f);
 }
 
 
@@ -2102,9 +1949,10 @@ void AFillainCharacter::ResetCameraRig()
 	}
 
 	// 2) Restore spring arm safety settings
-	CameraBoom->TargetArmLength = FMath::Max(50.f, DefaultArmLength); // never negative/zero
+	// TODO: Add proper camera properties if needed
+	CameraBoom->TargetArmLength = FMath::Max(50.f, 300.f); // Default arm length
 	CameraBoom->SocketOffset    = FVector::ZeroVector;
-	CameraBoom->TargetOffset    = DefaultTargetOffset;
+	CameraBoom->TargetOffset    = FVector::ZeroVector; // Default target offset
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bDoCollisionTest = true;     // keep sweep to avoid world clipping
 	CameraBoom->bEnableCameraLag = false;    // optional: disable to avoid late-frame dips
@@ -2119,150 +1967,6 @@ void AFillainCharacter::ResetCameraRig()
 	UE_LOG(LogTemp, Warning, TEXT("[ResetCameraRig] Parent=%s Arm=%.1f CamZ=%.1f CapZ=%.1f"),
 		   *GetNameSafe(CameraBoom->GetAttachParent()), CameraBoom->TargetArmLength,
 		   FollowCamera->GetComponentLocation().Z, GetCapsuleComponent()->GetComponentLocation().Z);
-}
-
-void AFillainCharacter::Client_SafeViewAfterEquip_Implementation()
-{
-	// 0) Kill any legacy timers on this actor (including that [PostEquip+600ms] one)
-    GetWorldTimerManager().ClearAllTimersForObject(this);
-
-    // 1) Make the boom/camera immune to self-collision & exposure flicker
-    if (CameraBoom) CameraBoom->bDoCollisionTest = false;
-
-    if (FollowCamera)
-    {
-        FollowCamera->PostProcessSettings = FPostProcessSettings(); // reset PP
-        auto& PPS = FollowCamera->PostProcessSettings;
-        PPS.bOverride_AutoExposureMinBrightness = true;
-        PPS.bOverride_AutoExposureMaxBrightness = true;
-        PPS.AutoExposureMinBrightness = 1.0f;
-        PPS.AutoExposureMaxBrightness = 1.0f;
-    }
-
-    // 2) Hide my own mesh/weapon for the owning player only
-    if (USkeletalMeshComponent* SMC = GetMesh())
-        SMC->SetOwnerNoSee(true);
-
-    if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
-        CombatComponent->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(true);
-
-    // 3) Mute weapon visuals that can full-screen you (lights/FX/widgets/decals)
-    if (CombatComponent && CombatComponent->EquippedWeapon)
-    {
-        AActor* W = CombatComponent->EquippedWeapon;
-
-        TArray<ULightComponent*> Lights;       W->GetComponents(Lights);
-        for (ULightComponent* L : Lights) if (L) { L->SetVisibility(false, true); L->SetIntensity(0.f); }
-
-        TArray<UNiagaraComponent*> NFX;        W->GetComponents(NFX);
-        for (UNiagaraComponent* N : NFX) if (N) { N->Deactivate(); N->SetAutoActivate(false); }
-
-        TArray<UWidgetComponent*> Widgets;     W->GetComponents(Widgets);
-        for (UWidgetComponent* WC : Widgets) if (WC) { WC->SetVisibility(false, true); WC->SetHiddenInGame(true, true); }
-
-        TArray<UDecalComponent*> Decals;       W->GetComponents(Decals);
-        for (UDecalComponent* D : Decals) if (D) { D->SetVisibility(false, true); }
-    }
-
-    // 4) Also hide any 3D widgets attached to the character
-    {
-        TArray<UWidgetComponent*> MyWidgets; GetComponents(MyWidgets);
-        for (UWidgetComponent* WC : MyWidgets) if (WC) { WC->SetVisibility(false, true); WC->SetHiddenInGame(true, true); }
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("[SafeView] Applied: boom collision OFF, PP reset, owner meshes hidden, weapon lights/FX/widgets OFF."));
-}
-
-void AFillainCharacter::Client_ForceFollowCamera_Implementation()
-{
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC) return;
-
-	// 1) Deactivate ALL camera components on self
-	{
-		TArray<UCameraComponent*> Cams;
-		GetComponents<UCameraComponent>(Cams);
-		for (UCameraComponent* C : Cams) if (C) C->Deactivate();
-	}
-
-	// 2) Deactivate ALL camera components on attached actors (weapon, etc.)
-	{
-		TArray<AActor*> Attached;
-		GetAttachedActors(Attached, /*bIncludeFromChildActors=*/true, /*bIncludeSocketNames=*/true);
-		for (AActor* A : Attached)
-		{
-			if (!A) continue;
-			TArray<UCameraComponent*> Cams;
-			A->GetComponents<UCameraComponent>(Cams);
-			for (UCameraComponent* C : Cams) if (C) C->Deactivate();
-		}
-	}
-
-	// 3) Activate the one true camera and set view target to THIS pawn
-	if (FollowCamera) FollowCamera->Activate(true);
-	PC->AutoManageActiveCameraTarget(this);
-	PC->SetViewTarget(this); // no blend
-
-	// 4) Prove what’s actually being used
-	const FVector PCM = (PC->PlayerCameraManager) ? PC->PlayerCameraManager->GetCameraLocation() : FVector::ZeroVector;
-	const FVector FCam = FollowCamera ? FollowCamera->GetComponentLocation() : FVector::ZeroVector;
-
-	UE_LOG(LogTemp, Warning, TEXT("[CamForce] VT=%s  PCM=%s  FollowCam=%s  Match=%d"),
-		*GetNameSafe(PC->PlayerCameraManager ? PC->PlayerCameraManager->GetViewTarget() : nullptr),
-		*PCM.ToCompactString(), *FCam.ToCompactString(),
-		(FVector::Dist(PCM, FCam) < 2.f) ? 1 : 0);
-}
-
-void AFillainCharacter::CamWatchdogCooldownOff()
-{
-	bCamFixCooldown = false;
-	GetWorldTimerManager().ClearTimer(CamFixCooldownHandle);
-	UE_LOG(LogTemp, Verbose, TEXT("[CamWatchdog] Cooldown off"));
-}
-
-void AFillainCharacter::Client_NukeScreenOverlays_Implementation()
-{
-	auto KillPPOnActor = [](AActor* A)
-	{
-		if (!A) return;
-
-		// 1) Disable any PostProcessComponents (common on weapons/scopes/VFX)
-		TArray<UPostProcessComponent*> PPCs;
-		A->GetComponents<UPostProcessComponent>(PPCs);
-		for (UPostProcessComponent* PPC : PPCs)
-		{
-			if (!PPC) continue;
-			PPC->bEnabled = false;
-			PPC->bUnbound = false;
-			PPC->Settings.WeightedBlendables.Array.Reset();
-			UE_LOG(LogTemp, Warning, TEXT("[NukePP] Disabled PostProcessComponent on %s"), *GetNameSafe(A));
-		}
-
-		// 2) Clear camera PostProcessSettings (in case the weapon wrote into your FollowCamera)
-		TArray<UCameraComponent*> Cams;
-		A->GetComponents<UCameraComponent>(Cams);
-		for (UCameraComponent* Cam : Cams)
-		{
-			if (!Cam) continue;
-			Cam->PostProcessSettings = FPostProcessSettings(); // reset to defaults
-			UE_LOG(LogTemp, Warning, TEXT("[NukePP] Cleared PostProcessSettings on camera %s (%s)"),
-				   *GetNameSafe(Cam), *GetNameSafe(A));
-		}
-	};
-
-	// Self
-	KillPPOnActor(this);
-
-	// Everything attached (includes the newly equipped weapon)
-	TArray<AActor*> Attached;
-	GetAttachedActors(Attached, /*bIncludeFromChildActors=*/true, /*bIncludeSocketNames=*/true);
-	for (AActor* A : Attached) { KillPPOnActor(A); }
-}
-
-void AFillainCharacter::Client_PostEquipCameraFix_Implementation()
-{
-	// If your attach/montage completes next tick, a tiny delay avoids racing transforms.
-	GetWorldTimerManager().SetTimerForNextTick(this, &AFillainCharacter::ResetCameraRig);
 }
 
 void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* W)
@@ -3415,30 +3119,6 @@ AAmmoPickup* AFillainCharacter::GetPickupThatOverlaps(AAmmoPickup* PickupThatOve
 	return PickupThatOverlaps;
 }
 
-void AFillainCharacter::CacheDamageParameters(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
-{
-	if (CachedDamagedPawn == nullptr && CachedDamage == 0.0f && CachedDamageType == nullptr && CachedInstigatorController == nullptr && CachedCauser == nullptr)
-	{
-		CachedDamagedPawn = DamagedPawn;
-		CachedDamage = Damage;
-		CachedDamageType = DamageType;
-		CachedInstigatorController = InstigatorController;
-		CachedCauser = DamageCauser;
-	}
-}
-
-void AFillainCharacter::ResetCachedDamageParameters()
-{
-	CachedDamageAmount = 0.f;
-	CachedDamageEvent = FDamageEvent();
-	CachedEventInstigator = nullptr;
-	CachedDamageCauser = nullptr;
-	CachedDamagedPawn = nullptr;
-	CachedDamage = 0.0f;
-	CachedDamageType = nullptr;
-	CachedInstigatorController = nullptr;
-	CachedCauser = nullptr;
-}
 void AFillainCharacter::InitASC()
 {
 	if (!AbilitySystemComponent) return;
@@ -3449,11 +3129,11 @@ void AFillainCharacter::InitASC()
 	if (AbilitySystemComponent)
 	{
 		const UHAFAttributeSet* AsConst = AbilitySystemComponent->GetSet<UHAFAttributeSet>();
-		HAFAS = const_cast<UHAFAttributeSet*>(AsConst); // caching; we won’t mutate
+		HAFAttributes = const_cast<UHAFAttributeSet*>(AsConst); // caching; we won’t mutate
 	}
 	else
 	{
-		HAFAS = nullptr;
+		HAFAttributes = nullptr;
 	}
 }
 
@@ -3536,7 +3216,7 @@ void AFillainCharacter::InitializeDefaultAttributes()
 			UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is NULL in InitializeDefaultAttributes (called too early?)"));
 			return;
 		}
-		if (UHAFAttributeSet* HAFASet = Cast<UHAFAttributeSet>(AttributeSet))
+		if (UHAFAttributeSet* HAFAttributeset = Cast<UHAFAttributeSet>(AttributeSet))
 		{
 			// SAFE LOGGING (no direct FGameplayAttributeData::GetCurrentValue() derefs)
 			/*UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: "
@@ -3545,27 +3225,27 @@ void AFillainCharacter::InitializeDefaultAttributes()
 				"HealthRegeneration=%.3f ShieldRegeneration=%.3f StaminaRegeneration=%.3f MajixRegeneration=%.3f "
 				"MaxHealth=%.3f MaxShield=%.3f MaxStamina=%.3f MaxMajix=%.3f"),
 				HasAuthority(),
-					SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetArmorAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetArmorPenetrationAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetBlockChanceAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitChanceAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitDamageAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCriticalHitResistanceAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetAgilityAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetFlexibilityAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetPurityAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCorruptibilityAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetIntuitionAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetVisionAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetCharmAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetHealthRegenerationAttribute()),
-				SafeGet(AbilitySystemComponent,HAFASet, HAFASet->GetShieldRegenerationAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetStaminaRegenerationAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMajixRegenerationAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxHealthAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxShieldAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxStaminaAttribute()),
-				SafeGet(AbilitySystemComponent, HAFASet, HAFASet->GetMaxMajixAttribute())
+					SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetArmorAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetArmorPenetrationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetBlockChanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetCriticalHitChanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetCriticalHitDamageAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetCriticalHitResistanceAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetAgilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetFlexibilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetPurityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetCorruptibilityAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetIntuitionAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetVisionAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetCharmAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetHealthRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent,HAFAttributeset, HAFAttributeset->GetShieldRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetStaminaRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetMajixRegenerationAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetMaxHealthAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetMaxShieldAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetMaxStaminaAttribute()),
+				SafeGet(AbilitySystemComponent, HAFAttributeset, HAFAttributeset->GetMaxMajixAttribute())
 		);*/
 		}
 	}

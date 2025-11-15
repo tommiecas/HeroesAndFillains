@@ -1209,13 +1209,11 @@ void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
 	{
-		FC->StartCamWatchdog(2.0f, 0.05f);
 	}
 	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
 	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
-	{
-		FC->StartCamWatchdog(2.0f, 0.05f);   // <— add this too
+	{   // <— add this too
 	}
 	if (EquippedWeapon && Character)
 	{
@@ -1226,7 +1224,6 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		PlayWeaponEquipSound(EquippedWeapon);
 		SetFightingStyle();
 	}
-	Character->StartCamWatchdog(2.f);
 }
 
 void UCombatComponent::OnRep_EquippedMeleeWeapon()
@@ -1276,7 +1273,6 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedRangedWeapon);
 	}
-	Character->StartCamWatchdog(2.f);
 }
 
 void UCombatComponent::OnRep_SecondaryWeapon()
@@ -1453,3 +1449,4 @@ void UCombatComponent::OnRep_WieldingTheSword()
 		Character->Crouch();
 	}
 }
+

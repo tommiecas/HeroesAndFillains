@@ -38,10 +38,10 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	if (APawn* Owner = TryGetPawnOwner())
 	{
 		AFillainCharacter* MyChar = Cast<AFillainCharacter>(Owner);
-		if (MyChar && MyChar->CharactersWeapon)
+		if (MyChar && MyChar->EquippedWeapon)
 		{
 			// Pull socket transform from weapon
-			LeftHandTransform = MyChar->CharactersWeapon->WeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
+			LeftHandTransform = MyChar->EquippedWeapon->WeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
 		}
 	}
 	if (FillainCharacter == nullptr)
@@ -186,3 +186,4 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 
 }
+

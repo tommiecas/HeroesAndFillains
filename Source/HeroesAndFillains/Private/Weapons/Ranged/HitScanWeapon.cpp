@@ -14,6 +14,7 @@
 #include "GameFramework/Pawn.h"
 #include "HAFComponents/LagCompensationComponent.h"
 #include "PlayerController/FillainPlayerController.h"
+#include "Interfaces/HitInterface.h"
 
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
@@ -39,16 +40,13 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 			bool bCauseAuthDamage = !bUseServerSideRewind || OwningPawn->IsLocallyControlled();
 			if (HasAuthority() && bCauseAuthDamage)
 			{
-				const float DamageToCause = FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
-
-			UGameplayStatics::ApplyDamage(
-				FillainCharacter,
-				Damage,
-				InstigatingController,
-				this,
-				UDamageType::StaticClass()
-			);
-		}
+				// Damage is now handled through GAS via GetHit_Implementation
+				// which will apply the appropriate GameplayEffect
+				if (IHitInterface* HitInterface = Cast<IHitInterface>(FillainCharacter))
+				{
+					HitInterface->Execute_GetHit(FillainCharacter, FireHit.ImpactPoint, GetOwner());
+				}
+			}
 			if (!HasAuthority() && bUseServerSideRewind)
 			{
 				FillainOwnerCharacter = FillainOwnerCharacter == nullptr ? Cast<AFillainCharacter>(Owner) : FillainOwnerCharacter;

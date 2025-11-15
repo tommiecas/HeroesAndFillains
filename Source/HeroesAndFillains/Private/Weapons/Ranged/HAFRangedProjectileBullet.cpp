@@ -95,7 +95,7 @@ void AHAFRangedProjectileBullet::OnCollisionBoxOverlap(
     bool bFromSweep, 
     const FHitResult& SweepResult)
 {
-	if (BulletDamageEffectSpecHandle.Data.IsValid() && BulletDamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser() == OtherActor) return;
+	if (!BulletDamageEffectSpecHandle.Data.IsValid() || BulletDamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser() == OtherActor) return;
 
 	if (!UHAFAbilitySystemBlueprintLibrary::IsNotFriend(BulletDamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser(), OtherActor)) return;
 	

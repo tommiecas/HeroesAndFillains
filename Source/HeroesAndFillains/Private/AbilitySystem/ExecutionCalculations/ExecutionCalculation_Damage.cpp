@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Druid Mechanics
 
 
 #include "AbilitySystem/ExecutionCalculations/ExecutionCalculation_Damage.h"
@@ -8,74 +8,20 @@
 #include "HAFGameplayTags.h"
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "AbilitySystem/ExecutionCalculations/HAFDamageStatics.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 
-struct HAFDamageStatics
-{
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ArmorPenetration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(BlockChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance);
-	
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Fireproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Shockproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ChaosIncorruptible);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Invulnerability);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HeartOfDarkness);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ThermalRadiation);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Immunity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Unstoppable);
-	
-	TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition> TagsToCaptureDefs;
-	
-	HAFDamageStatics()
-	{
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Armor, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ArmorPenetration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, BlockChance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitChance, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitDamage, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitResistance, Target, false);
-		
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Fireproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Shockproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ChaosIncorruptible, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Invulnerability, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HeartOfDarkness, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ThermalRadiation, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
-
-		const FHAFGameplayTags& Tags = FHAFGameplayTags::Get();
-		
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_Armor, ArmorDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_ArmorPenetration, ArmorPenetrationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_BlockChance, BlockChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitChance, CriticalHitChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitDamage, CriticalHitDamageDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitResistance, CriticalHitResistanceDef);
-
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Fire, FireproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Lightning, ShockproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ChaosMajix, ChaosIncorruptibleDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_MeleeAttacks, InvulnerabilityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_RuleOfOrder, HeartOfDarknessDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Ice, ThermalRadiationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Toxicity, ImmunityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Stun, UnstoppableDef);
-	}
-};
 
 static const HAFDamageStatics& DamageStatics()
 {
 	static HAFDamageStatics DStatics;
 	return DStatics;
 }
+
 UExecutionCalculation_Damage::UExecutionCalculation_Damage()
 {
+	
 	RelevantAttributesToCapture.Add(DamageStatics().ArmorDef);
 	RelevantAttributesToCapture.Add(DamageStatics().ArmorPenetrationDef);
 	RelevantAttributesToCapture.Add(DamageStatics().BlockChanceDef);
@@ -93,7 +39,6 @@ UExecutionCalculation_Damage::UExecutionCalculation_Damage()
 	RelevantAttributesToCapture.Add(DamageStatics().UnstoppableDef);
 
 }
-
 void UExecutionCalculation_Damage::Execute_Implementation(
 	const FGameplayEffectCustomExecutionParameters& ExecutionParams,
 	FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -116,7 +61,6 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 
 	// PART ONE: Get Damage Set by Caller Magnitude
 	float Damage = 0.f;
-	UE_LOG(LogTemp, Warning, TEXT("TagsToResistances size: %d"), FHAFGameplayTags::Get().DamageTypesToResistances.Num());
 	for (const TTuple<FGameplayTag, FGameplayTag>& Pair : FHAFGameplayTags::Get().DamageTypesToResistances)
 	{
 		const FGameplayTag DamageTypeTag = Pair.Key;
@@ -126,7 +70,6 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 		const FGameplayEffectAttributeCaptureDefinition CaptureDef = HAFDamageStatics().TagsToCaptureDefs[ResistanceTypeTag];
 
 		float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key);
-		UE_LOG(LogTemp, Warning, TEXT("DamageType %s = %f"), *Pair.Key.ToString(), DamageTypeValue);
 
 		float Resistance = 0.f;
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
@@ -208,5 +151,19 @@ void UExecutionCalculation_Damage::Execute_Implementation(
 		Damage));
 
 	UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f"), Damage);
+    
+	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+		UHAFAttributeSet::GetIncomingDamageAttribute(),
+		EGameplayModOp::Additive,
+		Damage));
+
+	UE_LOG(LogTemp, Log, TEXT("ExecutionCalculation_Damage: Calculated Damage = %f"), Damage);
+	// Apply damage output modifier...
+	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+		UHAFAttributeSet::GetIncomingDamageAttribute(), EGameplayModOp::Additive, Damage));
 	
+	/*float Damage = Spec.EffectSpec.GetMagnitude() * (1.f - (Armor / 100.f));
+	OutExecutionOutput.AddDamage(Damage);
+	//
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, )*/
 }

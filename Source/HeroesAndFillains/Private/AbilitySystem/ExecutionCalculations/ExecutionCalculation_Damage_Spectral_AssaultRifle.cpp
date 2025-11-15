@@ -7,72 +7,9 @@
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "AbilitySystem/ExecutionCalculations/ExecutionCalculation_Damage_Gnarled.h"
+#include "AbilitySystem/ExecutionCalculations/HAFDamageStatics.h"
 #include "Interfaces/CombatInterface.h"
 
-struct HAFDamageStatics
-{
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ArmorPenetration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(BlockChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance);
-	
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Fireproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Shockproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ChaosIncorruptible);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Invulnerability);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HeartOfDarkness);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ThermalRadiation);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Immunity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Unstoppable);
-	
-	TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition> TagsToCaptureDefs;
-	
-	HAFDamageStatics()
-	{
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Armor, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ArmorPenetration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, BlockChance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitChance, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitDamage, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitResistance, Target, false);
-		
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Fireproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Shockproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ChaosIncorruptible, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Invulnerability, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HeartOfDarkness, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ThermalRadiation, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
-
-		const FHAFGameplayTags& Tags = FHAFGameplayTags::Get();
-		
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_Armor, ArmorDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_ArmorPenetration, ArmorPenetrationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_BlockChance, BlockChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitChance, CriticalHitChanceDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitDamage, CriticalHitDamageDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitResistance, CriticalHitResistanceDef);
-
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Fire, FireproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Lightning, ShockproofDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ChaosMajix, ChaosIncorruptibleDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_MeleeAttacks, InvulnerabilityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_RuleOfOrder, HeartOfDarknessDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Ice, ThermalRadiationDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Toxicity, ImmunityDef);
-		TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Stun, UnstoppableDef);
-	}
-};
-
-
-static const HAFDamageStatics& DamageStatics()
-{
-	static HAFDamageStatics DStatics;
-	return DStatics;
-}
 
 
 void UExecutionCalculation_Damage_Spectral_AssaultRifle::Execute_Implementation(
@@ -119,7 +56,7 @@ void UExecutionCalculation_Damage_Spectral_AssaultRifle::Execute_Implementation(
 
 	// PART TWO: Capture BLOCKCHANCE on Target and determine if there was a successful BLOCK
 	float TargetBlockChance = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().BlockChanceDef, EvaluationParameters, TargetBlockChance);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().BlockChanceDef, EvaluationParameters, TargetBlockChance);
 	TargetBlockChance = FMath::Max<float>(TargetBlockChance, 0.f);
 	// If it was blocked, cut the damage by 50%.
 	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
@@ -131,11 +68,11 @@ void UExecutionCalculation_Damage_Spectral_AssaultRifle::Execute_Implementation(
 
 	//PART THREE: Capture Armor on Target, but Armor Penetration on Source.
 	float TargetArmor = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, TargetArmor);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().ArmorDef, EvaluationParameters, TargetArmor);
 	TargetArmor = FMath::Max<float>(TargetArmor, 0.f);
 
 	float SourceArmorPenetration = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorPenetrationDef, EvaluationParameters, SourceArmorPenetration);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().ArmorPenetrationDef, EvaluationParameters, SourceArmorPenetration);
 	SourceArmorPenetration = FMath::Max<float>(SourceArmorPenetration, 0.f);
 
 	const UCharacterClassInfo* CharacterClassInfo = UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(SourceAvatar);
@@ -156,15 +93,15 @@ void UExecutionCalculation_Damage_Spectral_AssaultRifle::Execute_Implementation(
 	//PART FOUR: Critical Hit Resistance reduces Critical Hit Chance, while Double Damage Plus Bonus if a Critical Hit is made
 	// Critical hit calculation
 	float SourceCriticalHitChance = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitChanceDef, EvaluationParameters, SourceCriticalHitChance);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitChanceDef, EvaluationParameters, SourceCriticalHitChance);
 	SourceCriticalHitChance = FMath::Max<float>(SourceCriticalHitChance, 0.f);
 
 	float SourceCriticalHitDamage = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitDamageDef, EvaluationParameters, SourceCriticalHitDamage);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitDamageDef, EvaluationParameters, SourceCriticalHitDamage);
 	SourceCriticalHitDamage = FMath::Max<float>(SourceCriticalHitDamage, 0.f);
 
 	float TargetCriticalHitResistance = 0.f;
-	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitResistanceDef, EvaluationParameters, TargetCriticalHitResistance);
+	ExecutionParameters.AttemptCalculateCapturedAttributeMagnitude(HAFDamageStatics().CriticalHitResistanceDef, EvaluationParameters, TargetCriticalHitResistance);
 	TargetCriticalHitResistance = FMath::Max<float>(TargetCriticalHitResistance, 0.f);
 
 	const FRealCurve* CriticalHitResistanceCurve =

@@ -1,94 +1,39 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Characters/BaseCharacter.h"
-#include "Components/BoxComponent.h"  
-#include "HAFComponents/CombatComponent.h"
-#include "Weapons/WeaponBase.h"
-#include "Weapons/Melee/MeleeWeapon.h"
-#include "Weapons/Ranged/RangedWeapon.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "HeroesAndFillains/DebugMacros.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"
-#include "NiagaraComponent.h"  
-#include "NiagaraFunctionLibrary.h"
-#include "Components/WidgetComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HAFComponents/AttributeComponent.h"
-#include "AIController.h"
-#include "NavigationPath.h"
-#include "Navigation/PathFollowingComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"  
-#include "Components/InputComponent.h"  
-#include "EnhancedInputSubsystems.h"  
-#include "EnhancedInputComponent.h"  
-#include "Components/WidgetComponent.h"  
-#include "GameFramework/PlayerState.h"  
-#include "UI/OverheadWidget.h"  
-#include "Net/UnrealNetwork.h"  
-#include "Weapons/WeaponBase.h"
-#include "HAFComponents/CombatComponent.h"  
-#include "HAFComponents/BuffComponent.h"  
-#include "Components/CapsuleComponent.h"  
-#include <Kismet/KismetMathLibrary.h>
-
-#include "AbilitySystemBlueprintLibrary.h"
-#include "ASync/ASync.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystem/HAFAttributeSet.h"
-
-#include "K2Node_CallFunction.h"
-#include "Characters/FillainAnimInstance.h"  
-#include "Characters/FillainFinalAnimInstance.h"
-#include "HeroesAndFillains/HeroesAndFillains.h"  
-#include "PlayerController/FillainPlayerController.h"  
-#include "GameMode/HaFGameMode.h"  
-#include "TimerManager.h"  
-#include "Kismet/GameplayStatics.h"  
-#include "Sound/SoundCue.h"  
-#include "Particles/ParticleSystemComponent.h"  
-#include "PlayerState/HAFPlayerState.h"  
-#include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"  
-#include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
-#include "GameMode/LobbyGameMode.h"  
-#include "Weapons/Ranged/Projectile.h"
-#include "Components/BoxComponent.h"  
-#include "HAFComponents/LagCompensationComponent.h"  
-#include "NiagaraComponent.h"  
-#include "NiagaraFunctionLibrary.h"  
-#include "Enemies/EnemyBase.h"
-#include "GameStates/HAFGameState.h"  
-#include "PlayerStart/TeamPlayerStart.h"
-#include "GameFramework/Actor.h"
-#include "Weapons/Melee/MeleeWeapon.h"
-#include "Weapons/Ranged/RangedWeapon.h"
-#include "Particles/ParticleSystemComponent.h"
-#include "Characters/FillainFinalAnimInstance.h"
+#include "GameFramework/PlayerState.h"
+#include "GameFramework/Controller.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "TimerManager.h"
 #include "Animation/AnimInstance.h"
-#include "MotionWarpingComponent.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
+
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
-#include "PlayerController/FillainPlayerController.h"
-#include "GameFramework/Controller.h"
-#include "Weapons/Majix/HAFMajixProjectile.h"
-#include "ModifiedMagnitudeCalculations/MMC_Agility.h"
-#include "ModifiedMagnitudeCalculations/MMC_DexterityAgilityFlexibility.h"
-#include "ModifiedMagnitudeCalculations/MMC_Intuition.h"
-#include "ModifiedMagnitudeCalculations/MMC_MaxHealth.h"
-#include "ModifiedMagnitudeCalculations/MMC_MaxMajix.h"
-#include "ModifiedMagnitudeCalculations/MMC_MaxShield.h"
-#include "ModifiedMagnitudeCalculations/MMC_MaxStamina.h"
-#include "Pickups/HealthPickup.h"
-#include "Pickups/MajixPickup.h"
-#include "Pickups/Pickup.h"
-#include "Pickups/ShieldPickup.h"
-#include "Pickups/StaminaPickup.h"
-#include "Components/CapsuleComponent.h"
 #include "HAFGameplayTags.h"
-#include "GameplayEffectTypes.h" // defines FGameplayEffectSpecHandle::Data and FGameplayEffectSpec
+#include "GameplayEffectTypes.h"
+
+#include "Weapons/WeaponBase.h"
+#include "Weapons/Melee/MeleeWeapon.h"
+#include "Weapons/Ranged/RangedWeapon.h"
+#include "MotionWarpingComponent.h"
+
+#include "PlayerController/FillainPlayerController.h"
+#include "GameMode/HaFGameMode.h"
+#include "Enemies/EnemyBase.h"
 #include "Enemies/SpectralBase.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
+#include "HAFComponents/AttributeComponent.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -98,6 +43,7 @@ ABaseCharacter::ABaseCharacter()
 	SetRootComponent(GetCapsuleComponent());
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	
+	// TODO: Remove AttributeComponent after migrating all code to GAS
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
@@ -144,20 +90,9 @@ void ABaseCharacter::BeginPlay()
 			AbilitySystemComponent->InitAbilityActorInfo(/*OwnerActor=*/this, /*AvatarActor=*/this);
 		}
 	}
-
-	// --- Player pawn (AFillainCharacter): DO NOT call InitAbilityActorInfo in BeginPlay ---
-	// Players typically keep the ASC on the PlayerState. That init belongs in PossessedBy/OnRep_PlayerState.
-	if (AFillainCharacter* AFC = Cast<AFillainCharacter>(this))
-	{
-		// (Unrelated to ASC) Input tags are fine to set up here.
-		AttackTags.Reset();
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.LeftMouseButtonOrGamepadShoulder")));
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.RightMouseButtonOrGamepadShoulder")));
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.1OrDPadUp")));
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.2OrDPadDown")));
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.3OrDPadLeft")));
-		AttackTags.Add(FGameplayTag::RequestGameplayTag(FName("InputTag.4OrDPadRight")));
-	}
+	
+	// Note: Player-specific initialization (like AttackTags setup) should be done in FillainCharacter::BeginPlay()
+	// to avoid circular dependency between BaseCharacter and FillainCharacter
 }
 
 void ABaseCharacter::SafeInitASC_ForPawnOwner()
@@ -268,17 +203,56 @@ void ABaseCharacter::ConsumeDodgeStamina()
 
 void ABaseCharacter::Die()
 {
-	if (Weapon) Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	MulticastHandleDeath();
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	}
+
+	CharacterDies(); // Marks state, handles game logic
+	MulticastHandleDeath(); // Visuals / physics
+}
+
+void ABaseCharacter::InitializeDefaultTags()
+{
+	
+}
+
+void ABaseCharacter::SafeInitializeAttributes()
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ❌ Cannot SafeInitializeAttributes — ASC is missing."), *GetName());
+		return;
+	}
+
+	// If the ASC is not ready yet, schedule again next tick
+	if (!ASC->AbilityActorInfo.IsValid())
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[%s] ⚠️ AbilityActorInfo not ready yet — deferring SafeInitializeAttributes."), *GetName());
+		GetWorldTimerManager().SetTimerForNextTick(this, &ABaseCharacter::SafeInitializeAttributes);
+		return;
+	}
+
+	// Only initialize once on the server
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] ✅ SafeInitializeAttributes(): proceeding with InitializeDefaultAttributes."), *GetName());
+		InitializeDefaultAttributes();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[%s] Skipping SafeInitializeAttributes (client)."), *GetName());
+	}
 }
 
 void ABaseCharacter::MulticastHandleDeath_Implementation()
 {
-	if (Weapon)
+	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
 	{
-		Weapon->SetSimulatePhysics(true);
-		Weapon->SetEnableGravity(true);
-		Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		EquippedWeapon->GetWeaponMesh()->SetSimulatePhysics(true);
+		EquippedWeapon->GetWeaponMesh()->SetEnableGravity(true);
+		EquippedWeapon->GetWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	}
 
 	if (GetMesh())
@@ -387,19 +361,10 @@ void ABaseCharacter::CharacterDies()
 	if (AEnemyBase* DeadEnemy = Cast<AEnemyBase>(this))
 	{
 		Tags.Add(FName("Dead"));
-		Die();
 	}
-	if (AFillainCharacter* DeadFillain = Cast<AFillainCharacter>(this))
-	{
-		HAFGameMode = HAFGameMode == nullptr ? GetWorld()->GetAuthGameMode<AHAFGameMode>() : HAFGameMode;
-		if (HAFGameMode && DeadFillain)
-		{
-			DeadFillain->MulticastEliminate(false);
-			AFillainPlayerController* VictimPlayerController = Cast<AFillainPlayerController>(DeadFillain->GetFillainPlayerController());
-			if (KillerPlayerController) KillerPlayerController->InitializeHUDEliminationMessage(KillerPlayerController, VictimPlayerController, CachedInstigatorController);
-			if (!KillerPlayerController) VictimPlayerController->InitializeHUDEliminationMessage(KillerPlayerController, VictimPlayerController, CachedInstigatorController);
-		}
-	}
+	
+	// Note: FillainCharacter-specific death handling moved to FillainCharacter::Die() override
+	// This keeps BaseCharacter independent of FillainCharacter to avoid circular dependencies
 }
 
 void ABaseCharacter::PlayHitReactMontage(const FName& Section)
@@ -457,60 +422,34 @@ void ABaseCharacter::SpawnHitSpecialEffects(const FVector& ImpactPoint)
 	}
 }
 
+// Legacy damage system stubs - kept for child class compatibility
+// TODO: Remove after cleaning up EnemyBase and FillainCharacter
+float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	// Empty stub - child classes may override
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
 void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	/*if (AttributeComponent)
-	{
-		AttributeComponent->CharactersReceiveMeleeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	}
-	AActor* InstigatorActor = Cast<AActor>(EventInstigator);
-	MaybeTriggerCharm(this, InstigatorActor);*/
-} 
-
-void ABaseCharacter::MaybeTriggerCharm(AActor* DamagedActor, AActor* DamageInstigator)
-{
-	// Quick guards
-	if (!DamagedActor || !DamageInstigator) return;
-	if (!HasAuthority()) return;
-
-	// If we're not on the game thread, hop back and re-run safely.
-	if (!IsInGameThread())
-	{
-		TWeakObjectPtr<ABaseCharacter> WeakThis(this);
-		TWeakObjectPtr<AActor> WeakDamaged(DamagedActor);
-		TWeakObjectPtr<AActor> WeakInstigator(DamageInstigator);
-
-		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakDamaged, WeakInstigator]()
-		{
-			if (!WeakThis.IsValid() || !WeakDamaged.IsValid() || !WeakInstigator.IsValid()) return;
-			WeakThis->MaybeTriggerCharm(WeakDamaged.Get(), WeakInstigator.Get());
-		});
-		return;
-	}
-
-	// --- From here, game thread only ---
-
-	const UAttributeSet* AS = GetAttributeSet();
-	if (!AS)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("HAFAttributeSet is null on %s"), *GetNameSafe(this));
-		return;
-	}
-
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	if (HAFAttributeSet) const float CurrentCharm = HAFAttributeSet->GetCharm();  // 0..100
-	if (HAFAttributeSet->GetCharm() <= 0.f) return;
-
-	const float Chance = FMath::Clamp(HAFAttributeSet->GetCharm(), 0.f, 100.f) * 0.01f;
-	const float Roll   = FMath::FRand();
-
-	if (Roll > Chance) return;
-
-	if (AEnemyBase* EnemyVictim = Cast<AEnemyBase>(DamagedActor))
-	{
-		EnemyVictim->TriggerCharm(DamageInstigator);
-	}
+	// Empty stub - child classes may override
 }
+
+void ABaseCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	// Empty stub - child classes may override
+}
+
+void ABaseCharacter::PlayRandomMeleeAttackMontage()
+{
+	// Empty stub - child classes may override
+}
+
+void ABaseCharacter::PlayRandomMajixAttackMontage()
+{
+	// Empty stub - child classes may override
+}
+
 
 void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& SectionName)
 {
@@ -606,22 +545,55 @@ void ABaseCharacter::DisableCapsule()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-FVector ABaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
+TArray<FVector> ABaseCharacter::GetCombatSocketLocations_Implementation(const FGameplayTag& MontageTag)
 {
-	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
-	{
-		return Weapon->GetSocketLocation(WeaponTipSocketName);check (GetMesh());return GetMesh()->GetSocketLocation(CombatSocketName);
-	}
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
-	{
-		return GetMesh()->GetSocketLocation(LeftHandSocketName);
-	}
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
-	{
-		return GetMesh()->GetSocketLocation(RightHandSocketName);
-	}
-	return FVector();
+    TArray<FVector> Locations;
+    const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+    
+    // Single socket attacks
+    if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon))
+    {
+        if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh())
+        {
+            Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+        }
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftFoot))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightFoot))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
+    }
+    // Multi-socket attacks
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_BothHands))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
+        Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_BothFeet))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
+        Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
+    }
+    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_HandsAndFeet))
+    {
+        Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
+        Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
+        Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
+        Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
+    }
+    
+    return Locations;
 }
 	
 	
@@ -644,6 +616,11 @@ TArray<FTaggedMontage> ABaseCharacter::GetAttackMontages_Implementation()
 		UE_LOG(LogTemp, Warning, TEXT(" - %s (%s)"), *GetNameSafe(M.Montage), *M.MontageTag.ToString());
 	}
 	return AttackMontages;}
+
+UNiagaraSystem* ABaseCharacter::GetBloodEffect_Implementation()
+{
+	return BloodEffect;
+}
 
 bool ABaseCharacter::CanAttack()
 {
@@ -715,10 +692,8 @@ void ABaseCharacter::ApplyStartupEffects() const
     };
 
 	UHAFAttributeSet* HAFAS = Cast<UHAFAttributeSet>(AttributeSet);
-    // ApplyGE(DefaultPrimaryAttributes);
-
-	// ApplyGE(DefaultSecondaryAttributes);
-
+    ApplyGE(DefaultPrimaryAttributes);
+	ApplyGE(DefaultSecondaryAttributes);
 	ApplyGE(DefaultResistanceAttributes);
 	// UE_LOG(LogTemp, Warning, TEXT("Attributes applied: %f/%f"), HAFAS->GetHealth(), HAFAS->GetMaxHealth());
 
@@ -758,13 +733,75 @@ void ABaseCharacter::ApplyStartupEffects() const
 
 void ABaseCharacter::InitializeDefaultAttributes()
 {
-	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
-	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
-	ApplyEffectToSelf(DefaultResistanceAttributes, 1.f);
-	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
-	ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
-	
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+
+	// --- Safety checks ---
+	if (!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ❌ Missing AbilitySystemComponent in InitializeDefaultAttributes!"), *GetName());
+		return;
+	}
+
+	if (!ASC->AbilityActorInfo.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ⚠️ ASC AbilityActorInfo not yet valid — deferring InitializeDefaultAttributes."), *GetName());
+		GetWorldTimerManager().SetTimerForNextTick(this, &ABaseCharacter::InitializeDefaultAttributes);
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] InitializeDefaultAttributes() | ASC: %s | Avatar: %s | Controller: %s"),
+		*GetName(),
+		*GetNameSafe(ASC),
+		*GetNameSafe(ASC->GetAvatarActor()),
+		*GetNameSafe(ASC->AbilityActorInfo->PlayerController.Get()));
+
+	// --- Apply only on authority ---
+	if (!HasAuthority())
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[%s] Skipping attribute initialization (client)."), *GetName());
+		return;
+	}
+
+	auto LogGE = [&](const TCHAR* Label, TSubclassOf<UGameplayEffect> GE)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] Applying %s: %s"), *GetNameSafe(this), Label, *GetNameSafe(GE));
+	};
+
+	// --- Apply each valid GameplayEffect safely ---
+	if (DefaultPrimaryAttributes)
+	{
+		LogGE(TEXT("DefaultPrimaryAttributes"), DefaultPrimaryAttributes);
+		ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
+	}
+
+	if (DefaultSecondaryAttributes)
+	{
+		LogGE(TEXT("DefaultSecondaryAttributes"), DefaultSecondaryAttributes);
+		ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+	}
+
+	if (DefaultResistanceAttributes)
+	{
+		LogGE(TEXT("DefaultResistanceAttributes"), DefaultResistanceAttributes);
+		ApplyEffectToSelf(DefaultResistanceAttributes, 1.f);
+	}
+
+	if (DefaultVitalAttributes)
+	{
+		LogGE(TEXT("DefaultVitalAttributes"), DefaultVitalAttributes);
+		ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
+	}
+
+	if (DefaultInvisibleAttributes)
+	{
+		LogGE(TEXT("DefaultInvisibleAttributes"), DefaultInvisibleAttributes);
+		ApplyEffectToSelf(DefaultInvisibleAttributes, 1.f);
+	}
+
+	// Optional: server-side diagnostic
 	LogSecondaries_Server();
+
+	UE_LOG(LogTemp, Log, TEXT("[%s] ✅ Finished applying BaseCharacter default attributes safely."), *GetNameSafe(this));
 }
 
 void ABaseCharacter::LogSecondaries_Server() const
@@ -886,44 +923,6 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 	}
 }
 
-void ABaseCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType,
-	AController* InstigatorController, AActor* DamageCauser)
-{
-	CachedDamagedPawn = DamagedPawn;
-	CachedDamage = Damage;
-	CachedDamageType = DamageType;
-	CachedInstigatorController = InstigatorController;
-	CachedDamageCauser = DamageCauser;
-
-}
-
-void ABaseCharacter::PlayRandomMeleeAttackMontage()
-{
-	
-}
-
-void ABaseCharacter::PlayRandomMajixAttackMontage()
-{
-	
-}
-
-void ABaseCharacter::PlayAttackMontage()
-{
-	
-}
-
-float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
-{
-	/*CachedDamageAmount = DamageAmount;
-	CachedDamageEvent = DamageEvent;
-	CachedEventInstigator = EventInstigator;
-	CachedDamageCauser = DamageCauser;	
-		
-	HandleDamage(CachedDamageAmount, CachedDamageEvent, CachedEventInstigator, CachedDamageCauser);
-	return DamageAmount;*/
-	return 0.f;
-}
-
 void ABaseCharacter::AddCharacterAbilities() const
 {
 	UHAFAbilitySystemComponent* ASComp = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
@@ -947,21 +946,21 @@ void ABaseCharacter::Dissolve()
 {
 	if (bIsCharacterDead) return;
 	
-	if (IsValid(DissolveMaterialInstance))
+	if (IsValid(CharacterDissolveMaterialInstanceZero))
 	{
-		UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
-		GetMesh()->SetMaterial(0, DynamicMatInst);
+		UMaterialInstanceDynamic* CharacterDynamicMatInstZero = UMaterialInstanceDynamic::Create(CharacterDissolveMaterialInstanceZero, this);
+		GetMesh()->SetMaterial(0, CharacterDynamicMatInstZero);
 
-		StartCharacterDissolveTimeline(DynamicMatInst);
+		StartCharacterDissolveTimelineZero(CharacterDynamicMatInstZero);
 	}
-	if (Weapon && IsValid(WeaponDissolveMaterialInstance))
+	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh() && IsValid(WeaponDissolveMaterialInstanceZero))
 	{
-		UMaterialInstanceDynamic* WeaponDynamicMatInst = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstance, this);
-		Weapon->SetMaterial(0, WeaponDynamicMatInst);
+		UMaterialInstanceDynamic* WeaponDynamicMatInstZero = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstanceZero, this);
+		EquippedWeapon->GetWeaponMesh()->SetMaterial(0, WeaponDynamicMatInstZero);
 
-		StartWeaponDissolveTimeline(WeaponDynamicMatInst);
+		StartWeaponDissolveTimelineZero(WeaponDynamicMatInstZero);
 	}
-} 
+}
 
 bool ABaseCharacter::IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> AbilityToCheck) const
 {
@@ -971,55 +970,12 @@ bool ABaseCharacter::IsAbilityInStartupAbilities(TSubclassOf<UGameplayAbility> A
 	{
 		if (AbilityClass && AbilityClass->IsChildOf(AbilityToCheck))
 		{
-			return true; // ✅ Found match (AbilityToCheck or subclass)
+			return true;
 		}
 	}
 
-	return false; // ❌ Not found
+	return false;
 }
-
-/*	// Small delay before playing actual section (prevents same-frame section override issues)
-	FTimerHandle PlayHitReactHandle;
-	FTimerDelegate PlayReactDel;
-	PlayReactDel.BindLambda([this, Section]()
-	{
-		if (!GetMesh() || !GetMesh()->GetAnimInstance()) return;
-
-		const float Result = GetMesh()->GetAnimInstance()->Montage_Play(HitReactMontage, 1.f);
-		if (Result > 0.f)
-		{
-			GetMesh()->GetAnimInstance()->Montage_JumpToSection(Section, HitReactMontage);
-			UE_LOG(LogTemp, Warning, TEXT("🎯 Played section: %s"), *Section.ToString());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ Failed to play HitReact montage!"));
-		}
-	});
-	if (AEnemyBase* EnemyBase = Cast<AEnemyBase>(this))
-	{
-		if (!EnemyBase->EnemyCombat)
-		{
-			UE_LOG(LogTemp, Error, TEXT("❌ EnemyCombat is NULL at time of damage!"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("✅ EnemyCombat is valid at time of damage"));
-		}
-	}
-	GetWorld()->GetTimerManager().SetTimer(PlayHitReactHandle, PlayReactDel, 0.05f, false); */
-
-void ABaseCharacter::ResetHitReact()
-{
-	bCanReact = true;
-}
-
-
-// Optional: visual debug
-/*
-UKismetSystemLibrary::DrawDebugArrow(this, ActorLocation, ActorLocation + Forward * 100.f, 5.f, FColor::Red, 5.f);
-UKismetSystemLibrary::DrawDebugArrow(this, ActorLocation, ActorLocation + ToHitNormalized * 100.f, 5.f, FColor::Green, 5.f);
-*/
 
 
 

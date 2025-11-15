@@ -5,38 +5,39 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AIController.h"
+#include "Navigation/PathFollowingComponent.h"
 
 void UHAFDamageGameplayAbility::CauseDamage(AActor* Target)
 {
 	if (!Target || !DamageEffectClass) return;
 
-	// Source = the actor who owns this ability (usually player or enemy)
+	// Source ASC
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 	if (!SourceASC) return;
 
-	// Target = the actor we’re damaging
+	// Target ASC
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
 	if (!TargetASC) return;
 
-	// ✅ Skip if source and target are the same ASC (prevents self-damage)
+	// Prevent self-damage
 	if (SourceASC == TargetASC)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Skipping self-damage attempt for %s"), *GetNameSafe(Target));
 		return;
 	}
 
-	// Make outgoing spec
+	// Make outgoing GE spec
 	FGameplayEffectSpecHandle DamageSpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, 1.f);
 
-	// Assign damage magnitudes
+	// Set By Caller magnitudes
 	for (const TTuple<FGameplayTag, FScalableFloat>& Pair : DamageTypes)
 	{
 		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, Pair.Key, ScaledDamage);
 	}
 
-	// ✅ Apply effect from source to target
-	SourceASC->ApplyGameplayEffectSpecToTarget(*DamageSpecHandle.Data.Get(), TargetASC);
+	// ------------------------------------------------------------
 }
 
 FTaggedMontage UHAFDamageGameplayAbility::GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages)

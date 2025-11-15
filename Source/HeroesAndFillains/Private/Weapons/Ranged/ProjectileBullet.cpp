@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Interfaces/HitInterface.h"
 
 AProjectileBullet::AProjectileBullet()
 {
@@ -15,16 +16,13 @@ AProjectileBullet::AProjectileBullet()
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-
-	if (OwnerCharacter)
+	// Damage is now handled through GAS via GetHit_Implementation
+	// which will apply the appropriate GameplayEffect
+	if (IHitInterface* HitInterface = Cast<IHitInterface>(OtherActor))
 	{
-		AController* OwnerController = OwnerCharacter->Controller;
-		if (OwnerController)
-		{
-			UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
-		}
+		HitInterface->Execute_GetHit(OtherActor, Hit.ImpactPoint, GetOwner());
 	}
+	
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }
 
