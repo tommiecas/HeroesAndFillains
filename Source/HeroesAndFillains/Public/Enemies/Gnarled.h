@@ -29,10 +29,10 @@ public:
 	bool IsGnarledMale = true;
 	
 protected:
-	virtual void EnableLeftSideMeleeAttack();
-	virtual void DisableLeftSideMeleeAttack();
-	virtual void EnableRightSideMeleeAttack();
-	virtual void DisableRightSideMeleeAttack();
+	void EnableLeftSideMeleeAttack();
+	void DisableLeftSideMeleeAttack();
+	void EnableRightSideMeleeAttack();
+	void DisableRightSideMeleeAttack();
 
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	UBoxComponent* LeftFistCollision;

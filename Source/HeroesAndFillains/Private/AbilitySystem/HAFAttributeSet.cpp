@@ -18,6 +18,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "PlayerController/FillainPlayerController.h"
 #include "HAFGameplayTags.h"
+#include "AbilitySystem/HAFAttributeSet.h"
+
+#include "Characters/FillainCharacter.h"
 
 UHAFAttributeSet::UHAFAttributeSet() 
 {
@@ -313,6 +316,11 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	}
 	else if (Attribute == GetIncomingDamageAttribute())
 	{
+		if (AFillainCharacter* FillChar = Cast<AFillainCharacter>(Props.TargetAvatarActor))
+		{
+			FillChar->EnterCombat();
+		}
+		
 		const float Damage = GetIncomingDamage();
 		// UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: IncomingDamage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
 
@@ -323,10 +331,22 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 			ApplyDamage(Damage, Props);
 		}
 	}
+	
 }
 
 void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 {
+	// ⭐ Prevent damage processing on dead actors ⭐
+	if (Props.TargetAvatarActor &&
+		Props.TargetAvatarActor->GetClass()->ImplementsInterface(UCombatInterface::StaticClass()))
+	{
+		if (ICombatInterface::Execute_IsDead(Props.TargetAvatarActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("💀 ApplyDamage prevented: %s is already dead"),
+				*Props.TargetAvatarActor->GetName());
+			return;
+		}
+	}
 	UE_LOG(LogTemp, Warning, TEXT("ApplyDamage called with Damage = %f on %s"), Damage, *Props.TargetAvatarActor->GetName());
 
 	float RemainingDamage = Damage;
@@ -355,9 +375,27 @@ void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 	if (GetHealth() <= 0.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s died due to damage application"), *Props.TargetAvatarActor->GetName());
-		if (ICombatInterface* Combat = Cast<ICombatInterface>(Props.TargetAvatarActor))
+		
+		// ✅ Check if already dead before calling Die() again using proper Execute_ macros
+		if (Props.TargetAvatarActor && Props.TargetAvatarActor->GetClass()->ImplementsInterface(UCombatInterface::StaticClass()))
 		{
-			Combat->Die();
+			// Use Execute_ macro for BlueprintNativeEvent interface methods
+			const bool bIsDead = ICombatInterface::Execute_IsDead(Props.TargetAvatarActor);
+
+			if (!bIsDead)
+			{
+				ICombatInterface::Execute_Die(Props.TargetAvatarActor);
+				UE_LOG(LogTemp, Warning, TEXT("✅ Called Execute_Die() on %s"), *Props.TargetAvatarActor->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("❌ %s already dead, skipping Die() call"), *Props.TargetAvatarActor->GetName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("⚠️ %s does NOT implement ICombatInterface - cannot call Die()!"),
+				Props.TargetAvatarActor ? *Props.TargetAvatarActor->GetName() : TEXT("NULL"));
 		}
 	}
 	else

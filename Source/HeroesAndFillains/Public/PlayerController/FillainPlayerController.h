@@ -129,8 +129,6 @@ public:
 	UPROPERTY()
 	class AHAFGameMode* GameMode;
 
-	UPROPERTY()
-	FVector CachedDestination = FVector::ZeroVector;
 
 	virtual void SetupInputComponent() override;
 
@@ -325,18 +323,9 @@ private:
 	float HighPingThreshold = 50.f;
 
 
-	float FollowTime = 0.f;
-	float ShortPressThreshold = 0.5f;
-	bool bAutoRunning = false;
-	bool bTargeting = false;
 
-	UPROPERTY(EditDefaultsOnly)
-	float AutoRunAcceptanceRadius = 50.f;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USplineComponent> Spline;
 
-	void AutoRun();
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;

@@ -15,6 +15,8 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage_Guul : public UExecutio
 	GENERATED_BODY()
 
 public:
+	UExecutionCalculation_Damage_Guul();
+	
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 
 };

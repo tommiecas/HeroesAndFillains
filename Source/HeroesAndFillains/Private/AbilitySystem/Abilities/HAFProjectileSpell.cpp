@@ -9,6 +9,7 @@
 #include "Interfaces/CombatInterface.h"
 #include "HAFGameplayTags.h"
 #include "Characters/BaseCharacter.h"
+#include "Characters/FillainCharacter.h"
 
 
 void UHAFProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -26,6 +27,7 @@ void UHAFProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	// 	UE_LOG(LogTemp, Warning, TEXT("FireBolt already active — skipping duplicate activation"));
 	// 	return;
 	// }
+	
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	
@@ -39,7 +41,7 @@ FGameplayEffectContextHandle UHAFProjectileSpell::AddSourceObjectToContext(const
 	return NewContext;
 }
 
-void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag)
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar) return;
@@ -48,7 +50,7 @@ void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocatio
 	{
 		TArray<FVector> SocketLocations = ICombatInterface::Execute_GetCombatSocketLocations(
 			GetAvatarActorFromActorInfo(),
-			FHAFGameplayTags::Get().Montage_Attack_Weapon);
+			SocketTag);
 		
 		// Use the first socket location (or average them for multi-socket attacks)
 		const FVector SocketLocation = SocketLocations.Num() > 0 ? SocketLocations[0] : GetAvatarActorFromActorInfo()->GetActorLocation();
@@ -93,6 +95,9 @@ void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocatio
 	}
 	else if (GetAvatarActorFromActorInfo()->ActorHasTag(FName("Player")))
 	{
+		AFillainCharacter* Fill = Cast<AFillainCharacter>(GetAvatarActorFromActorInfo());
+		Fill->EnterCombat();
+		
 		FName SocketName = "SpellSocket";
 		USkeletalMeshComponent* Mesh = Avatar->FindComponentByClass<USkeletalMeshComponent>();
 		if (!Mesh || !Mesh->DoesSocketExist(SocketName)) return;

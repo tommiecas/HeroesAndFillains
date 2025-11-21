@@ -69,10 +69,12 @@ public:
 	virtual void InitializeDefaultTags() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	virtual void MulticastHandleDeath_Implementation();
 	virtual void ApplyStartupEffects() const override;
-	
+	bool IsDead() const;
+	bool bIsDead = false;
+
 	// Override legacy damage system (TODO: Remove after migrating to pure GAS)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -117,6 +119,8 @@ public:
 	UFUNCTION()
 	virtual void OnRep_OverlappingRangedWeapon(ARangedWeapon* LastRangedWeapon); 
 
+	UFUNCTION(BlueprintCallable)
+	void ApplyRegenerationEffects();
 	
 	
 	virtual void PlayAttackMontage(const FGameplayTag& InputTag) override;
@@ -491,6 +495,28 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="GAS|Damage")
 	TSubclassOf<class UGameplayEffect> GE_DamageSplit;
+
+#pragma region Combat State
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float CombatRadius = 2200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float CombatTimeout = 7.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
+	float LastCombatTime = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
+	bool bIsInCombat = false;
+
+	// Functions
+	void EnterCombat();
+	void ExitCombat();
+	void UpdateCombatState(float DeltaTime);
+	bool AreEnemiesNearby(float Radius);
+
+#pragma endregion
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")

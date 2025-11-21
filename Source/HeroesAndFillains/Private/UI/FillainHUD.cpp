@@ -64,10 +64,11 @@ void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS,
 		// UE_LOG(LogTemp, Warning, TEXT("OverlayWidgetController valid? %s"), *GetNameSafe(OverlayWidgetController));
 
 		OverlayWidget->SetWidgetController(OverlayWidgetController);
-
+		OverlayWidgetController->BroadcastInitialValues();
+		OverlayWidgetController->BroadcastAllAbilityInfo();
 		if (!OverlayWidget->IsInViewport())
 		{
-			OverlayWidget->AddToViewport(200);
+			OverlayWidget->AddToViewport(1000);
 			OverlayWidget->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
@@ -107,7 +108,31 @@ void AFillainHUD::AddAnnouncement()
 
 void AFillainHUD::AddCharacterOverlayFixed()
 {
-	// Implement as needed later
+    	if (!CharacterOverlayWidgetFixedClass)
+    	{
+    		UE_LOG(LogTemp, Error, TEXT("CharacterOverlayWidgetFixedClass is NOT set in BP_FillainHUD!"));
+    		return;
+    	}
+
+    	APlayerController* PC = GetOwningPlayerController();
+    	if (!PC)
+    	{
+    		UE_LOG(LogTemp, Error, TEXT("No PlayerController in AddCharacterOverlayFixed"));
+    		return;
+    	}
+
+    	CharacterOverlayWidgetFixed = CreateWidget<UCharacterOverlayFixed>(PC, CharacterOverlayWidgetFixedClass);
+
+    	if (!CharacterOverlayWidgetFixed)
+    	{
+    		UE_LOG(LogTemp, Error, TEXT("Failed to create CharacterOverlayFixed widget"));
+    		return;
+    	}
+
+    	CharacterOverlayWidgetFixed->AddToViewport(0);
+    	CharacterOverlayWidgetFixed->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+    	UE_LOG(LogTemp, Warning, TEXT("CharacterOverlayFixed successfully added to viewport!"));
 }
 
 void AFillainHUD::AddEliminationAnnouncement(FString Killer, FString Victim)

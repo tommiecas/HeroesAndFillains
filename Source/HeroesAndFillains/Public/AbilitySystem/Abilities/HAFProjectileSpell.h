@@ -13,6 +13,7 @@
 
 class AHAFMajixProjectile;
 class UGameplayEffect;
+struct FGameplayTag;
 
 UCLASS()
 class HEROESANDFILLAINS_API UHAFProjectileSpell : public UHAFDamageGameplayAbility
@@ -33,7 +34,7 @@ protected:
 	TSubclassOf<AHAFMajixProjectile> HAFMajixProjectileClass;
 	
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
-	void SpawnProjectile(const FVector& ProjectileTargetLocation);
+	void SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag);
 
 
 };

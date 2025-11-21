@@ -14,7 +14,7 @@
 #include "HAFComponents/BuffComponent.h"  
 #include "Components/CapsuleComponent.h"  
 #include <Kismet/KismetMathLibrary.h>  
-#include "Characters/FillainAnimInstance.h"  
+#include "Characters/FillainFinalAnimInstance.h"  
 #include "HeroesAndFillains/HeroesAndFillains.h"  
 #include "PlayerController/FillainPlayerController.h"  
 #include "GameMode/HaFGameMode.h"  
@@ -102,6 +102,11 @@
 #include "GameplayEffectTypes.h"       // FGameplayEffectSpec, FGameplayEffectSpecHandle
 #include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
 #include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
+#include "Engine/OverlapResult.h"
+#include "GameplayEffects/RegenerationEffects/GE_HealthRegeneration.h"
+#include "GameplayEffects/RegenerationEffects/GE_MajixRegeneration.h"
+#include "GameplayEffects/RegenerationEffects/GE_ShieldRegeneration.h"
+#include "GameplayEffects/RegenerationEffects/GE_StaminaRegeneration.h"
 #include "UI/WidgetControllers/HAFWidgetController.h"
 #include "UI/WidgetControllers/OverlayWidgetController.h"
 
@@ -385,6 +390,32 @@ void AFillainCharacter::BeginPlay()
 			}
 		}
 	}, 0.05f, false); // 50 ms delay
+
+	if (AbilitySystemComponent)
+	{
+		ApplyRegenerationEffects(); 
+	}
+}
+
+void AFillainCharacter::ApplyRegenerationEffects()
+{
+	if (!AbilitySystemComponent) return;
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	const UGameplayEffect* HealthEffect = NewObject<UGE_HealthRegeneration>(this);
+	const UGameplayEffect* ShieldEffect = NewObject<UGE_ShieldRegeneration>(this);
+	const UGameplayEffect* StaminaEffect = NewObject<UGE_StaminaRegeneration>(this);
+	const UGameplayEffect* MajixEffect = NewObject<UGE_MajixRegeneration>(this);
+
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		HealthEffect, 1.f, Context);
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		ShieldEffect, 1.f, Context);
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		StaminaEffect, 1.f, Context);
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		MajixEffect, 1.f, Context);
 }
 
 
@@ -495,7 +526,70 @@ void AFillainCharacter::Tick(float DeltaTime)
 
 		if (FOVLockTimeLeft <= 0.f) bFOVLock = false;
 	}
+
+	UpdateCombatState(DeltaTime);
+
 }
+
+void AFillainCharacter::UpdateCombatState(float DeltaTime)
+{
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	// If not in combat, nothing to update
+	if (!bIsInCombat)
+		return;
+
+	// Check timeout
+	const bool bTimeoutExpired = 
+		(CurrentTime - LastCombatTime) > CombatTimeout;
+
+	// Check if enemies nearby
+	const bool bEnemiesNear = AreEnemiesNearby(CombatRadius);
+
+	if (bTimeoutExpired && !bEnemiesNear)
+	{
+		ExitCombat();
+	}
+}
+
+bool AFillainCharacter::AreEnemiesNearby(float Radius)
+{
+	UWorld* World = GetWorld();
+	if (!World) return false;
+
+	TArray<FOverlapResult> Out;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(CombatOverlap), false, this);
+
+	bool bHit = World->OverlapMultiByObjectType(
+		Out,
+		GetActorLocation(),
+		FQuat::Identity,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
+		FCollisionShape::MakeSphere(Radius),
+		Params
+	);
+
+	if (!bHit)
+		return false;
+
+	for (const FOverlapResult& Result : Out)
+	{
+		AActor* Other = Result.GetActor();
+		if (!Other) continue;
+
+		// replace with your Enemy base class
+		if (Other->ActorHasTag("Enemy"))
+		{
+			if (AEnemyBase* PotentialEnemy = Cast<AEnemyBase>(Other))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
 
 void AFillainCharacter::NotifyHit(
 	UPrimitiveComponent* MyComp,
@@ -876,18 +970,34 @@ void AFillainCharacter::PlayArmDisarmMontage(const FName& SectionName)
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (!AnimInstance) return;
 
-	if (AnimInstance->Montage_IsPlaying(ArmDisarmMontage) || bIsTogglingWeapon)
+	// Only block if montage is ACTUALLY playing (not just flag)
+	if (AnimInstance->Montage_IsPlaying(ArmDisarmMontage))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("⏸️ Arm/Disarm montage already playing"));
 		return;
 	}
+	
+	// Reset flag before starting (in case it got stuck)
+	bIsTogglingWeapon = false;
 	
 	// Set state BEFORE playing
 	CombatComponent->ActionState = EActionState::EAS_EquippingWeapon;
 	bIsTogglingWeapon = true;
 	
 	// Play and jump to section once
-	AnimInstance->Montage_Play(ArmDisarmMontage);
-	AnimInstance->Montage_JumpToSection(SectionName, ArmDisarmMontage);
+	float Duration = AnimInstance->Montage_Play(ArmDisarmMontage);
+	if (Duration > 0.f)
+	{
+		AnimInstance->Montage_JumpToSection(SectionName, ArmDisarmMontage);
+		UE_LOG(LogTemp, Warning, TEXT("🎬 Playing Arm/Disarm: %s"), *SectionName.ToString());
+	}
+	else
+	{
+		// Failed to play - reset immediately
+		UE_LOG(LogTemp, Error, TEXT("❌ Failed to play Arm/Disarm montage"));
+		bIsTogglingWeapon = false;
+		ResetToFightAgain();
+	}
 }
 
 void AFillainCharacter::OnArmDisarmMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -1266,7 +1376,7 @@ void AFillainCharacter::AttackButtonPressed()
 {
 	// Don't re-equip in the attack function!
 	ResetToFightAgain();
-    
+	AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Combat"));   
 	if (!CombatComponent || !CombatComponent->EquippedWeapon)
 		return;
 
@@ -3004,6 +3114,37 @@ void AFillainCharacter::SetOverlaps(APCPickupBaseItem* FloatingItem)
 	}
 }
 
+void AFillainCharacter::EnterCombat()
+{
+	if (!bIsInCombat)
+	{
+		bIsInCombat = true;
+
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->AddLooseGameplayTag(
+				FGameplayTag::RequestGameplayTag("State.Combat"));
+		}
+	}
+
+	LastCombatTime = GetWorld()->GetTimeSeconds();
+}
+
+void AFillainCharacter::ExitCombat()
+{
+	if (bIsInCombat)
+	{
+		bIsInCombat = false;
+
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->RemoveLooseGameplayTag(
+				FGameplayTag::RequestGameplayTag("State.Combat"));
+		}
+	}
+}
+
+
 void AFillainCharacter::OnRep_OverlappingItem(APCPickupBaseItem* LastItem)
 {
 	if (OverlappingItem)
@@ -3334,8 +3475,19 @@ void AFillainCharacter::OnRep_PlayerState()
 	BindHiddenTreasureCapsuleHooksOnce();
 }
 
-void AFillainCharacter::Die()
+bool AFillainCharacter::IsDead() const
 {
+	return bIsDead; // add this if it doesn't exist
+}
+
+void AFillainCharacter::Die_Implementation()
+{
+	if (bIsDead)
+	{
+		return; // Already dead — prevent second Die()
+	}
+
+	bIsDead = true;
 	Super::Die();
 }
 
@@ -3343,6 +3495,8 @@ void AFillainCharacter::MulticastHandleDeath_Implementation()
 {
 	MulticastEliminate_Implementation(false);
 }
+
+
 
 void AFillainCharacter::ApplyFillainCharacterCapsuleSize_FeetPlanted(float TargetUnscaledHalf, float TargetUnscaledRadius)
 {

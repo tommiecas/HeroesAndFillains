@@ -60,7 +60,6 @@ AFillainPlayerController::AFillainPlayerController()
 
 	bIsMatchCountdownVisible = true;
 	bReplicates = true;
-	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
 }
 
 
@@ -70,25 +69,8 @@ void AFillainPlayerController::PlayerTick(float DeltaTime)
 	Super::PlayerTick(DeltaTime);
 
 	CursorTrace();
-	AutoRun();
 }
 
-void AFillainPlayerController::AutoRun()
-{
-	if (!bAutoRunning) return;
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
-		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
-		ControlledPawn->AddMovementInput(Direction);
-
-		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
-		if (DistanceToDestination <= AutoRunAcceptanceRadius)
-		{
-			bAutoRunning = false;
-		}
-	}
-}
 
 void AFillainPlayerController::CursorTrace()
 {
@@ -970,11 +952,7 @@ void AFillainPlayerController::ToggleGameMode()
 
 void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	if (InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
-	{
-		bTargeting = ThisActor ? true : false;
-		bAutoRunning = false;
-	}
+	
 }
 
 void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
@@ -986,26 +964,7 @@ void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	}
 	
 	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
-
-	if (!bTargeting && !bShiftKeyDown)
-	{
-		const APawn* ControlledPawn = GetPawn();
-		if (FollowTime <= ShortPressThreshold && ControlledPawn)
-		{
-			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this,ControlledPawn->GetActorLocation(),CachedDestination))
-			{
-				Spline->ClearSplinePoints();
-				for (const FVector& PointLoc : NavPath->PathPoints)
-				{
-					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-				}
-				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() -1];
-				bAutoRunning = true;
-			}
-		}
-		FollowTime = 0.f;
-		bTargeting = false;
-	}
+	
 }
 
 
@@ -1019,7 +978,7 @@ void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	}
 
 	// --- If we're targeting or Shift key is down ---
-	if (bTargeting || bShiftKeyDown)
+	if (bShiftKeyDown)
 	{
 		if (GetASC())
 		{
@@ -1034,21 +993,6 @@ void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 
 			// ✅ If not active, try to activate normally
 			GetASC()->AbilityInputTagHeld(InputTag);
-		}
-	}
-	else
-	{
-		// --- Standard movement logic ---
-		FollowTime += GetWorld()->GetDeltaSeconds();
-		if (CursorHit.bBlockingHit)
-		{
-			CachedDestination = CursorHit.ImpactPoint;
-		}
-
-		if (APawn* ControlledPawn = GetPawn())
-		{
-			const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-			ControlledPawn->AddMovementInput(WorldDirection);
 		}
 	}
 }

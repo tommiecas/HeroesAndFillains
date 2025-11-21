@@ -15,5 +15,7 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage_Gnarledling : public UE
 	GENERATED_BODY()
 
 public:
+	UExecutionCalculation_Damage_Gnarledling();
+	
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };

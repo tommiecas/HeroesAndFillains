@@ -15,5 +15,8 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage_Spectral_AssaultRifle :
 	GENERATED_BODY()
 
 public:
+	UExecutionCalculation_Damage_Spectral_AssaultRifle();
+
+	
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };

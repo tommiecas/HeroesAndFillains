@@ -7,6 +7,8 @@
 #include "HAFProjectileFiringAbility.generated.h"
 
 class AHAFRangedProjectileBullet;
+struct FGameplayTag;
+
 /**
  * 
  */
@@ -29,7 +31,7 @@ protected:
 	TSubclassOf<AHAFRangedProjectileBullet> HAFRangedProjectileBulletClass;
 	
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
-	void SpawnProjectileBullet(const FVector& ProjectileTargetLocation);
+	void SpawnProjectileBullet(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag);
 
 
 };

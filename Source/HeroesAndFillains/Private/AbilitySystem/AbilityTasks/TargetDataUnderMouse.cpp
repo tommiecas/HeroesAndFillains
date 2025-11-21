@@ -28,6 +28,15 @@ void UTargetDataUnderMouse::Activate()
     FHitResult CursorHit;
     PC->GetHitResultUnderCursor(ECC_Enemy, false, CursorHit);
 
+    if (!CursorHit.bBlockingHit)
+    {
+        // Ray forward from camera 10,000 units
+        FVector WorldOrigin, WorldDir;
+        PC->DeprojectMousePositionToWorld(WorldOrigin, WorldDir);
+
+        CursorHit.Location = WorldOrigin + WorldDir * 10000.f;
+    }
+    
     FGameplayAbilityTargetDataHandle DataHandle;
     FGameplayAbilityTargetData_SingleTargetHit* Data = new FGameplayAbilityTargetData_SingleTargetHit();
     Data->HitResult = CursorHit;
@@ -66,7 +75,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
     if (!PC) return;
 
     FHitResult CursorHit;
-    PC->GetHitResultUnderCursor(ECC_Enemy, false, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Visibility, true, CursorHit);
     AEnemyBase* HitEnemy = Cast<AEnemyBase>(CursorHit.GetActor());
 
     // Handle hover highlighting

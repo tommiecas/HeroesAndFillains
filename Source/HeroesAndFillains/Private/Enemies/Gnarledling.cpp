@@ -11,9 +11,9 @@ AGnarledling::AGnarledling()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    // --- Right Fist ---
+    // --- Right Fistling ---
     RightFistlingCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightFistlingCollision"));
-    RightFistlingCollision->SetupAttachment(GetMesh(), FName("RightFistlingSocket"));
+    RightFistlingCollision->SetupAttachment(GetMesh(), FName("RightFistSocket"));
     RightFistlingCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     RightFistlingCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
     RightFistlingCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -22,7 +22,7 @@ AGnarledling::AGnarledling()
 
     // --- Left Fist ---
     LeftFistlingCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftFistlingCollision"));
-    LeftFistlingCollision->SetupAttachment(GetMesh(), FName("LeftFistlingSocket"));
+    LeftFistlingCollision->SetupAttachment(GetMesh(), FName("LeftFistSocket"));
     LeftFistlingCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     LeftFistlingCollision->SetCollisionObjectType(ECC_EnemyWeaponBox);
     LeftFistlingCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -42,6 +42,7 @@ void AGnarledling::BeginPlay()
     RegisterAttackCollision(LeftFistlingCollision);
 
     Tags.Add(FName("Gnarledling"));
+    Tags.Add(FName("Enemy"));
 }
 
 void AGnarledling::Tick(float DeltaTime)
@@ -82,13 +83,12 @@ void AGnarledling::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedCompo
 
     // Reset damage after a short delay
     bCanDamage = false;
-    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AGnarledling::ResetCanDamage, 0.3f, false);
+    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AEnemyBase::ResetCanDamage, 0.3f, false);
 }
 
 void AGnarledling::Dissolve()
 {
-    // --- optional visual dissolve code here ---
-    // e.g. spawn dynamic material instances and run dissolve timelines
+    Super::Dissolve();
 }
 
 int32 AGnarledling::PlayDeathMontage()
@@ -102,44 +102,44 @@ int32 AGnarledling::PlayDeathMontage()
     return Selection;
 }
 
-void AGnarledling::EnableLeftSideMeleeAttack()
+void AGnarledling::EnableLeftFistlingMeleeAttack()
 {
     if (LeftFistlingCollision)
     {
         LeftFistlingCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        UE_LOG(LogTemp, Warning, TEXT("🟢 Left Fistling Enabled"));
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Left Fistling Enabled (Gnarledling)"));
         DrawDebugBox(GetWorld(), LeftFistlingCollision->GetComponentLocation(),
                      LeftFistlingCollision->GetScaledBoxExtent(),
                      FColor::Green, false, 0.25f, 0, 2);
     }
 }
 
-void AGnarledling::DisableLeftSideMeleeAttack()
+void AGnarledling::DisableLeftFistlingMeleeAttack()
 {
     if (LeftFistlingCollision)
     {
         LeftFistlingCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Fistling Disabled"));
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Left Fistling Disabled (Gnarledling)"));
     }
 }
 
-void AGnarledling::EnableRightSideMeleeAttack()
+void AGnarledling::EnableRightFistlingMeleeAttack()
 {
     if (RightFistlingCollision)
     {
         RightFistlingCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        UE_LOG(LogTemp, Warning, TEXT("🟢 Right Fistling Enabled"));
+        UE_LOG(LogTemp, Warning, TEXT("🟢 Right Fist Enabled (Gnarledling)"));
         DrawDebugBox(GetWorld(), RightFistlingCollision->GetComponentLocation(),
                      RightFistlingCollision->GetScaledBoxExtent(),
                      FColor::Cyan, false, 0.25f, 0, 2);
     }
 }
 
-void AGnarledling::DisableRightSideMeleeAttack()
+void AGnarledling::DisableRightFistlingMeleeAttack()
 {
     if (RightFistlingCollision)
     {
         RightFistlingCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Fistling Disabled"));
+        UE_LOG(LogTemp, Warning, TEXT("🔴 Right Fistling Disabled (Gnarledling)"));
     }
 }

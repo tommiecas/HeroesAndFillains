@@ -60,6 +60,16 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 }
 
+int32 ABaseCharacter::GetMinionCount_Implementation()
+{
+	return MinionCount;
+}
+
+void ABaseCharacter::IncrementMinionCount_Implementation(int32 Amount)
+{
+	MinionCount += Amount;
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -201,16 +211,34 @@ void ABaseCharacter::ConsumeDodgeStamina()
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec);
 }
 
-void ABaseCharacter::Die()
+void ABaseCharacter::Die_Implementation()
 {
+	if (bIsCharacterDead)  // or bIsDead—pick one shared flag!
+	{
+		return;
+	}
+	bIsCharacterDead = true;
+	
+	if (ActorHasTag("Enemy"))
+	{
+		AEnemyBase* Enemy = Cast<AEnemyBase>(this);
+		Enemy->EnemyState = EEnemyState::EES_Dead;
+		Enemy->ClearAttackTimer();
+		GetWorldTimerManager().ClearAllTimersForObject(this);
+	}
+	
+ 
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+		EquippedWeapon->DetachFromActor(
+			FDetachmentTransformRules(EDetachmentRule::KeepWorld, true)
+		);
 	}
 
-	CharacterDies(); // Marks state, handles game logic
-	MulticastHandleDeath(); // Visuals / physics
+	CharacterDies();        // Server-side death logic
+	MulticastHandleDeath(); // Cosmetic death, effects, ragdoll, etc.
 }
+
 
 void ABaseCharacter::InitializeDefaultTags()
 {
@@ -248,6 +276,9 @@ void ABaseCharacter::SafeInitializeAttributes()
 
 void ABaseCharacter::MulticastHandleDeath_Implementation()
 {
+	// Mark as dead FIRST so IsDead() returns true immediately
+	bIsCharacterDead = true;
+	
 	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
 	{
 		EquippedWeapon->GetWeaponMesh()->SetSimulatePhysics(true);
@@ -255,22 +286,20 @@ void ABaseCharacter::MulticastHandleDeath_Implementation()
 		EquippedWeapon->GetWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	}
 
+	// DON'T enable physics on mesh - let the death montage play instead
+	// The montage will hold the dead pose until dissolve completes
 	if (GetMesh())
 	{
 		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetMesh()->SetCollisionObjectType(ECC_WorldStatic);
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-
-		GetMesh()->SetSimulatePhysics(true);
-		GetMesh()->SetEnableGravity(true);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
 	if (GetCapsuleComponent())
 	{
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	
 	Dissolve();
-	bIsCharacterDead = true;
 
 	if (ASpectralBase* SpectralSoldier = Cast<ASpectralBase>(this))
 	{
@@ -545,58 +574,90 @@ void ABaseCharacter::DisableCapsule()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-TArray<FVector> ABaseCharacter::GetCombatSocketLocations_Implementation(const FGameplayTag& MontageTag)
+TArray<FVector> ABaseCharacter::GetCombatSocketLocations_Implementation(const FGameplayTag& SocketTag)
 {
     TArray<FVector> Locations;
     const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
     
     // Single socket attacks
-    if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon))
+    if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon))
     {
         if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh())
         {
             Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
         }
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_LeftHand))
     {
         Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_RightHand))
     {
         Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftFoot))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_LeftFoot))
     {
         Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightFoot))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_RightFoot))
     {
         Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
     }
     // Multi-socket attacks
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_BothHands))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_BothHands))
     {
         Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
         Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_BothFeet))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_BothFeet))
     {
         Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
         Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
     }
-    else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_HandsAndFeet))
+    else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_HandsAndFeet))
     {
         Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
         Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
         Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
         Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
     }
+	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndFeet))
+	{
+		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
+	}
+	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndHands))
+	{
+		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
+	}
+	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndHandsAndFeet))
+	{
+		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
+		Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
+	}
+	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_Teeth))
+	{
+		Locations.Add(GetMesh()->GetSocketLocation(TeethSocketName));
+	}
     
     return Locations;
 }
-	
-	
+
+FTaggedMontage ABaseCharacter::GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag)
+{
+	for (FTaggedMontage TaggedMontage : AttackMontages)
+	{
+		if (TaggedMontage.MontageTag == MontageTag) return TaggedMontage;
+	}
+	return FTaggedMontage();
+}
+
 
 bool ABaseCharacter::IsDead_Implementation() const
 {
@@ -624,6 +685,13 @@ UNiagaraSystem* ABaseCharacter::GetBloodEffect_Implementation()
 
 bool ABaseCharacter::CanAttack()
 {
+	if (AEnemyBase* PossibleEnemy = Cast<AEnemyBase>(this))
+	{
+		if (bIsCharacterDead || PossibleEnemy->EnemyState == EEnemyState::EES_Dead)
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -891,6 +959,11 @@ void ABaseCharacter::DodgeEnd()
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
+	if (bIsCharacterDead)
+	{
+		return;
+	}
+	
 	Super::Tick(DeltaTime);
 
 	if (!MotionWarpingComponent) return;
@@ -944,21 +1017,30 @@ UAttributeSet* ABaseCharacter::GetAttributeSet() const
 
 void ABaseCharacter::Dissolve()
 {
-	if (bIsCharacterDead) return;
+	UE_LOG(LogTemp, Warning, TEXT("💨 %s Dissolve() called"), *GetName());
 	
+	// Character dissolve
 	if (IsValid(CharacterDissolveMaterialInstanceZero))
 	{
 		UMaterialInstanceDynamic* CharacterDynamicMatInstZero = UMaterialInstanceDynamic::Create(CharacterDissolveMaterialInstanceZero, this);
 		GetMesh()->SetMaterial(0, CharacterDynamicMatInstZero);
 
 		StartCharacterDissolveTimelineZero(CharacterDynamicMatInstZero);
+		UE_LOG(LogTemp, Warning, TEXT("   ✅ Character dissolve material applied"));
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("   ❌ CharacterDissolveMaterialInstanceZero not assigned!"));
+	}
+	
+	// Weapon dissolve
 	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh() && IsValid(WeaponDissolveMaterialInstanceZero))
 	{
 		UMaterialInstanceDynamic* WeaponDynamicMatInstZero = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstanceZero, this);
 		EquippedWeapon->GetWeaponMesh()->SetMaterial(0, WeaponDynamicMatInstZero);
 
 		StartWeaponDissolveTimelineZero(WeaponDynamicMatInstZero);
+		UE_LOG(LogTemp, Warning, TEXT("   ✅ Weapon dissolve material applied"));
 	}
 }
 

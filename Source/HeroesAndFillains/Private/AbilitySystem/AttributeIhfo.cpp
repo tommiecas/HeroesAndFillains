@@ -3,6 +3,8 @@
 
 #include "AbilitySystem/AttributeIhfo.h"
 
+#include "HeroesAndFillains/HAFLogChannels.h"
+
 FHAFAttributeInfo UAttributeInfo::FindAttributeInfoForTag(const FGameplayTag& AttributeTag, bool bLogNotFound) const
 {
 	for (const FHAFAttributeInfo& Info : AttributeInformation)
@@ -15,7 +17,7 @@ FHAFAttributeInfo UAttributeInfo::FindAttributeInfoForTag(const FGameplayTag& At
 
 	if (bLogNotFound)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Can't find the Info for AttributeTag [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
+		UE_LOG(LogHAF, Error, TEXT("Can't find the Info for AttributeTag [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
 	}
 
 	return FHAFAttributeInfo();

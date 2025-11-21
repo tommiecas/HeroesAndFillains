@@ -398,52 +398,196 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("When You're Pissed Off Enough to Fight Back") 
 		);
 
+	GameplayTags.Abilities_Summon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Summon"),
+		FString("When You Get Others to Do Your Dirty Work for You") 
+		);
+
+	GameplayTags.Abilities_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.Fire.FireBolt"),
+	FString("When You Just Want to Hit Someone in the Face with a Fireball") 
+	);
+
+	/***********************
+	************************
+	****    COOLDOWN    ****
+	************************
+	***********************/
+
+	GameplayTags.Cooldown_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Cooldown.Fire.FireBolt"),
+	FString("You can't just shoot those things over and over again and expect it to never end!") 
+	);
+
+	/*****************************
+	******************************
+	****    COMBAT SOCKETS    ****
+	******************************
+	*****************************/
+	
+	GameplayTags.CombatSocket_Weapon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("CombatSocket.Weapon"),
+	FString("When Your Weapon Is All You've Got") 
+	);
+
+	GameplayTags.CombatSocket_LeftHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("CombatSocket.LeftHand"),
+	FString("When Your Left Hand Is All You've... Wait a Minute...") 
+	);
+
+	GameplayTags.CombatSocket_RightHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("CombatSocket.RightHand"),
+	FString("When Your Right Hand Is All You've Okay, There's GOT To Be A Better Way To Phrase This...") 
+	);
+
+	GameplayTags.CombatSocket_LeftFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.LeftFoot"),
+		FString("When Your Left Foot Is All You've Got") 
+		);
+	
+	GameplayTags.CombatSocket_RightFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.RightFoot"),
+		FString("When Your Right Foot Is All You've Got")  
+		);
+
+	GameplayTags.CombatSocket_BothHands = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.BothHands"),
+		FString("When Your Hands Are All You've Got")  
+		);
+		
+	GameplayTags.CombatSocket_BothFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.BothFeet"),
+		FString("When Your Feet Are All You've Got")  
+		);
+
+	GameplayTags.CombatSocket_HandsAndFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.HandsAndFeet"),
+		FString("When Your Hands and Feet Are All You've Got... then you pretty much have it all, so what's the problem...?")  
+		);
+
+	GameplayTags.CombatSocket_WeaponAndFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.WeaponAndFeet"),
+		FString("When Your Weapon and Feet Are All You've... wait... really...?")  
+		);
+
+	GameplayTags.CombatSocket_WeaponAndHands = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.WeaponAndHands"),
+		FString("When Your Weapon and Your Hands Are All... this is just getting silly now...")
+		);
+
+	GameplayTags.CombatSocket_WeaponAndHandsAndFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.WeaponAndHandsAndFeet"),
+		FString("When Your Weapon and Your Hands and YourFeet Are All-- I QUIT!")  
+		);
+
+	GameplayTags.CombatSocket_Teeth = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("CombatSocket.Teeth"),
+		FString("When Your Mouth is All You've... Nope. This is where I draw the line. Enough.")  
+		);
+
 	/***********************
 	************************
 	****    MONTAGES    ****
 	************************
 	***********************/
-	
-	GameplayTags.Montage_Attack_Weapon = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName("Montage.Attack.Weapon"),
-	FString("When Your Weapon Is All You've Got") 
+
+	GameplayTags.Montage_Attack_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Montage.Attack.1"),
+	FString("1st Attack Montage")  
 	);
 
-	GameplayTags.Montage_Attack_LeftHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName("Montage.Attack.LeftHand"),
-	FString("When Your Left Hand Is All You've... Wait a Minute...") 
-	);
+	GameplayTags.Montage_Attack_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.2"),
+FString("2st Attack Montage")  
+);
 
-	GameplayTags.Montage_Attack_RightHand = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName("Montage.Attack.RightHand"),
-	FString("When Your Right Hand Is All You've Okay, There's GOT To Be A Better Way To Phrase This...") 
-	);
+	GameplayTags.Montage_Attack_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.3"),
+FString("3rd Attack Montage")  
+);
 
-	GameplayTags.Montage_Attack_LeftFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Montage.Attack.LeftFoot"),
-		FString("When Your Left Foot Is All You've Got") 
+	GameplayTags.Montage_Attack_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.4"),
+FString("4th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_5 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.5"),
+FString("5th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_6 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.6"),
+FString("6th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_7 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.7"),
+FString("7th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_8 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.8"),
+FString("8th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_9 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.9"),
+FString("9th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_10 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.10"),
+FString("10th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_11 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.11"),
+FString("11th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_12 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.12"),
+FString("12th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_13 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.13"),
+FString("13th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_14 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Montage.Attack.14"),
+FString("14th Attack Montage")  
+);
+
+	GameplayTags.Montage_Attack_15 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.15"),
+		FString("15th Attack Montage")  
 		);
-	
-	GameplayTags.Montage_Attack_RightFoot = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Montage.Attack.RightFoot"),
-		FString("When Your Right Foot Is All You've Got")  
+
+	GameplayTags.Montage_Attack_16 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.16"),
+		FString("16th Attack Montage")  
 		);
 
-	GameplayTags.Montage_Attack_BothHands = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Montage.Attack.BothHands"),
-		FString("When Your Hands Are All You've Got")  
-		);
-		
-	GameplayTags.Montage_Attack_BothFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Montage.Attack.BothFeet"),
-		FString("When Your Feet Are All You've Got")  
+	GameplayTags.Montage_Attack_17 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.17"),
+		FString("17th Attack Montage")  
 		);
 
-	GameplayTags.Montage_Attack_HandsAndFeet = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Montage.Attack.HandsAndFeet"),
-		FString("When Your Hands and Feet Are All You've Got... then you pretty much have it all, so what's the problem...?")  
+	GameplayTags.Montage_Attack_18 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.18"),
+		FString("18th Attack Montage")  
 		);
 
+	GameplayTags.Montage_Attack_19 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.19"),
+		FString("19th Attack Montage")  
+		);
 
-	
+	GameplayTags.Montage_Attack_20 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Montage.Attack.20"),
+		FString("20th Attack Montage")  
+		);
 }

@@ -76,7 +76,7 @@ public:
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
                              class AController* EventInstigator, AActor* DamageCauser) override;
     virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-    virtual void Die() override;
+    virtual void Die_Implementation() override;
     virtual void Dissolve() override;
     virtual void Destroyed() override;
     virtual int32 PlayDeathMontage() override;
@@ -107,9 +107,8 @@ public:
     /** Reset fire cooldown timer */
     void ResetFireCooldown();
     
-    void PlayAttackMontage();
-    void PlayRandomMeleeAttackMontage();
-    void PlayRandomMajixAttackMontage();
+    virtual void PlayRandomMeleeAttackMontage() override;
+    virtual void PlayRandomMajixAttackMontage() override;
     virtual void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
     virtual bool CanAttack() override;
     virtual void AttackEnd() override;

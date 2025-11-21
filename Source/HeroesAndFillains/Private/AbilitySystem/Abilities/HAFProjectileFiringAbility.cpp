@@ -38,7 +38,7 @@ FGameplayEffectContextHandle UHAFProjectileFiringAbility::AddSourceObjectToConte
 	return NewContext;
 }
 
-void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& ProjectileTargetLocation)
+void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag)
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar)
@@ -76,13 +76,15 @@ void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& Projectil
 		return;
 	}
 
-	const FVector SocketLocation = Mesh->GetSocketLocation(SocketName);
+	TArray<FVector> SocketLocations = ICombatInterface::Execute_GetCombatSocketLocations(GetAvatarActorFromActorInfo(), SocketTag);
+	//Mesh->GetSocketLocation(SocketName);
 
 	// Adjust target Z height
 	FVector AdjustedTarget = ProjectileTargetLocation;
 	AdjustedTarget.Z += 60.f;
 
 	// Compute firing rotation
+	const FVector SocketLocation = SocketLocations.Num() > 0 ? SocketLocations[0] : GetAvatarActorFromActorInfo()->GetActorLocation();
 	const FVector AimDirection = (AdjustedTarget - SocketLocation).GetSafeNormal();
 	const FRotator AimRotation = AimDirection.Rotation();
 

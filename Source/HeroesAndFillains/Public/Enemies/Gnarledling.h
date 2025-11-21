@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Gnarled.h"
+#include "EnemyBase.h"
 #include "Gnarledling.generated.h"
 
 UCLASS()
-class HEROESANDFILLAINS_API AGnarledling : public AGnarled
+class HEROESANDFILLAINS_API AGnarledling : public AEnemyBase
 {
 
 	GENERATED_BODY()
@@ -26,11 +26,18 @@ public:
 	virtual int32 PlayDeathMontage() override;
 
 protected:
-	virtual void EnableLeftSideMeleeAttack() override;
-	virtual void DisableLeftSideMeleeAttack() override;
-	virtual void EnableRightSideMeleeAttack() override;
-	virtual void DisableRightSideMeleeAttack() override;
+	UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+	void EnableLeftFistlingMeleeAttack();
 
+	UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+	void DisableLeftFistlingMeleeAttack();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+	void EnableRightFistlingMeleeAttack();
+	
+	UFUNCTION(BlueprintCallable, Category="Combat|Collision")
+	void DisableRightFistlingMeleeAttack();
+	
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	UBoxComponent* LeftFistlingCollision;
 
@@ -41,5 +48,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float FistlingDamage = 10.f;
 
-	FTimerHandle FistlingDamageResetTimer;
+	FTimerHandle FistDamageResetTimer;
+
 };

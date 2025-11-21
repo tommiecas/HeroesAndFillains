@@ -15,5 +15,8 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage_Thrope : public UExecut
 	GENERATED_BODY()
 
 public:
+	UExecutionCalculation_Damage_Thrope();
+
+	
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };

@@ -73,7 +73,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void MeleeAttack();
 	virtual void MajixAttack();
-	virtual void Die() override;
+	
+	// ICombatInterface - BlueprintNativeEvent implementation
+	virtual void Die_Implementation() override;
 	
 	// Legacy damage system - kept as virtual stubs for FillainCharacter compatibility
 	// TODO: Remove after FillainCharacter is migrated to pure GAS
@@ -314,6 +316,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName RightFootSocketName = FName("RightFootSocket");
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName TeethSocketName = FName("TeethSocket");
 	
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	bool WasBaseCharacterHit = false;
@@ -342,7 +347,8 @@ public:
 	UFUNCTION(BlueprintPure, Category="Costs")
 	float GetDodgeCost() const { return DodgeStaminaCost; }
 
-	virtual TArray<FVector> GetCombatSocketLocations_Implementation(const FGameplayTag& MontageTag) override;
+	virtual TArray<FVector> GetCombatSocketLocations_Implementation(const FGameplayTag& SocketTag) override;
+	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
 	virtual bool IsDead_Implementation() const override;
 	virtual AActor* GetAvatar_Implementation() override;
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
@@ -353,6 +359,11 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Character")
 	int32 CharacterLevel = 1;
+	
+	int32 MinionCount = 0;
+
+	virtual int32 GetMinionCount_Implementation() override;
+    virtual void IncrementMinionCount_Implementation(int32 Amount) override;
 	
 protected:
 	virtual void BeginPlay() override;

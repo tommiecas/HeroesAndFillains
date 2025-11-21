@@ -8,11 +8,14 @@
 #include "Items/CustomDesignedPCPickupItem.h"
 #include "OverlayWidgetController.generated.h"
 
+class UAbilityInfo;
+struct FHAFAbilityInfo;
 class UAttributeComponent;
 class UCombatComponent;
 class UHAFUserWidget;
 class UHAFWidgetController;
 class UDataTable;
+class UHAFAbilitySystemComponent;
 class UAbilitySystemComponent;
 class ACustomDesignedPCPickupItem;
 struct FUIWidgetRow;
@@ -45,7 +48,7 @@ struct FUIWidgetRow : public FTableRowBase
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FHAFAbilityInfo&, Info);
 /**
  * 
  */
@@ -100,6 +103,12 @@ public:
 
 	UPROPERTY() FGameplayTag LastBroadcastTag;
 	UPROPERTY() double LastBroadcastTime = 0.0;
+
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Ability Info")
+	FAbilityInfoSignature AbilityInfoDelegate;
+
+	void BroadcastAllAbilityInfo();
+
 protected:
 	UFUNCTION() // required for AddUObject binding
 	void OnGEAddedToSelf(UAbilitySystemComponent* TargetASC,
@@ -130,8 +139,13 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
 	float GetMaxMajix() const;
 
+	void OnInitializeStartupAbilities(UHAFAbilitySystemComponent* HAFAbilitySystemComponent);
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
 	
 		template<typename T>
 		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);

@@ -97,16 +97,44 @@ public:
 	FGameplayTag Effects_HitReact;
 
 	FGameplayTag Abilities_Attack;
+	FGameplayTag Abilities_Summon;
 
-	FGameplayTag Montage_Attack_Weapon;
-	FGameplayTag Montage_Attack_LeftHand;
-	FGameplayTag Montage_Attack_RightHand;
-	FGameplayTag Montage_Attack_LeftFoot;
-	FGameplayTag Montage_Attack_RightFoot;
-	FGameplayTag Montage_Attack_BothHands;
-	FGameplayTag Montage_Attack_BothFeet;
-	FGameplayTag Montage_Attack_HandsAndFeet;
+	FGameplayTag Abilities_Fire_FireBolt;
+	FGameplayTag Cooldown_Fire_FireBolt;
 
+	FGameplayTag CombatSocket_Weapon;
+	FGameplayTag CombatSocket_LeftHand;
+	FGameplayTag CombatSocket_RightHand;
+	FGameplayTag CombatSocket_LeftFoot;
+	FGameplayTag CombatSocket_RightFoot;
+	FGameplayTag CombatSocket_BothHands;
+	FGameplayTag CombatSocket_BothFeet;
+	FGameplayTag CombatSocket_HandsAndFeet;
+	FGameplayTag CombatSocket_WeaponAndFeet;
+	FGameplayTag CombatSocket_WeaponAndHands;
+	FGameplayTag CombatSocket_WeaponAndHandsAndFeet;
+	FGameplayTag CombatSocket_Teeth;
+
+	FGameplayTag Montage_Attack_1;
+	FGameplayTag Montage_Attack_2;
+	FGameplayTag Montage_Attack_3;
+	FGameplayTag Montage_Attack_4;
+	FGameplayTag Montage_Attack_5;
+	FGameplayTag Montage_Attack_6;
+	FGameplayTag Montage_Attack_7;
+	FGameplayTag Montage_Attack_8;
+	FGameplayTag Montage_Attack_9;
+	FGameplayTag Montage_Attack_10;
+	FGameplayTag Montage_Attack_11;
+	FGameplayTag Montage_Attack_12;
+	FGameplayTag Montage_Attack_13;
+	FGameplayTag Montage_Attack_14;
+	FGameplayTag Montage_Attack_15;
+	FGameplayTag Montage_Attack_16;
+	FGameplayTag Montage_Attack_17;
+	FGameplayTag Montage_Attack_18;
+	FGameplayTag Montage_Attack_19;
+	FGameplayTag Montage_Attack_20;
 	
 protected:
 

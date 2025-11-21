@@ -18,7 +18,7 @@ void UCharacterOverlayFixed::ForceWidgetComponentVisibility(UWidget* WidgetCompo
 {
    if (WidgetComponent)
    {
-      WidgetComponent->SetVisibility(ESlateVisibility::Visible);
+      WidgetComponent->SetVisibility(ESlateVisibility::HitTestInvisible);
       WidgetComponent->SetRenderOpacity(1.0f);
       WidgetComponent->SetIsEnabled(true);
       WidgetComponent->SetRenderScale(FVector2D(1.f, 1.f));
@@ -31,7 +31,7 @@ void UCharacterOverlayFixed::NativeConstruct()
 {
    Super::NativeConstruct();
 
-   SetVisibility(ESlateVisibility::Visible);
+   SetVisibility(ESlateVisibility::HitTestInvisible);
    SetRenderOpacity(1.0f);
    SetIsEnabled(true);
    SetRenderScale(FVector2D(1.f, 1.f));

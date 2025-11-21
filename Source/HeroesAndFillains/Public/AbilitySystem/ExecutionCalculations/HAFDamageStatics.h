@@ -44,3 +44,10 @@ struct HAFDamageStatics
 	
 	HAFDamageStatics();
 };
+
+// Inline singleton accessor - can be in header safely
+inline const HAFDamageStatics& DamageStatics()
+{
+	static HAFDamageStatics DStatics;
+	return DStatics;
+}

@@ -15,7 +15,7 @@
 #include "UI/FillainHUD.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
-#include "Characters/FillainAnimInstance.h"
+#include "Characters/FillainFinalAnimInstance.h"
 #include "Weapons/Ranged/Projectile.h"
 #include "Weapons/Ranged/Shotgun.h"
 #include "Components/PointLightComponent.h"

@@ -36,6 +36,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Characters/CharacterClassInfo.h"
+#include "Characters/FillainCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "HAFComponents/AttributeComponent.h"
 #include "HAFComponents/CombatComponent.h"
@@ -46,6 +47,9 @@
 AEnemyBase::AEnemyBase()
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
     GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -61,8 +65,6 @@ AEnemyBase::AEnemyBase()
     GetMesh()->SetCollisionObjectType(ECC_Mesh);
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetMesh()->SetGenerateOverlapEvents(false);
-    
-    MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComp"));
     
     // --- Ability System ---
     EnemyAbilitySystemComponent = CreateDefaultSubobject<UHAFAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
@@ -197,7 +199,6 @@ void AEnemyBase::BeginPlay()
     
     // --- GAS setup ---
     InitializeAbilityActorInfo();
-    InitializeDefaultAttributes();
 
     if (HasAuthority()) UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(this, EnemyAbilitySystemComponent, CharacterClass);
     FGameplayTagContainer OwnedTags;
@@ -223,6 +224,19 @@ void AEnemyBase::BeginPlay()
 
         // 🔹 Bind and prepare widget
         InitializeEnemyWidgets();
+
+        InitializeDefaultAttributes();
+
+        if (EnemyAttributeSet)
+        {
+            UE_LOG(LogTemp, Error, TEXT("AFTER ATTR INIT: Health=%.1f  MaxHealth=%.1f"),
+                EnemyAttributeSet->GetHealth(),
+                EnemyAttributeSet->GetMaxHealth());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("AFTER ATTR INIT: EnemyAttributeSet is NULL!"));
+        }
 
         // ✅ Force an immediate sync
         EnemyWidgetController->BroadcastInitialEnemyValues();
@@ -636,9 +650,16 @@ void AEnemyBase::ClearPatrolTimer()
 
 void AEnemyBase::StartAttackTimer()
 {
-    EnemyState = EEnemyState::EES_Attacking;
+    // Don't start a new timer if one is already active
+    if (GetWorldTimerManager().IsTimerActive(AttackTimer))
+    {
+        return;
+    }
+    
+    // Don't set state to Attacking yet - let Attack() do that after CanAttack() check
     const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
     GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemyBase::Attack, AttackTime);
+    UE_LOG(LogTemp, Warning, TEXT("⏰ %s starting attack timer (%.2fs)"), *GetName(), AttackTime);
 }
 
 void AEnemyBase::ClearAttackTimer()
@@ -729,6 +750,13 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 void AEnemyBase::HandleDamage(float DamageAmount, const FDamageEvent& DamageEvent,
     AController* EventInstigator, AActor* DamageCauser)
 {
+    // ✅ Prevent damage after death
+    if (bDead || Execute_IsDead(this))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("❌ %s is already dead, ignoring damage"), *GetName());
+        return;
+    }
+    
     UE_LOG(LogTemp, Log, TEXT("%s took %.1f damage from %s"), *GetName(), DamageAmount,
         *GetNameSafe(DamageCauser));
 
@@ -863,8 +891,7 @@ void AEnemyBase::Dissolve()
     // Disable collision during dissolve
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    // Destroy after dissolve duration
-    SetLifeSpan(3.0f);
+    // ❌ REMOVED: SetLifeSpan(3.0f) - This was conflicting with Die()'s SetLifeSpan(5.0f)
 }
 
 void AEnemyBase::Destroyed()
@@ -883,40 +910,52 @@ void AEnemyBase::Destroyed()
     }
 }
 
-void AEnemyBase::Die()
+void AEnemyBase::Die_Implementation()
 {
     if (bDead) return;
     bDead = true;
+    EnemyState = EEnemyState::EES_Dead;
 
     UE_LOG(LogTemp, Log, TEXT("%s died."), *GetName());
 
-    if (EnemyController && EnemyController->BrainComponent)
+    // --- SHUT DOWN AI CLEANLY BEFORE ANYTHING ELSE ---
+    if (EnemyController)
     {
-        EnemyController->BrainComponent->StopLogic(TEXT("Enemy Died"));
-        if (UBlackboardComponent* BlackboardComp = EnemyController->GetBlackboardComponent())
-        {
-            BlackboardComp->ClearValue(FName("CombatTarget"));
-            BlackboardComp->SetValueAsBool(FName("IsDead"), true);
-        }   
-    
-        // Immediately stop AI movement and blackboard logic
-        if (EnemyController)
-        {
-            EnemyController->StopMovement();
+        // Stop any movement
+        EnemyController->StopMovement();
 
-            if (UBlackboardComponent* BlackboardComp = EnemyController->GetBlackboardComponent())
-            {
-                BlackboardComp->ClearValue(FName("CombatTarget"));
-                BlackboardComp->SetValueAsBool(FName("IsDead"), true);
-            }
-        
-            if (EnemyController->BrainComponent)
-            {
-                EnemyController->BrainComponent->StopLogic(TEXT("Enemy died"));
-            }
+        // Stop BT / EQS / AI logic
+        if (EnemyController->BrainComponent)
+        {
+            EnemyController->BrainComponent->StopLogic(TEXT("Enemy died"));
+            EnemyController->BrainComponent->SetComponentTickEnabled(false);
         }
+
+        // Stop path following tick (THIS is what caused your crash)
+        if (UPathFollowingComponent* PathComp = EnemyController->GetPathFollowingComponent())
+        {
+            PathComp->SetComponentTickEnabled(false);
+        }
+
+        // Disable blackboard
+        if (UBlackboardComponent* BB = EnemyController->GetBlackboardComponent())
+        {
+            BB->ClearValue(FName("CombatTarget"));
+            BB->SetValueAsBool(FName("IsDead"), true);
+        }
+
+        // Fully detach the controller
+        EnemyController->UnPossess();
+
+        // Stop controller ticking
+        EnemyController->SetActorTickEnabled(false);
+
+        // DESTROY controller so it cannot tick next frame
+        EnemyController->Destroy();
+        EnemyController = nullptr;
     }
-    // Stop character movement and tick to avoid further pathfinding updates
+
+    // --- STOP MOVEMENT COMPONENT ---
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
     {
         MoveComp->StopMovementImmediately();
@@ -924,16 +963,11 @@ void AEnemyBase::Die()
         MoveComp->SetComponentTickEnabled(false);
     }
 
-    if (EnemyController)
-    {
-        EnemyController->StopMovement();
-    }
-
-    // Disable collisions to avoid further triggers
+    // --- COLLISION CLEANUP ---
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+    GetMesh()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Ignore);
 
-    // Clean up UI widgets
+    // --- WIDGET CLEANUP ---
     if (HealthBarWidget) HealthBarWidget->RemoveFromParent();
     if (ShieldBarWidget) ShieldBarWidget->RemoveFromParent();
     if (ActiveAttributeMenuWidget)
@@ -941,16 +975,46 @@ void AEnemyBase::Die()
         ActiveAttributeMenuWidget->RemoveFromParent();
         ActiveAttributeMenuWidget = nullptr;
     }
-    
+
     ClearAttackTimer();
 
-    // Play death animation, dissolve, spawn soul as usual
-    PlayDeathMontage();
+    // --- PLAY DEATH MONTAGE AND FREEZE WHEN DONE ---
+    const int32 Section = PlayDeathMontage();
+
+    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+    {
+        if (DeathMontage)
+        {
+            FOnMontageEnded EndDelegate;
+            EndDelegate.BindLambda([this](UAnimMontage*, bool)
+            {
+                if (GetMesh())
+                {
+                    GetMesh()->SetAnimInstanceClass(nullptr);
+                    GetMesh()->bPauseAnims = true;
+                    GetMesh()->bNoSkeletonUpdate = true;
+                    GetMesh()->SetSimulatePhysics(false);
+                    GetMesh()->SetComponentTickEnabled(false);
+                }
+
+                if (UCharacterMovementComponent* Move = GetCharacterMovement())
+                {
+                    Move->StopMovementImmediately();
+                    Move->DisableMovement();
+                    Move->SetComponentTickEnabled(false);
+                }
+
+                SetActorTickEnabled(false);
+            });
+
+            AnimInstance->Montage_SetEndDelegate(EndDelegate, DeathMontage);
+        }
+    }
+
     MulticastHandleDeath_Implementation();
     Dissolve();
     SpawnSoul();
 
-    // Destroy actor after a delay to let effects finish
     SetLifeSpan(5.0f);
 }
 
@@ -987,28 +1051,45 @@ int32 AEnemyBase::PlayDeathMontage()
 {
     if (!DeathMontage)
     {
-        UE_LOG(LogTemp, Warning, TEXT("%s has no DeathMontage assigned!"), *GetName());
+        UE_LOG(LogTemp, Error, TEXT("❌ %s has no DeathMontage assigned!"), *GetName());
         return -1;
     }
+    
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance)
     {
+        UE_LOG(LogTemp, Error, TEXT("❌ %s has no AnimInstance!"), *GetName());
         return -1;
     }
+    
     // Pick random death animation
     const int32 NumSections = DeathMontage->CompositeSections.Num();
     if (NumSections == 0)
     {
-        AnimInstance->Montage_Play(DeathMontage);
+        const float Duration = AnimInstance->Montage_Play(DeathMontage);
+        UE_LOG(LogTemp, Warning, TEXT("💀 %s C++ PlayDeathMontage (no sections), Duration: %.2f"), *GetName(), Duration);
         return 0;
     }
-    const int32 Selection = FMath::RandRange(0, NumSections - 1);
-    const FName SectionName = DeathMontage->GetSectionName(Selection);
-    AnimInstance->Montage_Play(DeathMontage);
-    AnimInstance->Montage_JumpToSection(SectionName, DeathMontage);
-    UE_LOG(LogTemp, Log, TEXT("%s playing death montage section %d: %s"), 
-        *GetName(), Selection, *SectionName.ToString());
-    return Selection;
+    if (NumSections == 1)
+    {
+        AnimInstance->Montage_Play(DeathMontage);
+        UE_LOG(LogTemp, Warning, TEXT("💀 %s C++ Singular Death Montage Played"), *this->GetEnemyDisplayName().ToString());
+        return NumSections;
+    }
+    if (NumSections > 1)
+    {
+        const int32 Selection = FMath::RandRange(0, NumSections - 1);
+        const FName SectionName = DeathMontage->GetSectionName(Selection);
+        const float Duration = AnimInstance->Montage_Play(DeathMontage);
+        AnimInstance->Montage_JumpToSection(SectionName, DeathMontage);
+    
+        UE_LOG(LogTemp, Warning, TEXT("💀 %s C++ PlayDeathMontage section %d: %s, Duration: %.2f"), 
+            *GetName(), Selection, *SectionName.ToString(), Duration);
+    
+        return Selection;
+    }
+    UE_LOG(LogTemp, Warning, TEXT("💀 No Death Montage"));
+    return -1;
 }
 
 void AEnemyBase::HideEnemyStatWidgets()
@@ -1036,36 +1117,51 @@ void AEnemyBase::ShowEnemyStatWidgets()
 }
 void AEnemyBase::Attack()
 {
-    if (EquippedMeleeWeapon) MeleeAttack();
-    if (EquippedRangedWeapon) RangedAttack();
+    UE_LOG(LogTemp, Warning, TEXT("🎯 %s Attack() called!"), *GetName());
+    UE_LOG(LogTemp, Warning, TEXT("   EquippedMeleeWeapon: %s"), EquippedMeleeWeapon ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("   EquippedRangedWeapon: %s"), EquippedRangedWeapon ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("   MeleeAttackMontage: %s"), MeleeAttackMontage ? TEXT("YES") : TEXT("NO"));
+    
+    // If has ranged weapon, do ranged attack
+    if (EquippedRangedWeapon)
+    {
+        RangedAttack();
+        return;
+    }
+    
+    // Otherwise do melee attack (works for both weapon-based and unarmed enemies like Gnarledlings)
+    if (MeleeAttackMontage)
+    {
+        MeleeAttack();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ %s has no MeleeAttackMontage assigned!"), *GetName());
+    }
 }
 
 void AEnemyBase::MeleeAttack()
 {
+    UE_LOG(LogTemp, Warning, TEXT("🗡️ %s MeleeAttack() called!"), *GetName());
+    
     Super::MeleeAttack();
 	
-    if (!CanAttack() || !CombatTarget) return;
-
-    SetEnemyState(EEnemyState::EES_Attacking);
-    bCanDamage = true;
-    DamagedActors.Empty();
-
-    SetWarpTargetsForCombatTarget(CombatTarget);
-
-    if (MeleeAttackMontage && GetMesh())
+    if (!CanAttack())
     {
-        if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-        {
-            const float Duration = AnimInstance->Montage_Play(MeleeAttackMontage, 1.0f);
-            if (Duration > 0.f)
-            {
-                // ✅ Correct delegate binding for UE 5.5.4
-                FOnMontageEnded EndDelegate;
-                EndDelegate.BindUObject(this, &AEnemyBase::OnAttackMontageEnded);
-                AnimInstance->Montage_SetEndDelegate(EndDelegate);
-            }
-        }
+        UE_LOG(LogTemp, Warning, TEXT("❌ %s CanAttack() returned false"), *GetName());
+        return;
     }
+    
+    if (!CombatTarget)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("❌ %s has no CombatTarget"), *GetName());
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("✅ %s passed CanAttack checks, calling PlayRandomMeleeAttackMontage"), *GetName());
+    
+    // Use the proper random montage function instead of playing MeleeAttackMontage directly
+    PlayRandomMeleeAttackMontage();
 }
 
 void AEnemyBase::MajixAttack()
@@ -1278,60 +1374,26 @@ void AEnemyBase::ResetFireCooldown()
     UE_LOG(LogTemp, Log, TEXT("🔫 %s weapon reloaded, ready to fire"), *GetName());
 }
 
-void AEnemyBase::PlayAttackMontage()
-{
-    if (!MeleeAttackMontage)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("%s has no AttackMontage assigned!"), *GetName());
-        return;
-    }
-    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-    if (!AnimInstance) return;
-    if (AnimInstance->IsAnyMontagePlaying())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("%s tried to attack while montage already playing"), *GetName());
-        return;
-    }
-    // Set state
-    EnemyState = EEnemyState::EES_Attacking;
-    bCanDamage = true;
-    // Play montage
-    const float Duration = AnimInstance->Montage_Play(MeleeAttackMontage, 1.0f);
-    
-    if (Duration > 0.f)
-    {
-        // Bind to montage ended delegate
-        FOnMontageEnded EndDelegate;
-        EndDelegate.BindUObject(this, &AEnemyBase::OnAttackMontageEnded);
-        AnimInstance->Montage_SetEndDelegate(EndDelegate, MeleeAttackMontage);
-        UE_LOG(LogTemp, Log, TEXT("%s playing attack montage (duration: %.2f)"), *GetName(), Duration);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("%s failed to play attack montage!"), *GetName());
-        EnemyState = EEnemyState::EES_Idle;
-    }
-}
-
-
 void AEnemyBase::PlayRandomMeleeAttackMontage()
 {
     if (!MeleeAttackMontage)
     {
         UE_LOG(LogTemp, Warning, TEXT("%s has no MeleeAttackMontage assigned!"), *GetName());
-        PlayAttackMontage(); // Fallback to generic attack
         return;
     }
+    
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance) return;
-    if (AnimInstance->IsAnyMontagePlaying())
-    {
-        return;
-    }
+    
+    // ✅ Clear any stale delegates first to prevent immediate callback
+    FOnMontageEnded ClearDelegate;
+    AnimInstance->Montage_SetEndDelegate(ClearDelegate, MeleeAttackMontage);
+    
     // Set state
     EnemyState = EEnemyState::EES_Attacking;
     bCanDamage = true;
     DamagedActors.Empty();
+    
     // Pick random section
     const int32 NumSections = MeleeAttackMontage->CompositeSections.Num();
     int32 Selection = 0;
@@ -1340,8 +1402,11 @@ void AEnemyBase::PlayRandomMeleeAttackMontage()
     {
         Selection = FMath::RandRange(0, NumSections - 1);
     }
-    // Play montage
+    
+    // Play montage (will interrupt any currently playing animation)
     const float Duration = AnimInstance->Montage_Play(MeleeAttackMontage, 1.0f);
+    
+    UE_LOG(LogTemp, Warning, TEXT("🥊 %s PlayRandomMeleeAttackMontage - Duration: %.2f"), *GetName(), Duration);
     
     if (Duration > 0.f)
     {
@@ -1349,14 +1414,21 @@ void AEnemyBase::PlayRandomMeleeAttackMontage()
         {
             const FName SectionName = MeleeAttackMontage->GetSectionName(Selection);
             AnimInstance->Montage_JumpToSection(SectionName, MeleeAttackMontage);
-            UE_LOG(LogTemp, Log, TEXT("%s playing melee section: %s"), *GetName(), *SectionName.ToString());
+            UE_LOG(LogTemp, Warning, TEXT("   Playing section: %s"), *SectionName.ToString());
         }
-        // Bind end delegate
+        
+        // ✅ Now bind the fresh delegate
         FOnMontageEnded EndDelegate;
         EndDelegate.BindUObject(this, &AEnemyBase::OnAttackMontageEnded);
         AnimInstance->Montage_SetEndDelegate(EndDelegate, MeleeAttackMontage);
+        
+        UE_LOG(LogTemp, Warning, TEXT("✅ %s ATTACK MONTAGE STARTED! Should run for %.2fs"), *GetName(), Duration);
     }
-    UE_LOG(LogTemp, Log, TEXT("%s random melee montage triggered."), *GetName());
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ %s Montage_Play returned 0!"), *GetName());
+        EnemyState = EEnemyState::EES_Idle;
+    }
 }
 
 void AEnemyBase::PlayRandomMajixAttackMontage()
@@ -1366,14 +1438,17 @@ void AEnemyBase::PlayRandomMajixAttackMontage()
         UE_LOG(LogTemp, Warning, TEXT("%s has no MajixAttackMontage assigned!"), *GetName());
         return;
     }
+    
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance) return;
-    if (AnimInstance->IsAnyMontagePlaying())
-    {
-        return;
-    }
+    
+    // ✅ Clear any stale delegates first
+    FOnMontageEnded ClearDelegate;
+    AnimInstance->Montage_SetEndDelegate(ClearDelegate, MajixAttackMontage);
+    
     // Set state
     EnemyState = EEnemyState::EES_Attacking;
+    
     // Pick random section
     const int32 NumSections = MajixAttackMontage->CompositeSections.Num();
     int32 Selection = 0;
@@ -1382,8 +1457,10 @@ void AEnemyBase::PlayRandomMajixAttackMontage()
     {
         Selection = FMath::RandRange(0, NumSections - 1);
     }
-    // Play montage
+    
+    // Play montage (will interrupt any currently playing animation)
     const float Duration = AnimInstance->Montage_Play(MajixAttackMontage, 1.0f);
+    
     if (Duration > 0.f)
     {
         if (NumSections > 0)
@@ -1391,34 +1468,34 @@ void AEnemyBase::PlayRandomMajixAttackMontage()
             const FName SectionName = MajixAttackMontage->GetSectionName(Selection);
             AnimInstance->Montage_JumpToSection(SectionName, MajixAttackMontage);
         }
-        // Bind end delegate
+        
+        // ✅ Now bind the fresh delegate
         FOnMontageEnded EndDelegate;
         EndDelegate.BindUObject(this, &AEnemyBase::OnAttackMontageEnded);
         AnimInstance->Montage_SetEndDelegate(EndDelegate, MajixAttackMontage);
+        
+        UE_LOG(LogTemp, Warning, TEXT("✅ %s majix attack montage started!"), *GetName());
     }
-    UE_LOG(LogTemp, Log, TEXT("%s random majix montage triggered."), *GetName());
+    else
+    {
+        EnemyState = EEnemyState::EES_Idle;
+    }
 }
 
 
 void AEnemyBase::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-    UE_LOG(LogTemp, Log, TEXT("%s attack montage ended. Interrupted: %d"), *GetName(), bInterrupted);
-    // Reset attack state
-    EnemyState = EEnemyState::EES_Idle;
-    bCanDamage = true;
+    UE_LOG(LogTemp, Warning, TEXT("🏁 %s attack montage ended. Interrupted: %d"), *GetName(), bInterrupted);
+    
+    // Reset to Chasing (not Idle!) so CheckCombatTarget() continues to run in Tick()
+    EnemyState = EEnemyState::EES_Chasing;
+    bCanDamage = false;
     DamagedActors.Empty();
 
     // Disable weapon collision
     SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    // If has combat target, resume pursuit
-    if (CombatTarget && EnemyController)
-    {
-        if (!IsInsideAttackRadius())
-        {
-            EnemyController->MoveToActor(CombatTarget, AcceptanceRadius);
-        }
-    }
+    UE_LOG(LogTemp, Warning, TEXT("   State set to Chasing, CheckCombatTarget will handle next attack"));
 }
 
 void AEnemyBase::RegisterAttackCollision(UBoxComponent* CollisionBox)
@@ -1461,45 +1538,58 @@ UAbilitySystemComponent* AEnemyBase::GetAbilitySystemComponent() const
         return EnemyAbilitySystemComponent;
 }
 
-void AEnemyBase::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AEnemyBase::OnAttackCollisionOverlap(
+    UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor,
+    UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex,
+    bool bFromSweep,
+    const FHitResult& SweepResult)
 {
     UE_LOG(LogTemp, Warning, TEXT("⚔️ %s attack collision overlap with %s"), 
-       *GetName(), *GetNameSafe(OtherActor));
-    
+        *GetName(), *GetNameSafe(OtherActor));
+
     if (!bCanDamage || !OtherActor || OtherActor == this) return;
 
+    // ⭐ NEW: Don't damage dead actors
+    if (OtherActor->GetClass()->ImplementsInterface(UCombatInterface::StaticClass()))
+    {
+        if (ICombatInterface::Execute_IsDead(OtherActor))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("💀 %s ignored dead target %s"), 
+                *GetName(), *GetNameSafe(OtherActor));
+            return;
+        }
+    }
+
     if (DamagedActors.Contains(OtherActor)) return;
-    
     DamagedActors.Add(OtherActor);
 
-    // ✅ Apply damage through GAS instead of old UGameplayStatics::ApplyDamage
+    // GAS damage (unchanged)
     if (IAbilitySystemInterface* TargetASI = Cast<IAbilitySystemInterface>(OtherActor))
     {
         if (UAbilitySystemComponent* TargetASC = TargetASI->GetAbilitySystemComponent())
         {
             if (DamageEffectClass && EnemyAbilitySystemComponent)
             {
-                FGameplayEffectContextHandle EffectContext = EnemyAbilitySystemComponent->MakeEffectContext();
+                FGameplayEffectContextHandle EffectContext = 
+                    EnemyAbilitySystemComponent->MakeEffectContext();
                 EffectContext.AddSourceObject(this);
                 EffectContext.AddInstigator(this, this);
 
-                FGameplayEffectSpecHandle SpecHandle = EnemyAbilitySystemComponent->MakeOutgoingSpec(
-                    DamageEffectClass, 
-                    1.0f, 
-                    EffectContext
-                );
+                FGameplayEffectSpecHandle SpecHandle = 
+                    EnemyAbilitySystemComponent->MakeOutgoingSpec(
+                        DamageEffectClass, 1.0f, EffectContext);
 
                 if (SpecHandle.IsValid())
                 {
-                    // Set damage magnitude using SetByCaller
                     SpecHandle.Data->SetSetByCallerMagnitude(
-                        FGameplayTag::RequestGameplayTag(FName("Data.Damage")), 
+                        FGameplayTag::RequestGameplayTag(FName("Data.Damage")),
                         BaseDamage
                     );
 
                     TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-                    
+
                     UE_LOG(LogTemp, Warning, TEXT("💥 %s damaged %s for %.1f through GAS!"), 
                         *GetName(), *GetNameSafe(OtherActor), BaseDamage);
                 }
@@ -1512,14 +1602,19 @@ void AEnemyBase::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedCompone
     }
     else
     {
-        // Fallback for non-GAS actors (shouldn't happen for players/enemies)
         UGameplayStatics::ApplyDamage(OtherActor, BaseDamage, GetController(), this, nullptr);
-        UE_LOG(LogTemp, Warning, TEXT("⚠️ %s used fallback damage on %s"), *GetName(), *GetNameSafe(OtherActor));
+        UE_LOG(LogTemp, Warning, TEXT("⚠️ %s used fallback damage on %s"),
+            *GetName(), *GetNameSafe(OtherActor));
     }
 
-    // Reset damage cooldown
     bCanDamage = false;
-    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AEnemyBase::ResetCanDamage, 0.25f, false);
+    GetWorldTimerManager().SetTimer(
+        DamageResetTimer,
+        this,
+        &AEnemyBase::ResetCanDamage,
+        0.25f,
+        false
+    );
 }
 
 void AEnemyBase::ResetCanDamage()
@@ -1532,10 +1627,17 @@ void AEnemyBase::ResetCanDamage()
 
 bool AEnemyBase::CanAttack()
 {
-    bool bCanAttack = IsInsideAttackRadius() &&
-        !IsAttacking() &&
-            !IsEnemyEngaged() &&
-                !Execute_IsDead(this);
+    const bool bInRadius = IsInsideAttackRadius();
+    const bool bNotEngaged = !IsEnemyEngaged();
+    const bool bNotDead = !Execute_IsDead(this);
+    const bool bCanAttack = bInRadius && bNotEngaged && bNotDead;
+    
+    UE_LOG(LogTemp, Warning, TEXT("🔍 %s CanAttack() check:"), *GetName());
+    UE_LOG(LogTemp, Warning, TEXT("   IsInsideAttackRadius: %s"), bInRadius ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("   !IsEnemyEngaged: %s (State=%s)"), bNotEngaged ? TEXT("YES") : TEXT("NO"), *UEnum::GetValueAsString(EnemyState));
+    UE_LOG(LogTemp, Warning, TEXT("   !IsDead: %s"), bNotDead ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("   → RESULT: %s"), bCanAttack ? TEXT("CAN ATTACK") : TEXT("CANNOT ATTACK"));
+    
     return bCanAttack;
 }
 
@@ -1768,6 +1870,10 @@ void AEnemyBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
             CombatTarget = nullptr;
             EnemyState = EEnemyState::EES_Patrolling;
         }
+    }
+    if (AFillainCharacter* FC = Cast<AFillainCharacter>(CombatTarget))
+    {
+        FC->EnterCombat();
     }
 }
 

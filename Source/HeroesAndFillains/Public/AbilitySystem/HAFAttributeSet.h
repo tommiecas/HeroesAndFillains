@@ -13,6 +13,17 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+#define ATTRIBUTE_CAPTUREDEF(PropertyName) \
+public: \
+static const FGameplayEffectAttributeCaptureDefinition& Get##PropertyName##Capture() \
+{ \
+static const FGameplayEffectAttributeCaptureDefinition CaptureDef( \
+UHAFAttributeSet::Get##PropertyName##Attribute(), \
+EGameplayEffectAttributeCaptureSource::Source, \
+true \
+); \
+return CaptureDef; \
+}
 
 USTRUCT()
 struct FEffectProperties
@@ -275,6 +286,26 @@ public:
 	FGameplayAttributeData IncomingDamage;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, IncomingDamage);
 
+
+	// CaptureDefinitions
+	ATTRIBUTE_CAPTUREDEF(Strength)
+	ATTRIBUTE_CAPTUREDEF(Dexterity)
+	ATTRIBUTE_CAPTUREDEF(Vigor)
+	ATTRIBUTE_CAPTUREDEF(Intelligence)
+	ATTRIBUTE_CAPTUREDEF(Resilience)
+	ATTRIBUTE_CAPTUREDEF(Marksmanship)
+	ATTRIBUTE_CAPTUREDEF(Wisdom)
+	ATTRIBUTE_CAPTUREDEF(Charisma)
+	ATTRIBUTE_CAPTUREDEF(Health)
+	ATTRIBUTE_CAPTUREDEF(MaxHealth)
+	ATTRIBUTE_CAPTUREDEF(Stamina)
+	ATTRIBUTE_CAPTUREDEF(MaxStamina)
+	ATTRIBUTE_CAPTUREDEF(Shield)
+	ATTRIBUTE_CAPTUREDEF(MaxShield)
+	ATTRIBUTE_CAPTUREDEF(Majix)
+	ATTRIBUTE_CAPTUREDEF(MaxMajix)
+
+	
 	UFUNCTION() void OnRep_Strength(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_Intelligence(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION() void OnRep_Resilience(const FGameplayAttributeData& OldValue) const;

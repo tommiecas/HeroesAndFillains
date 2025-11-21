@@ -4,7 +4,6 @@
 #include "GameFramework/DamageType.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "DrawDebugHelpers.h"
-#include "Kismet/GameplayStatics.h"
 #include "Interfaces/HitInterface.h"
 
 AGnarled::AGnarled()
@@ -103,7 +102,7 @@ void AGnarled::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent
 
     // Reset damage after a short delay
     bCanDamage = false;
-    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AGnarled::ResetCanDamage, 0.3f, false);
+    GetWorldTimerManager().SetTimer(DamageResetTimer, this, &AEnemyBase::ResetCanDamage, 0.3f, false);
 }
 
 void AGnarled::Dissolve()

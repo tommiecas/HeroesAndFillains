@@ -11,6 +11,7 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"            // FGameplayEffectSpec, UGameplayEffect
 #include "GameplayEffectTypes.h"       // FActiveGameplayEffectHandle
+#include "AbilitySystem/AbilityInfo.h"
 #include "Engine/DataTable.h"          // UDataTable
 #include "Items/CustomDesignedPCPickupItem.h"            // ACustomDesignedPCPickupItem (for SourceObject cast)
 
@@ -171,29 +172,42 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			});
 	// UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnMaxMajixChanged"));
 
-	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf
-	.AddUObject(this, &UOverlayWidgetController::OnGEAddedToSelf);
+	// AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf
+	// .AddUObject(this, &UOverlayWidgetController::OnGEAddedToSelf);
 	
-	Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
-		[this] (const FGameplayTagContainer& AssetTags)
+	// Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
+	// 	[this] (const FGameplayTagContainer& AssetTags)
+	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		if (HAFASC->bStartupAbilitiesGiven)
 		{
-			for (const FGameplayTag& Tag : AssetTags)
-			{
-				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
-				if (Tag.MatchesTag(MessageTag))
-				{
-					const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, Tag);
-					MessageWidgetRowDelegate.Broadcast(*Row);
-				}
-			}	
+			OnInitializeStartupAbilities(HAFASC);
 		}
-	);
-	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf
-	.AddUObject(this, &UOverlayWidgetController::OnGEAddedToSelf);
+		else
+		{
+			HAFASC->AbilitiesGiven.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+		}
 
+		HAFASC->EffectAssetTags.AddLambda(
+			[this](const FGameplayTagContainer& AssetTags)
+			{
+				for (const FGameplayTag& Tag : AssetTags)
+				{
+					FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+					if (Tag.MatchesTag(MessageTag))
+					{
+						const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+						MessageWidgetRowDelegate.Broadcast(*Row);
+					}
+				}
+			}
+			);
+	}
+}
+				
+	
 	// UE_LOG(LogTemp, Warning, TEXT("[WC] Bound AddedDelegate on ASC=%s"),
 		//   *GetNameSafe(AbilitySystemComponent));
-}
 
 float UOverlayWidgetController::GetCurrentHealth() const
 {
@@ -249,5 +263,39 @@ float UOverlayWidgetController::GetMaxMajix() const
 	if (!AttributeSet) return 0.f;
 	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
 	return HAFAttributeSet->GetMaxMajix();
+}
+
+void UOverlayWidgetController::OnInitializeStartupAbilities(UHAFAbilitySystemComponent* HAFAbilitySystemComponent)
+{
+	//TODO: Get information about all given abilities, look up their Ability Tag, and broadcast to all widgets.
+	if (!HAFAbilitySystemComponent->bStartupAbilitiesGiven) return;
+
+	FForEachAbility BroadcastDelegate;
+	BroadcastDelegate.BindLambda([this, HAFAbilitySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
+	{
+		//TODO: Need a way to figure out the ability tag for a given ability spec
+		FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(HAFAbilitySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
+		Info.InputTag = HAFAbilitySystemComponent->GetInputTagFromSpec(AbilitySpec);
+		AbilityInfoDelegate.Broadcast(Info);
+	});
+	HAFAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
+}
+
+void UOverlayWidgetController::BroadcastAllAbilityInfo()
+{
+	if (!AbilitySystemComponent) return;
+
+	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		FForEachAbility BroadcastDelegate;
+		BroadcastDelegate.BindLambda([this, HAFASC](const FGameplayAbilitySpec& Spec)
+		{
+			FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(HAFASC->GetAbilityTagFromSpec(Spec));
+			Info.InputTag = HAFASC->GetInputTagFromSpec(Spec);
+			AbilityInfoDelegate.Broadcast(Info);
+		});
+
+		HAFASC->ForEachAbility(BroadcastDelegate);
+	}
 }
 
