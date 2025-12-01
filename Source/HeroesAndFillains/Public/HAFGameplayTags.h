@@ -135,6 +135,8 @@ public:
 	FGameplayTag Montage_Attack_18;
 	FGameplayTag Montage_Attack_19;
 	FGameplayTag Montage_Attack_20;
+
+	FGameplayTag Attributes_Meta_IncomingXP;
 	
 protected:
 

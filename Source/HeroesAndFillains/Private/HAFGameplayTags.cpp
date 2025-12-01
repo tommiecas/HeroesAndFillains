@@ -590,4 +590,15 @@ FString("14th Attack Montage")
 		FName("Montage.Attack.20"),
 		FString("20th Attack Montage")  
 		);
+
+	/******************************
+	*******************************
+	****    META ATTRIBUTES    ****
+	*******************************
+	******************************/
+
+	GameplayTags.Attributes_Meta_IncomingXP = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Meta.IncomingXP"),
+		FString("Experience incoming to you, Player!")
+		);
 }

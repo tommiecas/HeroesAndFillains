@@ -102,9 +102,9 @@ void UCombatComponent::BeginPlay()
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 
-		if (Character->GetFollowCamera())
+		if (Character->GetCameraComponent())
 		{
-			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
+			DefaultFOV = Character->GetCameraComponent()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
 		if (Character->HasAuthority())
@@ -116,9 +116,9 @@ void UCombatComponent::BeginPlay()
 	DefaultFOV = 90.f;
 	CurrentFOV = DefaultFOV;
 
-	if (Character && Character->GetFollowCamera())
+	if (Character && Character->GetCameraComponent())
 	{
-		Character->GetFollowCamera()->SetFieldOfView(DefaultFOV);
+		Character->GetCameraComponent()->SetFieldOfView(DefaultFOV);
 	}
 }
 
@@ -1335,7 +1335,7 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 
 void UCombatComponent::InterpFOV(float DeltaTime)
 {
-	if (!EquippedRangedWeapon || !Character || !Character->GetFollowCamera()) return;
+	if (!EquippedRangedWeapon || !Character || !Character->GetCameraComponent()) return;
 
 	const float MinFOV = 45.f;
 	const float MaxFOV = 120.f;
@@ -1350,7 +1350,7 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 	CurrentFOV = FMath::Clamp(CurrentFOV, MinFOV, MaxFOV);
 	CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, Speed);
 
-	Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
+	Character->GetCameraComponent()->SetFieldOfView(CurrentFOV);
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)

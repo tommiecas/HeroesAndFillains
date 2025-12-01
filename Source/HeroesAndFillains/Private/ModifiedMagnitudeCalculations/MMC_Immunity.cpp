@@ -4,6 +4,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_Immunity.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_Immunity::UMMC_Immunity()
@@ -39,8 +40,28 @@ float UMMC_Immunity::CalculateBaseMagnitude_Implementation(const FGameplayEffect
 	GetCapturedAttributeMagnitude(VigorDef, Spec, EvaluationParameters, Vigor);
 	Vigor = FMath::Max<float>(Vigor, 0.f);
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Vigor));
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_Immunity: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_Immunity: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
+		return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Vigor));
+	}
+	return 0.f;
 }

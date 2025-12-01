@@ -4,6 +4,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_Speed.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_Speed::UMMC_Speed()
@@ -63,38 +64,45 @@ float UMMC_Speed::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpe
 	// ------------------------------------------------------------
 	// SAFE COMBAT INTERFACE HANDLING
 	// ------------------------------------------------------------
-	int32 PlayerLevel = 1; // Safe default
+	int32 CharacterLevel = 1; // Default level if context missing
 	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
 	if (SourceObj == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UMMC_Speed: SourceObject is NULL (likely during respawn)."));
 	}
-	else if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(SourceObj))
+	else 
 	{
-		PlayerLevel = CombatInterface->GetPlayerLevel();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UMMC_Speed: SourceObject %s does not implement CombatInterface."),
-			*SourceObj->GetName());
-	}
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_Speed: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
 
-	// Prevent divide-by-zero if Agility + Flexibility == 0
-	const float Denominator = FMath::Max(Agility + Flexibility, KINDA_SMALL_NUMBER);
+		// Prevent divide-by-zero if Agility + Flexibility == 0
+		const float Denominator = FMath::Max(Agility + Flexibility, KINDA_SMALL_NUMBER);
 
-	float BaseSpeed = 0.f;
-	if (Dexterity >= Strength)
-	{
-		BaseSpeed = (((Dexterity - Strength) / Denominator) + 2.f) / 5.f;
-	}
-	else
-	{
-		const float PositiveDiff = FMath::Abs(Dexterity - Strength);
-		BaseSpeed = (PositiveDiff / Denominator) + 2.f;
-	}
+		float BaseSpeed = 0.f;
+		if (Dexterity >= Strength)
+		{
+			BaseSpeed = (((Dexterity - Strength) / Denominator) + 2.f) / 5.f;
+		}
+		else
+		{
+			const float PositiveDiff = FMath::Abs(Dexterity - Strength);
+			BaseSpeed = (PositiveDiff / Denominator) + 2.f;
+		}
 
-	return BaseSpeed;
+		return BaseSpeed;
+	}
+	return 0.f;
 }
 
 

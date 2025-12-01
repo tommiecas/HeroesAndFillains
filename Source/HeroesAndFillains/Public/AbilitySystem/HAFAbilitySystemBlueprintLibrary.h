@@ -8,6 +8,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "HAFAbilitySystemBlueprintLibrary.generated.h"
 
+enum class EEnemyType : uint8;
+class UEnemyInfo;
 class AEnemyBase;
 class UEnemyAttributeMenuWidgetController;
 class UFillainAttributeMenuWidgetController;
@@ -39,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|CharacterClassDefaults")
 	static UCharacterClassInfo* GetCharacterClassInfo(const UObject* WorldContextObject);
 
+	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|EnemyDefaults")
+	static UEnemyInfo* GetEnemyInfo(const UObject* WorldContextObject);
+
 	UFUNCTION(BlueprintCallable, Category = "Ability|GameplayEffects")
 	static FGameplayEffectContextHandle AddSourceObjectToContext(
 		const FGameplayEffectContextHandle& Context, 
@@ -64,4 +69,7 @@ public:
 
 	UFUNCTION(BlueprintPure, BlueprintCallable, Category="HAF Ability System Library | GameplayMechanics")
 	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
+
+	static int32 GetXPAwardForEnemyTypeAndLevel(const UObject* WorldContextObject, EEnemyType EnemyType, int32 EnemyLevel);
+	
 };

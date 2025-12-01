@@ -27,6 +27,16 @@ void UHAFAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<
 	AbilitiesGiven.Broadcast(this);
 }
 
+void UHAFAbilitySystemComponent::AddCharacterPassiveAbilities(
+	const TArray<TSubclassOf<UGameplayAbility>>& StartupPassiveAbilities)
+{
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartupPassiveAbilities)
+	{
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		GiveAbilityAndActivateOnce(AbilitySpec);
+	}
+}
+
 static bool SpecMatchesInputTag(const FGameplayAbilitySpec& Spec, const FGameplayTag& InputTag)
 {
 	// 1) Allow parent/child tag matches (not exact)

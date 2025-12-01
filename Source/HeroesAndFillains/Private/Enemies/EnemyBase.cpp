@@ -311,6 +311,15 @@ void AEnemyBase::BeginPlay()
         EnemyAbilitySystemComponent->GetOwnedGameplayTags(OwnedTagsAgain);
         UE_LOG(LogTemp, Log, TEXT("Target Tags: %s"), *OwnedTagsAgain.ToString());
     }
+    if (EnemyAbilitySystemComponent && EnemyAttributeSet)
+    {
+        EnemyAbilitySystemComponent
+            ->GetGameplayAttributeValueChangeDelegate(EnemyAttributeSet->GetHealthAttribute())
+            .AddUObject(this, &AEnemyBase::HandleChangeInHealth);
+
+        UE_LOG(LogTemp, Warning,
+            TEXT("📌 Bound HandleChangeInHealth for enemy %s"), *GetName());
+    }
     InitializeEnemy();
 }
 
@@ -750,64 +759,39 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 void AEnemyBase::HandleDamage(float DamageAmount, const FDamageEvent& DamageEvent,
     AController* EventInstigator, AActor* DamageCauser)
 {
-    // ✅ Prevent damage after death
-    if (bDead || Execute_IsDead(this))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("❌ %s is already dead, ignoring damage"), *GetName());
-        return;
-    }
-    
-    UE_LOG(LogTemp, Log, TEXT("%s took %.1f damage from %s"), *GetName(), DamageAmount,
-        *GetNameSafe(DamageCauser));
-
     if (!EnemyAbilitySystemComponent || !EnemyAttributeSet)
     {
         UE_LOG(LogTemp, Error, TEXT("%s: Missing ASC or AttributeSet in HandleDamage!"), *GetName());
         return;
     }
 
-    // Apply damage through GAS
+    if (Execute_IsDead(this))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("%s is already dead, ignoring damage"), *GetName());
+        return;
+    }
+
     if (DamageEffectClass)
     {
-        FGameplayEffectContextHandle EffectContext = EnemyAbilitySystemComponent->MakeEffectContext();
-        EffectContext.AddSourceObject(DamageCauser);
-        EffectContext.AddInstigator(EventInstigator ? EventInstigator->GetPawn() : nullptr, DamageCauser);
+        FGameplayEffectContextHandle Context = EnemyAbilitySystemComponent->MakeEffectContext();
+        Context.AddSourceObject(DamageCauser);
+        Context.AddInstigator(EventInstigator ? EventInstigator->GetPawn() : nullptr, DamageCauser);
 
-        FGameplayEffectSpecHandle SpecHandle = EnemyAbilitySystemComponent->MakeOutgoingSpec(
+        FGameplayEffectSpecHandle Spec = EnemyAbilitySystemComponent->MakeOutgoingSpec(
             DamageEffectClass, 
             1.0f, 
-            EffectContext
+            Context
         );
 
-        if (SpecHandle.IsValid())
+        if (Spec.IsValid())
         {
-            // Set damage magnitude using SetByCaller
-            SpecHandle.Data->SetSetByCallerMagnitude(
-                FGameplayTag::RequestGameplayTag(FName("Data.Damage")), 
+            Spec.Data->SetSetByCallerMagnitude(
+                FHAFGameplayTags::Get().Damage_Physical, 
                 DamageAmount
             );
 
-            EnemyAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-            UE_LOG(LogTemp, Warning, TEXT("✅ Applied GAS damage effect: %.1f"), DamageAmount);
+            EnemyAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data);
         }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("❌ %s: No DamageEffectClass assigned!"), *GetName());
-    }
-
-    // Show hit react
-    if (IsValid(DamageCauser))
-    {
-        GetHit_Implementation(GetActorLocation(), DamageCauser);
-    }
-
-    // Check for death
-    const float CurrentHealth = EnemyAttributeSet->GetHealth();
-    UE_LOG(LogTemp, Warning, TEXT("💚 %s current health: %.1f"), *GetName(), CurrentHealth);
-    if (CurrentHealth <= 0.0f && !bDead)
-    {
-        Die();
     }
 }
 
@@ -1089,6 +1073,15 @@ int32 AEnemyBase::PlayDeathMontage()
         return Selection;
     }
     UE_LOG(LogTemp, Warning, TEXT("💀 No Death Montage"));
+    return -1;
+}
+
+int32 AEnemyBase::GetCharacterLevel_Implementation(ABaseCharacter* Character)
+{
+    if (AEnemyBase* QueriedEnemy = Cast<AEnemyBase>(this))
+    {
+        return CharacterLevel; 
+    }
     return -1;
 }
 
@@ -1584,7 +1577,7 @@ void AEnemyBase::OnAttackCollisionOverlap(
                 if (SpecHandle.IsValid())
                 {
                     SpecHandle.Data->SetSetByCallerMagnitude(
-                        FGameplayTag::RequestGameplayTag(FName("Data.Damage")),
+                        FGameplayTag::RequestGameplayTag(FName("Damage.Physical")),
                         BaseDamage
                     );
 
@@ -1594,27 +1587,17 @@ void AEnemyBase::OnAttackCollisionOverlap(
                         *GetName(), *GetNameSafe(OtherActor), BaseDamage);
                 }
             }
-            else
-            {
-                UE_LOG(LogTemp, Error, TEXT("❌ %s: No DamageEffectClass assigned!"), *GetName());
-            }
+
+            bCanDamage = false;
+            GetWorldTimerManager().SetTimer(
+                DamageResetTimer,
+                this,
+                &AEnemyBase::ResetCanDamage,
+                0.25f,
+                false
+            );
         }
     }
-    else
-    {
-        UGameplayStatics::ApplyDamage(OtherActor, BaseDamage, GetController(), this, nullptr);
-        UE_LOG(LogTemp, Warning, TEXT("⚠️ %s used fallback damage on %s"),
-            *GetName(), *GetNameSafe(OtherActor));
-    }
-
-    bCanDamage = false;
-    GetWorldTimerManager().SetTimer(
-        DamageResetTimer,
-        this,
-        &AEnemyBase::ResetCanDamage,
-        0.25f,
-        false
-    );
 }
 
 void AEnemyBase::ResetCanDamage()
@@ -1741,7 +1724,7 @@ void AEnemyBase::HandleChangeInHealth(const FOnAttributeChangeData& Data)
 
     if (Data.NewValue <= 0.0f && !bDead)
     {
-        Die();
+        ICombatInterface::Execute_Die(this);
     }
 }
 
@@ -1927,10 +1910,6 @@ void AEnemyBase::SpawnSoul()
 // Miscellaneous helpers
 // -----------------------------------------------------------------------------
 
-int32 AEnemyBase::GetPlayerLevel()
-{
-    return 1;
-}
 
 void AEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

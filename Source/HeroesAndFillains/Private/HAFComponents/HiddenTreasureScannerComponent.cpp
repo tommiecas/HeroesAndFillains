@@ -8,96 +8,158 @@
 UHiddenTreasureScannerComponent::UHiddenTreasureScannerComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
-}
 
-void UHiddenTreasureScannerComponent::BeginPlay()
-{
-    Super::BeginPlay();
-    if (const APawn* P = Cast<APawn>(GetOwner()))
-    {
-        if (!P->IsLocallyControlled())
-        {
-            // Don’t run on server or non-local clients
-            if (ScanSphere) { ScanSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); }
-            return;
-        }
-    }
-    UpdateRadius();
-    TArray<AActor*> Overlapping; ScanSphere->GetOverlappingActors(Overlapping);
-    for (AActor* A : Overlapping) { ApplyToActorTreasures(A, CurrentIntuitionFraction); }
-}
+    // Create the sphere correctly at construction time
+    ScanSphere = CreateDefaultSubobject<USphereComponent>(TEXT("IntuitionScanSphere"));
 
-void UHiddenTreasureScannerComponent::OnScanBegin(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-    if (!IsLocal()) return;                    // client-only visuals
-    ApplyToActorTreasures(OtherActor, CurrentIntuitionFraction);  // ✅ glow only
-}
-
-void UHiddenTreasureScannerComponent::OnScanEnd(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-    if (!IsLocal()) return;                    // client-only visuals
-    ApplyToActorTreasures(OtherActor, 0.f);    // ✅ remove glow
-}
-
-bool UHiddenTreasureScannerComponent::IsLocal() const
-{
-    if (const APawn* P = Cast<APawn>(GetOwner())) return P->IsLocallyControlled();
-    return true; // non-pawn owners just run
-}
-
-void UHiddenTreasureScannerComponent::SetIntuitionFraction(float Fraction)
-{
-    CurrentIntuitionFraction = FMath::Clamp(Fraction, 0.f, 1.f);
-    if (!ScanSphere || !ScanSphere->IsRegistered()
-        || ScanSphere->GetCollisionEnabled() == ECollisionEnabled::NoCollision)
-    {
-        return;
-    }
-    UpdateRadius();
-    TArray<AActor*> Overlapping;
-    ScanSphere->GetOverlappingActors(Overlapping);
-    for (AActor* A : Overlapping) { ApplyToActorTreasures(A, CurrentIntuitionFraction); }
+    // Base collision setup (correct to do here)
+    ScanSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    ScanSphere->SetCollisionObjectType(ECC_WorldDynamic);
+    ScanSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    ScanSphere->SetGenerateOverlapEvents(true);
 }
 
 void UHiddenTreasureScannerComponent::OnRegister()
 {
     Super::OnRegister();
 
-    if (!ScanSphere)
+    // Attach sphere to the owning actor’s root
+    if (AActor* Owner = GetOwner())
     {
-        ScanSphere = NewObject<USphereComponent>(GetOwner(), TEXT("IntuitionScanSphere"));
-        ScanSphere->SetupAttachment(GetOwner()->GetRootComponent());
-        ScanSphere->RegisterComponent(); // ensures it's valid before BeginPlay
+        if (USceneComponent* Root = Owner->GetRootComponent())
+        {
+            ScanSphere->AttachToComponent(
+                Root,
+                FAttachmentTransformRules::KeepRelativeTransform);
+        }
     }
 
-    // Collision wiring once
-    ScanSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    ScanSphere->SetCollisionObjectType(ECC_WorldDynamic);
-    ScanSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    // Final collision channel setup
     ScanSphere->SetCollisionResponseToChannel(ECC_Treasure, ECR_Overlap);
-    ScanSphere->SetGenerateOverlapEvents(true);
 
-    // Bind overlaps once
-    ScanSphere->OnComponentBeginOverlap.AddDynamic(this, &UHiddenTreasureScannerComponent::OnScanBegin);
-    ScanSphere->OnComponentEndOverlap  .AddDynamic(this, &UHiddenTreasureScannerComponent::OnScanEnd);
+    // SAFE delegate binding
+    if (!ScanSphere->OnComponentBeginOverlap.IsAlreadyBound(
+        this, &UHiddenTreasureScannerComponent::OnScanBegin))
+    {
+        ScanSphere->OnComponentBeginOverlap.AddDynamic(
+            this, &UHiddenTreasureScannerComponent::OnScanBegin);
+    }
+
+    if (!ScanSphere->OnComponentEndOverlap.IsAlreadyBound(
+        this, &UHiddenTreasureScannerComponent::OnScanEnd))
+    {
+        ScanSphere->OnComponentEndOverlap.AddDynamic(
+            this, &UHiddenTreasureScannerComponent::OnScanEnd);
+    }
 }
 
-void UHiddenTreasureScannerComponent::UpdateRadius() const
+void UHiddenTreasureScannerComponent::OnScanBegin(
+    UPrimitiveComponent* PrimitiveComponent,
+    AActor* OtherActor,
+    UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex,
+    bool bFromSweep,
+    const FHitResult& SweepResult)
 {
-    const float NewRadius = BaseRadius + MaxBonusRadius * CurrentIntuitionFraction;
-    if (ScanSphere) ScanSphere->SetSphereRadius(NewRadius, true);
-#if !(UE_BUILD_SHIPPING)
-    // DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), NewRadius, 16, FColor::Yellow, false, 0.05f);
-#endif
+    // Only local player should highlight treasure
+    if (!IsLocal())
+        return;
+
+    // Apply intuition highlight / emissive scaling to treasure components on the actor
+    ApplyToActorTreasures(OtherActor, CurrentIntuitionFraction);
+}
+
+void UHiddenTreasureScannerComponent::OnScanEnd(
+    UPrimitiveComponent* PrimitiveComponent,
+    AActor* OtherActor,
+    UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex)
+{
+    // Only local player should remove highlight
+    if (!IsLocal())
+        return;
+
+    // Remove highlight/emissive scaling from treasure components
+    ApplyToActorTreasures(OtherActor, 0.f);
 }
 
 void UHiddenTreasureScannerComponent::ApplyToActorTreasures(AActor* Other, float Fraction)
 {
-    if (!Other || Other == GetOwner()) return;
+    if (!Other || Other == GetOwner())
+        return;
+
+    // Find any UHiddenTreasureComponent on the actor and update its intuition fraction
     for (auto* HT : TInlineComponentArray<UHiddenTreasureComponent*>(Other, true))
     {
-        HT->ApplyIntuitionScale(Fraction); // drives emissive on the treasure
+        HT->ApplyIntuitionScale(Fraction);
     }
 }
+
+void UHiddenTreasureScannerComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    if (const APawn* P = Cast<APawn>(GetOwner()))
+    {
+        if (!P->IsLocallyControlled())
+        {
+            if (ScanSphere)
+            {
+                ScanSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            }
+            return;
+        }
+    }
+
+    UpdateRadius();
+
+    TArray<AActor*> Overlapping;
+    ScanSphere->GetOverlappingActors(Overlapping);
+
+    for (AActor* A : Overlapping)
+    {
+        ApplyToActorTreasures(A, CurrentIntuitionFraction);
+    }
+}
+
+void UHiddenTreasureScannerComponent::SetIntuitionFraction(float Fraction)
+{
+    CurrentIntuitionFraction = FMath::Clamp(Fraction, 0.f, 1.f);
+
+    if (!ScanSphere || !ScanSphere->IsRegistered() ||
+        ScanSphere->GetCollisionEnabled() == ECollisionEnabled::NoCollision)
+    {
+        return;
+    }
+
+    UpdateRadius();
+
+    TArray<AActor*> Overlapping;
+    ScanSphere->GetOverlappingActors(Overlapping);
+
+    for (AActor* A : Overlapping)
+    {
+        ApplyToActorTreasures(A, CurrentIntuitionFraction);
+    }
+}
+
+bool UHiddenTreasureScannerComponent::IsLocal() const
+{
+    if (const APawn* P = Cast<APawn>(GetOwner()))
+    {
+        return P->IsLocallyControlled();
+    }
+    return true;
+}
+
+
+void UHiddenTreasureScannerComponent::UpdateRadius() const
+{
+    const float NewRadius = BaseRadius + MaxBonusRadius * CurrentIntuitionFraction;
+
+    if (ScanSphere)
+    {
+        ScanSphere->SetSphereRadius(NewRadius, true);
+    }
+}
+

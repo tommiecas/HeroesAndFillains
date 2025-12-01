@@ -13,6 +13,9 @@ class THUMBNAILICONSEDITOR_API UThumbnailToTextureLibrary : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Thumbnails")
+	static UTexture2D* ScreenshotToTexture(const FString& AssetPath, int32 Size, const FString& BaseFilename);
+
 	// Note: WorldContextObject replaces the UWorld pin
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Thumbnails",
 		  meta=(WorldContext="WorldContextObject", DisplayName="Create Icon From Static Mesh Capture"))

@@ -10,9 +10,11 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/Team.h"
 #include "HAFPlayerState.generated.h"
 
+class ULevelUpInfo;
 class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32 /*StatValue*/)
 UCLASS()
 class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -20,6 +22,10 @@ class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbili
 
 public:
 	AHAFPlayerState();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Level Up Information")
+	TObjectPtr<ULevelUpInfo> LevelUpInformation;
+	
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Score() override;
@@ -46,6 +52,13 @@ public:
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
+	FOnPlayerStatChanged OnXPChangedDelegate;
+	FOnPlayerStatChanged OnLevelChangedDelegate;
+	
+	void AddLevel(const int32 LevelToAdd);
+	void SetPlayerLevel(const int32 NewLevel);
+	void AddXP(const int32 XPToAdd);
+	void SetPlayerXP(const int32 NewXP);
 protected:
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
@@ -60,7 +73,15 @@ private:
 
 	UFUNCTION()
 	void OnRep_Level(int32 OldLevel);
+
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_XP)
+	int32 XP = 0;
+
+	UFUNCTION()
+	void OnRep_XP(int32 OldXP);
 	
+
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	class AFillainCharacter* Character = nullptr;
 
@@ -81,5 +102,8 @@ public:
 	FORCEINLINE AFillainPlayerController* GetFillainPlayerController() const { return Controller; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
 	void SetTeam(ETeam TeamToSet);
-	FORCEINLINE int32 GetPlayerLevel() const { return Level; }
+	FORCEINLINE int32 GetFillainPlayerLevel() const { return Level; }
+	FORCEINLINE int32 GetFillainPlayerXP() const { return XP; }
+	
+		
 };

@@ -1,5 +1,6 @@
 #include "ModifiedMagnitudeCalculations/MMC_MaxStamina.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_MaxStamina::UMMC_MaxStamina()
@@ -40,9 +41,34 @@ float UMMC_MaxStamina::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 	Vigor     = FMath::Max(Vigor, 0.f);
 	Dexterity = FMath::Max(Dexterity, 0.f);
 	Strength  = FMath::Max(Strength, 0.f);
+	
+	// (Stamina might later scale with PlayerLevel, so ready for safe check)
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	// (No level used here either, safe from null SourceObject)
-	return (30.f + (2.f * Vigor)) +
-		   (30.f + (2.f * Dexterity)) +
-		   (30.f + (2.f * Strength));
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxStamina: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxStamina: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
+		
+		// (No level used here either, safe from null SourceObject)
+		return (30.f + (2.f * Vigor)) +
+			(30.f + (2.f * Dexterity)) +
+			(30.f + (2.f * Strength));
+	}
+	return 0.f;
 }

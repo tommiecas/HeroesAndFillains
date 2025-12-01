@@ -4,6 +4,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_Unstoppable.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_Unstoppable::UMMC_Unstoppable()
@@ -39,8 +40,29 @@ float UMMC_Unstoppable::CalculateBaseMagnitude_Implementation(const FGameplayEff
 	GetCapturedAttributeMagnitude(DexterityAgilityFlexibilityDef, Spec, EvaluationParameters, DexterityAgilityFlexibility);
 	DexterityAgilityFlexibility = FMath::Max<float>(DexterityAgilityFlexibility, 0.f);
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * DexterityAgilityFlexibility));
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_Unstoppable: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_Unstoppable: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
+
+		return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * DexterityAgilityFlexibility));
+	}
+	return 0.f;
 }

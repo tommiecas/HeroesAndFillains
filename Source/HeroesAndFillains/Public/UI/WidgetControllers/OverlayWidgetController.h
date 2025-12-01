@@ -47,6 +47,7 @@ struct FUIWidgetRow : public FTableRowBase
 	TSoftObjectPtr<UTexture2D> Image;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChangedSignature, int32, NewValue);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FHAFAbilityInfo&, Info);
 /**
@@ -109,7 +110,15 @@ public:
 
 	void BroadcastAllAbilityInfo();
 
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | XP")
+	FOnAttributeChangedSignature OnXPPercentChangedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Level")
+	FOnPlayerStatChangedSignature OnPlayerLevelChangedDelegate;
+	
 protected:
+	void OnXPChanged(int32 NewXP) const;
+	
 	UFUNCTION() // required for AddUObject binding
 	void OnGEAddedToSelf(UAbilitySystemComponent* TargetASC,
 						 const FGameplayEffectSpec& SpecApplied,

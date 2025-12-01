@@ -33,6 +33,7 @@ void AHAFPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AHAFPlayerState, Defeats);
 	DOREPLIFETIME(AHAFPlayerState, Team);
 	DOREPLIFETIME(AHAFPlayerState, Level);
+	DOREPLIFETIME(AHAFPlayerState, XP);
 }
 
 void AHAFPlayerState::AddToScore(float ScoreAmount)
@@ -97,9 +98,38 @@ void AHAFPlayerState::OnRep_Defeats()
 	}
 }
 
+void AHAFPlayerState::AddLevel(const int32 LevelToAdd)
+{
+	Level += LevelToAdd;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void AHAFPlayerState::SetPlayerLevel(const int32 NewLevel)
+{
+	Level = NewLevel;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
 void AHAFPlayerState::OnRep_Level(int32 OldLevel)
 {
-	
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void AHAFPlayerState::OnRep_XP(int32 OldXP)
+{
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AHAFPlayerState::AddXP(const int32 XPToAdd)
+{
+	XP += XPToAdd;
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AHAFPlayerState::SetPlayerXP(const int32 NewXP)
+{
+	XP = NewXP;
+	OnXPChangedDelegate.Broadcast(XP);
 }
 
 void AHAFPlayerState::SetTeam(ETeam TeamToSet)

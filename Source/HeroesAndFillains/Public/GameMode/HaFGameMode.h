@@ -6,6 +6,7 @@
 #include "HAFGameMode.generated.h"
 
 class UCharacterClassInfo;
+class UEnemyInfo;
 
 namespace MatchState
 {
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<UCharacterClassInfo> CharacterClassInfo;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy Defaults")
+	TObjectPtr<UEnemyInfo> EnemyInfo;
     
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;

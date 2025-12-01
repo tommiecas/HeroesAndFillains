@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "HAFWidgetController.generated.h"
 
+class AFillainPlayerController;
 class UAttributeSet;
 class UAbilitySystemComponent;
 
@@ -18,11 +19,11 @@ struct FWidgetControllerParams
 
 	FWidgetControllerParams() {}
 	FWidgetControllerParams(AController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
-	: PlayerController(PC), PlayerState(PS), AbilitySystemComponent(ASC), AttributeSet(AS) {}
+	: Controller(PC), PlayerState(PS), AbilitySystemComponent(ASC), AttributeSet(AS) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<AController> PlayerController = nullptr;
-
+	TObjectPtr<AController> Controller = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<APlayerState> PlayerState = nullptr;
 

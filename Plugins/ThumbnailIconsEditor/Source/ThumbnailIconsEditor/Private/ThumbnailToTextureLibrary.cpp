@@ -4,6 +4,8 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/StaticMeshComponent.h"
@@ -17,6 +19,77 @@
 #include "Modules/ModuleManager.h"
 #include "UObject/Package.h"
 #include "UObject/SavePackage.h"
+
+UTexture2D* UThumbnailToTextureLibrary::ScreenshotToTexture(const FString& AssetPath, int32 Size, const FString& BaseFilename)
+{
+#if WITH_EDITOR
+
+    // 1. Save screenshot PNG to the Saved directory
+    FString ScreenshotDir = FPaths::ProjectSavedDir() / TEXT("Thumbnails/");
+    IFileManager::Get().MakeDirectory(*ScreenshotDir, true);
+
+    FString ScreenshotFile = ScreenshotDir + BaseFilename + TEXT(".png");
+
+    FScreenshotRequest::RequestScreenshot(ScreenshotFile, false, false);
+    FlushRenderingCommands();
+
+    // 2. Load PNG data
+    TArray<uint8> PNGData;
+    if (!FFileHelper::LoadFileToArray(PNGData, *ScreenshotFile))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load screenshot file: %s"), *ScreenshotFile);
+        return nullptr;
+    }
+
+    // 3. Decode PNG
+    IImageWrapperModule& ImageWrapperModule =
+        FModuleManager::LoadModuleChecked<IImageWrapperModule>("ImageWrapper");
+    TSharedPtr<IImageWrapper> Wrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+
+    if (!Wrapper.IsValid() || !Wrapper->SetCompressed(PNGData.GetData(), PNGData.Num()))
+        return nullptr;
+
+    TArray<uint8> RawData;
+    Wrapper->GetRaw(ERGBFormat::BGRA, 8, RawData);
+
+    // 4. Create Texture2D asset in Content Browser
+    FString UniquePkgName;
+    FString UniqueAssetName;
+
+    FAssetToolsModule::GetModule().Get().CreateUniqueAssetName(
+        AssetPath + "/" + BaseFilename, "", UniquePkgName, UniqueAssetName);
+
+    UPackage* Pkg = CreatePackage(*UniquePkgName);
+
+    UTexture2D* Tex = NewObject<UTexture2D>(Pkg, *UniqueAssetName, RF_Public | RF_Standalone);
+    Tex->NeverStream = true;
+
+    Tex->Source.Init(
+    Wrapper->GetWidth(),
+    Wrapper->GetHeight(),
+    1, 1,
+    TSF_BGRA8,
+    RawData.GetData()
+);
+
+    Tex->UpdateResource();
+    FAssetRegistryModule::AssetCreated(Tex);
+    Tex->MarkPackageDirty();
+
+    FString FilePath = FPackageName::LongPackageNameToFilename(
+        UniquePkgName, FPackageName::GetAssetPackageExtension());
+
+    FSavePackageArgs SaveArgs;
+    SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+    SaveArgs.SaveFlags = SAVE_None;
+
+    UPackage::SavePackage(Pkg, Tex, *FilePath, SaveArgs);
+    return Tex;
+
+#else
+    return nullptr;
+#endif
+}
 
 // Resolve an Editor World from any UObject context (works from an EUW when you pass 'Self')
 static UWorld* ResolveEditorWorld(UObject* WorldContextObject)
@@ -90,8 +163,17 @@ UTexture2D* UThumbnailToTextureLibrary::CreateIconFromStaticMeshCapture(
     SMC->SetCastShadow(true);
     SMC->RegisterComponent();
 
+    // Force the mesh to face +X for portrait camera
+    SMC->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+    SMC->LightingChannels.bChannel0 = true;
+    SMC->LightingChannels.bChannel1 = true;
+    SMC->LightingChannels.bChannel2 = true;
+    SMC->SetRenderCustomDepth(false);
+    SMC->SetRenderInMainPass(true);
+
+
     // Pleasant default angle
-    SMC->AddLocalRotation(FRotator(0.f, 20.f, 0.f));
+    // SMC->AddLocalRotation(FRotator(0.f, 20.f, 0.f));
 
     // Lift slightly ABOVE Z=0 to avoid any thin floor line
     const FBoxSphereBounds B0 = SMC->CalcBounds(SMC->GetComponentTransform());
@@ -101,6 +183,8 @@ UTexture2D* UThumbnailToTextureLibrary::CreateIconFromStaticMeshCapture(
     // Recompute centered bounds after moving
     const FBoxSphereBounds B = SMC->CalcBounds(SMC->GetComponentTransform());
     const FVector Center = B.Origin;
+    
+
     const float   Radius = FMath::Max(1.f, B.SphereRadius);
 
     // --- Lighting: Key + Fill (balanced midtones) ---
@@ -127,17 +211,48 @@ UTexture2D* UThumbnailToTextureLibrary::CreateIconFromStaticMeshCapture(
     if (!Cap) { Stage->Destroy(); return nullptr; }
     USceneCaptureComponent2D* Cap2D = Cap->GetCaptureComponent2D();
 
-    Cap2D->ProjectionType = ECameraProjectionMode::Orthographic;
+    Cap2D->ShowFlags.SetLighting(true);
+    Cap2D->ShowFlags.SetDirectLighting(true);
+    Cap2D->ShowFlags.SetIndirectLightingCache(true);
+    Cap2D->ShowFlags.SetMaterials(true);
+    Cap2D->ShowFlags.SetPostProcessing(true);
+    Cap2D->ShowFlags.SetSkeletalMeshes(true); // even for Static Mesh, affects shading
+    Cap2D->ShowFlags.SetStaticMeshes(true);
+    Cap2D->ShowFlags.SetAmbientOcclusion(true);
+    Cap2D->ShowFlags.SetDepthOfField(true);  // optional
+    Cap2D->ShowFlags.SetTonemapper(true);
+
+    Cap2D->ShowFlags.SetLumenReflections(true);
+    Cap2D->ShowFlags.SetGlobalIllumination(true);
+    
+    Cap2D->ProjectionType = ECameraProjectionMode::Perspective; // Orthographic;
+    Cap2D->FOVAngle = 30.f; //for Character portraits only
     const float Padding = 1.18f;                  // ~18% empty border
     Cap2D->OrthoWidth = (Radius * 2.f) * Padding;
-
-    const float ViewDist = Radius * 4.0f;         // distance irrelevant in ortho; keep > 0
+    //BELOW IS COMMENTED OUT FOR CHARACTER PORTRAIT ONLY
+    /*const float ViewDist = Radius * 4.0f;         // distance irrelevant in ortho; keep > 0
     const FVector CamLoc  = Center + FVector(ViewDist, 0, 0);
     Cap->SetActorLocation(CamLoc);
-    Cap->SetActorRotation((Center - CamLoc).Rotation());
+    Cap->SetActorRotation((Center - CamLoc).Rotation()); */
 
+    //Following replaces above when doing character portrait
+    // Face-level center: raise camera toward upper body
+    const FVector PortraitCenter = Center + FVector(0.f, 0.f, B.BoxExtent.Z * 0.35f);
+    const float ViewDist = Radius * 6.0f;
+
+    // Distance appropriate for perspective
+    const float PortraitDist = Radius * 1.2f;
+
+    // Camera in front of the character
+    const FVector CamLoc = PortraitCenter + FVector(PortraitDist, 0, 0);
+
+    // Raise look-at point to head/upper chest
+    const FVector PortraitTarget = Center + FVector(0.f, 0.f, B.BoxExtent.Z * 0.35f);
+    Cap->SetActorLocation(CamLoc);
+    Cap->SetActorRotation((PortraitTarget - CamLoc).Rotation());
+    
     Cap2D->TextureTarget = RT;
-    Cap2D->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    Cap2D->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 
     // Only render our staged mesh; ignore the rest of the map
     Cap2D->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;

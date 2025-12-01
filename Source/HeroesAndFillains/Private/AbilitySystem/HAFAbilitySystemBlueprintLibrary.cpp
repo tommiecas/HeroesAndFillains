@@ -6,6 +6,7 @@
 #include "HAFAbilityTypes.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Enemies/EnemyBase.h"
+#include "Enemies/EnemyInfo.h"
 #include "Engine/OverlapResult.h"
 #include "GameMode/HaFGameMode.h"
 #include "UI/FillainHUD.h"
@@ -130,15 +131,17 @@ void UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(const UObject* Worl
 		ASC->GiveAbility(AbilitySpec);
 	}
 	const FCharacterClassDefaultInfo& DefaultInfo = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
-    for (TSubclassOf<UGameplayAbility> AbilityClass : DefaultInfo.ClassAbilities)
-    {
-	    ICombatInterface* CombatInterface = Cast<ICombatInterface>(Cast<ICombatInterface>(ASC->GetAvatarActor()));
-    	if (CombatInterface)
-    	{
-			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, CombatInterface->GetPlayerLevel());		
-			ASC->GiveAbility(AbilitySpec);
-    	}
-    }
+	for (TSubclassOf<UGameplayAbility> AbilityClass : DefaultInfo.ClassAbilities)
+	{
+		if (ASC->GetAvatarActor()->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* AvatarActorAsBase = Cast<ABaseCharacter>(ASC->GetAvatarActor()))
+			{
+				FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, ICombatInterface::Execute_GetCharacterLevel(ASC->GetAvatarActor(), AvatarActorAsBase));		
+				ASC->GiveAbility(AbilitySpec);
+			}
+		}
+	}
 }
 
 UCharacterClassInfo* UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
@@ -146,6 +149,13 @@ UCharacterClassInfo* UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(co
 	AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (HAFGameMode == nullptr) return nullptr;
 	return HAFGameMode->CharacterClassInfo;
+}
+
+UEnemyInfo* UHAFAbilitySystemBlueprintLibrary::GetEnemyInfo(const UObject* WorldContextObject)
+{
+	AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (HAFGameMode == nullptr) return nullptr;
+	return HAFGameMode->EnemyInfo;
 }
 
 FGameplayEffectContextHandle UHAFAbilitySystemBlueprintLibrary::AddSourceObjectToContext(
@@ -237,6 +247,18 @@ bool UHAFAbilitySystemBlueprintLibrary::IsNotFriend(AActor* FirstActor, AActor* 
 	const bool bFriends = FirstActor->ActorHasTag(FName("Player")) && SecondActor->ActorHasTag(FName("Player")) ||
 			FirstActor->ActorHasTag(FName("Enemy")) && SecondActor->ActorHasTag(FName("Enemy"));
 	return !bFriends;
+}
+
+int32 UHAFAbilitySystemBlueprintLibrary::GetXPAwardForEnemyTypeAndLevel(const UObject* WorldContextObject,
+	EEnemyType EnemyType, int32 EnemyLevel)
+{
+	UEnemyInfo* EnemyInfo = GetEnemyInfo(WorldContextObject);
+	if (EnemyInfo == nullptr) return 0;
+
+	const FEnemyWiki& EnemyWiki = EnemyInfo->GetEnemyInfo(EnemyType);
+	const float XPAward = EnemyWiki.XPReward.GetValueAtLevel(EnemyLevel);
+
+	return static_cast<int32>(XPAward);
 }
 
 	

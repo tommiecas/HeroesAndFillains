@@ -4,6 +4,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_ThermalRadiation.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_ThermalRadiation::UMMC_ThermalRadiation()
@@ -38,9 +39,31 @@ float UMMC_ThermalRadiation::CalculateBaseMagnitude_Implementation(const FGamepl
 	float Wisdom = 0.f;
 	GetCapturedAttributeMagnitude(WisdomDef, Spec, EvaluationParameters, Wisdom);
 	Wisdom = FMath::Max<float>(Wisdom, 0.f);
+	
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_ThermalRadiation: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_ThermalRadiation: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
 
-	return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Wisdom));
+		return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Wisdom));
+	}
+	return 0.f;
 }
+	

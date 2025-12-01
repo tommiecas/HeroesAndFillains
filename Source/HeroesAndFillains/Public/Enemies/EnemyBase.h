@@ -80,7 +80,7 @@ public:
     virtual void Dissolve() override;
     virtual void Destroyed() override;
     virtual int32 PlayDeathMontage() override;
-
+    virtual int32 GetCharacterLevel_Implementation(ABaseCharacter* Character) override;
     UFUNCTION(BlueprintCallable)
     void Attack();
     
@@ -275,7 +275,6 @@ public:
     FGenericTeamId GetGenericTeamId() const;
 
     // --- Helpers ---
-    virtual int32 GetPlayerLevel() override;
     virtual void MulticastHandleDeath_Implementation() override;
     void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
@@ -443,8 +442,7 @@ public:
     UPROPERTY()
     TObjectPtr<AHAFAIController>HAFAIController;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
-    ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
 
     UFUNCTION()
     virtual void OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

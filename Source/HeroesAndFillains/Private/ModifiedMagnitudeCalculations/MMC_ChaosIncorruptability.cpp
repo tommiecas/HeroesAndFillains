@@ -4,6 +4,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_ChaosIncorruptability.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_ChaosIncorruptability::UMMC_ChaosIncorruptability()
@@ -38,9 +39,30 @@ float UMMC_ChaosIncorruptability::CalculateBaseMagnitude_Implementation(const FG
 	float Purity = 0.f;
 	GetCapturedAttributeMagnitude(PurityDef, Spec, EvaluationParameters, Purity);
 	Purity = FMath::Max<float>(Purity, 0.f);
+	
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_ChaosIncorruptibility: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_ChaosIncorruptibility: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
 
-	return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Purity));
+		return (1.5f + (.25f * Resilience)) + (1.5f + (.25 * Purity));
+	}
+	return 0.f;
 }

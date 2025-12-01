@@ -12,6 +12,7 @@
 #include "GameplayTagContainer.h"
 #include "AbilitySystemComponent.h"
 #include "CharacterClassInfo.h"
+#include "Enemies/EnemyInfo.h"
 #include "BaseCharacter.generated.h"
 
 class AHAFGameMode;
@@ -82,7 +83,7 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
 	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
-
+	virtual EEnemyType GetEnemyType_Implementation() override;
 	UFUNCTION(BlueprintCallable)
 	virtual void InitializeDefaultTags();
 
@@ -369,6 +370,12 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
 	void StopMontage(UAnimMontage* Montage);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Type Defaults")
+	EEnemyType EnemyType = EEnemyType::None;
 	
 	// If false, subclasses can opt out (critters/corpses/etc.)
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
@@ -409,8 +416,9 @@ protected:
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level);
 
-	void AddCharacterAbilities() const;
+	void AddCharacterAbilities(); 
 
+	
 	/*************************************
 	*****                            *****
 	*****     DISSOLVE MATERIALS     *****
@@ -435,6 +443,9 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
 
 public:
 	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }

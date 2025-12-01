@@ -282,9 +282,13 @@ public:
 	****    META ATTRIBUTES    ****
 	******************************/
 
-	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_IncomingDamage, Category = "Meta Attributes")
 	FGameplayAttributeData IncomingDamage;
 	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, IncomingDamage);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	FGameplayAttributeData IncomingXP;
+	ATTRIBUTE_ACCESSORS(UHAFAttributeSet, IncomingXP);
 
 
 	// CaptureDefinitions
@@ -356,7 +360,6 @@ public:
 	UFUNCTION() void OnRep_Majix(const FGameplayAttributeData& OldValue) const;
 
 	UFUNCTION() void OnRep_IncomingDamage(const FGameplayAttributeData& OldValue) const;
-	
 	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldValue) const;
 
 protected:
@@ -370,7 +373,7 @@ private:
 	float NewMaxValue,
 	const FGameplayAttribute& AffectedAttributeProperty);
 	void ShowFloatingText(const FEffectProperties& Properties, float Damage, bool bBlockedHit, bool bCriticalHit) const;
-
+	void SendXPEvent(const FEffectProperties& Properties);
 public:
 
 };

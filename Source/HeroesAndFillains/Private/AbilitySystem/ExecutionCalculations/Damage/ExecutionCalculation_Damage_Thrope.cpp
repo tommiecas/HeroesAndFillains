@@ -9,6 +9,7 @@
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "AbilitySystem/ExecutionCalculations/HAFDamageStatics.h"
+#include "Characters/BaseCharacter.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 
@@ -42,8 +43,23 @@ const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySyste
 
 	AActor* SourceAvatar = SourceASC ? SourceASC->GetAvatarActor() : nullptr;
 	AActor* TargetAvatar = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
-	ICombatInterface* SourceCombatInterface = Cast<ICombatInterface>(SourceAvatar);
-	ICombatInterface* TargetCombatInterface = Cast<ICombatInterface>(TargetAvatar);
+	int32 SourceCharacterLevel = 1;
+	if (SourceAvatar->Implements<UCombatInterface>())
+	{
+		if (ABaseCharacter* SourceAvBaseChar = Cast<ABaseCharacter>(SourceAvatar))
+		{
+			SourceCharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceAvatar, SourceAvBaseChar);	
+		}
+	}
+	int32 TargetCharacterLevel = 1;
+	if (TargetAvatar->Implements<UCombatInterface>())
+	{
+		if (ABaseCharacter* TargetAvBaseChar = Cast<ABaseCharacter>(TargetAvatar))
+		{
+			TargetCharacterLevel = ICombatInterface::Execute_GetCharacterLevel(TargetAvatar, TargetAvBaseChar);	
+		}
+	}
+
 	
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
@@ -98,13 +114,13 @@ const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySyste
 
 	const UCharacterClassInfo* CharacterClassInfo = UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(SourceAvatar);
 	const FRealCurve* ArmorPenetrationCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("ArmorPenetrationCoefficient"), FString());
-	const float ArmorPenetrationCoefficient = ArmorPenetrationCurve->Eval(SourceCombatInterface->GetPlayerLevel());
+	const float ArmorPenetrationCoefficient = ArmorPenetrationCurve->Eval(SourceCharacterLevel);
 	//ArmorPenetration ignores a portion of the target's armor... 
 	const float EffectiveArmor = TargetArmor * (100 - SourceArmorPenetration * ArmorPenetrationCoefficient) / 100.f;
 
 	//...while Armor removes part of the damage from the source.
 	const FRealCurve* EffectiveArmorCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("EffectiveArmorCoefficient"), FString());
-	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCombatInterface->GetPlayerLevel());
+	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCharacterLevel);
 	//Armor is a percentage of the damage taken.
 	Damage *= (100 - EffectiveArmor * EffectiveArmorCoefficient) / 100.f;
 	
@@ -127,7 +143,7 @@ const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySyste
 
 	const FRealCurve* CriticalHitResistanceCurve =
 		CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("CriticalHitResistanceCoefficient"), FString());
-	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetCombatInterface->GetPlayerLevel());
+	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetCharacterLevel);
 
 	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;

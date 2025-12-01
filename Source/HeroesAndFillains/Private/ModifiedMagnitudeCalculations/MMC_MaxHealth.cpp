@@ -1,6 +1,7 @@
 #include "ModifiedMagnitudeCalculations/MMC_MaxHealth.h"
 
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_MaxHealth::UMMC_MaxHealth()
@@ -28,25 +29,32 @@ float UMMC_MaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffec
 	Vigor = FMath::Max(Vigor, 0.f);
 
 	// --- Safe CombatInterface access ---
-	int32 PlayerLevel = 1; // Default level if context missing
+	int32 CharacterLevel = 1; // Default level if context missing
 	UObject* SourceObj = Spec.GetContext().GetSourceObject();
 
 	if (SourceObj == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxHealth: SourceObject is NULL (likely during respawn)."));
 	}
-	else if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(SourceObj))
+	else 
 	{
-		PlayerLevel = CombatInterface->GetPlayerLevel();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxHealth: SourceObject %s does not implement CombatInterface."),
-			*SourceObj->GetName());
-	}
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxHealth: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
 
-	// --- Your original formula (unchanged functionality) ---
-	const float MaxHealth = 80.f + (2.5f * Vigor) + (10.f * PlayerLevel);
+		// --- Your original formula (unchanged functionality) ---
+		const float MaxHealth = 80.f + (2.5f * Vigor) + (10.f * CharacterLevel);
 
-	return MaxHealth;
+		return MaxHealth;
+	}
+	return 0.f;
 }

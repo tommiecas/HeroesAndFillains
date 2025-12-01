@@ -27,6 +27,8 @@
 #include "Weapons/Melee/MeleeWeapon.h"
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "MotionWarpingComponent.h"
+#include "Abilities/Tasks/AbilityTask.h"
+#include "AbilitySystem/Abilities/HAFGameplayAbility.h"
 
 #include "PlayerController/FillainPlayerController.h"
 #include "GameMode/HaFGameMode.h"
@@ -467,6 +469,11 @@ void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const&
 void ABaseCharacter::ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
 	// Empty stub - child classes may override
+}
+
+EEnemyType ABaseCharacter::GetEnemyType_Implementation()
+{
+	return EnemyType;
 }
 
 void ABaseCharacter::PlayRandomMeleeAttackMontage()
@@ -996,12 +1003,13 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 	}
 }
 
-void ABaseCharacter::AddCharacterAbilities() const
+void ABaseCharacter::AddCharacterAbilities()
 {
-	UHAFAbilitySystemComponent* ASComp = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
+	UHAFAbilitySystemComponent* ASCComp = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
 	if (!HasAuthority()) return;
 
-	ASComp->AddCharacterAbilities(StartupAbilities);
+	ASCComp->AddCharacterAbilities(StartupAbilities);
+	ASCComp->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const

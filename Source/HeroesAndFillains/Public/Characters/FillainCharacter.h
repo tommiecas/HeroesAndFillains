@@ -19,6 +19,7 @@
 #include "Weapons/Ranged/RangedWeapon.h"
 #include "Interfaces/PickupInterface.h"
 #include "Interfaces/CapsuleInterface.h"
+#include "Interfaces/PlayerInterface.h"
 #include "AbilitySystemComponent.h" // <-- for FOnAttributeChangeData
 #include "GameplayEffectTypes.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/CharacterTypes.h"
@@ -58,7 +59,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageWidget, float, Level);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInvisibleAttributeChangedSignature, float, NewValue);
 
 UCLASS()
-class HEROESANDFILLAINS_API AFillainCharacter : public ABaseCharacter, public IInteractWithCrosshairsInterface, public IPickupInterface
+class HEROESANDFILLAINS_API AFillainCharacter : public ABaseCharacter, public IInteractWithCrosshairsInterface, public IPickupInterface, public IPlayerInterface 
 {
 	GENERATED_BODY()
 
@@ -75,6 +76,16 @@ public:
 	bool IsDead() const;
 	bool bIsDead = false;
 
+	virtual void AddToXP_Implementation(int32 XPToAdd) override;
+	virtual void LevelUp_Implementation() override;
+	virtual int32 GetXP_Implementation() const override;
+	virtual int32 FindLevelForXP_Implementation(int32 XP) override;
+	virtual int32 GetAttributePointsAward_Implementation(int32 Level) const override;
+	virtual int32 GetSpellPointsAward_Implementation(int32 Level) const override;
+	virtual void AddToCharacterLevel_Implementation(int32 LevelToAdd) override;
+	virtual void AddToAttributePoints_Implementation(int32 AttributePointsToAdd) override;
+	virtual void AddToSpellPoints_Implementation(int32 SpellPointsToAdd) override;
+	
 	// Override legacy damage system (TODO: Remove after migrating to pure GAS)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -137,7 +148,7 @@ public:
 	****    Combat Interface    ****
 	*******************************/
 
-	virtual int32 GetPlayerLevel() override;
+	virtual int32 GetCharacterLevel_Implementation(ABaseCharacter* Character) override;
 
 	/********************************
 	****    Capsule Interface    ****
@@ -618,6 +629,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ApplyDefaultAttributes();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
 
 	
 private:
@@ -696,7 +709,7 @@ private:
 	class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-	class UCameraComponent* FollowCamera;
+	class UCameraComponent* CameraComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Camera") float DefaultFOV = 90.f;
 	UPROPERTY(EditDefaultsOnly, Category="Camera") float MinFOV = 60.f;   // safe floor
@@ -742,7 +755,8 @@ private:
 	ETurningInPlace TurningInPlace;
 	void TurnInPlace(float DeltaTime);
 
-		
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLevelUpParticles() const;
 	/***********************
 	** Animation Montages **
 	***********************/
@@ -876,7 +890,7 @@ public:
 	FORCEINLINE FString GetRangedWeaponName() const { return CombatComponent->EquippedRangedWeapon->RangedWeaponName; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
-	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
 	/*FORCEINLINE float GetHealth() const { return Health; }

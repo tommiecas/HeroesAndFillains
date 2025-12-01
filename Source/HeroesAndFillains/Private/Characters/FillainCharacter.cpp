@@ -102,6 +102,7 @@
 #include "GameplayEffectTypes.h"       // FGameplayEffectSpec, FGameplayEffectSpecHandle
 #include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
 #include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
+#include "AbilitySystem/LevelUpInfo.h"
 #include "Engine/OverlapResult.h"
 #include "GameplayEffects/RegenerationEffects/GE_HealthRegeneration.h"
 #include "GameplayEffects/RegenerationEffects/GE_MajixRegeneration.h"
@@ -136,13 +137,15 @@ AFillainCharacter::AFillainCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(GetMesh());
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->SetUsingAbsoluteRotation(true);
+	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->TargetArmLength = 450.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	FollowCamera->bUsePawnControlRotation = false;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
+	CameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	CameraComponent->bUsePawnControlRotation = false;
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
@@ -175,6 +178,13 @@ AFillainCharacter::AFillainCharacter()
 
 	bSelfOccluded = false;
 	CameraSelfOcclusionThreshold = 160.f;
+
+	LevelUpNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("LevelUpNiagaraComponent");
+	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent());
+	LevelUpNiagaraComponent->bAutoActivate = false;
+	
+	CharacterClass = ECharacterClass::Majixian;
+	EnemyType = EEnemyType::None;
 	
 	/***********************************************
 	****    Hit boxes for server-side rewind    ****
@@ -269,7 +279,7 @@ void AFillainCharacter::Client_OnEquipped_Implementation()
 {
 
 	bEquipInProgress = false;
-	if (FollowCamera)
+	/*if (FollowCamera)
 	{
 		FollowCamera->SetFieldOfView(DefaultFOV);
 		bFOVLock = true;
@@ -277,7 +287,7 @@ void AFillainCharacter::Client_OnEquipped_Implementation()
 	}
 	// after the weapon attaches, owning client
 	CombatComponent->CurrentFOV = CombatComponent->DefaultFOV;
-	GetFollowCamera()->SetFieldOfView(CombatComponent->DefaultFOV);
+	GetFollowCamera()->SetFieldOfView(CombatComponent->DefaultFOV);*/
 }
 
 void AFillainCharacter::BeginPlay()
@@ -513,7 +523,7 @@ void AFillainCharacter::Tick(float DeltaTime)
 	
 	if (IsLocallyControlled()) HideCharacterIfCameraClose();
 
-	if (IsLocallyControlled() && bFOVLock && FollowCamera)
+	/*if (IsLocallyControlled() && bFOVLock && FollowCamera)
 	{
 		FOVLockTimeLeft -= DeltaTime;
 
@@ -524,11 +534,9 @@ void AFillainCharacter::Tick(float DeltaTime)
 			FollowCamera->SetFieldOfView(DefaultFOV);
 		}
 
-		if (FOVLockTimeLeft <= 0.f) bFOVLock = false;
-	}
-
+		if (FOVLockTimeLeft <= 0.f) bFOVLock = false;*/
+	
 	UpdateCombatState(DeltaTime);
-
 }
 
 void AFillainCharacter::UpdateCombatState(float DeltaTime)
@@ -604,6 +612,68 @@ void AFillainCharacter::NotifyHit(
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 
 	UE_LOG(LogTemp, Warning, TEXT("🚧 BLOCKED by: %s (%s)"), *Other->GetName(), *OtherComp->GetName());
+}
+
+void AFillainCharacter::AddToXP_Implementation(int32 XPToAdd)
+{
+	AHAFPlayerState* PlayState = GetPlayerState<AHAFPlayerState>();
+	check(PlayState)
+	PlayState->AddXP(XPToAdd);
+}
+
+void AFillainCharacter::LevelUp_Implementation()
+{
+	MulticastLevelUpParticles();
+}
+
+int32 AFillainCharacter::GetXP_Implementation() const
+{
+	const AHAFPlayerState* PlSt = GetPlayerState<AHAFPlayerState>();
+	check(PlSt);
+	return PlSt->GetFillainPlayerXP();
+}
+
+int32 AFillainCharacter::FindLevelForXP_Implementation(int32 XP)
+{
+	const AHAFPlayerState* PlaSta = GetPlayerState<AHAFPlayerState>();
+	check(PlaSta);
+	return PlaSta->LevelUpInformation->FindLevelForXP(XP);
+}
+
+int32 AFillainCharacter::GetAttributePointsAward_Implementation(int32 Level) const
+{
+	const AHAFPlayerState* StateOfPlayer = GetPlayerState<AHAFPlayerState>();
+	check(StateOfPlayer);
+	return StateOfPlayer->LevelUpInformation->LevelUpInformation[Level].AttributePointAward;
+}
+
+int32 AFillainCharacter::GetSpellPointsAward_Implementation(int32 Level) const
+{
+	const AHAFPlayerState* PlaSta = GetPlayerState<AHAFPlayerState>();
+	check(PlaSta);
+	return PlaSta->LevelUpInformation->LevelUpInformation[Level].SpellPointAward;
+
+}
+
+void AFillainCharacter::AddToCharacterLevel_Implementation(int32 LevelToAdd)
+{
+	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
+	check(HAFPS);
+	return HAFPS->AddLevel(LevelToAdd);
+}
+
+void AFillainCharacter::AddToAttributePoints_Implementation(int32 AttributePointsToAdd)
+{
+	const AHAFPlayerState* HAFPState = GetPlayerState<AHAFPlayerState>();
+	check(HAFPState);
+	//TODO: Add AttributePoints to PlayerState
+}
+
+void AFillainCharacter::AddToSpellPoints_Implementation(int32 SpellPointsToAdd)
+{
+	const AHAFPlayerState* HAFPlayerS = GetPlayerState<AHAFPlayerState>();
+	check(HAFPlayerS);
+	//TODO: Add SpellPoints to PlayerState
 }
 
 float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
@@ -1160,12 +1230,11 @@ void AFillainCharacter::AddGoldAcquiredToTotalGold(class ATreasure* Treasure)
 	}
 }
 
-int32 AFillainCharacter::GetPlayerLevel()
+int32 AFillainCharacter::GetCharacterLevel_Implementation(ABaseCharacter* Character)
 {
 	const AHAFPlayerState* State = GetPlayerState<AHAFPlayerState>();
 	check(State);
-	return State->GetPlayerLevel();
-	
+	return State->GetFillainPlayerLevel();
 }
 
 double AFillainCharacter::GetCharacterCapsuleHeight()
@@ -2041,7 +2110,7 @@ void AFillainCharacter::EquipWeapon(AWeaponBase* AWB)
 
 void AFillainCharacter::ResetCameraRig()
 {
-	// 1) Ensure hierarchy: Camera attached to SpringArm, SpringArm to Root
+	/* 1) Ensure hierarchy: Camera attached to SpringArm, SpringArm to Root
 	if (CameraBoom->GetAttachParent() != GetRootComponent())
 	{
 		CameraBoom->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -2076,7 +2145,7 @@ void AFillainCharacter::ResetCameraRig()
 	// Breadcrumb
 	UE_LOG(LogTemp, Warning, TEXT("[ResetCameraRig] Parent=%s Arm=%.1f CamZ=%.1f CapZ=%.1f"),
 		   *GetNameSafe(CameraBoom->GetAttachParent()), CameraBoom->TargetArmLength,
-		   FollowCamera->GetComponentLocation().Z, GetCapsuleComponent()->GetComponentLocation().Z);
+		   FollowCamera->GetComponentLocation().Z, GetCapsuleComponent()->GetComponentLocation().Z);*/
 }
 
 void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* W)
@@ -2917,6 +2986,18 @@ void AFillainCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+void AFillainCharacter::MulticastLevelUpParticles_Implementation() const
+{
+	if (IsValid(LevelUpNiagaraComponent))
+	{
+		const FVector CameraLocation = CameraComponent->GetComponentLocation();
+		const FVector NiagaraSystemLocation = LevelUpNiagaraComponent->GetComponentLocation();
+		const FRotator CameraRotation = (CameraLocation - NiagaraSystemLocation).Rotation();
+		LevelUpNiagaraComponent->SetWorldRotation(CameraRotation);
+		LevelUpNiagaraComponent->Activate(true);
+	}
+}
+
 /* void AFillainCharacter::MulticastHit_Implementation()
 {
 	FName SectionName = FName("FromFront");
@@ -2925,10 +3006,10 @@ void AFillainCharacter::TurnInPlace(float DeltaTime)
 
 void AFillainCharacter::HideCharacterIfCameraClose()
 {
-	if (!IsLocallyControlled() || !CameraBoom || !FollowCamera || !GetMesh()) return;
+	if (!IsLocallyControlled() || !CameraBoom || !CameraComponent || !GetMesh()) return;
 
 	const float Actual =
-		(FollowCamera->GetComponentLocation() - CameraBoom->GetComponentLocation()).Size();
+		(CameraComponent->GetComponentLocation() - CameraBoom->GetComponentLocation()).Size();
 
 	// Decide desired state using hysteresis
 	const float EnterT = FMath::Min(SelfOcclEnter, SelfOcclExit);

@@ -12,8 +12,12 @@
 #include "GameplayEffect.h"            // FGameplayEffectSpec, UGameplayEffect
 #include "GameplayEffectTypes.h"       // FActiveGameplayEffectHandle
 #include "AbilitySystem/AbilityInfo.h"
+#include "AbilitySystem/LevelUpInfo.h"
 #include "Engine/DataTable.h"          // UDataTable
+#include "HeroesAndFillains/HAFLogChannels.h"
 #include "Items/CustomDesignedPCPickupItem.h"            // ACustomDesignedPCPickupItem (for SourceObject cast)
+#include "PlayerState/HAFPlayerState.h"
+#include "HeroesAndFillains/HAFLogChannels.h"
 
 void UOverlayWidgetController::OnGEAddedToSelf(UAbilitySystemComponent* /*TargetASC*/,
                                                const FGameplayEffectSpec& SpecApplied,
@@ -92,15 +96,22 @@ void UOverlayWidgetController::BroadcastInitialValues()
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	if (!AbilitySystemComponent || !AttributeSet)
+	if (!AbilitySystemComponent || !AttributeSet || !PlayerState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[OverlayWidgetController] Missing ASC or AS when binding!"));
+		UE_LOG(LogTemp, Error, TEXT("[OverlayWidgetController] Missing ASC or AS or PS when binding!"));
 		return;
 	}
+	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
+	HAFPlayerState->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	HAFPlayerState->OnLevelChangedDelegate.AddLambda(
+		[this](int32 NewLevel)
+		{
+			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
+		}
+	);	
 	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
 
-	UE_LOG(LogTemp, Warning, TEXT("[OverlayWidgetController] Successfully binding attribute delegates for ASC=%s, AS=%s"),
-		  *GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
+	UE_LOG(LogTemp, Warning, TEXT("[OverlayWidgetController] Successfully binding attribute delegates for ASC=%s, AS=%s, PS=%s"), *GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet), *GetNameSafe(PlayerState));
 	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		HAFAttributeSet->GetHealthAttribute()).AddLambda(
@@ -296,6 +307,30 @@ void UOverlayWidgetController::BroadcastAllAbilityInfo()
 		});
 
 		HAFASC->ForEachAbility(BroadcastDelegate);
+	}
+}
+
+void UOverlayWidgetController::OnXPChanged(int32 NewXP) const
+{
+	const AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
+	const ULevelUpInfo* LevelUpInfo = HAFPlayerState->LevelUpInformation;
+
+	checkf(LevelUpInfo, TEXT("Unable to find LevelUpInfo, Please fill out HAFPlayerState Blueprint"));
+
+	const int32 Level = LevelUpInfo->FindLevelForXP(NewXP);
+	const int32 MaxLevel = LevelUpInfo->LevelUpInformation.Num();
+
+	if (Level <= MaxLevel && Level >= 0)
+	{
+		const int32 LevelUpRequirement = LevelUpInfo->LevelUpInformation[Level].LevelUpRequirement;
+		const int32 PreviousLevelUpRequirement = LevelUpInfo->LevelUpInformation[Level -1].LevelUpRequirement;
+
+		const int32 DeltaLevelRequirement = LevelUpRequirement - PreviousLevelUpRequirement;
+		const int32 XPForThisLevel = NewXP - PreviousLevelUpRequirement;
+
+		const float XPBarPercent = static_cast<float>(XPForThisLevel) / static_cast<float>(DeltaLevelRequirement);
+
+		OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
 	}
 }
 

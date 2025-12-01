@@ -9,6 +9,7 @@
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "AbilitySystem/ExecutionCalculations/HAFDamageStatics.h"
+#include "Characters/BaseCharacter.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 
@@ -57,16 +58,23 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 		return;
 	}
 
-	ICombatInterface* SourceCombatInterface = Cast<ICombatInterface>(SourceAvatar);
-	ICombatInterface* TargetCombatInterface = Cast<ICombatInterface>(TargetAvatar);
-	
-	// ✅ Validate combat interfaces
-	if (!SourceCombatInterface || !TargetCombatInterface)
+	int32 SourceCharacterLevel = 1;
+	if (SourceAvatar->Implements<UCombatInterface>())
 	{
-		UE_LOG(LogTemp, Error, TEXT("ExecutionCalculation_Damage_StormAssassin: Actors don't implement CombatInterface!"));
-		return;
+		if (ABaseCharacter* SourceAvBaseChar = Cast<ABaseCharacter>(SourceAvatar))
+		{
+			SourceCharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceAvatar, SourceAvBaseChar);	
+		}
 	}
-
+	int32 TargetCharacterLevel = 1;
+	if (TargetAvatar->Implements<UCombatInterface>())
+	{
+		if (ABaseCharacter* TargetAvBaseChar = Cast<ABaseCharacter>(TargetAvatar))
+		{
+			TargetCharacterLevel = ICombatInterface::Execute_GetCharacterLevel(TargetAvatar, TargetAvBaseChar);	
+		}
+	}
+	
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
@@ -146,7 +154,7 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 		return;
 	}
 
-	const float ArmorPenetrationCoefficient = ArmorPenetrationCurve->Eval(SourceCombatInterface->GetPlayerLevel());
+	const float ArmorPenetrationCoefficient = ArmorPenetrationCurve->Eval(SourceCharacterLevel);
 	const float EffectiveArmor = TargetArmor * (100 - SourceArmorPenetration * ArmorPenetrationCoefficient) / 100.f;
 
 	const FRealCurve* EffectiveArmorCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("EffectiveArmorCoefficient"), FString());
@@ -156,7 +164,7 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 		return;
 	}
 
-	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCombatInterface->GetPlayerLevel());
+	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetCharacterLevel);
 	Damage *= (100 - EffectiveArmor * EffectiveArmorCoefficient) / 100.f;
 
 	// PART FOUR: Critical Hit Resistance reduces Critical Hit Chance, Double Damage Plus Bonus if Critical Hit
@@ -179,7 +187,7 @@ void UExecutionCalculation_Damage_StormAssassin::Execute_Implementation(
 		return;
 	}
 
-	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetCombatInterface->GetPlayerLevel());
+	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetCharacterLevel);
 
 	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;

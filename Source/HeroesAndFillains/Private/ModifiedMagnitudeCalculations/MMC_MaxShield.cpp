@@ -1,5 +1,6 @@
 #include "ModifiedMagnitudeCalculations/MMC_MaxShield.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/CombatInterface.h"
 
 UMMC_MaxShield::UMMC_MaxShield()
@@ -41,8 +42,33 @@ float UMMC_MaxShield::CalculateBaseMagnitude_Implementation(const FGameplayEffec
 	Armor      = FMath::Max(Armor, 0.f);
 	Strength   = FMath::Max(Strength, 0.f);
 
-	// (No level dependency here, so no CombatInterface required)
-	return (25.f + (1.8f * Resilience)) +
-		   (25.f + (1.8f * Armor)) +
-		   (25.f + (1.8f * Strength));
+
+	// (Shield might later scale with PlayerLevel, so ready for safe check)
+	int32 CharacterLevel = 1; // Default level if context missing
+	UObject* SourceObj = Spec.GetContext().GetSourceObject();
+
+	if (SourceObj == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxShield: SourceObject is NULL (likely during respawn)."));
+	}
+	else 
+	{
+		if (SourceObj->Implements<UCombatInterface>())
+		{
+			if (ABaseCharacter* SourceChar = Cast<ABaseCharacter>(SourceObj))
+			{
+				CharacterLevel = ICombatInterface::Execute_GetCharacterLevel(SourceObj, SourceChar);	
+			}
+		}
+		else
+		{	
+			UE_LOG(LogTemp, Warning, TEXT("UMMC_MaxShield: SourceObject %s does not implement CombatInterface."),
+				*SourceObj->GetName());
+		}
+		// (No level dependency here, so no CombatInterface required)
+		return (25.f + (1.8f * Resilience)) +
+			(25.f + (1.8f * Armor)) +
+			(25.f + (1.8f * Strength));
+	}
+	return 0.f;
 }
