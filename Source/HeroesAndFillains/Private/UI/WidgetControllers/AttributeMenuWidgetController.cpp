@@ -6,7 +6,9 @@
 #include "AbilitySystem/AttributeIhfo.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 #include "HAFGameplayTags.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Enemies/EnemyBase.h"
+#include "PlayerState/HAFPlayerState.h"
 
 void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 {
@@ -23,6 +25,14 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 		}
 	);
 	}
+	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
+	HAFPlayerState->OnAttributePointsChangedDelegate.AddLambda(
+		[this](int32 NewAttributePoints)
+		{
+			OnAttributeMenuAttributePointsChangedDelegate.Broadcast(NewAttributePoints);
+		}
+	);	
+
 }
 
 void UAttributeMenuWidgetController::BroadcastInitialValues()
@@ -35,6 +45,10 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 	{
 		BroadcastAttributeInfo(Pair.Key, Pair.Value());
 	}
+
+	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
+	OnAttributeMenuAttributePointsChangedDelegate.Broadcast(HAFPlayerState->GetFillainPlayerAttributePoints());
+
 }
 
 void UAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag& AttributeTag,
@@ -43,4 +57,10 @@ void UAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag& 
 	FHAFAttributeInfo Info = AttributeInfo->FindAttributeInfoForTag(AttributeTag);
 	Info.AttributeValue = Attribute.GetNumericValue(AttributeSet);
 	AttributeInfoDelegate.Broadcast(Info);
+}
+
+void UAttributeMenuWidgetController::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	UHAFAbilitySystemComponent* HAFASC = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
+	HAFASC->UpgradeAttribute(AttributeTag);
 }

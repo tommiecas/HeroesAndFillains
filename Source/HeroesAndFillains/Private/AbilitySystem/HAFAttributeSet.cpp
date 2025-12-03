@@ -292,6 +292,32 @@ void UHAFAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
     }
 }
 
+void UHAFAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+	if (Attribute == GetMaxHealthAttribute() && bTopOffHealth)
+	{
+		SetHealth(GetMaxHealth());
+		bTopOffHealth = false;
+	}
+	if (Attribute == GetMaxShieldAttribute() && bTopOffShield)
+	{
+		SetShield(GetMaxShield());
+		bTopOffShield = false;
+	}
+	if (Attribute == GetMaxStaminaAttribute() && bTopOffStamina)
+	{
+		SetStamina(GetMaxStamina());
+		bTopOffStamina = false;
+	}
+	if (Attribute == GetMaxMajixAttribute() && bTopOffMajix)
+	{
+		SetMajix(GetMaxMajix());
+		bTopOffMajix = false;
+	}
+}
+
 
 void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {	
@@ -378,14 +404,13 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 				const int32 SpellPointsAwarded = IPlayerInterface::Execute_GetSpellPointsAward(Props.SourceAvatarActor, CurrentLevel);
 
 				IPlayerInterface::Execute_AddToCharacterLevel(Props.SourceAvatarActor, NumLevelUps);
+				IPlayerInterface::Execute_AddToAttributePoints(Props.SourceAvatarActor, AttributePointsAwarded);
+				IPlayerInterface::Execute_AddToSpellPoints(Props.SourceAvatarActor, SpellPointsAwarded);
 
-				// IPlayerInterface::Execute_AddToAttributePoints(Props.SourceAvatarActor, AttributePointsAwarded);
-				// IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsAwarded);
-
-				SetHealth(GetMaxHealth());
-				SetShield(GetMaxShield());
-				SetStamina(GetMaxStamina());
-				SetMajix(GetMaxMajix());
+				bTopOffHealth = true;
+				bTopOffShield = true;
+				bTopOffStamina = true;
+				bTopOffMajix = true;
 				
 				IPlayerInterface::Execute_LevelUp(Props.SourceAvatarActor);
 			}

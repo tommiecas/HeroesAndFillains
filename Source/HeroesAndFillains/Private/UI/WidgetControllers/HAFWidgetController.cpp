@@ -8,7 +8,7 @@
 
 void UHAFWidgetController::SetWidgetControllerParams(const FWidgetControllerParams& WCParams)
 {
-	PlayerController = WCParams.Controller;
+	PlayerController = WCParams.PlayerController;
 	PlayerState = WCParams.PlayerState;
 	AbilitySystemComponent = WCParams.AbilitySystemComponent;
 	AttributeSet = WCParams.AttributeSet;

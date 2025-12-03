@@ -34,6 +34,9 @@ void AHAFPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AHAFPlayerState, Team);
 	DOREPLIFETIME(AHAFPlayerState, Level);
 	DOREPLIFETIME(AHAFPlayerState, XP);
+	DOREPLIFETIME(AHAFPlayerState, AttributePoints);
+	DOREPLIFETIME(AHAFPlayerState, SpellPoints);
+
 }
 
 void AHAFPlayerState::AddToScore(float ScoreAmount)
@@ -120,6 +123,16 @@ void AHAFPlayerState::OnRep_XP(int32 OldXP)
 	OnXPChangedDelegate.Broadcast(XP);
 }
 
+void AHAFPlayerState::OnRep_AttributePoints(int32 OldAttributePoints)
+{
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AHAFPlayerState::OnRep_SpellPoints(int32 OldSpellPoints)
+{
+	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
+}
+
 void AHAFPlayerState::AddXP(const int32 XPToAdd)
 {
 	XP += XPToAdd;
@@ -130,6 +143,30 @@ void AHAFPlayerState::SetPlayerXP(const int32 NewXP)
 {
 	XP = NewXP;
 	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AHAFPlayerState::AddAttributePoints(const int32 AttributePointsToAdd)
+{
+	AttributePoints += AttributePointsToAdd;
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AHAFPlayerState::SetAttributePoints(const int32 NewAttributePoints)
+{
+	AttributePoints = NewAttributePoints;
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AHAFPlayerState::AddSpellPoints(const int32 SpellPointsToAdd)
+{
+	SpellPoints += SpellPointsToAdd;
+	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
+}
+
+void AHAFPlayerState::SetSpellPoints(const int32 NewSpellPoints)
+{
+	SpellPoints = NewSpellPoints;
+	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
 }
 
 void AHAFPlayerState::SetTeam(ETeam TeamToSet)

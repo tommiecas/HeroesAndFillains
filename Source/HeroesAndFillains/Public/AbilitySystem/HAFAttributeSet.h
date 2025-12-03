@@ -75,6 +75,7 @@ public:
 	UHAFAttributeSet();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	void ApplyDamage(float Damage, const FEffectProperties& Properties);
 
@@ -374,6 +375,10 @@ private:
 	const FGameplayAttribute& AffectedAttributeProperty);
 	void ShowFloatingText(const FEffectProperties& Properties, float Damage, bool bBlockedHit, bool bCriticalHit) const;
 	void SendXPEvent(const FEffectProperties& Properties);
+	bool bTopOffHealth = false;
+	bool bTopOffShield = false;
+	bool bTopOffStamina = false;
+	bool bTopOffMajix = false;
 public:
 
 };

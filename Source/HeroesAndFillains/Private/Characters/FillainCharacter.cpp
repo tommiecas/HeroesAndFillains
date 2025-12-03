@@ -664,16 +664,30 @@ void AFillainCharacter::AddToCharacterLevel_Implementation(int32 LevelToAdd)
 
 void AFillainCharacter::AddToAttributePoints_Implementation(int32 AttributePointsToAdd)
 {
-	const AHAFPlayerState* HAFPState = GetPlayerState<AHAFPlayerState>();
+	AHAFPlayerState* HAFPState = GetPlayerState<AHAFPlayerState>();
 	check(HAFPState);
-	//TODO: Add AttributePoints to PlayerState
+	HAFPState->AddAttributePoints(AttributePointsToAdd);
 }
 
 void AFillainCharacter::AddToSpellPoints_Implementation(int32 SpellPointsToAdd)
 {
-	const AHAFPlayerState* HAFPlayerS = GetPlayerState<AHAFPlayerState>();
+	AHAFPlayerState* HAFPlayerS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPlayerS);
-	//TODO: Add SpellPoints to PlayerState
+	HAFPlayerS->AddSpellPoints(SpellPointsToAdd);
+}
+
+int32 AFillainCharacter::GetAttributePoints_Implementation() const
+{
+	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
+	check(HAFPS);
+	return HAFPS->GetFillainPlayerAttributePoints();
+}
+
+int32 AFillainCharacter::GetSpellPoints_Implementation() const
+{
+	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
+	check(HAFPS);
+	return HAFPS->GetFillainPlayerSpellPoints();
 }
 
 float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,

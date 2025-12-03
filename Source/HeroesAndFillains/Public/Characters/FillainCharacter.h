@@ -85,6 +85,8 @@ public:
 	virtual void AddToCharacterLevel_Implementation(int32 LevelToAdd) override;
 	virtual void AddToAttributePoints_Implementation(int32 AttributePointsToAdd) override;
 	virtual void AddToSpellPoints_Implementation(int32 SpellPointsToAdd) override;
+	virtual int32 GetAttributePoints_Implementation() const override;
+	virtual int32 GetSpellPoints_Implementation() const override;
 	
 	// Override legacy damage system (TODO: Remove after migrating to pure GAS)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;

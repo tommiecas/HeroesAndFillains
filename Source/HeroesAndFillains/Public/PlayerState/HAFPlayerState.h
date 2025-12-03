@@ -54,11 +54,18 @@ public:
 
 	FOnPlayerStatChanged OnXPChangedDelegate;
 	FOnPlayerStatChanged OnLevelChangedDelegate;
+	FOnPlayerStatChanged OnAttributePointsChangedDelegate;
+	FOnPlayerStatChanged OnSpellPointsChangedDelegate;
 	
 	void AddLevel(const int32 LevelToAdd);
 	void SetPlayerLevel(const int32 NewLevel);
 	void AddXP(const int32 XPToAdd);
 	void SetPlayerXP(const int32 NewXP);
+	void AddAttributePoints(const int32 AttributePointsToAdd);
+	void SetAttributePoints(const int32 NewAttributePoints);
+	void AddSpellPoints(const int32 SpellPointsToAdd);
+	void SetSpellPoints(const int32 NewSpellPoints);
+
 protected:
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
@@ -76,11 +83,24 @@ private:
 
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_XP)
-	int32 XP = 0;
+	int32 XP = 1;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_AttributePoints)
+	int32 AttributePoints = 0;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SpellPoints)
+	int32 SpellPoints = 0;
 
 	UFUNCTION()
 	void OnRep_XP(int32 OldXP);
-	
+
+
+	UFUNCTION()
+	void OnRep_AttributePoints(int32 OldAttributePoints);
+
+	UFUNCTION()
+	void OnRep_SpellPoints(int32 OldSpellPoints);
+
 
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	class AFillainCharacter* Character = nullptr;
@@ -104,6 +124,7 @@ public:
 	void SetTeam(ETeam TeamToSet);
 	FORCEINLINE int32 GetFillainPlayerLevel() const { return Level; }
 	FORCEINLINE int32 GetFillainPlayerXP() const { return XP; }
-	
+	FORCEINLINE int32 GetFillainPlayerAttributePoints() const { return AttributePoints; }
+	FORCEINLINE int32 GetFillainPlayerSpellPoints() const { return SpellPoints; }
 		
 };

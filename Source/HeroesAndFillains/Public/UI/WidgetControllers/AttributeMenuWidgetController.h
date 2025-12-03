@@ -50,6 +50,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "GAS | Attributes")
 	FOnAttributeChanged OnMaxMajixChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "GAS | Attribute Points")
+	FOnPlayerStatChangedSignature OnAttributeMenuAttributePointsChangedDelegate;
+
+	UFUNCTION(BlueprintCallable)
+	void UpgradeAttribute(const FGameplayTag& AttributeTag);
 	
 	UPROPERTY(EditDefaultsOnly) 
 	TObjectPtr<UAttributeInfo> AttributeInfo;
