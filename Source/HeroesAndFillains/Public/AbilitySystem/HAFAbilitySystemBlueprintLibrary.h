@@ -6,8 +6,11 @@
 #include "GameplayEffectTypes.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "UI/WidgetControllers/HAFWidgetController.h"
 #include "HAFAbilitySystemBlueprintLibrary.generated.h"
 
+class AFillainHUD;
+class USpellMenuWidgetController;
 enum class EEnemyType : uint8;
 class UEnemyInfo;
 class AEnemyBase;
@@ -17,6 +20,7 @@ class UAbilitySystemComponent;
 enum class ECharacterClass : uint8;
 class UAttributeMenuWidgetController;
 class UOverlayWidgetController;
+struct FWidgetControllerParams;
 /**
  * 
  */
@@ -26,11 +30,17 @@ class HEROESANDFILLAINS_API UHAFAbilitySystemBlueprintLibrary : public UBlueprin
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers")
+	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
+	static bool MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, AFillainHUD*& OutFillainHUD);
+	
+	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
 	static UOverlayWidgetController* GetOverlayWidgetController(const UObject* WorldContextObject);
 
-	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers")
+	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+	
+		UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
+    	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
 	
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC);
@@ -38,11 +48,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass);
 
-	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|CharacterClassDefaults")
+	UFUNCTION(BlueprintCallable, Category="HAFAbilitySystemLibrary|CharacterClassDefaults")
 	static UCharacterClassInfo* GetCharacterClassInfo(const UObject* WorldContextObject);
 
-	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|EnemyDefaults")
+	UFUNCTION(BlueprintCallable, Category="HAFAbilitySystemLibrary|EnemyDefaults")
 	static UEnemyInfo* GetEnemyInfo(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category="HAFAbilitySystemLibrary|AbilityDefaults")
+	static UAbilityInfo* GetAbilityInfo(const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "Ability|GameplayEffects")
 	static FGameplayEffectContextHandle AddSourceObjectToContext(

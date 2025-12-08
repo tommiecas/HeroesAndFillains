@@ -26,7 +26,7 @@ void UTargetDataUnderMouse::Activate()
 
     // --- Initial cursor trace (one-shot broadcast when task starts) ---
     FHitResult CursorHit;
-    PC->GetHitResultUnderCursor(ECC_Enemy, false, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 
     if (!CursorHit.bBlockingHit)
     {
@@ -65,6 +65,10 @@ void UTargetDataUnderMouse::Activate()
         &UTargetDataUnderMouse::SendMouseCursorData,
         HoverUpdateRate,
         true);
+
+    UE_LOG(LogTemp, Error, TEXT("CURSOR HIT: Actor=%s  Location=%s"),
+    CursorHit.GetActor() ? *CursorHit.GetActor()->GetName() : TEXT("None"),
+    *CursorHit.Location.ToString());
 }
 
 void UTargetDataUnderMouse::SendMouseCursorData()
@@ -113,6 +117,9 @@ void UTargetDataUnderMouse::SendMouseCursorData()
     {
         ValidData.Broadcast(DataHandle);
     }
+    UE_LOG(LogTemp, Error, TEXT("CURSOR HIT: Actor=%s  Location=%s"),
+    CursorHit.GetActor() ? *CursorHit.GetActor()->GetName() : TEXT("None"),
+    *CursorHit.Location.ToString());
 }
 
 void UTargetDataUnderMouse::OnTargetDataReplicatedCallback(const FGameplayAbilityTargetDataHandle& DataHandle, FGameplayTag ActivationTag)

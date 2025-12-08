@@ -11,6 +11,7 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"            // FGameplayEffectSpec, UGameplayEffect
 #include "GameplayEffectTypes.h"       // FActiveGameplayEffectHandle
+#include "HAFGameplayTags.h"
 #include "AbilitySystem/AbilityInfo.h"
 #include "AbilitySystem/LevelUpInfo.h"
 #include "Engine/DataTable.h"          // UDataTable
@@ -74,16 +75,14 @@ void UOverlayWidgetController::OnGEAddedToSelf(UAbilitySystemComponent* /*Target
 void UOverlayWidgetController::BroadcastInitialValues()
 {
 	
-	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
-
-	OnHealthChanged.Broadcast(HAFAttributeSet->GetHealth());
-	OnMaxHealthChanged.Broadcast(HAFAttributeSet->GetMaxHealth());
-	OnShieldChanged.Broadcast(HAFAttributeSet->GetShield());
-	OnMaxShieldChanged.Broadcast(HAFAttributeSet->GetMaxShield());
-	OnStaminaChanged.Broadcast(HAFAttributeSet->GetStamina());
-	OnMaxStaminaChanged.Broadcast(HAFAttributeSet->GetMaxStamina());
-	OnMajixChanged.Broadcast(HAFAttributeSet->GetMajix());
-	OnMaxMajixChanged.Broadcast(HAFAttributeSet->GetMaxMajix());
+	OnHealthChanged.Broadcast(GetHAFAttributeSet()->GetHealth());
+	OnMaxHealthChanged.Broadcast(GetHAFAttributeSet()->GetMaxHealth());
+	OnShieldChanged.Broadcast(GetHAFAttributeSet()->GetShield());
+	OnMaxShieldChanged.Broadcast(GetHAFAttributeSet()->GetMaxShield());
+	OnStaminaChanged.Broadcast(GetHAFAttributeSet()->GetStamina());
+	OnMaxStaminaChanged.Broadcast(GetHAFAttributeSet()->GetMaxStamina());
+	OnMajixChanged.Broadcast(GetHAFAttributeSet()->GetMajix());
+	OnMaxMajixChanged.Broadcast(GetHAFAttributeSet()->GetMaxMajix());
 
 	UE_LOG(LogTemp, Warning, TEXT("BroadcastInitialValues ASC=%s AS=%s Controller=%s"),
 	*GetNameSafe(AbilitySystemComponent),
@@ -101,20 +100,18 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		UE_LOG(LogTemp, Error, TEXT("[OverlayWidgetController] Missing ASC or AS or PS when binding!"));
 		return;
 	}
-	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
-	HAFPlayerState->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
-	HAFPlayerState->OnLevelChangedDelegate.AddLambda(
+	GetHAFPlayerState()->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	GetHAFPlayerState()->OnLevelChangedDelegate.AddLambda(
 		[this](int32 NewLevel)
 		{
 			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
 		}
 	);	
-	const UHAFAttributeSet* HAFAttributeSet = CastChecked<UHAFAttributeSet>(AttributeSet);
 
 	UE_LOG(LogTemp, Warning, TEXT("[OverlayWidgetController] Successfully binding attribute delegates for ASC=%s, AS=%s, PS=%s"), *GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet), *GetNameSafe(PlayerState));
 	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetHealthAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetHealthAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnHealthChanged.Broadcast(Data.NewValue);
@@ -122,7 +119,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	// UE_LOG(LogTemp, Warning, TEXT("[WidgetController] Bound OnHealthChanged"));
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxHealthAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetMaxHealthAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnMaxHealthChanged.Broadcast(Data.NewValue);
@@ -131,7 +128,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetShieldAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetShieldAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnShieldChanged.Broadcast(Data.NewValue);
@@ -140,7 +137,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxShieldAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetMaxShieldAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnMaxShieldChanged.Broadcast(Data.NewValue);
@@ -149,7 +146,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetStaminaAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetStaminaAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnStaminaChanged.Broadcast(Data.NewValue);
@@ -158,7 +155,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxStaminaAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetMaxStaminaAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnMaxStaminaChanged.Broadcast(Data.NewValue);
@@ -167,7 +164,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMajixAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetMajixAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnMajixChanged.Broadcast(Data.NewValue);
@@ -176,7 +173,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		HAFAttributeSet->GetMaxMajixAttribute()).AddLambda(
+		GetHAFAttributeSet()->GetMaxMajixAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data)
 			{
 				OnMaxMajixChanged.Broadcast(Data.NewValue);
@@ -188,18 +185,24 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	
 	// Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
 	// 	[this] (const FGameplayTagContainer& AssetTags)
-	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent))
+
+	if (GetHAFAbilitySystemComponent())
 	{
-		if (HAFASC->bStartupAbilitiesGiven)
+		GetHAFAbilitySystemComponent()->AbilityEquipped.AddUObject(this, &UOverlayWidgetController::OnAbilityEquipped);
+	}
+
+	if (GetHAFAbilitySystemComponent())
+	{
+		if (GetHAFAbilitySystemComponent()->bStartupAbilitiesGiven)
 		{
-			OnInitializeStartupAbilities(HAFASC);
+			BroadcastAbilityInfo();
 		}
 		else
 		{
-			HAFASC->AbilitiesGiven.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+			GetHAFAbilitySystemComponent()->AbilitiesGiven.AddUObject(this, &UOverlayWidgetController::BroadcastAbilityInfo);
 		}
 
-		HAFASC->EffectAssetTags.AddLambda(
+		GetHAFAbilitySystemComponent()->EffectAssetTags.AddLambda(
 			[this](const FGameplayTagContainer& AssetTags)
 			{
 				for (const FGameplayTag& Tag : AssetTags)
@@ -223,75 +226,52 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 float UOverlayWidgetController::GetCurrentHealth() const
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
 	return HAFAttributeSet->GetHealth();
 }
 
-float UOverlayWidgetController::GetMaxHealth() const
+float UOverlayWidgetController::GetMaxHealth()
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetMaxHealth();
+	return GetHAFAttributeSet()->GetMaxHealth();
 }
 
-float UOverlayWidgetController::GetCurrentShield() const
+float UOverlayWidgetController::GetCurrentShield() 
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetShield();
+	return GetHAFAttributeSet()->GetShield();
 }
 
-float UOverlayWidgetController::GetMaxShield() const
+float UOverlayWidgetController::GetMaxShield()
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetMaxShield();
+	return GetHAFAttributeSet()->GetMaxShield();
 }
 
-float UOverlayWidgetController::GetCurrentStamina() const
+float UOverlayWidgetController::GetCurrentStamina() 
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetStamina();
+	return GetHAFAttributeSet()->GetStamina();
 }
 
-float UOverlayWidgetController::GetMaxStamina() const
+float UOverlayWidgetController::GetMaxStamina() 
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetMaxStamina();
+	return GetHAFAttributeSet()->GetMaxStamina();
 }
 
-float UOverlayWidgetController::GetCurrentMajix() const
+float UOverlayWidgetController::GetCurrentMajix()
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetMajix();
+	return GetHAFAttributeSet()->GetMajix();
 }
 
-float UOverlayWidgetController::GetMaxMajix() const
+float UOverlayWidgetController::GetMaxMajix() 
 {
 	if (!AttributeSet) return 0.f;
-	UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-	return HAFAttributeSet->GetMaxMajix();
+	return GetHAFAttributeSet()->GetMaxMajix();
 }
 
-void UOverlayWidgetController::OnInitializeStartupAbilities(UHAFAbilitySystemComponent* HAFAbilitySystemComponent)
-{
-	//TODO: Get information about all given abilities, look up their Ability Tag, and broadcast to all widgets.
-	if (!HAFAbilitySystemComponent->bStartupAbilitiesGiven) return;
-
-	FForEachAbility BroadcastDelegate;
-	BroadcastDelegate.BindLambda([this, HAFAbilitySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
-	{
-		//TODO: Need a way to figure out the ability tag for a given ability spec
-		FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(HAFAbilitySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
-		Info.InputTag = HAFAbilitySystemComponent->GetInputTagFromSpec(AbilitySpec);
-		AbilityInfoDelegate.Broadcast(Info);
-	});
-	HAFAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
-}
-
+ 
 void UOverlayWidgetController::BroadcastAllAbilityInfo()
 {
 	if (!AbilitySystemComponent) return;
@@ -310,10 +290,26 @@ void UOverlayWidgetController::BroadcastAllAbilityInfo()
 	}
 }
 
-void UOverlayWidgetController::OnXPChanged(int32 NewXP) const
+void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag,
+	const FGameplayTag& SlotTag, const FGameplayTag& PreviousSlotTag)
 {
-	const AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
-	const ULevelUpInfo* LevelUpInfo = HAFPlayerState->LevelUpInformation;
+	const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
+
+	FHAFAbilityInfo LastSlotInfo;
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;
+	LastSlotInfo.InputTag = PreviousSlotTag;
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);
+
+	FHAFAbilityInfo CurrentInfo = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	CurrentInfo.StatusTag = StatusTag;
+	CurrentInfo.InputTag = SlotTag;
+	AbilityInfoDelegate.Broadcast(CurrentInfo);
+}
+
+void UOverlayWidgetController::OnXPChanged(int32 NewXP) 
+{
+	const ULevelUpInfo* LevelUpInfo = GetHAFPlayerState()->LevelUpInformation;
 
 	checkf(LevelUpInfo, TEXT("Unable to find LevelUpInfo, Please fill out HAFPlayerState Blueprint"));
 

@@ -48,7 +48,6 @@ struct FUIWidgetRow : public FTableRowBase
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FHAFAbilityInfo&, Info);
 /**
  * 
  */
@@ -104,8 +103,7 @@ public:
 	UPROPERTY() FGameplayTag LastBroadcastTag;
 	UPROPERTY() double LastBroadcastTime = 0.0;
 
-	UPROPERTY(BlueprintAssignable, Category = "Gameplay Ability System | Ability Info")
-	FAbilityInfoSignature AbilityInfoDelegate;
+	
 
 	void BroadcastAllAbilityInfo();
 
@@ -116,7 +114,8 @@ public:
 	FOnPlayerStatChangedSignature OnPlayerLevelChangedDelegate;
 	
 protected:
-	void OnXPChanged(int32 NewXP) const;
+	void OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag, const FGameplayTag& SlotTag, const FGameplayTag& PreviousSlotTag);
+	void OnXPChanged(int32 NewXP);
 	
 	UFUNCTION() // required for AddUObject binding
 	void OnGEAddedToSelf(UAbilitySystemComponent* TargetASC,
@@ -127,33 +126,30 @@ protected:
 	float GetCurrentHealth() const;
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetMaxHealth() const;
+	float GetMaxHealth();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetCurrentShield() const;
+	float GetCurrentShield();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetMaxShield() const;
+	float GetMaxShield();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetCurrentStamina() const;
+	float GetCurrentStamina();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetMaxStamina() const;
+	float GetMaxStamina();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetCurrentMajix() const;
+	float GetCurrentMajix();
 
 	UFUNCTION(BlueprintCallable, Category = "UI|VitalAttributes")
-	float GetMaxMajix() const;
-
-	void OnInitializeStartupAbilities(UHAFAbilitySystemComponent* HAFAbilitySystemComponent);
+	float GetMaxMajix();
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
-	TObjectPtr<UAbilityInfo> AbilityInfo;
+
 	
 		template<typename T>
 		T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);

@@ -25,8 +25,7 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 		}
 	);
 	}
-	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
-	HAFPlayerState->OnAttributePointsChangedDelegate.AddLambda(
+	GetHAFPlayerState()->OnAttributePointsChangedDelegate.AddLambda(
 		[this](int32 NewAttributePoints)
 		{
 			OnAttributeMenuAttributePointsChangedDelegate.Broadcast(NewAttributePoints);
@@ -46,8 +45,7 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 		BroadcastAttributeInfo(Pair.Key, Pair.Value());
 	}
 
-	AHAFPlayerState* HAFPlayerState = CastChecked<AHAFPlayerState>(PlayerState);
-	OnAttributeMenuAttributePointsChangedDelegate.Broadcast(HAFPlayerState->GetFillainPlayerAttributePoints());
+	OnAttributeMenuAttributePointsChangedDelegate.Broadcast(GetHAFPlayerState()->GetFillainPlayerAttributePoints());
 
 }
 

@@ -18,9 +18,10 @@
     #include "Engine/Texture2D.h"
     #include "UI/WidgetControllers/HAFWidgetController.h"
     #include "UI/WidgetControllers/HAFWidgetController.h"
-    
-    
-    void AFillainHUD::BeginPlay()
+#include "UI/WidgetControllers/SpellMenuWidgetController.h"
+
+
+	void AFillainHUD::BeginPlay()
     {
     	Super::BeginPlay();
     
@@ -95,7 +96,18 @@ UAttributeMenuWidgetController* AFillainHUD::GetAttributeMenuWidgetController(co
 	return AttributeMenuWidgetController;
 }
 
-void AFillainHUD::AddAnnouncement()
+	USpellMenuWidgetController* AFillainHUD::GetSpellMenuWidgetController(const FWidgetControllerParams& Params)
+	{
+    	if (SpellMenuWidgetController == nullptr)
+    	{
+    		SpellMenuWidgetController = NewObject<USpellMenuWidgetController>(this, SpellMenuWidgetControllerClass);
+    		SpellMenuWidgetController->SetWidgetControllerParams(Params);
+    		SpellMenuWidgetController->BindCallbacksToDependencies();
+    	}
+    	return SpellMenuWidgetController;
+	}
+
+	void AFillainHUD::AddAnnouncement()
 {
 	APlayerController* PlayerController = GetOwningPlayerController();
 	if (PlayerController && AnnouncementClass)

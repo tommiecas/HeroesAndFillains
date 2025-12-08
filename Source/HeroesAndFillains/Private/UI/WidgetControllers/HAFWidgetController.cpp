@@ -3,7 +3,11 @@
 
 #include "UI/WidgetControllers/HAFWidgetController.h"
 
+#include "AbilitySystem/AbilityInfo.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "PlayerController/FillainPlayerController.h"
+#include "PlayerState/HAFPlayerState.h"
 #include "UI/WidgetControllers/OverlayWidgetController.h"
 
 void UHAFWidgetController::SetWidgetControllerParams(const FWidgetControllerParams& WCParams)
@@ -14,17 +18,31 @@ void UHAFWidgetController::SetWidgetControllerParams(const FWidgetControllerPara
 	AttributeSet = WCParams.AttributeSet;
 }
 
+void UHAFWidgetController::BroadcastAbilityInfo()
+{
+	if (!GetHAFAbilitySystemComponent()->bStartupAbilitiesGiven) return;
+
+	FForEachAbility BroadcastDelegate;
+	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& Spec)
+	{
+		FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(GetHAFAbilitySystemComponent()->GetAbilityTagFromSpec(Spec));
+		Info.InputTag = GetHAFAbilitySystemComponent()->GetInputTagFromSpec(Spec);
+		Info.StatusTag = HAFAbilitySystemComponent->GetStatusFromSpec(Spec);
+		AbilityInfoDelegate.Broadcast(Info);
+	});
+	GetHAFAbilitySystemComponent()->ForEachAbility(BroadcastDelegate);
+}
 
 
 void UHAFWidgetController::BroadcastInitialValues()
 {
 	if (UOverlayWidgetController* OWC = Cast<UOverlayWidgetController>(this))
 	{
-		UHAFAttributeSet* HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
-		check(HAFAttributeSet);
+		UHAFAttributeSet* HAFAttSet = Cast<UHAFAttributeSet>(AttributeSet);
+		check(HAFAttSet);
 		
-		OWC->OnHealthChanged.Broadcast(HAFAttributeSet->GetHealth());
-		OWC->OnMaxHealthChanged.Broadcast(HAFAttributeSet->GetMaxHealth());
+		OWC->OnHealthChanged.Broadcast(HAFAttSet->GetHealth());
+		OWC->OnMaxHealthChanged.Broadcast(HAFAttSet->GetMaxHealth());
 		OWC->OnShieldChanged.Broadcast(HAFAttributeSet->GetShield());
 		OWC->OnMaxShieldChanged.Broadcast(HAFAttributeSet->GetMaxShield());
 		OWC->OnStaminaChanged.Broadcast(HAFAttributeSet->GetStamina());
@@ -37,4 +55,40 @@ void UHAFWidgetController::BroadcastInitialValues()
 
 void UHAFWidgetController::BindCallbacksToDependencies()
 {
+}
+
+AFillainPlayerController* UHAFWidgetController::GetFillainPlayerController()
+{
+	if (FillainPlayerController == nullptr)
+	{
+		FillainPlayerController = Cast<AFillainPlayerController>(PlayerController);
+	}
+	return FillainPlayerController;
+}
+
+AHAFPlayerState* UHAFWidgetController::GetHAFPlayerState()
+{
+	if (HAFPlayerState == nullptr)
+	{
+		HAFPlayerState = Cast<AHAFPlayerState>(PlayerState);
+	}
+	return HAFPlayerState;
+}
+
+UHAFAbilitySystemComponent* UHAFWidgetController::GetHAFAbilitySystemComponent()
+{
+	if (HAFAbilitySystemComponent == nullptr)
+	{
+		HAFAbilitySystemComponent = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent);
+	}
+	return HAFAbilitySystemComponent;
+}
+
+UHAFAttributeSet* UHAFWidgetController::GetHAFAttributeSet()
+{
+	if (HAFAttributeSet == nullptr)
+	{
+		HAFAttributeSet = Cast<UHAFAttributeSet>(AttributeSet);
+	}
+	return HAFAttributeSet;
 }

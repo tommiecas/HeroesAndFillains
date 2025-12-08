@@ -36,6 +36,8 @@ HAFDamageStatics::HAFDamageStatics()
 	DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
 	DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
 
+	DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, IncomingDamage, Target, false);
+
 	const FHAFGameplayTags& Tags = FHAFGameplayTags::Get();
 	
 	TagsToCaptureDefs.Add(Tags.Attributes_Secondary_Armor, ArmorDef);
@@ -45,12 +47,12 @@ HAFDamageStatics::HAFDamageStatics()
 	TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitDamage, CriticalHitDamageDef);
 	TagsToCaptureDefs.Add(Tags.Attributes_Secondary_CriticalHitResistance, CriticalHitResistanceDef);
 
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Fire, FireproofDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Lightning, ShockproofDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ChaosMajix, ChaosIncorruptibleDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_MeleeAttacks, InvulnerabilityDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_RuleOfOrder, HeartOfDarknessDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Ice, ThermalRadiationDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Toxicity, ImmunityDef);
-	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Stun, UnstoppableDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Fireproof, FireproofDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Shockproof, ShockproofDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ChaosIncorruptibility, ChaosIncorruptibleDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Invulnerability, InvulnerabilityDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_HeartOfDarkness, HeartOfDarknessDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_ThermalRadiation, ThermalRadiationDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Immunity, ImmunityDef);
+	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Unstoppable, UnstoppableDef);
 }

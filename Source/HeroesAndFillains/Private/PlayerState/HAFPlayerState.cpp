@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/HAFAttributeSet.h"   // <- concrete set (derives from UAttributeSet)
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/Abilities/HAFGameplayAbility.h"
 
 AHAFPlayerState::AHAFPlayerState()
 {
@@ -105,12 +106,18 @@ void AHAFPlayerState::AddLevel(const int32 LevelToAdd)
 {
 	Level += LevelToAdd;
 	OnLevelChangedDelegate.Broadcast(Level);
+
+	// Update ability costs
+	UpdateAbilityCosts(Level);
 }
 
 void AHAFPlayerState::SetPlayerLevel(const int32 NewLevel)
 {
 	Level = NewLevel;
 	OnLevelChangedDelegate.Broadcast(Level);
+
+	// Update ability costs
+	UpdateAbilityCosts(Level);
 }
 
 void AHAFPlayerState::OnRep_Level(int32 OldLevel)
@@ -167,6 +174,30 @@ void AHAFPlayerState::SetSpellPoints(const int32 NewSpellPoints)
 {
 	SpellPoints = NewSpellPoints;
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
+}
+
+void AHAFPlayerState::UpdateAbilityCosts(int32 PlayerCharacterLevel)
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	// Loop all granted abilities
+	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+	{
+		if (Spec.Ability)
+		{
+			UHAFGameplayAbility* Ability = Cast<UHAFGameplayAbility>(Spec.Ability);
+			if (Ability)
+			{
+				float NewCost = Ability->CalculateAbilityCost(PlayerCharacterLevel);
+
+				// Store it however you want
+				NewCost = Ability->AbilityCost;
+
+				// Or update a GAS SetByCaller, etc
+			}
+		}
+	}
 }
 
 void AHAFPlayerState::SetTeam(ETeam TeamToSet)

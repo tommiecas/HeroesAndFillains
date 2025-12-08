@@ -65,14 +65,14 @@ public:
 
 	FGameplayTag Attributes_Invisible_DexterityAgilityFlexibility;
 
-	FGameplayTag Attributes_Resistance_Fire;
-	FGameplayTag Attributes_Resistance_Lightning;
-	FGameplayTag Attributes_Resistance_ChaosMajix;
-	FGameplayTag Attributes_Resistance_MeleeAttacks;
-	FGameplayTag Attributes_Resistance_RuleOfOrder;
-	FGameplayTag Attributes_Resistance_Ice;
-	FGameplayTag Attributes_Resistance_Toxicity;
-	FGameplayTag Attributes_Resistance_Stun;
+	FGameplayTag Attributes_Resistance_Fireproof;
+	FGameplayTag Attributes_Resistance_Shockproof;
+	FGameplayTag Attributes_Resistance_ThermalRadiation;
+	FGameplayTag Attributes_Resistance_Invulnerability;
+	FGameplayTag Attributes_Resistance_HeartOfDarkness;
+	FGameplayTag Attributes_Resistance_ChaosIncorruptibility;
+	FGameplayTag Attributes_Resistance_Immunity;
+	FGameplayTag Attributes_Resistance_Unstoppable;
 	
 	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
 	FGameplayTag InputTag_RightMouseButtonOrGamepadShoulder;
@@ -98,9 +98,22 @@ public:
 
 	FGameplayTag Abilities_Attack;
 	FGameplayTag Abilities_Summon;
+	FGameplayTag Abilities_HitReact;
+	FGameplayTag Abilities_None;
+	
+	FGameplayTag Abilities_Status_Locked;
+	FGameplayTag Abilities_Status_Eligible;
+	FGameplayTag Abilities_Status_Unlocked;
+	FGameplayTag Abilities_Status_Equipped;
+	FGameplayTag Abilities_Type_Offensive;
+	FGameplayTag Abilities_Type_Passive;
+	FGameplayTag Abilities_Type_None;
 
 	FGameplayTag Abilities_Fire_FireBolt;
+	FGameplayTag Abilities_Lightning_Electrocute;
+	
 	FGameplayTag Cooldown_Fire_FireBolt;
+	FGameplayTag Cooldown_Lightning_Electrocute;
 
 	FGameplayTag CombatSocket_Weapon;
 	FGameplayTag CombatSocket_LeftHand;

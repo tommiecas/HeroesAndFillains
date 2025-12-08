@@ -5,6 +5,7 @@
 #include "WidgetControllers/HAFWidgetController.h"
 #include "FillainHUD.generated.h"
 
+class USpellMenuWidgetController;
 class UAnnouncement;
 struct FFillainWidgetControllerParams;
 class UAttributeMenuWidgetController;
@@ -77,7 +78,7 @@ public:
 	// --- Widget controller getters ---
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& Params);
 	UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FWidgetControllerParams& Params);
-
+	USpellMenuWidgetController* GetSpellMenuWidgetController(const FWidgetControllerParams& Params);
 	// --- Widgets ---
 	UPROPERTY()
 	TObjectPtr<UHAFUserWidget> OverlayWidget;
@@ -100,11 +101,17 @@ public:
 	UPROPERTY()
 	TObjectPtr<UAttributeMenuWidgetController> AttributeMenuWidgetController;
 
+	UPROPERTY()
+	TObjectPtr<USpellMenuWidgetController> SpellMenuWidgetController;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<USpellMenuWidgetController> SpellMenuWidgetControllerClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FWidgetControllerParams WidgetControllerParams;

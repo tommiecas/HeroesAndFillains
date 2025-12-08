@@ -66,6 +66,7 @@ public:
 	void AddSpellPoints(const int32 SpellPointsToAdd);
 	void SetSpellPoints(const int32 NewSpellPoints);
 
+	void UpdateAbilityCosts(int32 Level);
 protected:
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")

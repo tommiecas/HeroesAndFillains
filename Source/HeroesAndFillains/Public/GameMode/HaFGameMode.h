@@ -5,6 +5,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "HAFGameMode.generated.h"
 
+class UAbilityInfo;
 class UCharacterClassInfo;
 class UEnemyInfo;
 
@@ -31,6 +32,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<UCharacterClassInfo> CharacterClassInfo;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Ability Info")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy Defaults")
 	TObjectPtr<UEnemyInfo> EnemyInfo;

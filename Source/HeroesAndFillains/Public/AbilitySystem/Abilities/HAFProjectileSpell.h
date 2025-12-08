@@ -21,8 +21,6 @@ class HEROESANDFILLAINS_API UHAFProjectileSpell : public UHAFDamageGameplayAbili
 	GENERATED_BODY()
 
 public:
-	
-protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Ability|GameplayEffects")
@@ -36,5 +34,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag);
 
+	UPROPERTY(EditDefaultsOnly)
+	int32 NumProjectiles = 5;
+	
 
 };
+

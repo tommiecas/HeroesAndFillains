@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "HAFGameplayTags.h"
 #include "Navigation/PathFollowingComponent.h"
 
 void UHAFDamageGameplayAbility::CauseDamage(AActor* Target)
@@ -50,4 +51,10 @@ FTaggedMontage UHAFDamageGameplayAbility::GetRandomTaggedMontageFromArray(const 
 
 	// Return an empty struct if no montages exist
 	return FTaggedMontage();
+}
+
+float UHAFDamageGameplayAbility::GetDamageByDamageType(float InLevel, const FGameplayTag& DamageType)
+{
+	checkf(DamageTypes.Contains(DamageType), TEXT("GameplayAbility %s does not contain DamageType %s"), *GetNameSafe(this), *DamageType.ToString());
+	return DamageTypes[DamageType].GetValueAtLevel(InLevel);
 }

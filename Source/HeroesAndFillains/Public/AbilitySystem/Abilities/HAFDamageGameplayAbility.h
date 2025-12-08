@@ -24,6 +24,8 @@ public:
 	FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages);
 
 protected:
+
+	float GetDamageByDamageType(float InLevel, const FGameplayTag& DamageType);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;

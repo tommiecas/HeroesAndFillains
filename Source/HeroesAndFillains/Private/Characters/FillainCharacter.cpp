@@ -659,7 +659,12 @@ void AFillainCharacter::AddToCharacterLevel_Implementation(int32 LevelToAdd)
 {
 	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPS);
-	return HAFPS->AddLevel(LevelToAdd);
+	HAFPS->AddLevel(LevelToAdd);
+
+	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		HAFASC->UpdateAbilityStatuses(HAFPS->GetFillainPlayerLevel());
+	}
 }
 
 void AFillainCharacter::AddToAttributePoints_Implementation(int32 AttributePointsToAdd)
@@ -3583,7 +3588,7 @@ void AFillainCharacter::Die_Implementation()
 	}
 
 	bIsDead = true;
-	Super::Die();
+	Super::Die_Implementation();
 }
 
 void AFillainCharacter::MulticastHandleDeath_Implementation()

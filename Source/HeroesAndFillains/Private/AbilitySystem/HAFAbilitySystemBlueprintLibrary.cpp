@@ -8,6 +8,7 @@
 #include "Enemies/EnemyBase.h"
 #include "Enemies/EnemyInfo.h"
 #include "Engine/OverlapResult.h"
+#include "Engine/SceneCapture2D.h"
 #include "GameMode/HaFGameMode.h"
 #include "UI/FillainHUD.h"
 #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
@@ -15,20 +16,36 @@
 #include "UI/Widgets/EnemyAttributeMenuWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerState/HAFPlayerState.h"
+#include "UI/WidgetControllers/HAFWidgetController.h"
+
+bool UHAFAbilitySystemBlueprintLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, AFillainHUD*& OutFillainHUD)
+{
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
+	{
+		OutFillainHUD = Cast<AFillainHUD>(PC->GetHUD());
+		if (OutFillainHUD)
+		{
+			AHAFPlayerState* PS = PC->GetPlayerState<AHAFPlayerState>();
+			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+			UAttributeSet* AS = PS->GetAttributeSet();
+			OutWCParams.AttributeSet = AS;
+			OutWCParams.AbilitySystemComponent = ASC;OutWCParams.PlayerState = PS;
+			OutWCParams.PlayerController = PC;
+			return true;
+		}
+	}
+	return false;
+}
+
 
 UOverlayWidgetController* UHAFAbilitySystemBlueprintLibrary::GetOverlayWidgetController(
 	const UObject* WorldContextObject)
 {
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
+	FWidgetControllerParams WCParams;
+	AFillainHUD* FillainHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, FillainHUD))
 	{
-		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(PC->GetHUD()))
-		{
-			AHAFPlayerState* PS = PC->GetPlayerState<AHAFPlayerState>();
-			UAbilitySystemComponent* AbilitySystemComponent = PS->GetAbilitySystemComponent();
-			UAttributeSet* AS = PS->GetAttributeSet();
-			const FWidgetControllerParams WidgetControllerParams(PC, PS, AbilitySystemComponent, AS);
-			return FillainHUD->GetOverlayWidgetController(WidgetControllerParams);
-		}
+		return FillainHUD->GetOverlayWidgetController(WCParams);
 	}
 	return nullptr;
 }
@@ -36,56 +53,25 @@ UOverlayWidgetController* UHAFAbilitySystemBlueprintLibrary::GetOverlayWidgetCon
 UAttributeMenuWidgetController* UHAFAbilitySystemBlueprintLibrary::GetAttributeMenuWidgetController(
 		const UObject* WorldContextObject)
 {
-	if (!WorldContextObject)
+	FWidgetControllerParams WCParams;
+	AFillainHUD* FillainHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, FillainHUD))
 	{
-		UE_LOG(LogTemp, Error, TEXT("GetAttributeMenuWidgetController: Invalid parameters"));
-		return nullptr;
-	}
-
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
-	{
-		if (AFillainHUD* FillainHUD = Cast<AFillainHUD>(PC->GetHUD()))
-		{
-			AHAFPlayerState* PS = PC->GetPlayerState<AHAFPlayerState>();
-			UAbilitySystemComponent* AbilitySystemComponent = PS->GetAbilitySystemComponent();
-			UAttributeSet* AS = PS->GetAttributeSet();
-			const FWidgetControllerParams WidgetControllerParams(PC, PS, AbilitySystemComponent, AS);
-			return FillainHUD->GetAttributeMenuWidgetController(WidgetControllerParams);
-		}
+		return FillainHUD->GetAttributeMenuWidgetController(WCParams);
 	}
 	return nullptr;
-	// THIS IS THE INTERFACE STUFF AI CAME UP WITH TO REPLACE THE OBJECT/ENEMYATTRIBBUTEMENUWIDGETCONTROLLER DEBACLE.
-/*
-	// ✅ If the target actor implements the interface, we’re good.
-	if (TargetActor->GetClass()->ImplementsInterface(UEnemyAttributeMenuWidgetControllerInterface::StaticClass()))
-	{
-		UE_LOG(LogTemp, Log, TEXT("Returning %s as its own WidgetController"), *TargetActor->GetName());
-		return TargetActor;
-	}
+}
 
-	// ✅ Fallback: maybe it’s the player’s HUD or PS-based system
-	APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
-	if (!PC) return nullptr;
-
-	AFillainHUD* FillainHUD = Cast<AFillainHUD>(PC->GetHUD());
-	if (!FillainHUD)
+USpellMenuWidgetController* UHAFAbilitySystemBlueprintLibrary::GetSpellMenuWidgetController(
+	const UObject* WorldContextObject)
+{
+	FWidgetControllerParams WCParams;
+	AFillainHUD* FillainHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, FillainHUD))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("GetAttributeMenuWidgetController: No FillainHUD found"));
-		return nullptr;
+		return FillainHUD->GetSpellMenuWidgetController(WCParams);
 	}
-
-	// --- Handle player case (Fillain)
-	if (AHAFPlayerState* PS = PC->GetPlayerState<AHAFPlayerState>())
-	{
-		UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-		UAttributeSet* AS = PS->GetAttributeSet();
-		if (ASC && AS)
-		{
-			const FWidgetControllerParams Params(PC, PS, ASC, AS);
-			return FillainHUD->GetAttributeMenuWidgetController(Params);
-		}
-	}
-	return nullptr;*/
+	return nullptr;
 }
 
 void UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC)
@@ -146,16 +132,23 @@ void UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(const UObject* Worl
 
 UCharacterClassInfo* UHAFAbilitySystemBlueprintLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
 {
-	AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
+	const AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (HAFGameMode == nullptr) return nullptr;
 	return HAFGameMode->CharacterClassInfo;
 }
 
 UEnemyInfo* UHAFAbilitySystemBlueprintLibrary::GetEnemyInfo(const UObject* WorldContextObject)
 {
-	AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
+	const AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (HAFGameMode == nullptr) return nullptr;
 	return HAFGameMode->EnemyInfo;
+}
+
+UAbilityInfo* UHAFAbilitySystemBlueprintLibrary::GetAbilityInfo(const UObject* WorldContextObject)
+{
+	const AHAFGameMode* HAFGameMode = Cast<AHAFGameMode>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (HAFGameMode == nullptr) return nullptr;
+	return HAFGameMode->AbilityInfo;
 }
 
 FGameplayEffectContextHandle UHAFAbilitySystemBlueprintLibrary::AddSourceObjectToContext(

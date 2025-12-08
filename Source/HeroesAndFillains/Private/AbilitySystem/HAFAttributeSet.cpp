@@ -64,14 +64,14 @@ UHAFAttributeSet::UHAFAttributeSet()
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMajix, GetMaxMajixAttribute);
 
 	// Resistances
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Fire, GetFireproofAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Ice, GetThermalRadiationAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Lightning, GetShockproofAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_MeleeAttacks, GetInvulnerabilityAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_RuleOfOrder, GetHeartOfDarknessAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_ChaosMajix, GetChaosIncorruptibleAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Toxicity, GetImmunityAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Stun, GetUnstoppableAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Fireproof, GetFireproofAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_ThermalRadiation, GetThermalRadiationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Shockproof, GetShockproofAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Invulnerability, GetInvulnerabilityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_ChaosIncorruptibility, GetHeartOfDarknessAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_HeartOfDarkness, GetChaosIncorruptibleAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Immunity, GetImmunityAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Unstoppable, GetUnstoppableAttribute);
 	
 	// Vital
 	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Health,GetHealthAttribute);

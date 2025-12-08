@@ -315,43 +315,43 @@ FString("How the Sausage Gets Made...Go Away")
 	***************************
 	**************************/
 
-	GameplayTags.Attributes_Resistance_Fire = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.Fire"),
+	GameplayTags.Attributes_Resistance_Fireproof = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Fireproof"),
 		FString("Reduces Burn Damage Taken from Fire")
 		);
 
-	GameplayTags.Attributes_Resistance_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.Lightning"),
+	GameplayTags.Attributes_Resistance_Shockproof = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Shockproof"),
 		FString("Reduces Shock Damage Taken from Lightning")
 		);
 
-	GameplayTags.Attributes_Resistance_ChaosMajix = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.ChaosMajix"),
+	GameplayTags.Attributes_Resistance_ChaosIncorruptibility = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.ChaosIncorruptibility"),
 		FString("Reduces Corrupt Chaos Damage Taken from Majix")
 		);
 
-	GameplayTags.Attributes_Resistance_MeleeAttacks = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.MeleeAttacks"),
+	GameplayTags.Attributes_Resistance_Invulnerability = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Invulnerability"),
 		FString("Reduces Physical Damage Taken from Melee Attacks")
 		);
 
-	GameplayTags.Attributes_Resistance_RuleOfOrder = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.RuleOfOrder"),
+	GameplayTags.Attributes_Resistance_HeartOfDarkness = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.HeartOfDarkness"),
 		FString("Reduces Pure Order Damage Taken from the Rule of Order")
 		);
 
-	GameplayTags.Attributes_Resistance_Ice = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.Ice"),
+	GameplayTags.Attributes_Resistance_ThermalRadiation = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.ThermalRadiation"),
 		FString("Reduces Frostbite Damage Taken from Ice")
 		);
 
-	GameplayTags.Attributes_Resistance_Toxicity = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.Toxicity"),
+	GameplayTags.Attributes_Resistance_Immunity = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Immunity"),
 		FString("Reduces Poison Damage Taken from Toxic Substances")
 		);
 
-	GameplayTags.Attributes_Resistance_Stun = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Resistance.Stun"),
+	GameplayTags.Attributes_Resistance_Unstoppable = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Resistance.Unstoppable"),
 		FString("Reduces Paralysis Damage Taken from Being Stunned")
 		);
 	
@@ -362,14 +362,14 @@ FString("How the Sausage Gets Made...Go Away")
 	**************************************************
 	*************************************************/
 
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Burn, GameplayTags.Attributes_Resistance_Fire);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Shock, GameplayTags.Attributes_Resistance_Lightning);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_CorruptChaos, GameplayTags.Attributes_Resistance_ChaosMajix);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Physical, GameplayTags.Attributes_Resistance_MeleeAttacks);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_PureOrder, GameplayTags.Attributes_Resistance_RuleOfOrder);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Frostbite, GameplayTags.Attributes_Resistance_Ice);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Poison, GameplayTags.Attributes_Resistance_Toxicity);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Paralysis, GameplayTags.Attributes_Resistance_Stun);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Burn, GameplayTags.Attributes_Resistance_Fireproof);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Shock, GameplayTags.Attributes_Resistance_Shockproof);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_CorruptChaos, GameplayTags.Attributes_Resistance_ChaosIncorruptibility);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Physical, GameplayTags.Attributes_Resistance_Invulnerability);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_PureOrder, GameplayTags.Attributes_Resistance_HeartOfDarkness);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Frostbite, GameplayTags.Attributes_Resistance_ThermalRadiation);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Poison, GameplayTags.Attributes_Resistance_Immunity);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Paralysis, GameplayTags.Attributes_Resistance_Unstoppable);
 	
 	/**********************
 	***********************
@@ -403,10 +403,63 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("When You Get Others to Do Your Dirty Work for You") 
 		);
 
+	GameplayTags.Abilities_None = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.None"),
+	FString("You have no abilities. At all. Period. Loser.") 
+	);
+
 	GameplayTags.Abilities_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
 	FName("Abilities.Fire.FireBolt"),
 	FString("When You Just Want to Hit Someone in the Face with a Fireball") 
 	);
+
+	GameplayTags.Abilities_Lightning_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Lightning.Electrocute"),
+FString("A Shockingly Powerful Bolt of Lightning") 
+);
+
+	GameplayTags.Abilities_Status_Eligible = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Status.Eligible"),
+		FString("Your ability is eligible to be equipped.") 
+		);
+
+	GameplayTags.Abilities_Status_Equipped = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Status.Equipped"),
+		FString("Your ability is equipped and ready to use.") 
+		);
+
+	GameplayTags.Abilities_Status_Locked = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Status.Locked"),
+		FString("Your ability is locked and cannot be equipped.") 
+		);
+
+	GameplayTags.Abilities_Status_Unlocked = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Status.Unlocked"),
+		FString("Your ability is unlocked and can be equipped.") 
+		);
+
+	GameplayTags.Abilities_Type_Offensive = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.Type.Offensive"),
+	FString("An ability that deals damage to enemies.") 
+	);
+
+	GameplayTags.Abilities_Type_Passive = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.Type.Passive"),
+	FString("An ability that provides passive benefits or buffs.") 
+	);
+	
+	GameplayTags.Abilities_Type_None = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.Type.None"),
+	FString("No ability type specified.") 
+	);
+
+
+
+
+	GameplayTags.Abilities_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.HitReact"),
+		FString("Because when you get hit, you should have the ability to react to said hit... ") 
+		);
 
 	/***********************
 	************************
@@ -417,6 +470,11 @@ FString("How the Sausage Gets Made...Go Away")
 	GameplayTags.Cooldown_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
 	FName("Cooldown.Fire.FireBolt"),
 	FString("You can't just shoot those things over and over again and expect it to never end!") 
+	);
+
+	GameplayTags.Cooldown_Lightning_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Cooldown.Lightning.Electrocute"),
+	FString("You really thought we'd let you just fire lightning from your fingertips for all of eternity, didn't you?") 
 	);
 
 	/*****************************
