@@ -32,7 +32,7 @@ public:
 	TSubclassOf<AHAFMajixProjectile> HAFMajixProjectileClass;
 	
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
-	void SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag);
+	void SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag, bool bOverridePitch, float PitchOverride);
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 NumProjectiles = 5;

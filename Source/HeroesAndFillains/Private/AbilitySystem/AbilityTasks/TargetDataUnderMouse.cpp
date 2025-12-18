@@ -69,6 +69,9 @@ void UTargetDataUnderMouse::Activate()
     UE_LOG(LogTemp, Error, TEXT("CURSOR HIT: Actor=%s  Location=%s"),
     CursorHit.GetActor() ? *CursorHit.GetActor()->GetName() : TEXT("None"),
     *CursorHit.Location.ToString());
+
+    MouseHitLocation = CursorHit.Location;
+    MouseHitActor = CursorHit.GetActor();
 }
 
 void UTargetDataUnderMouse::SendMouseCursorData()
@@ -79,7 +82,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
     if (!PC) return;
 
     FHitResult CursorHit;
-    PC->GetHitResultUnderCursor(ECC_Visibility, true, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Target, true, CursorHit);
     AEnemyBase* HitEnemy = Cast<AEnemyBase>(CursorHit.GetActor());
 
     // Handle hover highlighting

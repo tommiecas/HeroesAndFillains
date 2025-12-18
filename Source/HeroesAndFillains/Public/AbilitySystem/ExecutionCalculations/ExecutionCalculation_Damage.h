@@ -16,7 +16,12 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage : public UGameplayEffec
 
 public:
 	UExecutionCalculation_Damage();
-	
+
+	virtual void DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
+	                     const FGameplayEffectSpec& Spec,
+	                     FAggregatorEvaluateParameters EvaluationParameters,
+	                     const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>& InTagsToCaptureDefs) const;
+
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 	
 };

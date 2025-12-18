@@ -15,6 +15,7 @@
 #include "Enemies/EnemyInfo.h"
 #include "BaseCharacter.generated.h"
 
+class UDebuffNiagaraComponent;
 class AHAFGameMode;
 class APCPickupBaseItem;
 class APrePackagedPCPickupItem;
@@ -76,8 +77,8 @@ public:
 	virtual void MajixAttack();
 	
 	// ICombatInterface - BlueprintNativeEvent implementation
-	virtual void Die_Implementation() override;
-	
+	virtual void Die(const FVector& DeathImpulse) override;
+	virtual FOnDeathSignature& GetOnDeathDelegate() override;
 	// Legacy damage system - kept as virtual stubs for FillainCharacter compatibility
 	// TODO: Remove after FillainCharacter is migrated to pure GAS
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -95,7 +96,7 @@ public:
 	virtual void Dissolve();
 
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastHandleDeath();
+	virtual void MulticastHandleDeath(const FVector& DeathImpulse);
 
 	/** 
 	 * Called by GAS when damage is applied through GameplayEffects
@@ -109,7 +110,7 @@ public:
 
 	virtual void PlayRandomMeleeAttackMontage();
 	virtual void PlayRandomMajixAttackMontage();
-
+	virtual USkeletalMeshComponent* GetSpellCaster_Implementation() override;
 	UFUNCTION(BlueprintCallable)
     virtual void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
@@ -126,9 +127,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void DodgeEnd();
-    
-    virtual void CharacterDies();
-
+	
 	/*****************************
     ***                        ***
     ***   ANIMATION MONTAGES   ***
@@ -365,12 +364,52 @@ public:
 
 	virtual int32 GetMinionCount_Implementation() override;
     virtual void IncrementMinionCount_Implementation(int32 Amount) override;
+
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override; 
 	
+	FOnASCRegistered OnASCRegistered;
+	FOnDeathSignature OnDeathDelegate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	USoundBase* DeathSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<UDebuffNiagaraComponent> BurnDebuffComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<UDebuffNiagaraComponent> StunDebuffComponent;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Burned, BlueprintReadOnly)
+	bool bIsBurned = false;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_Stunned, BlueprintReadOnly)
+	bool bIsStunned = false;
+
+	UPROPERTY(ReplicatedUsing = OnRep_BeingShocked, BlueprintReadOnly)
+	bool bIsBeingShocked = false;
+	
+	UFUNCTION()
+	virtual void OnRep_Burned();
+	
+	UFUNCTION()
+	virtual void OnRep_Stunned();
+
+	UFUNCTION()
+	virtual void OnRep_BeingShocked();
+
+	virtual void SetIsBeingShocked_Implementation(bool bInShock) override;
+	virtual bool IsBeingShocked_Implementation() const override;
+
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
 	void StopMontage(UAnimMontage* Montage);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float BaseWalkSpeed = 600.f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	ECharacterClass CharacterClass = ECharacterClass::Warrior;
 

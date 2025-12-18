@@ -32,11 +32,14 @@
 #include "UI/WidgetControllers/EnemyWidgetControllerBase.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/Abilities/HAFBeamSpell.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Characters/CharacterClassInfo.h"
 #include "Characters/FillainCharacter.h"
+#include "Enemies/Hellspawn.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "HAFComponents/AttributeComponent.h"
 #include "HAFComponents/CombatComponent.h"
@@ -123,6 +126,8 @@ AEnemyBase::AEnemyBase()
 
     GetCharacterMovement()->bUseControllerDesiredRotation = true;
     GetCharacterMovement()->bOrientRotationToMovement = true;
+
+    BaseWalkSpeed = 250.f;
 }
 
 void AEnemyBase::SetWarpTargetsForCombatTarget(AActor* TargetActor)
@@ -321,6 +326,7 @@ void AEnemyBase::BeginPlay()
             TEXT("📌 Bound HandleChangeInHealth for enemy %s"), *GetName());
     }
     InitializeEnemy();
+
 }
 
 void AEnemyBase::InitializeDefaultTags()
@@ -544,6 +550,19 @@ void AEnemyBase::InitializeAbilityActorInfo()
 {
     if (!EnemyAbilitySystemComponent) return;
     EnemyAbilitySystemComponent->InitAbilityActorInfo(this, this);
+    Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+    EnemyAbilitySystemComponent->RegisterGameplayTagEvent(FHAFGameplayTags::Get().Debuffs_Stunned, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AEnemyBase::StunTagChanged);
+    
+    if (HasAuthority())
+    {
+        InitializeDefaultAttributes();
+    }
+    OnASCRegistered.Broadcast(EnemyAbilitySystemComponent);
+}
+
+void AEnemyBase::InitializeDefaultAttributes() const
+{
+    UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(this, CharacterClass, CharacterLevel, AbilitySystemComponent);
 }
 
 void AEnemyBase::InitializeEnemy()
@@ -854,6 +873,19 @@ void AEnemyBase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitte
     }
 }
 
+void AEnemyBase::Die(const FVector& DeathImpulse)
+{
+    SetLifeSpan(LifeSpan);
+    if (HAFAIController) HAFAIController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
+
+    if (AHellspawn* Hellspawn = Cast<AHellspawn>(this))
+    {
+        Hellspawn->StopZombieFeast();
+        Hellspawn->GetMesh()->DestroyComponent();
+    }
+    Super::Die(DeathImpulse);
+}
+
 void AEnemyBase::Dissolve()
 {
     UE_LOG(LogTemp, Log, TEXT("%s beginning dissolve effect."), *GetName());
@@ -891,143 +923,6 @@ void AEnemyBase::Destroyed()
     if (EquippedEnemyRangedWeapon)
     {
         EquippedEnemyRangedWeapon->Destroy();
-    }
-}
-
-void AEnemyBase::Die_Implementation()
-{
-    if (bDead) return;
-    bDead = true;
-    EnemyState = EEnemyState::EES_Dead;
-
-    UE_LOG(LogTemp, Log, TEXT("%s died."), *GetName());
-
-    // --- SHUT DOWN AI CLEANLY BEFORE ANYTHING ELSE ---
-    if (EnemyController)
-    {
-        // Stop any movement
-        EnemyController->StopMovement();
-
-        // Stop BT / EQS / AI logic
-        if (EnemyController->BrainComponent)
-        {
-            EnemyController->BrainComponent->StopLogic(TEXT("Enemy died"));
-            EnemyController->BrainComponent->SetComponentTickEnabled(false);
-        }
-
-        // Stop path following tick (THIS is what caused your crash)
-        if (UPathFollowingComponent* PathComp = EnemyController->GetPathFollowingComponent())
-        {
-            PathComp->SetComponentTickEnabled(false);
-        }
-
-        // Disable blackboard
-        if (UBlackboardComponent* BB = EnemyController->GetBlackboardComponent())
-        {
-            BB->ClearValue(FName("CombatTarget"));
-            BB->SetValueAsBool(FName("IsDead"), true);
-        }
-
-        // Fully detach the controller
-        EnemyController->UnPossess();
-
-        // Stop controller ticking
-        EnemyController->SetActorTickEnabled(false);
-
-        // DESTROY controller so it cannot tick next frame
-        EnemyController->Destroy();
-        EnemyController = nullptr;
-    }
-
-    // --- STOP MOVEMENT COMPONENT ---
-    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-    {
-        MoveComp->StopMovementImmediately();
-        MoveComp->DisableMovement();
-        MoveComp->SetComponentTickEnabled(false);
-    }
-
-    // --- COLLISION CLEANUP ---
-    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    GetMesh()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Ignore);
-
-    // --- WIDGET CLEANUP ---
-    if (HealthBarWidget) HealthBarWidget->RemoveFromParent();
-    if (ShieldBarWidget) ShieldBarWidget->RemoveFromParent();
-    if (ActiveAttributeMenuWidget)
-    {
-        ActiveAttributeMenuWidget->RemoveFromParent();
-        ActiveAttributeMenuWidget = nullptr;
-    }
-
-    ClearAttackTimer();
-
-    // --- PLAY DEATH MONTAGE AND FREEZE WHEN DONE ---
-    const int32 Section = PlayDeathMontage();
-
-    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-    {
-        if (DeathMontage)
-        {
-            FOnMontageEnded EndDelegate;
-            EndDelegate.BindLambda([this](UAnimMontage*, bool)
-            {
-                if (GetMesh())
-                {
-                    GetMesh()->SetAnimInstanceClass(nullptr);
-                    GetMesh()->bPauseAnims = true;
-                    GetMesh()->bNoSkeletonUpdate = true;
-                    GetMesh()->SetSimulatePhysics(false);
-                    GetMesh()->SetComponentTickEnabled(false);
-                }
-
-                if (UCharacterMovementComponent* Move = GetCharacterMovement())
-                {
-                    Move->StopMovementImmediately();
-                    Move->DisableMovement();
-                    Move->SetComponentTickEnabled(false);
-                }
-
-                SetActorTickEnabled(false);
-            });
-
-            AnimInstance->Montage_SetEndDelegate(EndDelegate, DeathMontage);
-        }
-    }
-
-    MulticastHandleDeath_Implementation();
-    Dissolve();
-    SpawnSoul();
-
-    SetLifeSpan(5.0f);
-}
-
-void AEnemyBase::MulticastHandleDeath_Implementation()
-{
-    UE_LOG(LogTemp, Log, TEXT("%s multicast handle death."), *GetName());
-    // Visual effects on all clients
-    if (DeathParticles)
-    {
-        UGameplayStatics::SpawnEmitterAtLocation(
-            GetWorld(),
-            DeathParticles,
-            GetActorLocation(),
-            FRotator::ZeroRotator,
-            FVector(1.f)
-        );
-    }
-    if (DeathSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation(
-            this,
-            DeathSound,
-            GetActorLocation()
-        );
-    }
-    // Weapon handling
-    if (EquippedEnemyWeapon)
-    {
-        EquippedEnemyWeapon->SetActorHiddenInGame(true);
     }
 }
 
@@ -1721,11 +1616,6 @@ void AEnemyBase::HandleChangeInHealth(const FOnAttributeChangeData& Data)
     UE_LOG(LogTemp, Error, TEXT("❤️ %s Health changed: %.1f → %.1f"), 
        *GetName(), Data.OldValue, Data.NewValue);
     OnEnemyHealthChanged.Broadcast(Data.NewValue);
-
-    if (Data.NewValue <= 0.0f && !bDead)
-    {
-        ICombatInterface::Execute_Die(this);
-    }
 }
 
 void AEnemyBase::HandleChangeInMaxHealth(const FOnAttributeChangeData& Data)
@@ -1923,6 +1813,16 @@ void AEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
 
     UE_LOG(LogTemp, Log, TEXT("%s EndPlay cleanup."), *GetName());
+}
+
+void AEnemyBase::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+    Super::StunTagChanged(CallbackTag, NewCount);
+
+    if (HAFAIController && HAFAIController->GetBlackboardComponent())
+    {
+        HAFAIController->GetBlackboardComponent()->SetValueAsBool(FName("Stunned"), bIsStunned);
+    }
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)

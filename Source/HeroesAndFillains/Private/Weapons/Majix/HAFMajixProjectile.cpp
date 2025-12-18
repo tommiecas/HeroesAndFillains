@@ -23,7 +23,6 @@ AHAFMajixProjectile::AHAFMajixProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-	SetReplicateMovement(true);
 	
 	// 2) Reattach & neutralize the base pickup sphere so it’s harmless here
 	// IMPORTANT: Do NOT destroy default subobjects in a constructor (CDO runs here).
@@ -132,14 +131,26 @@ void AHAFMajixProjectile::BeginPlay()
 
 }
 
+void AHAFMajixProjectile::OnHit()
+{
+	if (ImpactSound) UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	if (ImpactEffect) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
+	}
+	bHit = true;
+}
+
 void AHAFMajixProjectile::Destroyed()
 {
-	if (!bHit && !HasAuthority())
+	if (LoopingSoundComponent)
 	{
-		if (ImpactSound) UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-		if (ImpactEffect) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-		if (LoopingSoundComponent) LoopingSoundComponent->Stop();
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
 	}
+	if (!bHit && !HasAuthority()) OnHit();
 	Super::Destroyed();
 }
 
@@ -152,69 +163,37 @@ void AHAFMajixProjectile::OnNewSphereOverlap(
     bool bFromSweep, 
     const FHitResult& SweepResult)
 {
-	if (!DamageEffectSpecHandle.Data.IsValid() || DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser() == OtherActor) return;
+	if (DamageEffectParams.SourceAbilitySystemComponent == nullptr) return;
+	AActor* SourceAvatarActor = DamageEffectParams.SourceAbilitySystemComponent->GetAvatarActor();
+	if (SourceAvatarActor == OtherActor) return;
 
-	if (!UHAFAbilitySystemBlueprintLibrary::IsNotFriend(DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser(), OtherActor)) return;
-	
-    UE_LOG(LogTemp, Warning, TEXT("🔥 Projectile overlap! Hit: %s"), *GetNameSafe(OtherActor));
+	if (!UHAFAbilitySystemBlueprintLibrary::IsNotFriend(SourceAvatarActor, OtherActor)) return;
+	if (!bHit) OnHit();
+	if (!bHit && OtherActor && OtherActor != this && OtherActor != GetOwner()) OnHit();
+	// UE_LOG(LogTemp, Warning, TEXT("🔥 Projectile overlap! Hit: %s"), *GetNameSafe(OtherActor));
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
+		{
+			// UE_LOG(LogTemp, Warning, TEXT("✅ Target %s has ASC"), *GetNameSafe(OtherActor));
+			const FVector DeathImpulse = GetActorForwardVector() * DamageEffectParams.DeathImpulseMagnitude;
+			DamageEffectParams.DeathImpulse = DeathImpulse;
+			const bool bKnockback = FMath::RandRange(1, 100) < DamageEffectParams.KnockbackChance;
+			if (bKnockback)
+			{
+				FRotator Rotation = GetActorRotation();
+				Rotation.Pitch = 45.f;
 
-    if (OtherActor && OtherActor != this && OtherActor != GetOwner())
-    {
-        UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-        if (LoopingSoundComponent) LoopingSoundComponent->Stop();
+				const FVector KnockbackDirection = Rotation.Vector();
+				const FVector KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;
+				DamageEffectParams.KnockbackForce = KnockbackForce;
+			}
 
-        if (HasAuthority())
-        {
-            if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
-            {
-                UE_LOG(LogTemp, Warning, TEXT("✅ Target %s has ASC"), *GetNameSafe(OtherActor));
-                
-                if (DamageEffectSpecHandle.IsValid())
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("✅ DamageEffectSpecHandle is VALID"));
-                    
-                    // ✅ Log all SetByCaller values in the spec
-                    const FGameplayEffectSpec* Spec = DamageEffectSpecHandle.Data.Get();
-                    if (Spec)
-                    {
-                        UE_LOG(LogTemp, Warning, TEXT("📋 Spec has %d SetByCaller magnitudes"), 
-                            Spec->SetByCallerTagMagnitudes.Num());
-                        
-                        for (const auto& Pair : Spec->SetByCallerTagMagnitudes)
-                        {
-                            UE_LOG(LogTemp, Warning, TEXT("  - Tag: %s | Value: %.1f"), 
-                                *Pair.Key.ToString(), Pair.Value);
-                        }
-                    }
-                    
-                    // ✅ Apply damage effect to the target
-                    FActiveGameplayEffectHandle ActiveHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*Spec);
-                    
-                    if (ActiveHandle.IsValid())
-                    {
-                        UE_LOG(LogTemp, Warning, TEXT("💥 Successfully applied damage effect!"));
-                    }
-                    else
-                    {
-                        UE_LOG(LogTemp, Error, TEXT("❌ Failed to apply damage effect!"));
-                    }
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Error, TEXT("❌ DamageEffectSpecHandle is INVALID!"));
-                }
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("⚠️ Hit actor %s has no AbilitySystemComponent"), *GetNameSafe(OtherActor));
-            }
-            Destroy();
-        }
-        else
-        {
-            bHit = true;
-        }
+			DamageEffectParams.TargetAbilitySystemComponent = TargetASC;
+			UHAFAbilitySystemBlueprintLibrary::ApplyDamageEffect(DamageEffectParams);
+		}
+		Destroy();
     }
+	else bHit = true;
 }
 

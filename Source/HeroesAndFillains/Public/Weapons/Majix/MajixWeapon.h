@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
+#include "HAFAbilityTypes.h"
 #include "Weapons/WeaponBase.h"
 #include "MajixWeapon.generated.h"
 
@@ -16,7 +17,7 @@ public:
 	AMajixWeapon();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = "true"))
-	FGameplayEffectSpecHandle DamageEffectSpecHandle;
+	FDamageEffectParams DamageEffectParams;
 	
 protected:
 	virtual void BeginPlay() override;

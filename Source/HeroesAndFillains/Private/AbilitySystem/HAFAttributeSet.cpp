@@ -21,9 +21,15 @@
 #include "HAFGameplayTags.h"
 #include "AbilitySystem/HAFAttributeSet.h"
 
+#include "HAFAbilityTypes.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Characters/FillainCharacter.h"
 #include "HeroesAndFillains/HAFLogChannels.h"
+#include "GameplayEffect.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
+
+
 
 UHAFAttributeSet::UHAFAttributeSet() 
 {
@@ -181,57 +187,6 @@ void UHAFAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 		Properties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
 		Properties.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 	}
-
-	// --- Logging (safe) ---
-	UE_LOG(LogTemp, Log, TEXT("Source ASC: %s | Avatar: %s | Controller: %s"),
-		*GetNameSafe(Properties.SourceASC),
-		*GetNameSafe(Properties.SourceAvatarActor),
-		*GetNameSafe(Properties.SourceController));
-
-	UE_LOG(LogTemp, Log, TEXT("Target ASC: %s | Avatar: %s | Controller: %s"),
-		*GetNameSafe(Properties.TargetASC),
-		*GetNameSafe(Properties.TargetAvatarActor),
-		*GetNameSafe(Properties.TargetController));
-
-	// --- Optional: sanity warning ---
-	if (!IsValid(Properties.SourceController))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing or invalid SourceController for %s"),
-			TEXT(__FUNCTION__), *GetNameSafe(Properties.SourceAvatarActor));
-	}
-	UE_LOG(LogTemp, Warning, TEXT("SetEffectProperties: TargetAvatarActor=%s TargetCharacter=%s"),
-		*GetNameSafe(Properties.TargetAvatarActor),
-		*GetNameSafe(Properties.TargetCharacter));
-	LogEffectSourceTarget(Properties, TEXT(__FUNCTION__), Data.EffectSpec);
-}
-
-void UHAFAttributeSet::LogEffectSourceTarget(const FEffectProperties& Props, const FString& FunctionName, const FGameplayEffectSpec& Spec)
-{
-	const FString SourceName = GetNameSafe(Props.SourceAvatarActor);
-	const FString TargetName = GetNameSafe(Props.TargetAvatarActor);
-
-	// ✅ Extract the name of the GameplayEffect
-	const FString EffectName = Spec.Def ? Spec.Def->GetName() : TEXT("UnknownEffect");
-
-	if (Props.SourceASC == Props.TargetASC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] ⚠️ %s self-applied (%s)"),
-			*FunctionName, *SourceName, *EffectName);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("[%s] ✅ %s ➜ %s (%s)"),
-			*FunctionName, *SourceName, *TargetName, *EffectName);
-	}
-
-	if (!Props.SourceController)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing SourceController for %s"), *FunctionName, *SourceName);
-	}
-	if (!Props.TargetController)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Missing TargetController for %s"), *FunctionName, *TargetName);
-	}
 }
 
 void UHAFAttributeSet::AdjustAttributeForMaxChange(
@@ -320,18 +275,20 @@ void UHAFAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, 
 
 
 void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
-{	
+{
 	Super::PostGameplayEffectExecute(Data);
 
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
 
+	if (Props.TargetAvatarActor->Implements<UCombatInterface>() && ICombatInterface::Execute_IsDead(Props.TargetAvatarActor)) return;
+	
 	const FGameplayAttribute& Attribute = Data.EvaluatedData.Attribute;
 
 	// --- Clamp vitals ---
 	if (Attribute == GetHealthAttribute())
 	{
-        // UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: Health changed to %f on %s"), GetHealth(), *Props.TargetAvatarActor->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute: Health changed to %f on %s"), GetHealth(), *Props.TargetAvatarActor->GetName());
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 	}
 	else if (Attribute == GetShieldAttribute())
@@ -352,70 +309,141 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 		{
 			FillChar->EnterCombat();
 		}
-		const float LocalIncomingDamage = GetIncomingDamage();
-		SetIncomingDamage(0.f);
-		if (LocalIncomingDamage > 0.f)
-		{
-			UE_LOG(LogTemp, Error, TEXT("🔥 INCOMING DAMAGE EXECUTED: %.1f"), LocalIncomingDamage);
-
-			ApplyDamage(LocalIncomingDamage, Props);
-			
-			const bool bFatal = GetHealth() <= 0.f;
-			if (bFatal)
-			{
-				ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props. TargetAvatarActor);
-				if (CombatInterface)
-				{
-					ICombatInterface::Execute_Die(Props.TargetAvatarActor);
-					SendXPEvent(Props);
-				}
-			}
-			else
-			{
-				FGameplayTagContainer TagContainer;
-				TagContainer.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
-				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
-			}
-
-			const bool bBlock = UHAFAbilitySystemBlueprintLibrary::IsBlockedHit(Props.EffectContextHandle);
-			const bool bCritical = UHAFAbilitySystemBlueprintLibrary::IsCriticalHit(Props.EffectContextHandle);
-			ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCritical);
-		}
-		
-		
-		
-		
+		HandleIncomingDamage(Props);
 	}
 	else if (Attribute == GetIncomingXPAttribute())
 	{
-		const float LocalIncomingXP = GetIncomingXP();
-		SetIncomingXP(0.f);
-		UE_LOG(LogHAF, Log, TEXT("Incoming XP: %f"), LocalIncomingXP);
+		HandleIncomingXP(Props);	
+	}
+}
 
-		if (Props.SourceAvatarActor->Implements<UPlayerInterface>() && Props.SourceAvatarActor->Implements<UCombatInterface>())
+void UHAFAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
+{
+	const float LocalIncomingDamage = GetIncomingDamage();
+	SetIncomingDamage(0.f);
+	if (LocalIncomingDamage > 0.f)
+	{
+		UE_LOG(LogTemp, Error, TEXT("🔥 INCOMING DAMAGE EXECUTED: %.1f"), LocalIncomingDamage);
+
+		ApplyDamage(LocalIncomingDamage, Props);
+			
+		const bool bFatal = GetHealth() <= 0.f;
+		if (bFatal)
 		{
-			const int32 CurrentLevel = ICombatInterface::Execute_GetCharacterLevel(Props.SourceAvatarActor, Cast<ABaseCharacter>(Props.SourceAvatarActor));
-			const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceAvatarActor);
-			const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceAvatarActor, CurrentXP + LocalIncomingXP);
-			const int32 NumLevelUps = NewLevel  - CurrentLevel;
-			if (NumLevelUps > 0)
+			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props. TargetAvatarActor);
+			if (CombatInterface)
 			{
-				const int32 AttributePointsAwarded = IPlayerInterface::Execute_GetAttributePointsAward(Props.SourceAvatarActor, CurrentLevel);
-				const int32 SpellPointsAwarded = IPlayerInterface::Execute_GetSpellPointsAward(Props.SourceAvatarActor, CurrentLevel);
-
-				IPlayerInterface::Execute_AddToCharacterLevel(Props.SourceAvatarActor, NumLevelUps);
-				IPlayerInterface::Execute_AddToAttributePoints(Props.SourceAvatarActor, AttributePointsAwarded);
-				IPlayerInterface::Execute_AddToSpellPoints(Props.SourceAvatarActor, SpellPointsAwarded);
-
-				bTopOffHealth = true;
-				bTopOffShield = true;
-				bTopOffStamina = true;
-				bTopOffMajix = true;
-				
-				IPlayerInterface::Execute_LevelUp(Props.SourceAvatarActor);
+				CombatInterface->Die(UHAFAbilitySystemBlueprintLibrary::GetDeathImpulse(Props.EffectContextHandle));
 			}
-			IPlayerInterface::Execute_AddToXP(Props.SourceAvatarActor, LocalIncomingXP);
+			SendXPEvent(Props);
 		}
+		else
+		{
+			if (Props.TargetAvatarActor->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(Props.TargetAvatarActor))
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);	
+			}
+			
+			const FVector& KnockbackForce = UHAFAbilitySystemBlueprintLibrary::GetKnockbackForce(Props.EffectContextHandle);
+			if (!KnockbackForce.IsNearlyZero(1.f))
+			{
+				ACharacter* CharacterTargeted = Cast<ACharacter>(Props.TargetAvatarActor);
+				if (CharacterTargeted) CharacterTargeted->LaunchCharacter(KnockbackForce, true, true);	
+			}
+		}
+		const bool bBlock = UHAFAbilitySystemBlueprintLibrary::IsBlockedHit(Props.EffectContextHandle);
+		const bool bCritical = UHAFAbilitySystemBlueprintLibrary::IsCriticalHit(Props.EffectContextHandle);
+		ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCritical);
+		if (UHAFAbilitySystemBlueprintLibrary::IsDebuffSuccessful(Props.EffectContextHandle))
+		{
+			Debuff(Props);
+		}
+	}
+}
+
+void UHAFAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
+{
+	const float LocalIncomingXP = GetIncomingXP();
+	SetIncomingXP(0.f);
+	UE_LOG(LogHAF, Log, TEXT("Incoming XP: %f"), LocalIncomingXP);
+
+	if (Props.SourceAvatarActor->Implements<UPlayerInterface>() && Props.SourceAvatarActor->Implements<UCombatInterface>())
+	{
+		const int32 CurrentLevel = ICombatInterface::Execute_GetCharacterLevel(Props.SourceAvatarActor, Cast<ABaseCharacter>(Props.SourceAvatarActor));
+		const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceAvatarActor);
+		const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceAvatarActor, CurrentXP + LocalIncomingXP);
+		const int32 NumLevelUps = NewLevel  - CurrentLevel;
+		if (NumLevelUps > 0)
+		{
+			const int32 AttributePointsAwarded = IPlayerInterface::Execute_GetAttributePointsAward(Props.SourceAvatarActor, CurrentLevel);
+			const int32 SpellPointsAwarded = IPlayerInterface::Execute_GetSpellPointsAward(Props.SourceAvatarActor, CurrentLevel);
+
+			IPlayerInterface::Execute_AddToCharacterLevel(Props.SourceAvatarActor, NumLevelUps);
+			IPlayerInterface::Execute_AddToAttributePoints(Props.SourceAvatarActor, AttributePointsAwarded);
+			IPlayerInterface::Execute_AddToSpellPoints(Props.SourceAvatarActor, SpellPointsAwarded);
+
+			bTopOffHealth = true;
+			bTopOffShield = true;
+			bTopOffStamina = true;
+			bTopOffMajix = true;
+				
+			IPlayerInterface::Execute_LevelUp(Props.SourceAvatarActor);
+		}
+		IPlayerInterface::Execute_AddToXP(Props.SourceAvatarActor, LocalIncomingXP);
+	}
+}
+
+void UHAFAttributeSet::Debuff(const FEffectProperties& Props)
+{
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+	FGameplayEffectContextHandle EffectContext = Props.SourceASC->MakeEffectContext();
+	EffectContext.AddSourceObject(Props.SourceAvatarActor);
+
+	const FGameplayTag DamageTypeTag = UHAFAbilitySystemBlueprintLibrary::GetDamageTypeTag(Props.EffectContextHandle);
+	float DebuffDamage = UHAFAbilitySystemBlueprintLibrary::GetDebuffDamage(Props.EffectContextHandle);
+	float DebuffDuration = UHAFAbilitySystemBlueprintLibrary::GetDebuffDuration(Props.EffectContextHandle);
+	float DebuffFrequency = UHAFAbilitySystemBlueprintLibrary::GetDebuffFrequency(Props.EffectContextHandle);
+	
+	FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageTypeTag.ToString());
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+
+	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	Effect->Period = DebuffFrequency;
+	Effect->DurationMagnitude = FScalableFloat(DebuffDuration);
+
+	// REMOVE THIS LINE: Effect->GetGrantedTags().AddTag(GameplayTags.DamageTypesToDebuffs[DamageTypeTag]);
+	const FGameplayTag DebuffTag = GameplayTags.DamageTypesToDebuffs[DamageTypeTag];
+	FGameplayEffectContextHandle Context = Props.SourceASC->MakeEffectContext();
+
+	FGameplayEffectSpec Spec(Effect, Context, 1.f);
+	Spec.DynamicGrantedTags.AddTag(DebuffTag);
+	if (DebuffTag.MatchesTagExact(GameplayTags.Debuffs_Stunned))
+	{
+		Spec.DynamicGrantedTags.AddTag(GameplayTags.Player_Block_CursorTrace);
+		Spec.DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputHeld);
+		Spec.DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputPressed);
+		Spec.DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputReleased);
+	}
+
+	const int32 Index = Effect->Modifiers.Num();
+	Effect->Modifiers.Add(FGameplayModifierInfo());
+	FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+
+	ModifierInfo.ModifierMagnitude = FScalableFloat(DebuffDamage);
+	ModifierInfo.ModifierOp = EGameplayModOp::Additive;
+	ModifierInfo.Attribute = UHAFAttributeSet::GetIncomingDamageAttribute();
+	
+	if (FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContext, 1.f))
+	{
+		MutableSpec->DynamicGrantedTags.AddTag(GameplayTags.DamageTypesToDebuffs[DamageTypeTag]);
+
+		FHAFGameplayEffectContext* HAFContext = static_cast<FHAFGameplayEffectContext*>(MutableSpec->GetContext().Get());
+		TSharedPtr<FGameplayTag> DebuffDamageTypeTag = MakeShareable(new FGameplayTag(DamageTypeTag));
+		HAFContext->SetDamageTypeTag(DebuffDamageTypeTag);
+
+		Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
 	}
 }
 
@@ -457,10 +485,12 @@ void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 	}
 	else
 	{
-		FGameplayTagContainer Tags;
-		Tags.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
-		Props.TargetASC->TryActivateAbilitiesByTag(Tags);
-		UE_LOG(LogTemp, Warning, TEXT("%s took damage and triggered hit react"), *Props.TargetAvatarActor->GetName());
+		if (Props.TargetAvatarActor->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(Props.TargetAvatarActor))
+		{
+			FGameplayTagContainer TagContainer;
+			TagContainer.AddTag(FHAFGameplayTags::Get().Effects_HitReact);
+			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+		}
 	}
 
 	// --- Floating text or damage numbers are optional ---
@@ -471,18 +501,17 @@ void UHAFAttributeSet::ApplyDamage(float Damage, const FEffectProperties& Props)
 
 void UHAFAttributeSet::ShowFloatingText(const FEffectProperties& Properties, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
-	if (Properties.SourceCharacter != Properties.TargetCharacter)
+	if (Properties.SourceAvatarActor != Properties.TargetAvatarActor)
 	{
-		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0)))
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.SourceAvatarActor, 0)))
 		{
-			PC->ShowDamageNumber(Damage, Properties.TargetCharacter, bBlockedHit, bCriticalHit);
+			PC->ShowDamageNumber(Damage, Properties.TargetAvatarActor, bBlockedHit, bCriticalHit);
 			return;
 		}
-		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.TargetCharacter, 0)))
+		if (AFillainPlayerController* PC = Cast<AFillainPlayerController>(UGameplayStatics::GetPlayerController(Properties.TargetAvatarActor, 0)))
 		{
-			PC->ShowDamageNumber(Damage, Properties.TargetCharacter, bBlockedHit, bCriticalHit);
+			PC->ShowDamageNumber(Damage, Properties.TargetAvatarActor, bBlockedHit, bCriticalHit);
 		}
-		
 	}
 }
 
@@ -504,6 +533,8 @@ void UHAFAttributeSet::SendXPEvent(const FEffectProperties& Properties)
 		}
 	}
 }
+
+
 
 void UHAFAttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue) const
 {

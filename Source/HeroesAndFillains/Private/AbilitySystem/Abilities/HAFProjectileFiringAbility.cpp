@@ -76,7 +76,7 @@ void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& Projectil
 		return;
 	}
 
-	TArray<FVector> SocketLocations = ICombatInterface::Execute_GetCombatSocketLocations(GetAvatarActorFromActorInfo(), SocketTag);
+	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo(), SocketTag);
 	//Mesh->GetSocketLocation(SocketName);
 
 	// Adjust target Z height
@@ -84,12 +84,12 @@ void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& Projectil
 	AdjustedTarget.Z += 60.f;
 
 	// Compute firing rotation
-	const FVector SocketLocation = SocketLocations.Num() > 0 ? SocketLocations[0] : GetAvatarActorFromActorInfo()->GetActorLocation();
+	const FVector SocketLoc = /*SocketLocations.Num() > 0 ? SocketLocations[0] :*/ GetAvatarActorFromActorInfo()->GetActorLocation();
 	const FVector AimDirection = (AdjustedTarget - SocketLocation).GetSafeNormal();
 	const FRotator AimRotation = AimDirection.Rotation();
 
 	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(SocketLocation);
+	SpawnTransform.SetLocation(SocketLoc);
 	SpawnTransform.SetRotation(AimRotation.Quaternion());
 
 	// Spawn projectile
@@ -140,11 +140,8 @@ void UHAFProjectileFiringAbility::SpawnProjectileBullet(const FVector& Projectil
 	}
 
 	// Assign damage magnitudes
-	for (const auto& Pair : DamageTypes)
-	{
-		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
-	}
+	const float ScaledDamage = DamageAmount.GetValueAtLevel(GetAbilityLevel());
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageTypeTag, ScaledDamage);
 
 	ProjectileBullet->BulletDamageEffectSpecHandle = SpecHandle;
 	ProjectileBullet->FinishSpawning(SpawnTransform);

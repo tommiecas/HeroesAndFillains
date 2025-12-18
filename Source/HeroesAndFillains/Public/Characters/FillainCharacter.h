@@ -68,12 +68,10 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void InitializeDefaultTags() override;
+	virtual void Die(const FVector& DeathImpulse) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	virtual void Die_Implementation() override;
-	virtual void MulticastHandleDeath_Implementation();
 	virtual void ApplyStartupEffects() const override;
-	bool IsDead() const;
 	bool bIsDead = false;
 
 	virtual void AddToXP_Implementation(int32 XPToAdd) override;
@@ -97,6 +95,8 @@ public:
 	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void AddSoulsGatheredToTotalSouls(class ASoul* Soul) override;
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
+	virtual void OnRep_Burned() override;
+	virtual void OnRep_Stunned() override;
 	void InitASC();
 
 	UFUNCTION(BlueprintCallable)
@@ -190,7 +190,6 @@ public:
 	void SpawnEliminationBotEffect();
 	void PlayEliminationSound();
 	void DestroyCrown();
-	void FinishElimination();
 	virtual void Destroyed() override;
 	void HideAttachedGrenade();
 	// void OnFillainDying(AFillainCharacter* InstigatorFillain, AFillainCharacter* DyingFillain, class AFillainPlayerController* InstigatorController);
@@ -642,7 +641,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float CameraSelfOcclusionThreshold = 160.f; // tweakable
 
-	void FixSelfCameraCollision();
 	void ResetCameraRig();
 
 	UFUNCTION()

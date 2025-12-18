@@ -269,18 +269,18 @@ FString("How the Sausage Gets Made...Go Away")
 	****************************
 	***************************/
 
-	GameplayTags.Damage_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage.Burn"),
+	GameplayTags.Damage_Fire = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Fire"),
 		FString("Fire burns... in case you didn't know.") 
 		);
 
-	GameplayTags.Damage_Shock = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage.Shock"),
+	GameplayTags.Damage_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Lightning"),
 		FString("Lightning electrocutes... you'll see soon enough.") 
 		);
 
-	GameplayTags.Damage_CorruptChaos = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage.CorruptChaos"),
+	GameplayTags.Damage_ChaosMajix = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.ChaosMajix"),
 		FString("Chaos corrupts... is your soul worth it?")
 		);
 
@@ -289,13 +289,13 @@ FString("How the Sausage Gets Made...Go Away")
 		FString("Physical damage...because sometimes nothing says it better than a good punch in the face.")
 		);
 
-	GameplayTags.Damage_PureOrder = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage.PureOrder"),
+	GameplayTags.Damage_RuleOfOrder = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.RuleOfOrder"),
 		FString("Pure Order... always stay in line and obey.")
 		);
 
-	GameplayTags.Damage_Frostbite = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Damage.Frostbite"),
+	GameplayTags.Damage_Ice = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage.Ice"),
 		FString("Frostbite... ice, ice, baby.")
 		);
 
@@ -356,20 +356,102 @@ FString("How the Sausage Gets Made...Go Away")
 		);
 	
 
+	/**********************
+	***********************
+	****    DEBUFFS    ****
+	***********************
+	**********************/
+
+	GameplayTags.Debuffs_Burned = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Burned"),
+		FString("Burn Damage Over Time Caused By Being Set on Fire")
+		);
+
+	GameplayTags.Debuffs_Shocked = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Shocked"),
+		FString("Shock Damage Over Time Caused By Being Struck By Lightning")
+		);
+
+	GameplayTags.Debuffs_Corrupted = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Corrupted"),
+		FString("Chaos Damage Over Time Caused By Being Corrupted")
+		);
+
+	GameplayTags.Debuffs_Injured = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Injured"),
+		FString("Physical Damage Over Time Caused By Injuries Sustained From Melee Attacks and Gunfire")
+		);
+
+	GameplayTags.Debuffs_Ordered = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Ordered"),
+		FString("Damage You Do To Yourself Over Time Caused By Being Ordered to Obey By The Rule of Order")
+		);
+
+	GameplayTags.Debuffs_Frozen = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Frozen"),
+		FString("Hypothermic Damage Sustained Over Time While Frozen in a Block of Ice")
+		);
+
+	GameplayTags.Debuffs_Contaminated = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Contaminated"),
+		FString("Toxic Damage Sustained Over Time From Being Poisoned")
+		);
+
+	GameplayTags.Debuffs_Stunned = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Debuffs.Stunned"),
+		FString("Paralyzed for a Certain Length of Time After Being Stunned")
+		);
+
+	GameplayTags.Debuff_Chance = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Debuff.Chance"),
+	FString("The Odds This Poor Jackass Will Get a Debuff")
+	);
+
+	GameplayTags.Debuff_Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Debuff.Damage"),
+FString("The Amount of Extra Damage That Sorry Sunnavabitch Has To Endure")
+);
+
+	GameplayTags.Debuff_Duration = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Debuff.Duration"),
+FString("How Long That Pathetic Loser Has to Suffer Through the Debuff")
+);
+
+	GameplayTags.Debuff_Frequency = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Debuff.Frequency"),
+	FString("How Often That Damned Rat Bastard Gets Hit With That Debuff")
+	);
+
+	
 	/*************************************************
 	**************************************************
 	****    MAP OF DAMAGE TYPES TO RESISTANCES    ****
 	**************************************************
 	*************************************************/
 
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Burn, GameplayTags.Attributes_Resistance_Fireproof);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Shock, GameplayTags.Attributes_Resistance_Shockproof);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_CorruptChaos, GameplayTags.Attributes_Resistance_ChaosIncorruptibility);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Fire, GameplayTags.Attributes_Resistance_Fireproof);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Lightning, GameplayTags.Attributes_Resistance_Shockproof);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_ChaosMajix, GameplayTags.Attributes_Resistance_ChaosIncorruptibility);
 	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Physical, GameplayTags.Attributes_Resistance_Invulnerability);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_PureOrder, GameplayTags.Attributes_Resistance_HeartOfDarkness);
-	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Frostbite, GameplayTags.Attributes_Resistance_ThermalRadiation);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_RuleOfOrder, GameplayTags.Attributes_Resistance_HeartOfDarkness);
+	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Ice, GameplayTags.Attributes_Resistance_ThermalRadiation);
 	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Poison, GameplayTags.Attributes_Resistance_Immunity);
 	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Paralysis, GameplayTags.Attributes_Resistance_Unstoppable);
+
+	/*********************************************
+    **********************************************
+    ****    MAP OF DAMAGE TYPES TO DEBUFFS    ****
+    **********************************************
+    *********************************************/
+
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Fire, GameplayTags.Debuffs_Burned);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Lightning, GameplayTags.Debuffs_Shocked);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_ChaosMajix, GameplayTags.Debuffs_Corrupted);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Physical, GameplayTags.Debuffs_Injured);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_RuleOfOrder, GameplayTags.Debuffs_Ordered);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Ice, GameplayTags.Debuffs_Frozen);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Poison, GameplayTags.Debuffs_Contaminated);
+	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Paralysis, GameplayTags.Debuffs_Stunned);
 	
 	/**********************
 	***********************
@@ -659,4 +741,38 @@ FString("14th Attack Montage")
 		FName("Attributes.Meta.IncomingXP"),
 		FString("Experience incoming to you, Player!")
 		);
+
+	/**************************
+	***************************
+	****    PLAYER TAGS    ****
+	***************************
+	**************************/
+
+	GameplayTags.Player_Block_CursorTrace = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Player.Block.CursorTrace"),
+	FString("Blocks any tracing done under the mouse cursor")
+	);
+
+	GameplayTags.Player_Block_InputHeld = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Player.Block.InputHeld"),
+	FString("Blocks callback when holding down an input button on gamepad or keyboard")
+	);
+
+	GameplayTags.Player_Block_InputPressed = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Player.Block.InputPressed"),
+	FString("Blocks callback when pressing any input button on gamepad or keyboard")
+	);
+
+	GameplayTags.Player_Block_InputReleased = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Player.Block.InputReleased"),
+	FString("Blocks callback when releasing any input button on gamepad or keyboard")
+	);
+
+	/****************************
+	*****************************
+	****    GAMEPLAY CUES    ****
+	*****************************
+	****************************/
+
+
 }

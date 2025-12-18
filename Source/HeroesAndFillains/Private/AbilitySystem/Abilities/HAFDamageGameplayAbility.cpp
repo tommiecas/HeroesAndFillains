@@ -32,11 +32,8 @@ void UHAFDamageGameplayAbility::CauseDamage(AActor* Target)
 	FGameplayEffectSpecHandle DamageSpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, 1.f);
 
 	// Set By Caller magnitudes
-	for (const TTuple<FGameplayTag, FScalableFloat>& Pair : DamageTypes)
-	{
-		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, Pair.Key, ScaledDamage);
-	}
+	const float ScaledDamage = DamageAmount.GetValueAtLevel(GetAbilityLevel());
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, DamageTypeTag, ScaledDamage);
 
 	// ------------------------------------------------------------
 }
@@ -53,8 +50,36 @@ FTaggedMontage UHAFDamageGameplayAbility::GetRandomTaggedMontageFromArray(const 
 	return FTaggedMontage();
 }
 
-float UHAFDamageGameplayAbility::GetDamageByDamageType(float InLevel, const FGameplayTag& DamageType)
+FDamageEffectParams UHAFDamageGameplayAbility::MakeDamageEffectParamsFromClassDefaults(AActor* TargetActor) const
 {
-	checkf(DamageTypes.Contains(DamageType), TEXT("GameplayAbility %s does not contain DamageType %s"), *GetNameSafe(this), *DamageType.ToString());
-	return DamageTypes[DamageType].GetValueAtLevel(InLevel);
+	FDamageEffectParams Params;
+	Params.WorldContextObject = GetAvatarActorFromActorInfo();
+	Params.DamageGameplayEffectClass = DamageEffectClass;
+	Params.SourceAbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
+	Params.TargetAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+	Params.BaseDamage = DamageAmount.GetValueAtLevel(GetAbilityLevel());
+	Params.AbilityLevel = GetAbilityLevel();
+	Params.DamageTypeTag = DamageTypeTag;
+	Params.DebuffChance = DebuffChance;
+	Params.DebuffDuration = DebuffDuration;
+	Params.DebuffFrequency = DebuffFrequency;
+	Params.DebuffDamage = DebuffDamage;
+	Params.DeathImpulseMagnitude = DeathImpulseMagnitude;
+	Params.KnockbackForceMagnitude = KnockbackForceMagnitude;
+	Params.KnockbackChance = KnockbackChance;
+	if (IsValid(TargetActor))
+	{
+		FRotator Rotation = (TargetActor->GetActorLocation() - GetAvatarActorFromActorInfo()->GetActorLocation()).Rotation();
+		Rotation.Pitch = 45.f;
+		const FVector ToTarget = Rotation.Vector();
+		Params.DeathImpulse = ToTarget * DeathImpulseMagnitude;
+		Params.KnockbackForce = ToTarget * KnockbackForceMagnitude;
+	}
+	return Params;
 }
+
+float UHAFDamageGameplayAbility::GetDamageAtLevel() const
+{
+	return DamageAmount.GetValueAtLevel(GetAbilityLevel());
+}
+

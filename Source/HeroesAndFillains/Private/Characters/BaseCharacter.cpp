@@ -29,6 +29,7 @@
 #include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "AbilitySystem/Abilities/HAFGameplayAbility.h"
+#include "AbilitySystem/Debuffs/DebuffNiagaraComponent.h"
 
 #include "PlayerController/FillainPlayerController.h"
 #include "GameMode/HaFGameMode.h"
@@ -49,6 +50,14 @@ ABaseCharacter::ABaseCharacter()
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+
+	BurnDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("BurnDebuffComponent"));
+	BurnDebuffComponent->SetupAttachment(GetMesh());
+	BurnDebuffComponent->DebuffTag = FHAFGameplayTags::Get().Debuffs_Burned;
+
+	StunDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("StunDebuffComponent"));
+	StunDebuffComponent->SetupAttachment(GetMesh());
+	StunDebuffComponent->DebuffTag = FHAFGameplayTags::Get().Debuffs_Stunned;
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -59,7 +68,9 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ABaseCharacter, MeleeAttackMontages);
 	DOREPLIFETIME(ABaseCharacter, MajixAttackMontage);
 	DOREPLIFETIME(ABaseCharacter, MajixAttackMontages);
-
+	DOREPLIFETIME(ABaseCharacter, bIsStunned);
+	DOREPLIFETIME(ABaseCharacter, bIsBurned);
+	DOREPLIFETIME(ABaseCharacter, bIsBeingShocked);
 }
 
 int32 ABaseCharacter::GetMinionCount_Implementation()
@@ -70,6 +81,43 @@ int32 ABaseCharacter::GetMinionCount_Implementation()
 void ABaseCharacter::IncrementMinionCount_Implementation(int32 Amount)
 {
 	MinionCount += Amount;
+}
+
+FOnASCRegistered& ABaseCharacter::GetOnASCRegisteredDelegate()
+{
+	return OnASCRegistered;
+}
+
+
+void ABaseCharacter::OnRep_Burned()
+{
+	
+}
+
+void ABaseCharacter::OnRep_Stunned()
+{
+	
+}
+
+void ABaseCharacter::OnRep_BeingShocked()
+{
+	
+}
+
+void ABaseCharacter::SetIsBeingShocked_Implementation(bool bInShock)
+{
+	bIsBeingShocked = bInShock;
+}
+
+bool ABaseCharacter::IsBeingShocked_Implementation() const
+{
+	return bIsBeingShocked;
+}
+
+void ABaseCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bIsStunned = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsStunned ? 0.f : BaseWalkSpeed;
 }
 
 void ABaseCharacter::BeginPlay()
@@ -213,23 +261,8 @@ void ABaseCharacter::ConsumeDodgeStamina()
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec);
 }
 
-void ABaseCharacter::Die_Implementation()
+void ABaseCharacter::Die(const FVector& DeathImpulse)
 {
-	if (bIsCharacterDead)  // or bIsDead—pick one shared flag!
-	{
-		return;
-	}
-	bIsCharacterDead = true;
-	
-	if (ActorHasTag("Enemy"))
-	{
-		AEnemyBase* Enemy = Cast<AEnemyBase>(this);
-		Enemy->EnemyState = EEnemyState::EES_Dead;
-		Enemy->ClearAttackTimer();
-		GetWorldTimerManager().ClearAllTimersForObject(this);
-	}
-	
- 
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->DetachFromActor(
@@ -237,8 +270,12 @@ void ABaseCharacter::Die_Implementation()
 		);
 	}
 
-	CharacterDies();        // Server-side death logic
-	MulticastHandleDeath(); // Cosmetic death, effects, ragdoll, etc.
+	MulticastHandleDeath(DeathImpulse); // Cosmetic death, effects, ragdoll, etc.
+}
+
+FOnDeathSignature& ABaseCharacter::GetOnDeathDelegate()
+{
+	return OnDeathDelegate;
 }
 
 
@@ -276,24 +313,30 @@ void ABaseCharacter::SafeInitializeAttributes()
 	}
 }
 
-void ABaseCharacter::MulticastHandleDeath_Implementation()
+void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
 {
 	// Mark as dead FIRST so IsDead() returns true immediately
 	bIsCharacterDead = true;
+
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
 	
 	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
 	{
 		EquippedWeapon->GetWeaponMesh()->SetSimulatePhysics(true);
 		EquippedWeapon->GetWeaponMesh()->SetEnableGravity(true);
 		EquippedWeapon->GetWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		EquippedWeapon->GetWeaponMesh()->AddImpulse(DeathImpulse);
 	}
 
 	// DON'T enable physics on mesh - let the death montage play instead
 	// The montage will hold the dead pose until dissolve completes
 	if (GetMesh())
 	{
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetEnableGravity(true);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->AddImpulse(DeathImpulse, NAME_None, true);
 	}
 
 	if (GetCapsuleComponent())
@@ -302,11 +345,9 @@ void ABaseCharacter::MulticastHandleDeath_Implementation()
 	}
 	
 	Dissolve();
-
-	if (ASpectralBase* SpectralSoldier = Cast<ASpectralBase>(this))
-	{
-		SpectralSoldier->SpectralAssaultRifle->DestroyComponent();
-	}
+	if (BurnDebuffComponent) BurnDebuffComponent->Deactivate();
+	if (StunDebuffComponent) StunDebuffComponent->Deactivate();
+	OnDeathDelegate.Broadcast(this);
 }
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
@@ -326,10 +367,6 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 		{
 			DirectionalHitReact(Hitter->GetActorLocation());
 		}
-	}
-	else
-	{
-		Die();
 	}
 
 	// Play audiovisual feedback
@@ -380,22 +417,6 @@ void ABaseCharacter::MajixAttack()
 	{
 		CombatTarget = nullptr;
 	}
-}
-
-void ABaseCharacter::CharacterDies()
-{
-	UE_LOG(LogTemp, Warning, TEXT("CharacterDies() called for: %s"), *GetName());
-
-	if (bIsCharacterDead) return;
-	bIsCharacterDead = true;
-	
-	if (AEnemyBase* DeadEnemy = Cast<AEnemyBase>(this))
-	{
-		Tags.Add(FName("Dead"));
-	}
-	
-	// Note: FillainCharacter-specific death handling moved to FillainCharacter::Die() override
-	// This keeps BaseCharacter independent of FillainCharacter to avoid circular dependencies
 }
 
 void ABaseCharacter::PlayHitReactMontage(const FName& Section)
@@ -484,6 +505,11 @@ void ABaseCharacter::PlayRandomMeleeAttackMontage()
 void ABaseCharacter::PlayRandomMajixAttackMontage()
 {
 	// Empty stub - child classes may override
+}
+
+USkeletalMeshComponent* ABaseCharacter::GetSpellCaster_Implementation()
+{
+	return GetMesh();
 }
 
 

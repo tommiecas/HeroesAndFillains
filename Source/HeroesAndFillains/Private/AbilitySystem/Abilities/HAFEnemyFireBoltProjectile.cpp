@@ -145,13 +145,10 @@ void UHAFEnemyFireBoltProjectile::SpawnEnemyFireBoltProjectile(const FVector& En
 	}
 
 	// Assign damage magnitudes
-	for (const auto& Pair : DamageTypes)
-	{
-		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
-	}
+	const float ScaledDamage = DamageAmount.GetValueAtLevel(GetAbilityLevel());
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageTypeTag, ScaledDamage);
 
-	EnemyFireBoltProjectile->DamageEffectSpecHandle = SpecHandle;
+	EnemyFireBoltProjectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults(nullptr);
 	EnemyFireBoltProjectile->FinishSpawning(SpawnTransform);
 
 	// Debug visualization

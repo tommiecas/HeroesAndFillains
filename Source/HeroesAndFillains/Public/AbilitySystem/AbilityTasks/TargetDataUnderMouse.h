@@ -29,6 +29,12 @@ public:
 
 	FTimerHandle HoverTimerHandle;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Beam")
+	FVector MouseHitLocation = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Beam")
+	TObjectPtr<AActor> MouseHitActor = nullptr;
+
 private:
 	virtual void Activate() override;
 	void SendMouseCursorData();

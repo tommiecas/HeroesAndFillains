@@ -88,12 +88,6 @@ float AHAFGameMode::CalculateDamage(AController* Killer, AController* Victim, fl
 
 void AHAFGameMode::PlayerEliminated(class AFillainCharacter* VictimCharacter, class AFillainPlayerController* VictimController, AFillainPlayerController* KillerController)
 {
-	if (KillerController == nullptr || KillerController->PlayerState == nullptr)
-	{
-		ABaseCharacter* DeadCharacter = Cast<ABaseCharacter>(VictimCharacter);
-		DeadCharacter->Die();
-	}
-	if (VictimController == nullptr || VictimController->PlayerState == nullptr) return;
 	AHAFPlayerState* KillerPlayerState = KillerController ? Cast<AHAFPlayerState>(KillerController->PlayerState) : nullptr;
 	AHAFPlayerState* VictimPlayerState = VictimController ? Cast<AHAFPlayerState>(VictimController->PlayerState) : nullptr;
 

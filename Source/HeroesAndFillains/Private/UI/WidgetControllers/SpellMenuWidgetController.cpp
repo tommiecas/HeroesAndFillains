@@ -38,6 +38,8 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 		}
 	});
 
+	GetHAFAbilitySystemComponent()->AbilityEquipped.AddUObject(this, &USpellMenuWidgetController::OnAbilityEquipped);
+
 	GetHAFPlayerState()->OnSpellPointsChangedDelegate.AddLambda([this] (int32 SpellPoints)
 	{
 		SpellPointsChangedDelegate.Broadcast(SpellPoints);
@@ -52,7 +54,6 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 		SpellGlobeButtonSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description, NextLevelDescription);
 	});
 
-	GetHAFAbilitySystemComponent()->AbilityEquipped.AddUObject(this, &USpellMenuWidgetController::OnAbilityEquipped);
 }
 
 void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityTag)
@@ -158,9 +159,6 @@ void USpellMenuWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTa
 	AbilityInfoDelegate.Broadcast(Info);
 
 	StopWaitingForEquipSelectionDelegate.Broadcast(AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType);
-
-	SpellGlobeReassignedDelegate.Broadcast(AbilityTag);
-	GlobeButtonDeselect();
 }
 
 void USpellMenuWidgetController::ShouldEnableButtons(const FGameplayTag& AbilityStatus, int32 SpellPoints, bool& bShouldEnableSpellPointsButton, bool& bShouldEnableEquipButton)

@@ -64,6 +64,13 @@ public:
 	FGameplayTag Attributes_Vital_Majix;
 
 	FGameplayTag Attributes_Invisible_DexterityAgilityFlexibility;
+	
+	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
+	FGameplayTag InputTag_RightMouseButtonOrGamepadShoulder;
+	FGameplayTag InputTag_1OrDPadUp;
+	FGameplayTag InputTag_2OrDPadDown;
+	FGameplayTag InputTag_3OrDPadLeft;
+	FGameplayTag InputTag_4OrDPadRight;
 
 	FGameplayTag Attributes_Resistance_Fireproof;
 	FGameplayTag Attributes_Resistance_Shockproof;
@@ -73,29 +80,43 @@ public:
 	FGameplayTag Attributes_Resistance_ChaosIncorruptibility;
 	FGameplayTag Attributes_Resistance_Immunity;
 	FGameplayTag Attributes_Resistance_Unstoppable;
-	
-	FGameplayTag InputTag_LeftMouseButtonOrGamepadShoulder;
-	FGameplayTag InputTag_RightMouseButtonOrGamepadShoulder;
-	FGameplayTag InputTag_1OrDPadUp;
-	FGameplayTag InputTag_2OrDPadDown;
-	FGameplayTag InputTag_3OrDPadLeft;
-	FGameplayTag InputTag_4OrDPadRight;
 
 	FGameplayTag Damage;
 	FGameplayTag Damage_IncomingDamage;
-	FGameplayTag Damage_Burn;
-	FGameplayTag Damage_Shock;
-	FGameplayTag Damage_CorruptChaos;
+
+	FGameplayTag Damage_Fire;
+	FGameplayTag Damage_Lightning;
+	FGameplayTag Damage_Ice;
 	FGameplayTag Damage_Physical;
-	FGameplayTag Damage_PureOrder;
-	FGameplayTag Damage_Frostbite;
+	FGameplayTag Damage_RuleOfOrder;
+	FGameplayTag Damage_ChaosMajix;
 	FGameplayTag Damage_Poison;
 	FGameplayTag Damage_Paralysis;
+
+	FGameplayTag Debuffs_Burned;
+	FGameplayTag Debuffs_Shocked;
+	FGameplayTag Debuffs_Frozen;
+	FGameplayTag Debuffs_Injured;
+	FGameplayTag Debuffs_Corrupted;
+	FGameplayTag Debuffs_Ordered;
+	FGameplayTag Debuffs_Contaminated;
+	FGameplayTag Debuffs_Stunned;
+
+	FGameplayTag Debuff_Chance;
+	FGameplayTag Debuff_Damage;
+	FGameplayTag Debuff_Duration;
+	FGameplayTag Debuff_Frequency;
 	
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;
-
+	TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
+	
 	FGameplayTag Effects_HitReact;
 
+	FGameplayTag Player_Block_InputPressed;
+	FGameplayTag Player_Block_InputReleased;
+	FGameplayTag Player_Block_InputHeld;
+	FGameplayTag Player_Block_CursorTrace;
+	
 	FGameplayTag Abilities_Attack;
 	FGameplayTag Abilities_Summon;
 	FGameplayTag Abilities_HitReact;

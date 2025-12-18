@@ -364,7 +364,6 @@ public:
 	UFUNCTION() void OnRep_DexterityAgilityFlexibility(const FGameplayAttributeData& OldValue) const;
 
 protected:
-	static void LogEffectSourceTarget(const FEffectProperties& Props, const FString& FunctionName, const FGameplayEffectSpec& Spec);
 
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Properties) const;
@@ -379,6 +378,10 @@ private:
 	bool bTopOffShield = false;
 	bool bTopOffStamina = false;
 	bool bTopOffMajix = false;
+	void HandleIncomingDamage(const FEffectProperties& Props);
+	void HandleIncomingXP(const FEffectProperties& Props);
+	void Debuff(const FEffectProperties& Props);
+	
 public:
 
 };

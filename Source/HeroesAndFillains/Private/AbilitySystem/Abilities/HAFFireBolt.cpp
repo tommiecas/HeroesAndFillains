@@ -7,11 +7,14 @@
 #include "HAFGameplayTags.h"
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/HAFAttributeSet.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Characters/FillainCharacter.h"
+#include "Weapons/Majix/HAFMajixProjectile.h"
 
 
 FString UHAFFireBolt::GetDescription(int32 Level)
 {
-	const int32 Damage = GetDamageByDamageType(Level, FHAFGameplayTags::Get().Damage_Burn);
+	const int32 ScaledDamage = DamageAmount.GetValueAtLevel(Level);
 	const float MajixCost = FMath::Abs(GetMajixCost(Level));
 	const float Cooldown = GetCooldown(Level);
 	if (Level == 1)
@@ -39,7 +42,7 @@ FString UHAFFireBolt::GetDescription(int32 Level)
 			MajixCost,
 			Cooldown,
 			Level,
-			Damage * Level);
+			ScaledDamage * Level);
 	}
 	else
 	{
@@ -53,13 +56,13 @@ FString UHAFFireBolt::GetDescription(int32 Level)
 								MajixCost,
 								Cooldown,
 								Level,
-								Damage * Level);
+								ScaledDamage * Level);
 	}
 }
 
 FString UHAFFireBolt::GetNextLevelDescription(int32 Level)
 {
-	const int32 Damage = GetDamageByDamageType(Level, FHAFGameplayTags::Get().Damage_Burn);
+	const int32 ScaledDamage = DamageAmount.GetValueAtLevel(Level);
 	float MajixCost = FMath::Abs(GetMajixCost(Level));
 	float Cooldown = GetCooldown(Level);
 	if (Level <= 5)
@@ -75,7 +78,7 @@ FString UHAFFireBolt::GetNextLevelDescription(int32 Level)
 								MajixCost,
 								Cooldown,
 								FMath::Min(Level, NumProjectiles),
-								Damage * Level);
+								ScaledDamage * Level);
 	}
 	else if (Level >5)
 	{
@@ -88,8 +91,58 @@ FString UHAFFireBolt::GetNextLevelDescription(int32 Level)
 								Level,
 								MajixCost,
 								Cooldown,
-								Damage * Level);
+								ScaledDamage * Level);
 	}
 	return FString();
+}
+
+void UHAFFireBolt::SpawnProjectiles(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag,
+	bool bOverridePitch, float PitchOverride, AActor* HomingTarget)
+{
+	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
+	if (!bIsServer) return;
+
+	if (AFillainCharacter* Fill = Cast<AFillainCharacter>(GetOwningActorFromActorInfo()))
+	{
+		FVector SocketLocation = Fill->GetMesh()->GetSocketLocation(TEXT("SpellSocket"));
+		ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo(), SocketTag) = SocketLocation;;
+		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+		if (bOverridePitch) Rotation.Pitch = PitchOverride;
+
+		const FVector Forward = Rotation.Vector();
+		const int32 NumFirebolts = FMath::Min(MaxProjectiles, GetAbilityLevel());
+		TArray<FRotator> Rotations = UHAFAbilitySystemBlueprintLibrary::EvenlySpacedRotators(Forward, FVector::UpVector, ProjectileSpread, NumFirebolts);
+
+		for (const FRotator& Rot : Rotations)
+		{
+			FTransform SpawnTransform;
+			SpawnTransform.SetLocation(SocketLocation);
+			SpawnTransform.SetRotation(Rot.Quaternion());
+
+			AHAFMajixProjectile* Projectile = GetWorld()->SpawnActorDeferred<AHAFMajixProjectile>(HAFMajixProjectileClass, SpawnTransform, GetOwningActorFromActorInfo(), Cast<APawn>(GetOwningActorFromActorInfo()), ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+			Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults(nullptr);
+
+			if (IsValid(HomingTarget) && HomingTarget->Implements<UCombatInterface>())
+			{
+				Projectile->ProjectileMovement->HomingTargetComponent = HomingTarget->GetRootComponent();
+			}
+			else
+			{
+				USceneComponent* TempComp = NewObject<USceneComponent>(Projectile);
+				TempComp->RegisterComponent();
+				TempComp->AttachToComponent(Projectile->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+
+				Projectile->HomingTargetSceneComponent = TempComp;
+				Projectile->ProjectileMovement->HomingTargetComponent = TempComp;
+			}
+
+			Projectile->ProjectileMovement->HomingAccelerationMagnitude = FMath::FRandRange(HomingAccelerationMin, HomingAccelerationMax);
+			Projectile->ProjectileMovement->bIsHomingProjectile = bLaunchHomingProjectiles;
+			
+			Projectile->FinishSpawning(SpawnTransform);
+		}
+
+	}
 }
 

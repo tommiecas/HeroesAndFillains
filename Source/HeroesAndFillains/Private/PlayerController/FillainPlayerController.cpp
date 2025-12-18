@@ -74,6 +74,14 @@ void AFillainPlayerController::PlayerTick(float DeltaTime)
 
 void AFillainPlayerController::CursorTrace()
 {
+	if (GetASC() && GetASC()->HasMatchingGameplayTag(FHAFGameplayTags::Get().Player_Block_CursorTrace))
+	{
+		if (LastActor) LastActor->UnHighlightActor();
+		if (ThisActor) ThisActor->UnHighlightActor();
+		LastActor = nullptr;
+		ThisActor = nullptr;
+		return;
+	}
 	GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
@@ -559,13 +567,13 @@ void AFillainPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 }
 
-void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
+void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AActor* TargetAvatarActor, bool bBlockedHit, bool bCriticalHit)
 { 
-	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	if (IsValid(TargetAvatarActor) && DamageTextComponentClass)
 	{
-		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetAvatarActor, DamageTextComponentClass);
 		DamageText->RegisterComponent();
-		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		DamageText->AttachToComponent(TargetAvatarActor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
 	}
@@ -952,11 +960,19 @@ void AFillainPlayerController::ToggleGameMode()
 
 void AFillainPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	
+	if (GetASC() && GetASC()->HasMatchingGameplayTag(FHAFGameplayTags::Get().Player_Block_InputPressed))
+	{
+		return;
+	}
+	if (GetASC()) GetASC()->AbilityInputTagPressed(InputTag);
 }
 
 void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
+	if (GetASC() && GetASC()->HasMatchingGameplayTag(FHAFGameplayTags::Get().Player_Block_InputReleased))
+	{
+		return;
+	}
 	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{
 		if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
@@ -970,6 +986,10 @@ void AFillainPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 
 void AFillainPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
+	if (GetASC() && GetASC()->HasMatchingGameplayTag(FHAFGameplayTags::Get().Player_Block_InputHeld))
+	{
+		return;
+	}
 	// --- Early return if not LMB/GamepadShoulder ---
 	if (!InputTag.MatchesTagExact(FHAFGameplayTags::Get().InputTag_LeftMouseButtonOrGamepadShoulder))
 	{

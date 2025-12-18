@@ -27,9 +27,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AHAFMajixProjectile> FireBoltProjectileClass;
-	
+
+	UPROPERTY()
+	TObjectPtr<USceneComponent> HomingTargetSceneComponent;
+
 protected:
 	virtual void BeginPlay() override;
+	void OnHit();
 	virtual void Destroyed() override;
 
 	UFUNCTION(BlueprintCallable)

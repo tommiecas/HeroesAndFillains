@@ -17,6 +17,7 @@ class HEROESANDFILLAINS_API UExecutionCalculation_Damage_HellspawnBase : public 
 public:
 	UExecutionCalculation_Damage_HellspawnBase();
 
+	virtual void DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams, const FGameplayEffectSpec& Spec, FAggregatorEvaluateParameters EvaluationParameters, const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>& InTagsToCaptureDefs) const override;
 	
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 

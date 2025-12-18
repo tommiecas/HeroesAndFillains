@@ -13,7 +13,8 @@
 				"UMG",
 				"GameplayAbilities",
 				"CoreUObject",
-				"AIModule"
+				"AIModule",
+				"Niagara"
 			]
 		}
 	],
@@ -64,18 +65,7 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/17a5d8b490794ec28b5996af37381d3b"
 		},
 		{
-			"Name": "ChaosCachingUSD",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64"
-			]
-		},
-		{
 			"Name": "ChaosClothAsset",
-			"Enabled": true
-		},
-		{
-			"Name": "ChaosClothAssetEditor",
 			"Enabled": true
 		},
 		{
@@ -84,14 +74,6 @@
 		},
 		{
 			"Name": "ChaosClothGenerator",
-			"Enabled": true
-		},
-		{
-			"Name": "ChaosFlesh",
-			"Enabled": true
-		},
-		{
-			"Name": "ChaosFleshGenerator",
 			"Enabled": true
 		},
 		{
@@ -135,13 +117,16 @@
 			"Enabled": false
 		},
 		{
-			"Name": "InterchangeEditor",
-			"Enabled": false,
-			"SupportedTargetPlatforms": [
-				"Win64",
-				"Linux",
-				"Mac"
-			]
+			"Name": "Fab",
+			"Enabled": false
+		},
+		{
+			"Name": "InterchangeTests",
+			"Enabled": false
+		},
+		{
+			"Name": "GLTFExporter",
+			"Enabled": false
 		}
 	]
 }

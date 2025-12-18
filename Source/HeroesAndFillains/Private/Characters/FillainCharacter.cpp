@@ -103,6 +103,7 @@
 #include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
 #include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
 #include "AbilitySystem/LevelUpInfo.h"
+#include "AbilitySystem/Debuffs/DebuffNiagaraComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GameplayEffects/RegenerationEffects/GE_HealthRegeneration.h"
 #include "GameplayEffects/RegenerationEffects/GE_MajixRegeneration.h"
@@ -433,6 +434,18 @@ void AFillainCharacter::InitializeDefaultTags()
 {
     Super::InitializeDefaultTags();
     // FillainCharacter-specific tag initialization can go here if needed
+}
+
+void AFillainCharacter::Die(const FVector& DeathImpulse)
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->DetachFromActor(
+			FDetachmentTransformRules(EDetachmentRule::KeepWorld, true)
+		);
+	}
+	Eliminate(false);
+
 }
 
 
@@ -1249,6 +1262,41 @@ void AFillainCharacter::AddGoldAcquiredToTotalGold(class ATreasure* Treasure)
 	}
 }
 
+void AFillainCharacter::OnRep_Burned()
+{
+	if (bIsBurned)
+	{
+		BurnDebuffComponent->Activate();
+	}
+	else
+	{
+		BurnDebuffComponent->Deactivate();
+	}
+}
+
+void AFillainCharacter::OnRep_Stunned()
+{
+	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
+		FGameplayTagContainer BlockedTags;
+		BlockedTags.AddTag(GameplayTags.Player_Block_CursorTrace);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputHeld);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputPressed);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputReleased);
+		if (bIsStunned)
+		{
+			HAFASC->AddLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Activate();
+		}
+		else
+		{
+			HAFASC->RemoveLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Deactivate();
+		}
+	}
+}
+
 int32 AFillainCharacter::GetCharacterLevel_Implementation(ABaseCharacter* Character)
 {
 	const AHAFPlayerState* State = GetPlayerState<AHAFPlayerState>();
@@ -1847,6 +1895,10 @@ bool AFillainCharacter::IsUsingGamepad() const
 
 void AFillainCharacter::Move(const FInputActionValue& Value)
 {
+	if (GetAbilitySystemComponent() && GetAbilitySystemComponent()->HasMatchingGameplayTag(FHAFGameplayTags::Get().Player_Block_InputPressed))
+	{
+		return;
+	}
 	if (CombatComponent->ActionState != EActionState::EAS_Unoccupied) return;
 	if (bDisableGameplay)
 	{
@@ -3392,7 +3444,9 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 	Cast<UHAFAbilitySystemComponent>(FillainPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
 	AttributeSet = FillainPlayerState->GetAttributeSet();
-
+	OnASCRegistered.Broadcast(AbilitySystemComponent);
+	AbilitySystemComponent->RegisterGameplayTagEvent(FHAFGameplayTags::Get().Debuffs_Stunned, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AFillainCharacter::StunTagChanged);
+	
 	InitializeDefaultAttributes();
 
 	if (const UHAFAttributeSet* AS = Cast<UHAFAttributeSet>(AttributeSet))
@@ -3574,29 +3628,6 @@ void AFillainCharacter::OnRep_PlayerState()
 	BindFillainCharacterCapsuleHooksOnce(); // client bind for UI responsiveness
 	BindHiddenTreasureCapsuleHooksOnce();
 }
-
-bool AFillainCharacter::IsDead() const
-{
-	return bIsDead; // add this if it doesn't exist
-}
-
-void AFillainCharacter::Die_Implementation()
-{
-	if (bIsDead)
-	{
-		return; // Already dead — prevent second Die()
-	}
-
-	bIsDead = true;
-	Super::Die_Implementation();
-}
-
-void AFillainCharacter::MulticastHandleDeath_Implementation()
-{
-	MulticastEliminate_Implementation(false);
-}
-
-
 
 void AFillainCharacter::ApplyFillainCharacterCapsuleSize_FeetPlanted(float TargetUnscaledHalf, float TargetUnscaledRadius)
 {

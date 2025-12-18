@@ -53,7 +53,7 @@ public:
 	void SetHUDGrenades(int32 Grenades);
 
 	UFUNCTION(Client, Reliable)
-	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
+	void ShowDamageNumber(float DamageAmount, AActor* TargetAvatarActor, bool bBlockedHit, bool bCriticalHit);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsHUDReady() const;

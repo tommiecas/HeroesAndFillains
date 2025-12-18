@@ -55,7 +55,6 @@ public:
     AEnemyBase();
 
     virtual void BeginPlay() override;
-    void DeferredGASSetup();
 
     virtual void Tick(float DeltaTime) override;
     virtual void InitializeDefaultTags() override;
@@ -64,7 +63,7 @@ public:
     void SafeInitializeAttributes();
     virtual void OnRep_PlayerState() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+    virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
     // --- Interface ---
     virtual UAbilitySystemComponent* GetEnemyASC_Implementation() const override;
     virtual UAttributeSet* GetEnemyAttributeSet_Implementation() const override;
@@ -76,7 +75,7 @@ public:
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
                              class AController* EventInstigator, AActor* DamageCauser) override;
     virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-    virtual void Die_Implementation() override;
+    virtual void Die(const FVector& DeathImpulse) override;
     virtual void Dissolve() override;
     virtual void Destroyed() override;
     virtual int32 PlayDeathMontage() override;
@@ -213,6 +212,8 @@ public:
 	
     UPROPERTY(EditAnywhere, Category = Combat)
     float DeathLifeSpan = 8.f;
+
+    virtual void InitializeDefaultAttributes() const;
     
     // --- Ranged Combat Properties ---
     
@@ -275,7 +276,6 @@ public:
     FGenericTeamId GetGenericTeamId() const;
 
     // --- Helpers ---
-    virtual void MulticastHandleDeath_Implementation() override;
     void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
     void SetEnemyState(EEnemyState NewState);          // [Restored]
@@ -286,8 +286,7 @@ public:
     virtual void SetCombatTarget_Implementation(AActor* InCombatTarget) override;
     virtual AActor* GetCombatTarget_Implementation() override;
     
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-    float BaseWalkSpeed = 250.f;
+
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
     EEnemyState EnemyState = EEnemyState::EES_Idle;
@@ -473,9 +472,6 @@ public:
     // Death effects
     UPROPERTY(EditAnywhere, Category = "Combat")
     UParticleSystem* DeathParticles;
-
-    UPROPERTY(EditAnywhere, Category = "Combat")
-    USoundBase* DeathSound;
 
     // Soul spawning
     UPROPERTY(EditAnywhere, Category = "Soul")

@@ -43,30 +43,30 @@ FGameplayEffectContextHandle UHAFProjectileSpell::AddSourceObjectToContext(const
 	return NewContext;
 }
 
-void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag)
+void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag, bool bOverridePitch, float PitchOverride)
 {
-	UE_LOG(LogTemp, Warning, TEXT("SpawnProjectile CALLED. Avatar=%s"),
-	*GetAvatarActorFromActorInfo()->GetName());
+	// UE_LOG(LogTemp, Warning, TEXT("SpawnProjectile CALLED. Avatar=%s"),
+	// *GetAvatarActorFromActorInfo()->GetName());
     AActor* Avatar = GetAvatarActorFromActorInfo();
     if (!Avatar || !HAFMajixProjectileClass) return;
 
-	if (USkeletalMeshComponent* Mesh = Avatar->FindComponentByClass<USkeletalMeshComponent>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Mesh Component Rot: %s"), *Mesh->GetComponentRotation().ToString());
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Character Mesh Rot: %s"), *Avatar->GetActorRotation().ToString());
+	// if (USkeletalMeshComponent* Mesh = Avatar->FindComponentByClass<USkeletalMeshComponent>())
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("Mesh Component Rot: %s"), *Mesh->GetComponentRotation().ToString());
+	// }
+	// UE_LOG(LogTemp, Warning, TEXT("Character Mesh Rot: %s"), *Avatar->GetActorRotation().ToString());
 
     const bool bIsEnemy = Avatar->ActorHasTag(FName("Enemy"));
     const bool bIsPlayer = Avatar->ActorHasTag(FName("Player"));
 
-    FVector SocketLocation;
-    FRotator SpawnRotation;
+    // FVector SocketLocation;
+    // FRotator SpawnRotation;
 
     // ----------------------------------------
     // 1) Determine socket location
-    // ----------------------------------------
+    // THIS IS CHATGPT'S VERSION BELOW----------------------------------------
 
-    if (bIsEnemy)
+    /*if (bIsEnemy)
     {
         TArray<FVector> SocketLocations = ICombatInterface::Execute_GetCombatSocketLocations(Avatar, SocketTag);
         SocketLocation = SocketLocations.Num() > 0 ? SocketLocations[0] : Avatar->GetActorLocation();
@@ -149,42 +149,33 @@ void UHAFProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocatio
         Cast<APawn>(GetOwningActorFromActorInfo()),
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-    if (!Projectile) return;
+	
+	Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults(nullptr);
+    Projectile->FinishSpawning(SpawnTransform); */
 
-    // Build GameplayEffectContext
-    const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Avatar);
-    FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
-    EffectContextHandle.SetAbility(this);
-    EffectContextHandle.AddSourceObject(Projectile);
+	//This is the original version from the class.
 
-    TArray<TWeakObjectPtr<AActor>> Actors;
-    Actors.Add(Projectile);
-    EffectContextHandle.AddActors(Actors);
+	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
+	if (!bIsServer) return;
 
-    FHitResult HitResult;
-    HitResult.Location = ProjectileTargetLocation; 
-    EffectContextHandle.AddHitResult(HitResult);
+	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo(), SocketTag);
+	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+	if (bOverridePitch)
+	{
+		Rotation.Pitch = PitchOverride;
+	}
 
-    // Damage GE
-    const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(SocketLocation);
+	SpawnTransform.SetRotation(Rotation.Quaternion());
 
-    // Tag-based damage assignment (untouched)
-    for (auto& Pair : DamageTypes)
-    {
-        const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
-        UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
-    }
+	AHAFMajixProjectile* Projectile = GetWorld()->SpawnActorDeferred<AHAFMajixProjectile>(HAFMajixProjectileClass, SpawnTransform, GetOwningActorFromActorInfo(), Cast<APawn>(GetOwningActorFromActorInfo()), ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-    Projectile->DamageEffectSpecHandle = SpecHandle;
+	Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults(nullptr);
 
-    // ----------------------------------------
-    // 5) Finish spawning
-    // ----------------------------------------
+	Projectile->FinishSpawning(SpawnTransform);
 
-    Projectile->FinishSpawning(SpawnTransform);
 
-	UE_LOG(LogTemp, Warning, TEXT("Projectile ForwardVector: %s"),
-	*Projectile->GetActorForwardVector().ToString());
 
 }
 
