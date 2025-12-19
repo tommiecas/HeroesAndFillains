@@ -115,7 +115,7 @@ void USpellMenuWidgetController::GlobeButtonDeselect()
 
 void USpellMenuWidgetController::EquipButtonPressed()
 {
-	const FGameplayTag& AbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
+	const FGameplayTag AbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
 
 	WaitForEquipSelectionDelegate.Broadcast(AbilityType);
 	bIsWaitingForEquipSelection = true;
