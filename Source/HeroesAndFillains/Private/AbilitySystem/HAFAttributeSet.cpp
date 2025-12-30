@@ -315,6 +315,13 @@ void UHAFAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 	{
 		HandleIncomingXP(Props);	
 	}
+	else if (Data.EvaluatedData.Attribute == GetVigorAttribute())
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("VIGOR CHANGED -> Base: %f  Current: %f"),
+			GetVigor(),
+			GetVigor());
+	}
 }
 
 void UHAFAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
@@ -372,13 +379,19 @@ void UHAFAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 	if (Props.SourceAvatarActor->Implements<UPlayerInterface>() && Props.SourceAvatarActor->Implements<UCombatInterface>())
 	{
 		const int32 CurrentLevel = ICombatInterface::Execute_GetCharacterLevel(Props.SourceAvatarActor, Cast<ABaseCharacter>(Props.SourceAvatarActor));
-		const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceAvatarActor);
+		const float CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceAvatarActor);
 		const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceAvatarActor, CurrentXP + LocalIncomingXP);
 		const int32 NumLevelUps = NewLevel  - CurrentLevel;
 		if (NumLevelUps > 0)
 		{
-			const int32 AttributePointsAwarded = IPlayerInterface::Execute_GetAttributePointsAward(Props.SourceAvatarActor, CurrentLevel);
-			const int32 SpellPointsAwarded = IPlayerInterface::Execute_GetSpellPointsAward(Props.SourceAvatarActor, CurrentLevel);
+			float AttributePointsAwarded = 0;
+			float SpellPointsAwarded = 0;
+
+			for (float i = 0; i < NumLevelUps; ++i)
+			{
+				SpellPointsAwarded += IPlayerInterface::Execute_GetSpellPointsAward(Props.SourceAvatarActor, CurrentLevel + i);
+				AttributePointsAwarded += IPlayerInterface::Execute_GetAttributePointsAward(Props.SourceAvatarActor, CurrentLevel + i);
+			}
 
 			IPlayerInterface::Execute_AddToCharacterLevel(Props.SourceAvatarActor, NumLevelUps);
 			IPlayerInterface::Execute_AddToAttributePoints(Props.SourceAvatarActor, AttributePointsAwarded);
@@ -523,7 +536,7 @@ void UHAFAttributeSet::SendXPEvent(const FEffectProperties& Properties)
 		{
 			const int32 TargetLevel = ICombatInterface::Execute_GetCharacterLevel(Properties.TargetAvatarActor, TargetCharAsBase);
 			const EEnemyType TargetType = ICombatInterface::Execute_GetEnemyType(Properties.TargetAvatarActor);
-			const int32 XPAward = UHAFAbilitySystemBlueprintLibrary::GetXPAwardForEnemyTypeAndLevel(Properties.TargetAvatarActor, TargetType, TargetLevel);;
+			const float XPAward = UHAFAbilitySystemBlueprintLibrary::GetXPAwardForEnemyTypeAndLevel(Properties.TargetAvatarActor, TargetType, TargetLevel);;
 
 			const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
 			FGameplayEventData Payload;

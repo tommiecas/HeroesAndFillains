@@ -26,7 +26,7 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 	);
 	}
 	GetHAFPlayerState()->OnAttributePointsChangedDelegate.AddLambda(
-		[this](int32 NewAttributePoints)
+		[this](float NewAttributePoints)
 		{
 			OnAttributeMenuAttributePointsChangedDelegate.Broadcast(NewAttributePoints);
 		}

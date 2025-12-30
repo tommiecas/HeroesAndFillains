@@ -500,6 +500,42 @@ FName("Abilities.Lightning.Electrocute"),
 FString("A Shockingly Powerful Bolt of Lightning") 
 );
 
+	GameplayTags.Abilities_ChaosMajix_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.ChaosMajix.ArcaneShards"),
+FString("When you need Hell itself to rise up on Earth...") 
+);
+
+	/*****************************
+	******************************
+	****    PASSIVE SPELLS    ****
+	******************************
+	*****************************/
+
+	GameplayTags.Abilities_Passive_RulesOfOrder_HaloOfProtection = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Passive.RulesOfOrder.HaloOfProtection"),
+FString("None Shall Harm Me...") 
+);
+
+	GameplayTags.Abilities_Passive_ChaosMajix_LifeSiphon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Passive.ChaosMajix.LifeSiphon"),
+FString("What's Yours... Becomes Mine.") 
+);
+
+	GameplayTags.Abilities_Passive_RulesOfOrder_MightOfMajix = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Passive.RulesOfOrder.MightOfMajix"),
+FString("Why Stop At The Earth... When the Meek Can Inherit It All...?") 
+);
+
+	GameplayTags.Abilities_Passive_ChaosMajix_DoubleJeopardy = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Passive.ChaosMajix.DoubleJeopardy"),
+FString("My Blood Is A Small Price To Pay... For Your Death") 
+);
+
+	GameplayTags.Abilities_Passive_RulesOfOrder_FlightOfTheFeeniks = UGameplayTagsManager::Get().AddNativeGameplayTag(
+FName("Abilities.Passive.RulesOfOrder.FlightOfTheFeeniks"),
+FString("I Shall Rise Again... Higher Than You Could Possibly Imagine...") 
+);
+	
 	GameplayTags.Abilities_Status_Eligible = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Abilities.Status.Eligible"),
 		FString("Your ability is eligible to be equipped.") 

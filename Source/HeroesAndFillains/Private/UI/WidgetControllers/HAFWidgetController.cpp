@@ -23,11 +23,11 @@ void UHAFWidgetController::BroadcastAbilityInfo()
 	if (!GetHAFAbilitySystemComponent()->bStartupAbilitiesGiven) return;
 
 	FForEachAbility BroadcastDelegate;
-	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& Spec)
+	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& AbilitySpec)
 	{
-		FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(GetHAFAbilitySystemComponent()->GetAbilityTagFromSpec(Spec));
-		Info.InputTag = GetHAFAbilitySystemComponent()->GetInputTagFromSpec(Spec);
-		Info.StatusTag = HAFAbilitySystemComponent->GetStatusFromSpec(Spec);
+		FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(GetHAFAbilitySystemComponent()->GetAbilityTagFromSpec(AbilitySpec));
+		Info.InputTag = GetHAFAbilitySystemComponent()->GetInputTagFromSpec(AbilitySpec);
+		Info.StatusTag = HAFAbilitySystemComponent->GetStatusFromSpec(AbilitySpec);
 		AbilityInfoDelegate.Broadcast(Info);
 	});
 	GetHAFAbilitySystemComponent()->ForEachAbility(BroadcastDelegate);

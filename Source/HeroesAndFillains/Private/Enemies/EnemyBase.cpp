@@ -748,9 +748,16 @@ void AEnemyBase::AttackEnd()
     UE_LOG(LogTemp, Log, TEXT("%s finished attacking"), *GetName());
 }
 
-float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+float AEnemyBase::TakeMeleeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
     AController* EventInstigator, AActor* DamageCauser)
 {
+    if (EventInstigator == nullptr)
+    {
+        if (this == DamageCauser)
+        {
+            EventInstigator = GetController();
+        }
+    }
     HandleDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
     CombatTarget = EventInstigator->GetPawn();
 

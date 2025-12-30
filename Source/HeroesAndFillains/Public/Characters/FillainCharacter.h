@@ -81,13 +81,15 @@ public:
 	virtual int32 GetAttributePointsAward_Implementation(int32 Level) const override;
 	virtual int32 GetSpellPointsAward_Implementation(int32 Level) const override;
 	virtual void AddToCharacterLevel_Implementation(int32 LevelToAdd) override;
-	virtual void AddToAttributePoints_Implementation(int32 AttributePointsToAdd) override;
-	virtual void AddToSpellPoints_Implementation(int32 SpellPointsToAdd) override;
-	virtual int32 GetAttributePoints_Implementation() const override;
-	virtual int32 GetSpellPoints_Implementation() const override;
+	virtual void AddToAttributePoints_Implementation(float AttributePointsToAdd) override;
+	virtual void AddToSpellPoints_Implementation(float SpellPointsToAdd) override;
+	virtual float GetAttributePoints_Implementation() const override;
+	virtual float GetSpellPoints_Implementation() const override;
+	virtual void ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial = nullptr) override;
+	virtual void HideMagicCircle_Implementation() override;
 	
 	// Override legacy damage system (TODO: Remove after migrating to pure GAS)
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
 	virtual void HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void ReceiveDamage(AActor* DamagedPawn, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
@@ -97,6 +99,8 @@ public:
 	virtual void AddGoldAcquiredToTotalGold(class ATreasure* Treasure) override;
 	virtual void OnRep_Burned() override;
 	virtual void OnRep_Stunned() override;
+	virtual void AddCharacterAbilities() override;
+	virtual void UnlockAbilities() override;
 	void InitASC();
 
 	UFUNCTION(BlueprintCallable)

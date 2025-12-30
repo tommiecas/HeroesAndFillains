@@ -43,17 +43,23 @@ public:
 	void AddToCharacterLevel(int32 LevelToAdd);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void AddToAttributePoints(int32 AttributePointsToAdd);
+	void AddToAttributePoints(float AttributePointsToAdd);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void AddToSpellPoints(int32 SpellPointsToAdd);
+	void AddToSpellPoints(float SpellPointsToAdd);
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void LevelUp();
 
 	UFUNCTION(BlueprintNativeEvent)
-	int32 GetAttributePoints() const;
+	float GetAttributePoints() const;
 
 	UFUNCTION(BlueprintNativeEvent)
-	int32 GetSpellPoints() const;
+	float GetSpellPoints() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ShowMagicCircle(UMaterialInterface* DecalMaterial = nullptr);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void HideMagicCircle();
 };

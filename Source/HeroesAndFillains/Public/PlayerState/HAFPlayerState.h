@@ -61,12 +61,16 @@ public:
 	void SetPlayerLevel(const int32 NewLevel);
 	void AddXP(const int32 XPToAdd);
 	void SetPlayerXP(const int32 NewXP);
-	void AddAttributePoints(const int32 AttributePointsToAdd);
-	void SetAttributePoints(const int32 NewAttributePoints);
-	void AddSpellPoints(const int32 SpellPointsToAdd);
-	void SetSpellPoints(const int32 NewSpellPoints);
+	void AddAttributePoints(const float AttributePointsToAdd);
+	void SetAttributePoints(const float NewAttributePoints);
+	void AddSpellPoints(const float SpellPointsToAdd);
+	void SetSpellPoints(const float NewSpellPoints);
 
 	void UpdateAbilityCosts(int32 Level);
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetFillainPlayerLevel() const { return Level; }
+
 protected:
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
@@ -87,20 +91,20 @@ private:
 	int32 XP = 1;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_AttributePoints)
-	int32 AttributePoints = 0;
+	float AttributePoints = 0;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SpellPoints)
-	int32 SpellPoints = 0;
+	float SpellPoints = 0;
 
 	UFUNCTION()
 	void OnRep_XP(int32 OldXP);
 
 
 	UFUNCTION()
-	void OnRep_AttributePoints(int32 OldAttributePoints);
+	void OnRep_AttributePoints(float OldAttributePoints) const;
 
 	UFUNCTION()
-	void OnRep_SpellPoints(int32 OldSpellPoints);
+	void OnRep_SpellPoints(float OldSpellPoints) const;
 
 
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
@@ -123,9 +127,8 @@ public:
 	FORCEINLINE AFillainPlayerController* GetFillainPlayerController() const { return Controller; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }
 	void SetTeam(ETeam TeamToSet);
-	FORCEINLINE int32 GetFillainPlayerLevel() const { return Level; }
 	FORCEINLINE int32 GetFillainPlayerXP() const { return XP; }
-	FORCEINLINE int32 GetFillainPlayerAttributePoints() const { return AttributePoints; }
-	FORCEINLINE int32 GetFillainPlayerSpellPoints() const { return SpellPoints; }
+	FORCEINLINE float GetFillainPlayerAttributePoints() const { return AttributePoints; }
+	FORCEINLINE float GetFillainPlayerSpellPoints() const { return SpellPoints; }
 		
 };

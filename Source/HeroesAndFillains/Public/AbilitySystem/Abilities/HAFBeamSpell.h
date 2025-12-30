@@ -33,6 +33,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StoreOwnerVariables();
 
+	
 	/* UFUNCTION(BlueprintCallable)
 	void BuildShockChain(TArray<FShockChainLink>& OutChain); */
 
@@ -65,5 +66,5 @@ protected:
 	TObjectPtr<ACharacter> OwnerCharacter;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Beam")
-	int32 NumShockTargetsMax = 5.f;
+	int32 NumShockTargetsMax = 10.f;
 };

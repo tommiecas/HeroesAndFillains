@@ -95,9 +95,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Widget Controller")
 	TObjectPtr<UHAFAttributeSet> HAFAttributeSet = nullptr;
 
+	UFUNCTION(BlueprintCallable)
 	AFillainPlayerController* GetFillainPlayerController();
+
+	UFUNCTION(BlueprintCallable)
 	AHAFPlayerState* GetHAFPlayerState();
+
+	UFUNCTION(BlueprintCallable)
 	UHAFAbilitySystemComponent* GetHAFAbilitySystemComponent();
+
+	UFUNCTION(BlueprintCallable)
 	UHAFAttributeSet* GetHAFAttributeSet();
 
 private:

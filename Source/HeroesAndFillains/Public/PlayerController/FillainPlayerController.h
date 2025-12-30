@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "Weapons/Ranged/RangedWeapon.h"
@@ -14,6 +15,8 @@ class UDamageTextComponent;
 class UAbilitySystemComponent;
 class UHAFInputConfig;
 class UTextBlock;
+class AMagicCircle;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
 struct FInputActionValue;
@@ -136,6 +139,20 @@ public:
 	void ActivateByTag(FGameplayTag Tag);
 
 	void DebugCursorTrace();
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AMagicCircle> MagicCircleClass;
+
+	TObjectPtr<AMagicCircle> MagicCircle;
+
+	UFUNCTION(BlueprintCallable)
+	void ShowMagicCircle(UMaterialInterface* DecalMaterial = nullptr);
+
+	UFUNCTION(BlueprintCallable)
+	void HideMagicCircle();
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateMagicCircleLocation();
 
 
 private:

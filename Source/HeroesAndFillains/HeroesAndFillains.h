@@ -16,5 +16,6 @@
 #define ECC_Area ECollisionChannel::ECC_GameTraceChannel10
 #define ECC_Projectile ECollisionChannel::ECC_GameTraceChannel11
 #define ECC_Target ECollisionChannel::ECC_GameTraceChannel12
+#define ECC_BlockAllExceptCharacters ECollisionChannel::ECC_GameTraceChannel13
 
 #define CUSTOM_DEPTH_RED 250

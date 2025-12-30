@@ -72,8 +72,8 @@ public:
     virtual void BroadcastInitialEnemyValues_Implementation() override;
 
     // --- Combat / AI ---
-    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-                             class AController* EventInstigator, AActor* DamageCauser) override;
+    virtual float TakeMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                             class AController* EventInstigator, AActor* DamageCauser);
     virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
     virtual void Die(const FVector& DeathImpulse) override;
     virtual void Dissolve() override;

@@ -30,6 +30,7 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "AbilitySystem/Abilities/HAFGameplayAbility.h"
 #include "AbilitySystem/Debuffs/DebuffNiagaraComponent.h"
+#include "AbilitySystem/PassiveSpells/NiagaraPassiveSpellComponent.h"
 
 #include "PlayerController/FillainPlayerController.h"
 #include "GameMode/HaFGameMode.h"
@@ -58,6 +59,21 @@ ABaseCharacter::ABaseCharacter()
 	StunDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("StunDebuffComponent"));
 	StunDebuffComponent->SetupAttachment(GetMesh());
 	StunDebuffComponent->DebuffTag = FHAFGameplayTags::Get().Debuffs_Stunned;
+
+	EffectAttachComponent = CreateDefaultSubobject<USceneComponent>("EffectAttachPoint");
+	EffectAttachComponent->SetupAttachment(GetRootComponent());
+	HaloOfProtectionNiagaraComponent = CreateDefaultSubobject<UNiagaraPassiveSpellComponent>("HaloOfProtectionComponent");
+	HaloOfProtectionNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	LifeSiphonNiagaraComponent = CreateDefaultSubobject<UNiagaraPassiveSpellComponent>("LifeSiphonComponent");
+	LifeSiphonNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	MightOfMajixNiagaraComponent = CreateDefaultSubobject<UNiagaraPassiveSpellComponent>("MightOfMajixComponent");
+	MightOfMajixNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	DoubleJeopardyNiagaraComponent = CreateDefaultSubobject<UNiagaraPassiveSpellComponent>("DoubleJeopardyComponent");
+	DoubleJeopardyNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	FlightOfTheFeeniksNiagaraComponent = CreateDefaultSubobject<UNiagaraPassiveSpellComponent>("FlightOfTheFeeniksComponent");
+	FlightOfTheFeeniksNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	
+	
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -112,6 +128,11 @@ void ABaseCharacter::SetIsBeingShocked_Implementation(bool bInShock)
 bool ABaseCharacter::IsBeingShocked_Implementation() const
 {
 	return bIsBeingShocked;
+}
+
+FOnDamageSignature& ABaseCharacter::GetOnDamageDelegate()
+{
+	return OnDamageDelegate;
 }
 
 void ABaseCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
@@ -478,8 +499,16 @@ void ABaseCharacter::SpawnHitSpecialEffects(const FVector& ImpactPoint)
 // TODO: Remove after cleaning up EnemyBase and FillainCharacter
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	// Empty stub - child classes may override
-	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (EventInstigator == nullptr)
+	{
+		if (ABaseCharacter* Character = Cast<ABaseCharacter>(DamageCauser))
+		{
+			EventInstigator = Character->GetController();
+		}
+	}
+	const float DamageTaken = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	OnDamageDelegate.Broadcast(DamageTaken);
+	return DamageTaken;
 }
 
 void ABaseCharacter::HandleDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
@@ -999,6 +1028,8 @@ void ABaseCharacter::Tick(float DeltaTime)
 	
 	Super::Tick(DeltaTime);
 
+	EffectAttachComponent->SetWorldRotation(FRotator::ZeroRotator);
+	
 	if (!MotionWarpingComponent) return;
 
 	// First Warp Target – for translation
@@ -1031,11 +1062,26 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 
 void ABaseCharacter::AddCharacterAbilities()
 {
-	UHAFAbilitySystemComponent* ASCComp = CastChecked<UHAFAbilitySystemComponent>(AbilitySystemComponent);
-	if (!HasAuthority()) return;
+	if (ActorHasTag("Fillain"))
+	{
+		UnlockAbilities();
+	}
+	else return;
+}
 
-	ASCComp->AddCharacterAbilities(StartupAbilities);
-	ASCComp->AddCharacterPassiveAbilities(StartupPassiveAbilities);
+TArray<TSubclassOf<UGameplayAbility>> ABaseCharacter::GetStartupAbilities()
+{
+	return StartupAbilities;
+}
+
+TArray<TSubclassOf<UGameplayAbility>> ABaseCharacter::GetStartupPassiveAbilities()
+{
+	return StartupPassiveAbilities;
+}
+
+void ABaseCharacter::UnlockAbilities()
+{
+	
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const

@@ -16,6 +16,12 @@ void UHAFAbilitySystemComponent::AbilityActorInfoSet()
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UHAFAbilitySystemComponent::ClientEffectApplied);
 }
 
+void UHAFAbilitySystemComponent::MulticastActivatePassiveEffect_Implementation(const FGameplayTag& AbilityTag,
+	bool bActivate)
+{
+	ActivatePassiveEffect.Broadcast(AbilityTag, bActivate);
+}
+
 void UHAFAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
 {
 	if (GetAvatarActor()->Implements<UPlayerInterface>())
@@ -31,13 +37,13 @@ void UHAFAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGa
 {
 	FGameplayEventData Payload;
 	Payload.EventTag = AttributeTag;
-	Payload.EventMagnitude = 1.f;
+	Payload.EventMagnitude = 0.5f;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActor(), AttributeTag, Payload);
 
 	if (GetAvatarActor()->Implements<UPlayerInterface>())
 	{
-		IPlayerInterface::Execute_AddToAttributePoints(GetAvatarActor(), -1);
+		IPlayerInterface::Execute_AddToAttributePoints(GetAvatarActor(), -0.5f);
 	}
 }
 
@@ -83,6 +89,7 @@ void UHAFAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTa
 {
 	if (!InputTag.IsValid()) return;
 
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
@@ -100,6 +107,7 @@ void UHAFAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inp
 {
 	if (!InputTag.IsValid()) return;
 
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && AbilitySpec.IsActive())
@@ -114,6 +122,7 @@ void UHAFAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Inpu
 {
 	if (!InputTag.IsValid()) return;
 
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
@@ -183,7 +192,7 @@ FGameplayAbilitySpec* UHAFAbilitySystemComponent::GetSpecFromAbilityTag(const FG
 	FScopedAbilityListLock ActiveScopeLock(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
-		for (FGameplayTag Tag : AbilitySpec.Ability.Get()->GetAssetTags())
+		for (FGameplayTag Tag : AbilitySpec.Ability.Get()->AbilityTags)
 		{
 			if (Tag.MatchesTag(AbilityTag))
 			{
@@ -230,13 +239,64 @@ void UHAFAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
 	}
 }
 
+bool UHAFAbilitySystemComponent::InputTagIsEmpty(const FGameplayTag& InputTag)
+{
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (AbilityHasInputTag(AbilitySpec, InputTag))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UHAFAbilitySystemComponent::AbilityHasInputTag(const FGameplayAbilitySpec& Spec, const FGameplayTag& InputTag)
+{
+	return Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag);
+}
+
+bool UHAFAbilitySystemComponent::AbilityHasAnyInputTag(const FGameplayAbilitySpec& Spec)
+{
+	return Spec.GetDynamicSpecSourceTags().HasTag(FGameplayTag::RequestGameplayTag(FName("InputTag")));
+}
+
+void UHAFAbilitySystemComponent::AssignInputTagToAbility(FGameplayAbilitySpec& Spec, const FGameplayTag& InputTag)
+{
+	ClearSlotOfTag(&Spec);
+	Spec.GetDynamicSpecSourceTags().AddTag(InputTag);
+}
+
+FGameplayAbilitySpec* UHAFAbilitySystemComponent::GetSpecWithInputTag(const FGameplayTag& InputTag)
+{
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
+		{
+			return &AbilitySpec;
+		}
+	}
+	return nullptr;
+}
+
+bool UHAFAbilitySystemComponent::IsPassiveAbility(const FGameplayAbilitySpec& Spec)
+{
+	UAbilityInfo* AbilityInfo = UHAFAbilitySystemBlueprintLibrary::GetAbilityInfo(GetAvatarActor());
+	const FGameplayTag AbilityTag = GetAbilityTagFromSpec(Spec);
+	const FHAFAbilityInfo& Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	const FGameplayTag AbilityType = Info.AbilityType;
+	return AbilityType.MatchesTagExact(FHAFGameplayTags::Get().Abilities_Type_Passive);
+}
+
 void UHAFAbilitySystemComponent::ServerSpendSpellPoint_Implementation(const FGameplayTag& AbilityTag)
 {
 	if (FGameplayAbilitySpec* AbilitySpec = GetSpecFromAbilityTag(AbilityTag))
 	{
 		if (GetAvatarActor()->Implements<UPlayerInterface>())
 		{
-			IPlayerInterface::Execute_AddToSpellPoints(GetAvatarActor(), -1);
+			IPlayerInterface::Execute_AddToSpellPoints(GetAvatarActor(), -0.5f);
 		}
 
 		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
@@ -268,21 +328,47 @@ void UHAFAbilitySystemComponent::ServerEquipAbility_Implementation(const FGamepl
 		const bool bStatusValid = Status == GameplayTags.Abilities_Status_Equipped || Status == GameplayTags.Abilities_Status_Unlocked;
 		if (bStatusValid)
 		{
-			ClearAbilitiesOfSlot(Slot);
-			ClearSlotOfTag(AbilitySpec);
-			AbilitySpec->GetDynamicSpecSourceTags().AddTag(Slot);
-			if (Status.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
+			//Handle Activation/Deactivation for PAssive Abilities
+
+			// Slot is Empty (Slot) function
+			if (!InputTagIsEmpty(Slot))
 			{
-				AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GameplayTags.Abilities_Status_Unlocked);
-				AbilitySpec->GetDynamicSpecSourceTags().AddTag(GameplayTags.Abilities_Status_Equipped);
+				FGameplayAbilitySpec* SpecWithInputTag = GetSpecWithInputTag(Slot);
+				if (SpecWithInputTag)
+				{
+					if (AbilityTag.MatchesTagExact(GetAbilityTagFromSpec(*SpecWithInputTag)))
+					{
+						ClientEquipAbility(AbilityTag, GameplayTags.Abilities_Status_Equipped, Slot, PreviousSlot);
+						return;
+					}
+
+					if (IsPassiveAbility(*SpecWithInputTag))
+					{
+						MulticastActivatePassiveEffect(GetAbilityTagFromSpec(*SpecWithInputTag), false);
+						DeactivatePassiveAbility.Broadcast(GetAbilityTagFromSpec(*SpecWithInputTag));
+					}
+
+					ClearSlotOfTag(SpecWithInputTag);
+				}
 			}
+
+			if (!AbilityHasInputTag(*AbilitySpec, Slot))
+			{
+				if (IsPassiveAbility(*AbilitySpec))
+				{
+					TryActivateAbility(AbilitySpec->Handle);
+					MulticastActivatePassiveEffect(AbilityTag, true);
+				}
+			}
+			AssignInputTagToAbility(*AbilitySpec, Slot);
+			
 			MarkAbilitySpecDirty(*AbilitySpec);
 			ClientEquipAbility(AbilityTag, GameplayTags.Abilities_Status_Equipped, Slot, PreviousSlot);
 		}
 	}
 }
 
-void UHAFAbilitySystemComponent::ClientEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& Status,
+void UHAFAbilitySystemComponent::ClientEquipAbility_Implementation(const FGameplayTag& AbilityTag, const FGameplayTag& Status,
 	const FGameplayTag& Slot, const FGameplayTag& PreviousSlot)
 {
 	AbilityEquipped.Broadcast(AbilityTag, Status, Slot, PreviousSlot);
@@ -317,7 +403,6 @@ void UHAFAbilitySystemComponent::ClearSlotOfTag(FGameplayAbilitySpec* Spec)
 {
 	const FGameplayTag Slot = GetInputTagFromSpec(*Spec);
 	Spec->GetDynamicSpecSourceTags().RemoveTag(Slot);
-	MarkAbilitySpecDirty(*Spec);
 }
 
 void UHAFAbilitySystemComponent::ClearAbilitiesOfSlot(const FGameplayTag& Slot)

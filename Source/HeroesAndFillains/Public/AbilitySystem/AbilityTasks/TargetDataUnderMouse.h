@@ -35,6 +35,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Beam")
 	TObjectPtr<AActor> MouseHitActor = nullptr;
 
+	UPROPERTY(BlueprintReadOnly)
+	FVector CursorHitLocation;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector CachedCursorHitLocation;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector FinalLocation;
+
 private:
 	virtual void Activate() override;
 	void SendMouseCursorData();
@@ -43,5 +52,9 @@ private:
 
 	UPROPERTY()
 	AEnemyBase* LastHoveredEnemy = nullptr;
+
+public:
+	FORCEINLINE FVector GetMouseHitLocation() const { return MouseHitLocation; }
+	FORCEINLINE FVector GetCursorHitLocation() const { return CursorHitLocation; }
 };
 	

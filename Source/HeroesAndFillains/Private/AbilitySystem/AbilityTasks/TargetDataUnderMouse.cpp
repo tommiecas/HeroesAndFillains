@@ -72,17 +72,36 @@ void UTargetDataUnderMouse::Activate()
 
     MouseHitLocation = CursorHit.Location;
     MouseHitActor = CursorHit.GetActor();
+    
+    /*if (bIsLocallyControlled)
+    {
+        FinalLocation = CachedCursorHitLocation;
+    }
+    else
+    {
+        const FGameplayAbilitySpecHandle SpecHandle = GetAbilitySpecHandle();
+        const FPredictionKey ActivationPredictionKey = GetActivationPredictionKey();
+        AbilitySystemComponent.Get()->AbilityTargetDataSetDelegate(SpecHandle, ActivationPredictionKey).AddUObject(this, &UTargetDataUnderMouse::OnTargetDataReplicatedCallback);
+        const bool bCalledDelegate = AbilitySystemComponent.Get()->CallReplicatedTargetDataDelegatesIfSet(SpecHandle, ActivationPredictionKey);
+        if (!bCalledDelegate)
+        {
+            SetWaitingOnRemotePlayerData();
+        }
+    }*/
 }
 
 void UTargetDataUnderMouse::SendMouseCursorData()
 {
-    if (!AbilitySystemComponent.IsValid()) return;
+    FScopedPredictionWindow ScopedPrediction(AbilitySystemComponent.Get());
 
     APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
-    if (!PC) return;
-
+    if (!PC || !PC->IsLocalController())
+    {
+        return;
+    }
     FHitResult CursorHit;
-    PC->GetHitResultUnderCursor(ECC_Target, true, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Target, false, CursorHit);
+    CachedCursorHitLocation = CursorHit.Location;
     AEnemyBase* HitEnemy = Cast<AEnemyBase>(CursorHit.GetActor());
 
     // Handle hover highlighting
@@ -101,7 +120,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
         }
 
         LastHoveredEnemy = HitEnemy;
-    }
+    } 
 
     // Send updated target data each tick if you want continuous aiming
     FGameplayAbilityTargetDataHandle DataHandle;
@@ -123,6 +142,8 @@ void UTargetDataUnderMouse::SendMouseCursorData()
     UE_LOG(LogTemp, Error, TEXT("CURSOR HIT: Actor=%s  Location=%s"),
     CursorHit.GetActor() ? *CursorHit.GetActor()->GetName() : TEXT("None"),
     *CursorHit.Location.ToString());
+
+    CursorHitLocation = CursorHit.Location;
 }
 
 void UTargetDataUnderMouse::OnTargetDataReplicatedCallback(const FGameplayAbilityTargetDataHandle& DataHandle, FGameplayTag ActivationTag)

@@ -30,6 +30,14 @@ class HEROESANDFILLAINS_API UHAFAbilitySystemBlueprintLibrary : public UBlueprin
 	GENERATED_BODY()
 
 public:
+
+	/********************************
+	*********************************
+	****    WIDGET CONTROLLER    ****
+	****    LIBRARY FUNCTIONS    ****
+	*********************************
+	********************************/
+	
 	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
 	static bool MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, AFillainHUD*& OutFillainHUD);
 	
@@ -39,15 +47,24 @@ public:
 	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
 	
-		UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
-    	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
+	UFUNCTION(BlueprintPure, Category = "HAFAbilitySystemBlueprintLibrary | Widget Controllers", meta = (DefaultToSelf = "WorldContextObject"))
+	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
+	
+
+	/*********************************
+	**********************************
+	****      ABILITY SYSTEM      ****
+	****      CLASS DEFAULTS      ****
+	****     LIBRARY FUNCTIONS    ****
+	**********************************
+	*********************************/
 	
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC);
 
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass);
-
+	
 	UFUNCTION(BlueprintCallable, Category="HAFAbilitySystemLibrary|CharacterClassDefaults")
 	static UCharacterClassInfo* GetCharacterClassInfo(const UObject* WorldContextObject);
 
@@ -65,6 +82,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="HAF AbilitySystem Library | GameplayEffects")
 	static bool IsGameplayEffectSpecHandleValid(const FGameplayEffectSpecHandle& SpecHandle);
 
+	/**************************
+	***************************
+	****       EFFECT      ****
+	****      CONTEXT      ****
+	****       GETTER      ****
+	****      LIBRARY      ****
+	****     FUNCTIONS     ****
+	***************************
+	**************************/
+	
 	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
 	static bool IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle);
 
@@ -91,6 +118,28 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
 	static FVector GetKnockbackForce(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
+	static bool IsRadialDamage(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
+	static float GetRadialDamageInnerRadius(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
+	static float GetRadialDamageOuterRadius(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
+	static FVector GetRadialDamageOrigin(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	/**************************
+	***************************
+	****       EFFECT      ****
+	****      CONTEXT      ****
+	****       SETTER      ****
+	****      LIBRARY      ****
+	****     FUNCTIONS     ****
+	***************************
+	**************************/
 	
 	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
 	static void SetIsBlockedHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit);
@@ -119,6 +168,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
 	static void SetKnockbackForce(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, const FVector InForce);
 
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
+	static void SetIsRadialDamage(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsRadialDamage);
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
+	static void SetRadialDamageInnerRadius(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, float InInnerRadius);
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
+	static void SetRadialDamageOuterRadius(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, float InOuterRadius);
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayEffects")
+	static void SetRadialDamageOrigin(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, const FVector& InOrigin);
+	
+	/*********************************
+	**********************************
+	****    GAMEPLAY MECHANICS    ****
+	****    LIBRARY FUNCTIONS     ****
+	**********************************
+	*********************************/
+	
 	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | GameplayMechanics")
 	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject, TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
 

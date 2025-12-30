@@ -130,12 +130,12 @@ void AHAFPlayerState::OnRep_XP(int32 OldXP)
 	OnXPChangedDelegate.Broadcast(XP);
 }
 
-void AHAFPlayerState::OnRep_AttributePoints(int32 OldAttributePoints)
+void AHAFPlayerState::OnRep_AttributePoints(float OldAttributePoints) const
 {
 	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
 }
 
-void AHAFPlayerState::OnRep_SpellPoints(int32 OldSpellPoints)
+void AHAFPlayerState::OnRep_SpellPoints(float OldSpellPoints) const
 {
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
 }
@@ -152,25 +152,25 @@ void AHAFPlayerState::SetPlayerXP(const int32 NewXP)
 	OnXPChangedDelegate.Broadcast(XP);
 }
 
-void AHAFPlayerState::AddAttributePoints(const int32 AttributePointsToAdd)
+void AHAFPlayerState::AddAttributePoints(const float AttributePointsToAdd)
 {
 	AttributePoints += AttributePointsToAdd;
 	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
 }
 
-void AHAFPlayerState::SetAttributePoints(const int32 NewAttributePoints)
+void AHAFPlayerState::SetAttributePoints(const float NewAttributePoints)
 {
 	AttributePoints = NewAttributePoints;
 	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
 }
 
-void AHAFPlayerState::AddSpellPoints(const int32 SpellPointsToAdd)
+void AHAFPlayerState::AddSpellPoints(const float SpellPointsToAdd)
 {
 	SpellPoints += SpellPointsToAdd;
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
 }
 
-void AHAFPlayerState::SetSpellPoints(const int32 NewSpellPoints)
+void AHAFPlayerState::SetSpellPoints(const float NewSpellPoints)
 {
 	SpellPoints = NewSpellPoints;
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);

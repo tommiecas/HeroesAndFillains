@@ -38,8 +38,10 @@
 #include "Components/SplineComponent.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
+#include "Components/DecalComponent.h"
 #include "Enemies/EnemyBase.h"
 #include "GameMode/HybridGameMode.h"
+#include "HeroesAndFillains/HeroesAndFillains.h"
 #include "UI/Widgets/DamageTextComponent.h"
 #include "Interfaces/EnemyInterface.h"
 #include "Weapons/Ranged/RangedWeapon.h"
@@ -47,6 +49,7 @@
 #include "UI/WidgetControllers/HAFWidgetController.h"
 #include "Interfaces/EnemyInterface.h"
 #include "Interfaces/InterfaceHelpers.h"
+#include "Items/MagicCircle.h"
 
 
 AFillainPlayerController::AFillainPlayerController()
@@ -69,6 +72,7 @@ void AFillainPlayerController::PlayerTick(float DeltaTime)
 	Super::PlayerTick(DeltaTime);
 
 	CursorTrace();
+	UpdateMagicCircleLocation();
 }
 
 
@@ -82,7 +86,8 @@ void AFillainPlayerController::CursorTrace()
 		ThisActor = nullptr;
 		return;
 	}
-	GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, CursorHit);
+	const ECollisionChannel TraceChannel = IsValid(MagicCircle) ? ECC_BlockAllExceptCharacters : ECC_Visibility;
+	GetHitResultUnderCursor(TraceChannel, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
 	LastActor = ThisActor;
@@ -290,6 +295,39 @@ void AFillainPlayerController::DebugCursorTrace()
 	//		bShowMouseCursor ? TEXT("World/Viewport") : TEXT("Unknown"));
 	//}
 }
+
+void AFillainPlayerController::ShowMagicCircle(UMaterialInterface* DecalMaterial)
+{
+	if (!IsValid(MagicCircle))
+	{
+		MagicCircle = GetWorld()->SpawnActor<AMagicCircle>(MagicCircleClass);
+		if (DecalMaterial)
+		{
+			MagicCircle->MagicCircleDecal->SetMaterial(0, DecalMaterial);
+		}
+	}
+}
+
+void AFillainPlayerController::HideMagicCircle()
+{
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->Destroy();
+	}
+}
+
+void AFillainPlayerController::UpdateMagicCircleLocation()
+{
+	if (!IsValid(MagicCircle))
+	{
+		return;
+	}	
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->SetActorLocation(CursorHit.ImpactPoint);
+	}
+}
+
 
 void AFillainPlayerController::CheckPing(float DeltaTime)
 {

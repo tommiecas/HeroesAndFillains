@@ -676,39 +676,57 @@ void AFillainCharacter::AddToCharacterLevel_Implementation(int32 LevelToAdd)
 
 	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(GetAbilitySystemComponent()))
 	{
-		HAFASC->UpdateAbilityStatuses(HAFPS->GetFillainPlayerLevel());
+		HAFASC->UpdateAbilityStatuses(LevelToAdd);
 	}
 }
 
-void AFillainCharacter::AddToAttributePoints_Implementation(int32 AttributePointsToAdd)
+void AFillainCharacter::AddToAttributePoints_Implementation(float AttributePointsToAdd)
 {
 	AHAFPlayerState* HAFPState = GetPlayerState<AHAFPlayerState>();
 	check(HAFPState);
 	HAFPState->AddAttributePoints(AttributePointsToAdd);
 }
 
-void AFillainCharacter::AddToSpellPoints_Implementation(int32 SpellPointsToAdd)
+void AFillainCharacter::AddToSpellPoints_Implementation(float SpellPointsToAdd)
 {
 	AHAFPlayerState* HAFPlayerS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPlayerS);
 	HAFPlayerS->AddSpellPoints(SpellPointsToAdd);
 }
 
-int32 AFillainCharacter::GetAttributePoints_Implementation() const
+float AFillainCharacter::GetAttributePoints_Implementation() const
 {
 	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPS);
 	return HAFPS->GetFillainPlayerAttributePoints();
 }
 
-int32 AFillainCharacter::GetSpellPoints_Implementation() const
+float AFillainCharacter::GetSpellPoints_Implementation() const
 {
 	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPS);
 	return HAFPS->GetFillainPlayerSpellPoints();
 }
 
-float AFillainCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+void AFillainCharacter::ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial)
+{
+	if (AFillainPlayerController* FillPlayCon = Cast<AFillainPlayerController>(GetController()))
+	{
+		FillPlayCon->ShowMagicCircle(DecalMaterial);
+		FillPlayCon->bShowMouseCursor = false;
+	}
+}
+
+void AFillainCharacter::HideMagicCircle_Implementation()
+{
+	if (AFillainPlayerController* FPC = Cast<AFillainPlayerController>(GetController()))
+	{
+		FPC->HideMagicCircle();
+		FPC->bShowMouseCursor = true;
+	}
+}
+
+float AFillainCharacter::TakeMeleeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
                                     class AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
@@ -1293,6 +1311,23 @@ void AFillainCharacter::OnRep_Stunned()
 		{
 			HAFASC->RemoveLooseGameplayTags(BlockedTags);
 			StunDebuffComponent->Deactivate();
+		}
+	}
+}
+void AFillainCharacter::AddCharacterAbilities()
+{
+	if (StartupAbilities.Num() > 0 && StartupPassiveAbilities.Num() > 0) UnlockAbilities();
+}
+
+void AFillainCharacter::UnlockAbilities()
+{
+	if (!HasAuthority()) return;
+	if (AHAFPlayerState* HAFStateOfThePlayer = Cast<AHAFPlayerState>(GetPlayerState()))
+	{
+		if (UHAFAbilitySystemComponent* HAFASComp = Cast<UHAFAbilitySystemComponent>(HAFStateOfThePlayer->GetAbilitySystemComponent()))
+		{
+			HAFASComp->AddCharacterAbilities(StartupAbilities);
+			HAFASComp->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 		}
 	}
 }

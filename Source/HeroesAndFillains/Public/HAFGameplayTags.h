@@ -132,6 +132,13 @@ public:
 
 	FGameplayTag Abilities_Fire_FireBolt;
 	FGameplayTag Abilities_Lightning_Electrocute;
+	FGameplayTag Abilities_ChaosMajix_ArcaneShards;
+
+	FGameplayTag Abilities_Passive_RulesOfOrder_HaloOfProtection;
+	FGameplayTag Abilities_Passive_ChaosMajix_LifeSiphon;
+	FGameplayTag Abilities_Passive_RulesOfOrder_MightOfMajix;
+	FGameplayTag Abilities_Passive_ChaosMajix_DoubleJeopardy;
+	FGameplayTag Abilities_Passive_RulesOfOrder_FlightOfTheFeeniks;
 	
 	FGameplayTag Cooldown_Fire_FireBolt;
 	FGameplayTag Cooldown_Lightning_Electrocute;

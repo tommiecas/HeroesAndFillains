@@ -58,12 +58,12 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 
 void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityTag)
 {
-	if (bIsWaitingForEquipSelection)
-	{
-		const FGameplayTag SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType;
-		StopWaitingForEquipSelectionDelegate.Broadcast(SelectedAbilityType);
-		bIsWaitingForEquipSelection = false;
-	} 
+	// if (bIsWaitingForEquipSelection)
+	// {
+	// 	const FGameplayTag SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType;
+	//	StopWaitingForEquipSelectionDelegate.Broadcast(SelectedAbilityType);
+	//	bIsWaitingForEquipSelection = false;
+	// } 
 	
 	const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
 	const int32 SpellPoints = GetHAFPlayerState()->GetFillainPlayerSpellPoints();
@@ -161,25 +161,25 @@ void USpellMenuWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTa
 	StopWaitingForEquipSelectionDelegate.Broadcast(AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType);
 }
 
-void USpellMenuWidgetController::ShouldEnableButtons(const FGameplayTag& AbilityStatus, int32 SpellPoints, bool& bShouldEnableSpellPointsButton, bool& bShouldEnableEquipButton)
-	{
-		const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
+void USpellMenuWidgetController::ShouldEnableButtons(const FGameplayTag& AbilityStatus, int32 SpellPoints, bool& bShouldEnableSpendPointsButton, bool& bShouldEnableEquipButton)
+{
+	const FHAFGameplayTags GameplayTags = FHAFGameplayTags::Get();
 
-		bShouldEnableSpellPointsButton = false;
-		bShouldEnableEquipButton = false;
+	bShouldEnableSpendPointsButton = false;
+	bShouldEnableEquipButton = false;
 	
-		if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Equipped))
-		{
-			bShouldEnableEquipButton = true;
-			if (SpellPoints > 0) bShouldEnableSpellPointsButton = true;
-		}
-		else if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Eligible))
-		{
-			if (SpellPoints > 0) bShouldEnableSpellPointsButton = true;
-		}
-		else if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
-		{
-			bShouldEnableEquipButton = true;
-			if (SpellPoints > 0) bShouldEnableSpellPointsButton = true;
-		}
+	if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Equipped))
+	{
+		bShouldEnableEquipButton = true;
+		if (SpellPoints > 0) bShouldEnableSpendPointsButton = true;
 	}
+	else if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Eligible))
+	{
+		if (SpellPoints > 0) bShouldEnableSpendPointsButton = true;
+	}
+	else if (AbilityStatus.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
+	{
+		bShouldEnableEquipButton = true;
+		if (SpellPoints > 0) bShouldEnableSpendPointsButton = true;
+	}
+}

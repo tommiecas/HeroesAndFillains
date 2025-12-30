@@ -170,3 +170,4 @@ void UHAFBeamSpell::StoreAdditionalBeamTargets(TArray<AActor*>& OutAdditionalTar
 		}
 	}
 }
+

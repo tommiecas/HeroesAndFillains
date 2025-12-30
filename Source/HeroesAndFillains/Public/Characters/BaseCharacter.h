@@ -32,6 +32,7 @@ class AFillainCharacter;
 class AWeaponBase;
 class AMeleeWeapon;
 class ARangedWeapon;
+class UNiagaraPassiveSpellComponent;
 
 UENUM(BlueprintType, Blueprintable)
 enum EDeathPose
@@ -369,6 +370,7 @@ public:
 	
 	FOnASCRegistered OnASCRegistered;
 	FOnDeathSignature OnDeathDelegate;
+	FOnDamageSignature OnDamageDelegate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	USoundBase* DeathSound;
@@ -399,9 +401,38 @@ public:
 
 	virtual void SetIsBeingShocked_Implementation(bool bInShock) override;
 	virtual bool IsBeingShocked_Implementation() const override;
-
+	virtual FOnDamageSignature& GetOnDamageDelegate() override ;
 	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
+	UFUNCTION(BlueprintCallable)
+	virtual void UnlockAbilities();
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+
+	UFUNCTION(BlueprintCallable)
+	TArray<TSubclassOf<UGameplayAbility>> GetStartupAbilities();
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<UNiagaraPassiveSpellComponent> HaloOfProtectionNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<UNiagaraPassiveSpellComponent> LifeSiphonNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<UNiagaraPassiveSpellComponent> MightOfMajixNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<UNiagaraPassiveSpellComponent> DoubleJeopardyNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<UNiagaraPassiveSpellComponent> FlightOfTheFeeniksNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PassiveAbilities")
+	TObjectPtr<USceneComponent> EffectAttachComponent;
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeAbilityActorInfo();
@@ -455,7 +486,8 @@ protected:
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level);
 
-	void AddCharacterAbilities(); 
+	UFUNCTION(BlueprintCallable)
+	virtual void AddCharacterAbilities(); 
 
 	
 	/*************************************
@@ -479,13 +511,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UNiagaraSystem* BloodEffect;
 
+	
+	
 private:
-	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
-
-	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
-
+	UFUNCTION(BlueprintCallable)
+	TArray<TSubclassOf<UGameplayAbility>> GetStartupPassiveAbilities();
 public:
 	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	FORCEINLINE AMeleeWeapon* GetEquippedMeleeWeapon() const { return EquippedMeleeWeapon; }

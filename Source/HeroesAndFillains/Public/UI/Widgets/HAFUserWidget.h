@@ -9,7 +9,7 @@ class UAbilitySystemComponent;
 class UAttributeSet;
 class AEnemyBase; // ✅ forward declare instead of including
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class HEROESANDFILLAINS_API UHAFUserWidget : public UUserWidget
 {
 	GENERATED_BODY()

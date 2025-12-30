@@ -253,6 +253,45 @@ FVector UHAFAbilitySystemBlueprintLibrary::GetKnockbackForce(const FGameplayEffe
 	return FVector::ZeroVector;		
 }
 
+bool UHAFAbilitySystemBlueprintLibrary::IsRadialDamage(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->IsRadialDamage();
+	}
+	return false;
+}
+
+float UHAFAbilitySystemBlueprintLibrary::GetRadialDamageInnerRadius(
+	const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->GetRadialDamageInnerRadius();
+	}
+	return 0.f;
+}
+
+float UHAFAbilitySystemBlueprintLibrary::GetRadialDamageOuterRadius(
+	const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->GetRadialDamageOuterRadius();
+	}
+	return 0.f;
+}
+
+FVector UHAFAbilitySystemBlueprintLibrary::GetRadialDamageOrigin(
+	const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<const FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return HAFGameplayEffectContext->GetRadialDamageOrigin();
+	}
+	return FVector::ZeroVector;	
+}
+
 void UHAFAbilitySystemBlueprintLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& EffectContextHandle,
                                                         bool bInIsBlockedHit)
 {
@@ -334,6 +373,42 @@ void UHAFAbilitySystemBlueprintLibrary::SetKnockbackForce(FGameplayEffectContext
 	}
 }
 
+void UHAFAbilitySystemBlueprintLibrary::SetIsRadialDamage(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsRadialDamage)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetIsRadialDamage(bInIsRadialDamage);
+	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetRadialDamageInnerRadius(FGameplayEffectContextHandle& EffectContextHandle,
+	float InInnerRadius)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetRadialDamageInnerRadius(InInnerRadius);
+	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetRadialDamageOuterRadius(FGameplayEffectContextHandle& EffectContextHandle,
+	float InOuterRadius)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetRadialDamageOuterRadius(InOuterRadius);
+	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetRadialDamageOrigin(FGameplayEffectContextHandle& EffectContextHandle,
+	const FVector& InOrigin)
+{
+	if (FHAFGameplayEffectContext* HAFGameplayEffectContext = static_cast<FHAFGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		HAFGameplayEffectContext->SetRadialDamageOrigin(InOrigin);
+	}
+}
+
 void UHAFAbilitySystemBlueprintLibrary::GetLivePlayersWithinRadius(const UObject* WorldContextObject, TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin)
 {
 	FCollisionQueryParams SphereParams;
@@ -410,6 +485,11 @@ FGameplayEffectContextHandle UHAFAbilitySystemBlueprintLibrary::ApplyDamageEffec
 	EffectContextHandle.AddSourceObject(SourceAvatarActor);
 	SetDeathImpulse(EffectContextHandle, DamageEffectParams.DeathImpulse);
 	SetKnockbackForce(EffectContextHandle, DamageEffectParams.KnockbackForce);
+	SetIsRadialDamage(EffectContextHandle, DamageEffectParams.bIsRadialDamage);
+	SetRadialDamageInnerRadius(EffectContextHandle, DamageEffectParams.RadialDamageInnerRadius);
+	SetRadialDamageOuterRadius(EffectContextHandle, DamageEffectParams.RadialDamageOuterRadius);
+	SetRadialDamageOrigin(EffectContextHandle, DamageEffectParams.RadialDamageOrigin);
+	
 	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(DamageEffectParams.DamageGameplayEffectClass, DamageEffectParams.AbilityLevel, EffectContextHandle);
 
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageEffectParams.DamageTypeTag, DamageEffectParams.BaseDamage);
@@ -418,7 +498,10 @@ FGameplayEffectContextHandle UHAFAbilitySystemBlueprintLibrary::ApplyDamageEffec
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Debuff_Duration, DamageEffectParams.DebuffDuration);
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Debuff_Frequency, DamageEffectParams.DebuffFrequency);
 
-	DamageEffectParams.TargetAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	if (DamageEffectParams.TargetAbilitySystemComponent)
+	{
+		DamageEffectParams.TargetAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	}
 	return EffectContextHandle;
 }
 

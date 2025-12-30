@@ -534,7 +534,7 @@ void UCombatComponent::ReceiveMeleeDamage(
 )
 {
 	// Apply actual damage
-	float FinalDamage = Character->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	float FinalDamage = Character->TakeMeleeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	if (FinalDamage <= 0.f)
 	{
 		return;

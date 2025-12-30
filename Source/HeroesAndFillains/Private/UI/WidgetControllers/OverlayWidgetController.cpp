@@ -20,6 +20,7 @@
 #include "PlayerState/HAFPlayerState.h"
 #include "HeroesAndFillains/HAFLogChannels.h"
 
+
 void UOverlayWidgetController::OnGEAddedToSelf(UAbilitySystemComponent* /*TargetASC*/,
                                                const FGameplayEffectSpec& SpecApplied,
                                                FActiveGameplayEffectHandle /*ActiveHandle*/)

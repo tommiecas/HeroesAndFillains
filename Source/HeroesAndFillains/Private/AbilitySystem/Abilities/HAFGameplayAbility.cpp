@@ -39,7 +39,7 @@ float UHAFGameplayAbility::GetAbilityCost(const FGameplayAttribute& Attribute) c
 
 FString UHAFGameplayAbility::GetNextLevelDescription(int32 Level)
 {
-	return FString::Printf(TEXT("<Default>NextLevel: </Default><Level>%d</> \n<Default>Causes much more damage. </>"), Level);
+	return FString::Printf(TEXT("<Default>NextLevel: </Default><Level>%d</> \n<Default>Causes even more damage. </>"), Level);
 }
 
 FString UHAFGameplayAbility::GetLockedDescription(int32 Level)

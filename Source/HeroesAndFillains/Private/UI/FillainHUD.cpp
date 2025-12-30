@@ -2,7 +2,7 @@
     #include "UI/WidgetControllers/OverlayWidgetController.h"
     #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
     #include "UI/Widgets/HAFUserWidget.h"
-    #include "UI/Widgets/EnemyAttributeMenuWidget.h"
+#include "UI/Widgets/EnemyAttributeMenuWidget.h"
     #include "UI/CharacterOverlayFixed.h"
     #include "UI/Announcement.h"
     #include "UI/EliminationAnnouncement.h"
