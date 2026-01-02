@@ -24,13 +24,13 @@ AProjectileWeapon* UWeaponSpawnLibrary::SpawnFloatingWeapon(UObject* WorldContex
         SpawnedWeapon->bShouldHover = true;
         SpawnedWeapon->bShouldFloatSpin = true;
 
-        if (SpawnedWeapon->GetAreaSphere())
+        if (SpawnedWeapon->GetSphereCollision())
         {
-            SpawnedWeapon->GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-            SpawnedWeapon->GetAreaSphere()->SetCollisionResponseToAllChannels(ECR_Ignore);
-            SpawnedWeapon->GetAreaSphere()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-            SpawnedWeapon->GetAreaSphere()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
-            SpawnedWeapon->GetAreaSphere()->SetGenerateOverlapEvents(true);
+            SpawnedWeapon->GetSphereCollision()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+            SpawnedWeapon->GetSphereCollision()->SetCollisionResponseToAllChannels(ECR_Ignore);
+            SpawnedWeapon->GetSphereCollision()->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+            SpawnedWeapon->GetSphereCollision()->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+            SpawnedWeapon->GetSphereCollision()->SetGenerateOverlapEvents(true);
         }
     }
 

@@ -25,10 +25,10 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
 
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetRangedWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
 	if (MuzzleFlashSocket)
 	{
-		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetRangedWeaponMesh());
 		const FVector Start = SocketTransform.GetLocation();
 
 		// Maps hit character to number of times hit
@@ -137,18 +137,18 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 
 void AShotgun::ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets)
 {
-	if (!IsValid(GetWeaponMesh())) return;
+	if (!IsValid(GetRangedWeaponMesh())) return;
     
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetRangedWeaponMesh()->GetSocketByName("MuzzleFlashSocket");
 	if (!MuzzleFlashSocket) return;
     
-	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetRangedWeaponMesh());
 	const FVector TraceStart = SocketTransform.GetLocation();
     
 	FVector ToTarget = HitTarget - TraceStart;
 	if (ToTarget.IsNearlyZero(KINDA_SMALL_NUMBER))
 	{
-		ToTarget = GetWeaponMesh()->GetForwardVector() * 100.0f;
+		ToTarget = GetRangedWeaponMesh()->GetForwardVector() * 100.0f;
 	}
     
 	const FVector ToTargetNormalized = ToTarget.GetSafeNormal();

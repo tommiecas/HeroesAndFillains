@@ -25,11 +25,11 @@ AStormWeapons::AStormWeapons()
 	SetupWeaponBox();
 	
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
-	BoxTraceStart->SetupAttachment(WeaponMesh, TEXT("StartBoxTraceSocket"));
+	BoxTraceStart->SetupAttachment(MeleeWeaponMesh, TEXT("StartBoxTraceSocket"));
 	
 
 	BoxTraceEnd = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace End"));
-	BoxTraceEnd->SetupAttachment(WeaponMesh, TEXT("EndBoxTraceSocket"));
+	BoxTraceEnd->SetupAttachment(MeleeWeaponMesh, TEXT("EndBoxTraceSocket"));
 
 	StormWeapon = this;
 	
@@ -119,9 +119,9 @@ void AStormWeapons::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT(" - Collision Profile: %s"), *WeaponBox->GetCollisionProfileName().ToString());
 
 			// Attach Box to Mesh
-			if (WeaponMesh)
+			if (MeleeWeaponMesh)
 			{
-				WeaponBox->AttachToComponent(WeaponMesh, FAttachmentTransformRules::KeepRelativeTransform, FName("MeleeSocket"));
+				WeaponBox->AttachToComponent(MeleeWeaponMesh, FAttachmentTransformRules::KeepRelativeTransform, FName("MeleeSocket"));
 				WeaponBox->SetRelativeLocation(FVector::ZeroVector);
 
 				// UE_LOG(LogTemp, Warning, TEXT("🔗 Attached WeaponBox to WeaponMesh at MeleeSocket"));
@@ -200,11 +200,11 @@ void AStormWeapons::Tick(float DeltaTime)
 
 	if (bIsEquipped == true)
 	{
-		if (HoverDecal) HoverDecal->DestroyComponent();
-		if (HoverLight) HoverLight->DestroyComponent();
-		if (PickupGearWidgetComponent) PickupGearWidgetComponent->DestroyComponent();
-		if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->DestroyComponent();
-		if (AreaSphere) AreaSphere->DestroyComponent();
+		if (HoveringDecal) HoveringDecal->DestroyComponent();
+		if (HoveringLight) HoveringLight->DestroyComponent();
+		if (PickupWidgetComponent) PickupWidgetComponent->DestroyComponent();
+		if (InfoWidgetComponent) InfoWidgetComponent->DestroyComponent();
+		if (SphereCollision) SphereCollision->DestroyComponent();
 	}
 	
 	/* DrawDebugBox(GetWorld(), WeaponBox->GetComponentLocation(), WeaponBox->GetScaledBoxExtent(), WeaponBox->GetComponentQuat(), FColor::Red, false, 2.f); */

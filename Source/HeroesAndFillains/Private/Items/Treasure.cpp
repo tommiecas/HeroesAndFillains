@@ -18,8 +18,8 @@ void ATreasure::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	AreaSphere->OnComponentBeginOverlap.RemoveDynamic(this, &ATreasure::OnSphereOverlap);
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ATreasure::OnSphereOverlap);
+	SphereComp->OnComponentBeginOverlap.RemoveDynamic(this, &ATreasure::OnSphereOverlap);
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ATreasure::OnSphereOverlap);
 }
 void ATreasure::EnableCustomDepth(bool bEnable)
 {

@@ -68,9 +68,9 @@ void AChaosSword::OnRep_WeaponState()
 	Super::OnRep_WeaponState();
 
 	// Maintain scale when weapon state changes
-	if (WeaponMesh)
+	if (MeleeWeaponMesh)
 	{
-		WeaponMesh->SetRelativeScale3D(InitialMeshScale);
+		MeleeWeaponMesh->SetRelativeScale3D(InitialMeshScale);
 	}
 
 }
@@ -78,17 +78,17 @@ void AChaosSword::OnRep_WeaponState()
 void AChaosSword::Equip(USceneComponent* InParent, FName InSocketName,  AActor* NewOwner, APawn* NewInstigator)
 {
 	// Set scale before attachment
-	if (WeaponMesh)
+	if (MeleeWeaponMesh)
 	{
-		WeaponMesh->SetWorldScale3D(InitialMeshScale);
+		MeleeWeaponMesh->SetWorldScale3D(InitialMeshScale);
 	}
     
 	Super::Equip(InParent, InSocketName, NewOwner, NewInstigator);
     
 	// Ensure scale after attachment
-	if (WeaponMesh)
+	if (MeleeWeaponMesh)
 	{
-		WeaponMesh->SetWorldScale3D(InitialMeshScale);
+		MeleeWeaponMesh->SetWorldScale3D(InitialMeshScale);
 	}
 
 

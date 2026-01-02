@@ -19,13 +19,9 @@ public:
 	APrePackagedPCPickupItem();
 	virtual void Tick(float DeltaTime) override;
 	virtual void PostInitializeComponents() override;
-
-
-	virtual void ShowPickupAndInfoWidgets(bool bShow) override;
-
 	
 	
-	
+protected:
 	virtual void BeginPlay() override;
 
 
@@ -69,7 +65,6 @@ private:
 public:
 	FORCEINLINE UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
 	FORCEINLINE UNiagaraComponent* GetItemEffect() const { return ItemEffect; }
-	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	
 };
 

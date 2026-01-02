@@ -91,10 +91,7 @@ public:
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedRangedWeapon)
 	class ARangedWeapon* EquippedRangedWeapon;
-
-	UPROPERTY(ReplicatedUsing = OnRep_EquippedMajixWeapon)
-	class AMajixWeapon* EquippedMajixWeapon;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	EFightingStyle FightingStyle = EFightingStyle::EFS_Unequipped;
 
@@ -103,15 +100,15 @@ public:
 
 	UFUNCTION()
 	void OnRep_EquippedMeleeWeapon();
-
-	UFUNCTION()
-	void OnRep_EquippedMajixWeapon();
 	
 	UFUNCTION()
 	void OnRep_EquippedRangedWeapon();
 
-	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
-	AWeaponBase* SecondaryWeapon;
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryRangedWeapon)
+	TObjectPtr<ARangedWeapon> SecondaryRangedWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryMeleeWeapon)
+	TObjectPtr<AMeleeWeapon> SecondaryMeleeWeapon;
 
     UPROPERTY()
     EWeaponType WeaponType;
@@ -178,7 +175,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnRep_SecondaryWeapon();
+	void OnRep_SecondaryRangedWeapon();
+
+	UFUNCTION()
+	void OnRep_SecondaryMeleeWeapon();
 
 	
 	void Fire();
@@ -222,10 +222,10 @@ protected:
 
 	void AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketName);
 
-	void AttachOneHandedRangedWeaponToRightHand(class AWeaponBase* OneHandedRangedWeaponToAttach);
-	void AttachTwoHandedRangedWeaponToLeftHand(class AWeaponBase* TwoHandedRangedWeaponToAttach);
-	void AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach);
-	void AttachTwoHandedMeleeWeaponToLeftHand(class AWeaponBase* TwoHandedMeleeWeaponToAttach);
+	void AttachOneHandedRangedWeaponToRightHand(class ARangedWeapon* OneHandedRangedWeaponToAttach);
+	void AttachTwoHandedRangedWeaponToLeftHand(class ARangedWeapon* TwoHandedRangedWeaponToAttach);
+	void AttachOneHandedMeleeWeaponToRightHand(class AMeleeWeapon* OneHandedMeleeWeaponToAttach);
+	void AttachTwoHandedMeleeWeaponToLeftHand(class AMeleeWeapon* TwoHandedMeleeWeaponToAttach);
 	void AttachWeaponToLeftHand(class AWeaponBase* WeaponToAttach);
 	void AttachSwordToLeftHand(AMeleeWeapon* Sword);
 	void AttachActorToBackpack(class AWeaponBase* WeaponToAttach);	

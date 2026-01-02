@@ -3,10 +3,18 @@
 
 #include "Weapons/Majix/MajixWeapon.h"
 
+#include "Components/BoxComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+
 
 AMajixWeapon::AMajixWeapon()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	
 }
 
 void AMajixWeapon::BeginPlay()

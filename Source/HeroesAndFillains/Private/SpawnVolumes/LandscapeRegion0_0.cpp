@@ -149,18 +149,18 @@ void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UU
     {
         if (!IsValid(TargetActor)) return;
 
-        if (AWeaponBase* Weapon = Cast<AWeaponBase>(TargetActor))
+        if (ARangedWeapon* Weapon = Cast<ARangedWeapon>(TargetActor))
         {
             // Setup widgets with delays between operations
-            if (Weapon->PickupGearWidgetComponent)
+            if (Weapon->PickupWidgetComponent)
             {
-                Weapon->PickupGearWidgetComponent->SetVisibility(false);
+                Weapon->PickupWidgetComponent->SetVisibility(false);
                 
                 // Delay widget class assignment
                 GetWorld()->GetTimerManager().SetTimerForNextTick([Weapon, WidgetClass]()
                 {
                     if (!IsValid(Weapon)) return;
-                    Weapon->PickupGearWidgetComponent->SetWidgetClass(WidgetClass);
+                    Weapon->PickupWidgetComponent->SetWidgetClass(WidgetClass);
                     
                     // Delay visibility change
                     FTimerHandle VisibilityTimerHandle;
@@ -168,9 +168,9 @@ void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UU
                         VisibilityTimerHandle,
                         [Weapon]()
                         {
-                            if (IsValid(Weapon) && Weapon->PickupGearWidgetComponent)
+                            if (IsValid(Weapon) && Weapon->PickupWidgetComponent)
                             {
-                                Weapon->PickupGearWidgetComponent->SetVisibility(false);
+                                Weapon->PickupWidgetComponent->SetVisibility(false);
                             }
                         },
                         0.1f,
@@ -180,23 +180,23 @@ void ALandscapeRegion0_0::AttachFloatingIcon(AActor* TargetActor, TSubclassOf<UU
             }
 
             // Setup ItemInfo widget with separate delay
-            if (Weapon->ItemInfoWidgetComponent)
+            if (Weapon->InfoWidgetComponent)
             {
-                Weapon->ItemInfoWidgetComponent->SetVisibility(false);
+                Weapon->InfoWidgetComponent->SetVisibility(false);
                 
                 GetWorld()->GetTimerManager().SetTimerForNextTick([Weapon]()
                 {
                     if (!IsValid(Weapon)) return;
-                    Weapon->ItemInfoWidgetComponent->SetWidgetClass(Weapon->ItemInfoWidgetClass);
+                    Weapon->InfoWidgetComponent->SetWidgetClass(Weapon->InfoWidgetClass);
                     
                     FTimerHandle VisibilityTimerHandle;
                     Weapon->GetWorld()->GetTimerManager().SetTimer(
                         VisibilityTimerHandle,
                         [Weapon]()
                         {
-                            if (IsValid(Weapon) && Weapon->ItemInfoWidgetComponent)
+                            if (IsValid(Weapon) && Weapon->InfoWidgetComponent)
                             {
-                                Weapon->ItemInfoWidgetComponent->SetVisibility(false);
+                                Weapon->InfoWidgetComponent->SetVisibility(false);
                             }
                         },
                         0.15f,  // Slightly delayed from PickupGear widget
@@ -296,15 +296,15 @@ void ALandscapeRegion0_0::SpawnActorInBox(
 
                     if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(SpawnedActor))
                     {
-                        MeleeWeapon->ItemInfoWidgetClass = WidgetClass; // 🔥 assign the class
+                        MeleeWeapon->InfoWidgetClass = WidgetClass; // 🔥 assign the class
                     }
                     else if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(SpawnedActor))
                     {
-                        RangedWeapon->ItemInfoWidgetClass = WidgetClass;
+                        RangedWeapon->InfoWidgetClass = WidgetClass;
                     }
                     else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(SpawnedActor))
                     {
-                        AmmoPickup->ItemInfoWidgetClass = WidgetClass;
+                        AmmoPickup->InfoWidgetClass = WidgetClass;
                     }
                     
                     if (OnSpawnedSetup)

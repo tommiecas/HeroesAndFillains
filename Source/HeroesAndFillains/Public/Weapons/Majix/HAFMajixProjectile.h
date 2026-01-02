@@ -31,9 +31,13 @@ public:
 	UPROPERTY()
 	TObjectPtr<USceneComponent> HomingTargetSceneComponent;
 
+	bool IsValidOverlap(AActor* OtherActor);
 protected:
 	virtual void BeginPlay() override;
-	void OnHit();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnHit();
+	
 	virtual void Destroyed() override;
 
 	UFUNCTION(BlueprintCallable)
@@ -41,16 +45,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USphereComponent> NewSphere;
-	
-private:
-	
-	
-	UPROPERTY(EditDefaultsOnly, Category="GAS")
-	TSubclassOf<UGameplayEffect> DamageEffectClass; // use this instead of a cached SpecHandle
 
-	UPROPERTY()
-	bool bHasAppliedEffect = false;
-	
+	bool bHit = false;
+
 	UPROPERTY(VisibleAnywhere, Category="Audio|FX")
 	UAudioComponent* LoopingSoundComponent = nullptr;
 	
@@ -60,6 +57,15 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float LifeSpan = 15.f;
 
-	bool bHit = false;
+private:
+	
+	
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> DamageEffectClass; // use this instead of a cached SpecHandle
+
+	UPROPERTY()
+	bool bHasAppliedEffect = false;
+	
+
 
 };

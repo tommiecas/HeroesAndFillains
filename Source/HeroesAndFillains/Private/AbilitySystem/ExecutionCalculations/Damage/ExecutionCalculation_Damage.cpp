@@ -1,7 +1,7 @@
 // Copyright Druid Mechanics
 
 
-#include "AbilitySystem/ExecutionCalculations/ExecutionCalculation_Damage.h"
+#include "AbilitySystem/ExecutionCalculations/Damage/ExecutionCalculation_Damage.h"
 #include "GameplayEffectExecutionCalculation.h"
 #include "GameplayEffectTypes.h"
 #include "HAFGameplayTags.h"
@@ -14,83 +14,7 @@
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
-
-struct HAFDamageStatics
-{
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ArmorPenetration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(BlockChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Agility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Flexibility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Purity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Corruptibility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Intuition);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Vision);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Speed);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Charm);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HealthRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ShieldRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(StaminaRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MajixRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxHealth);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxShield);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxStamina);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxMajix);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Fireproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Shockproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ThermalRadiation);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Invulnerability);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HeartOfDarkness);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ChaosIncorruptible);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Immunity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Unstoppable);
-	
-	HAFDamageStatics()
-	{
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Armor, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ArmorPenetration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, BlockChance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitChance, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitDamage, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitResistance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Agility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Flexibility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Purity, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Corruptibility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Intuition, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Vision, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Charm, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Speed, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HealthRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ShieldRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, StaminaRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MajixRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxHealth, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxShield, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxStamina, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxMajix, Source, false);
-	
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Fireproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Shockproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ChaosIncorruptible, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Invulnerability, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HeartOfDarkness, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ThermalRadiation, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
-	}
-};
-
-// Inline singleton accessor - can be in header safely
-static const HAFDamageStatics& DamageStatics()
-{
-	static HAFDamageStatics DStatics;
-	return DStatics;
-}
-
+#include "AbilitySystem/ExecutionCalculations/Damage/ExecutionCalculation_DamageStatics.h"
 
 
 UExecutionCalculation_Damage::UExecutionCalculation_Damage()

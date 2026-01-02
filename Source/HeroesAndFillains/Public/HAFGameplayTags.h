@@ -131,9 +131,10 @@ public:
 	FGameplayTag Abilities_Type_None;
 
 	FGameplayTag Abilities_Fire_FireBolt;
+	FGameplayTag Abilities_Fire_FireBlast;
 	FGameplayTag Abilities_Lightning_Electrocute;
 	FGameplayTag Abilities_ChaosMajix_ArcaneShards;
-
+	
 	FGameplayTag Abilities_Passive_RulesOfOrder_HaloOfProtection;
 	FGameplayTag Abilities_Passive_ChaosMajix_LifeSiphon;
 	FGameplayTag Abilities_Passive_RulesOfOrder_MightOfMajix;
@@ -178,6 +179,8 @@ public:
 	FGameplayTag Montage_Attack_20;
 
 	FGameplayTag Attributes_Meta_IncomingXP;
+
+	FGameplayTag GameplayCue_Fireblast;
 	
 protected:
 

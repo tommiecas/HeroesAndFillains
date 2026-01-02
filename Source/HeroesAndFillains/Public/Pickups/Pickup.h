@@ -8,6 +8,8 @@
 #include "Pickup.generated.h"
 
 
+class UWidgetComponent;
+
 UCLASS()
 class HEROESANDFILLAINS_API APickup : public APrePackagedPCPickupItem
 {
@@ -21,6 +23,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup Properties")
 	UStaticMeshComponent* PickupMesh;
+
+	UPROPERTY()
+	UWidgetComponent* PickupWidgetComponent;
+
+	UPROPERTY()
+	UWidgetComponent* InfoWidgetComponent;
 	
 protected:
 	virtual void BeginPlay() override;

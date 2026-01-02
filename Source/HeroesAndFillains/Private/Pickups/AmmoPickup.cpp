@@ -53,23 +53,17 @@ void AAmmoPickup::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 	if (!OtherActor || OtherActor == this) return;
 
 	// Fade in Info Widget
-	if (ItemInfoWidgetComponent)
+	UItemInfoWidgetBase* InfoInstancedWidgetA = Cast<UItemInfoWidgetBase>(InfoWidgetComponent->GetUserWidgetObject());
+	if (InfoInstancedWidgetA && InfoInstancedWidgetA->FadeOutAnimation)
 	{
-		UItemInfoWidgetBase* InfoInstancedWidgetA = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
-		if (InfoInstancedWidgetA && InfoInstancedWidgetA->FadeOutAnimation)
-		{
-			InfoInstancedWidgetA->PlayAnimation(InfoInstancedWidgetA->FadeOutAnimation);
-		}
+		InfoInstancedWidgetA->PlayAnimation(InfoInstancedWidgetA->FadeOutAnimation);
 	}
 
 	// Fade in Equip Widget (if you have a subclass for it)
-	if (PickupGearWidgetComponent)
+	UPickupGearWidget* PickupGearInstancedWidgetA = Cast<UPickupGearWidget>(PickupWidgetComponent->GetUserWidgetObject());
+	if (PickupGearInstancedWidgetA && PickupGearInstancedWidgetA->FadeOutAnimation)
 	{
-		UPickupGearWidget* PickupGearInstancedWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
-		if (PickupGearInstancedWidgetA && PickupGearInstancedWidgetA->FadeOutAnimation)
-		{
-			PickupGearInstancedWidgetA->PlayAnimation(PickupGearInstancedWidgetA->FadeOutAnimation);
-		}
+		PickupGearInstancedWidgetA->PlayAnimation(PickupGearInstancedWidgetA->FadeOutAnimation);
 	}
 	ShowPickupAndInfoWidgets(false);
 

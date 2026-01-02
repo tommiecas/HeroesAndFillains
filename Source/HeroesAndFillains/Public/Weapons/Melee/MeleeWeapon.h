@@ -8,6 +8,7 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "MeleeWeapon.generated.h"
 
+class UHAFUserWidget;
 class USphereComponent;
 
 UCLASS()
@@ -20,7 +21,7 @@ public:
 	virtual void EnableCustomDepth(bool bEnable) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator) override;
+	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 	virtual void BeginAttack();
 	virtual void ImplementLineTraceGetHit(FHitResult Hit);
 	virtual void TickAttackTrace();
@@ -50,6 +51,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Info")
 	FString MeleeWeaponDamage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UBoxComponent* WeaponBox;
+	
 	UPROPERTY()
 	TArray<AActor*> IgnoreActors;
 
@@ -69,19 +73,55 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
+	USkeletalMeshComponent* MeleeWeaponMesh;
 
+	UFUNCTION(BlueprintCallable)
+	void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
 
-	
+	void DisableSphereCollision();
+	void OnEquippedSecondary();
+	void OnDropped();
+	void OnEquippedTwoHanded();
+	void OnEquippedOneHanded();
+	void WeaponDropped();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* PickupWidgetComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* InfoWidgetComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHAFUserWidget* InfoWidget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHAFUserWidget* PickupWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UPickupGearWidget> PickupWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UItemInfoWidgetBase> InfoWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UPointLightComponent* HoveringLight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UDecalComponent* HoveringDecal;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> SphereCollision;
+
+	void OnWeaponStateSet();
+	void SetEquippedWeaponState();
+	void OnRep_WeaponState();
+
 protected:
 	virtual void BeginPlay() override;
 	
 	UFUNCTION()
 	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
-	virtual void OnEquippedOneHanded() override;
-	virtual void OnEquippedTwoHanded() override;
-	virtual void OnDropped() override;
-	virtual void OnEquippedSecondary() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Trace")
 	class USceneComponent* TracePointTip;
@@ -128,15 +168,21 @@ private:
 	
 
 public:
+	FORCEINLINE USphereComponent* GetSphereCollision() const { return SphereCollision; }
+	FORCEINLINE UHAFUserWidget* GetInfoWidget() const { return InfoWidget; }
+	FORCEINLINE UHAFUserWidget* GetPickupWidget() const { return PickupWidget; }
+	FORCEINLINE UWidgetComponent* GetInfoWidgetComponent() const { return InfoWidgetComponent; }
+	FORCEINLINE UWidgetComponent* GetPickupWidgetComponent() const { return PickupWidgetComponent; }
+	FORCEINLINE USkeletalMeshComponent* GetMeleeWeaponMesh() const { return MeleeWeaponMesh; }
 	FORCEINLINE EMeleeType GetMeleeWeaponType() const { return MeleeType; }
-	FORCEINLINE UUserWidget* GetItemInfoWidget() const { return ItemInfoWidget; }
 	FORCEINLINE USceneComponent* GetTracePointTip() const { return TracePointTip; }
 	FORCEINLINE USceneComponent* GetTracePointMid() const { return TracePointMid; }
 	FORCEINLINE USceneComponent* GetTracePointHilt() const { return TracePointHilt; }
 	FORCEINLINE FVector GetLastTraceLocationTip() const { return LastTraceLocationTip; }
 	FORCEINLINE FVector GetLastTraceLocationMid() const { return LastTraceLocationMid; }
 	FORCEINLINE FVector GetLastTraceLocationHilt() const { return LastTraceLocationHilt; }
-	
+	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
+
 
 	
 

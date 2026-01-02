@@ -1,7 +1,7 @@
 // Copyright Druid Mechanics
 
 
-#include "AbilitySystem/ExecutionCalculations/ExecutionCalculation_Damage_Gnarledling.h"
+#include "AbilitySystem/ExecutionCalculations/Damage/ExecutionCalculation_Damage_Gnarledling.h"
 #include "GameplayEffectExecutionCalculation.h"
 #include "GameplayEffectTypes.h"
 #include "HAFGameplayTags.h"
@@ -14,159 +14,8 @@
 #include "Characters/CharacterClassInfo.h"
 #include "Interfaces/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "AbilitySystem/ExecutionCalculations/Damage/ExecutionCalculation_DamageStatics.h"
 
-struct HAFDamageStatics
-{
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ArmorPenetration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(BlockChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Agility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Flexibility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Purity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Corruptibility);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Intuition);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Vision);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Speed);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Charm);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HealthRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ShieldRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(StaminaRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MajixRegeneration);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxHealth);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxShield);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxStamina);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxMajix);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Fireproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Shockproof);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ThermalRadiation);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Invulnerability);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(HeartOfDarkness);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(ChaosIncorruptible);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Immunity);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Unstoppable);
-	
-	HAFDamageStatics()
-	{
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Armor, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ArmorPenetration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, BlockChance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitChance, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitDamage, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, CriticalHitResistance, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Agility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Flexibility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Purity, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Corruptibility, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Intuition, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Vision, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Charm, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Speed, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HealthRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ShieldRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, StaminaRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MajixRegeneration, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxHealth, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxShield, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxStamina, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, MaxMajix, Source, false);
-	
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Fireproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Shockproof, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ChaosIncorruptible, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Invulnerability, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, HeartOfDarkness, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, ThermalRadiation, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Immunity, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UHAFAttributeSet, Unstoppable, Target, false);
-	}
-};
-
-// Inline singleton accessor - can be in header safely
-static const HAFDamageStatics& DamageStatics()
-{
-	static HAFDamageStatics DStatics;
-	return DStatics;
-}
-
-
-
-UExecutionCalculation_Damage_Gnarledling::UExecutionCalculation_Damage_Gnarledling()
-{
-	
-	RelevantAttributesToCapture.Add(DamageStatics().ArmorDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ArmorPenetrationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().BlockChanceDef);
-	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitChanceDef);
-	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitDamageDef);
-	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitResistanceDef);
-	RelevantAttributesToCapture.Add(DamageStatics().AgilityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().FlexibilityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().PurityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().CorruptibilityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().IntuitionDef);
-	RelevantAttributesToCapture.Add(DamageStatics().VisionDef);
-	RelevantAttributesToCapture.Add(DamageStatics().CharmDef);
-	RelevantAttributesToCapture.Add(DamageStatics().SpeedDef);
-	RelevantAttributesToCapture.Add(DamageStatics().HealthRegenerationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ShieldRegenerationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().StaminaRegenerationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MajixRegenerationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MaxHealthDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MaxShieldDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MaxStaminaDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MaxMajixDef);
-
-	RelevantAttributesToCapture.Add(DamageStatics().FireproofDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ShockproofDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ChaosIncorruptibleDef);
-	RelevantAttributesToCapture.Add(DamageStatics().InvulnerabilityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().HeartOfDarknessDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ThermalRadiationDef);
-	RelevantAttributesToCapture.Add(DamageStatics().ImmunityDef);
-	RelevantAttributesToCapture.Add(DamageStatics().UnstoppableDef);
-	
-}
-
-void UExecutionCalculation_Damage_Gnarledling::DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams, const FGameplayEffectSpec& Spec, FAggregatorEvaluateParameters EvaluationParameters, const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>& InTagsToCaptureDefs) const
-{
-	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
-	
-	for (TTuple<FGameplayTag, FGameplayTag> Pair : GameplayTags.DamageTypesToDebuffs)
-	{
-		const FGameplayTag& DamageTypeTag = Pair.Key;
-		const FGameplayTag& DebuffTag = Pair.Value;
-		const float TypeDamage = Spec.GetSetByCallerMagnitude(Pair.Key, false, -1.f);
-		if (TypeDamage > -.5f)
-		{
-			//Determine if there was a successful debuff
-			const float SourceDebuffChance = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Chance, false, -1.f);
-
-			float TargetDebuffResistance = 0.f;
-			const FGameplayTag& ResistanceTag = GameplayTags.DamageTypesToResistances[DamageTypeTag];
-			ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(InTagsToCaptureDefs[ResistanceTag], EvaluationParameters, TargetDebuffResistance);
-			TargetDebuffResistance = FMath::Max<float>(TargetDebuffResistance, 0.f);
-			const float EffectiveDebuffChance = SourceDebuffChance * ( 100 - TargetDebuffResistance ) / 100.f;
-			const bool bDebuff = FMath::RandRange(1, 100) < EffectiveDebuffChance;
-			if (bDebuff)
-			{
-				FGameplayEffectContextHandle ContextHandle = Spec.GetContext();
-
-				UHAFAbilitySystemBlueprintLibrary::SetIsDebuffSuccessful(ContextHandle, true);
-				UHAFAbilitySystemBlueprintLibrary::SetDamageTypeTag(ContextHandle, DamageTypeTag);
-
-				const float DebuffDamage = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Damage, false, -1.f);
-				const float DebuffDuration = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Duration, false, -1.f);
-				const float DebuffFrequency = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Frequency, false, -1.f);
-
-				UHAFAbilitySystemBlueprintLibrary::SetDebuffDamage(ContextHandle, DebuffDamage);
-				UHAFAbilitySystemBlueprintLibrary::SetDebuffDuration(ContextHandle, DebuffDuration);
-				UHAFAbilitySystemBlueprintLibrary::SetDebuffFrequency(ContextHandle, DebuffFrequency);			}
-		}
-	}
-}
 
 void UExecutionCalculation_Damage_Gnarledling::Execute_Implementation(
 	const FGameplayEffectCustomExecutionParameters& ExecutionParams,
@@ -248,7 +97,7 @@ void UExecutionCalculation_Damage_Gnarledling::Execute_Implementation(
 		// PART ONE: Get Damage Set by Caller Magnitude
 
 		float Damage = 5.f;
-		for (const TTuple<FGameplayTag, FGameplayTag>& Pair : FHAFGameplayTags::Get().DamageTypesToResistances)
+		for (const TTuple<FGameplayTag, FGameplayTag>& Pair : Tags.DamageTypesToResistances)
 		{
 			const FGameplayTag DamageTypeTag = Pair.Key;
 			const FGameplayTag ResistanceTypeTag = Pair.Value;
@@ -257,7 +106,10 @@ void UExecutionCalculation_Damage_Gnarledling::Execute_Implementation(
 			const FGameplayEffectAttributeCaptureDefinition CaptureDef = TagsToCaptureDefs[ResistanceTypeTag];
 
 			float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key, false);
-
+			if (DamageTypeValue <= 0.f)
+			{
+				continue;
+			}
 			float Resistance = 0.f;
 			ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
 			Resistance = FMath::Clamp(Resistance, 0.f, 100.f);
@@ -269,7 +121,7 @@ void UExecutionCalculation_Damage_Gnarledling::Execute_Implementation(
 				// 1. Override Take Damage in BaseCharacter *DONE
 				// 2. Create OnDamageDelegate, broadcast Damage Received in TakeDamage. *DONE
 				// 3. Bind to OnDamageDelegate on the Victim here.
-				// 4. Call UGameplayStatics::ApplyRadialDamageWithFalloff to cause damage, which results in Take Damage being called on the Victim, broadcast OnDamageDelegate
+				// 4. Call UGamjeplayStatics::ApplyRadialDamageWithFalloff to cause damage, which results in Take Damage being called on the Victim, broadcast OnDamageDelegate
 				// 5. In Lambda, Set DamageTypeValue to the damage received from the broadcast
 
 				if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(TargetAvatar))
@@ -366,7 +218,5 @@ void UExecutionCalculation_Damage_Gnarledling::Execute_Implementation(
 			Damage));
 
 		UE_LOG(LogTemp, Warning, TEXT("💥 DAMAGE CALCULATED: %.1f"), Damage);
-    
-
 	}
 }

@@ -38,10 +38,14 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	if (APawn* Owner = TryGetPawnOwner())
 	{
 		AFillainCharacter* MyChar = Cast<AFillainCharacter>(Owner);
-		if (MyChar && MyChar->EquippedWeapon)
+		if (MyChar && MyChar->EquippedRangedWeapon)
 		{
 			// Pull socket transform from weapon
-			LeftHandTransform = MyChar->EquippedWeapon->WeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
+			LeftHandTransform = MyChar->EquippedRangedWeapon->RangedWeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
+		}
+		else if (MyChar && MyChar->EquippedMeleeWeapon)
+		{
+			LeftHandTransform = MyChar->EquippedMeleeWeapon->MeleeWeaponMesh->GetSocketTransform("LeftHandSocket", RTS_World);
 		}
 	}
 	if (FillainCharacter == nullptr)
@@ -59,6 +63,8 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsAccelerating = FillainCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
 	bWeaponEquipped = FillainCharacter->IsWeaponEquipped();
 	EquippedWeapon = FillainCharacter->GetEquippedWeapon();
+	EquippedRangedWeapon = FillainCharacter->GetEquippedRangedWeapon();
+	EquippedMeleeWeapon = FillainCharacter->GetEquippedMeleeWeapon();
 	bIsCrouched = FillainCharacter->bIsCrouched;
 	bAiming = FillainCharacter->IsAiming();
 	TurningInPlace = FillainCharacter->GetTurningInPlace();
@@ -80,9 +86,9 @@ void UFillainFinalAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	AO_Yaw = FillainCharacter->GetAO_Yaw();
 	AO_Pitch = FillainCharacter->GetAO_Pitch();
 
-	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && FillainCharacter->GetMesh())
+	if (bWeaponEquipped && EquippedRangedWeapon && EquippedRangedWeapon->GetRangedWeaponMesh() && FillainCharacter->GetMesh())
 	{
-		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+		LeftHandTransform = EquippedRangedWeapon->GetRangedWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
 		FVector OutPosition;
 		FRotator OutRotation;
 		FillainCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);

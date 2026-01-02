@@ -53,7 +53,8 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, EquippedMeleeWeapon);
 	DOREPLIFETIME(UCombatComponent, EquippedRangedWeapon);
-	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
+	DOREPLIFETIME(UCombatComponent, SecondaryRangedWeapon);
+	DOREPLIFETIME(UCombatComponent, SecondaryMeleeWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, ActionState);
@@ -67,8 +68,8 @@ bool UCombatComponent::AreMeshesValid(AWeaponBase* Weapon) const
 {
 	return Character &&
 		  Character->GetMesh() &&
-		  Weapon &&
-		  Weapon->WeaponMesh;
+		  EquippedRangedWeapon &&
+		  EquippedRangedWeapon->RangedWeaponMesh;
 }
 
 void UCombatComponent::ShotgunShellReload()
@@ -162,11 +163,11 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 					PC->bEnableMouseOverEvents = false;         // Enable mouse over events
 					PC->bShowMouseCursor = false;               // (Optional) Show the mouse if you're using it
 				} 
-				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
-				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
-				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
-				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
-				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+				HUDPackage.CrosshairsCenter = EquippedRangedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedRangedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedRangedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsBottom = EquippedRangedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairsTop = EquippedRangedWeapon->CrosshairsTop;
 			}
 			if (EquippedWeapon)
 			{
@@ -176,11 +177,11 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 					PC->bEnableMouseOverEvents = false;         // Enable mouse over events
 					PC->bShowMouseCursor = false;               // (Optional) Show the mouse if you're using it
 				} 
-				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
-				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
-				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
-				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
-				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+				HUDPackage.CrosshairsCenter = EquippedRangedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedRangedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedRangedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsBottom = EquippedRangedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairsTop = EquippedRangedWeapon->CrosshairsTop;
 			}
 			else
 			{
@@ -664,62 +665,74 @@ void UCombatComponent::SwapWeapons()
 	Character->PlaySwapMontage();
 	ActionState = EActionState::EAS_SwappingWeapons;
 	Character->bFinishedSwapping = false;
-	if (SecondaryWeapon) SecondaryWeapon->EnableCustomDepth(false);
+	if (SecondaryRangedWeapon) SecondaryRangedWeapon->EnableCustomDepth(false);
 	ActionState = EActionState::EAS_Unoccupied;
 
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeaponBase* WeaponToEquip)
 {
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
-	if (WeaponToEquip == nullptr) return;
-	DropEquippedWeapon();
-	FightingStyle = EFightingStyle::EFS_Unequipped;
-	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetEquippedWeaponState();
-	EquippedWeapon->SetOwner(Character);
-	EquippedWeapon->bShouldHover = false;
-	EquippedWeapon->bShouldFloatSpin = false;
-	EquippedWeapon->HoverLight->SetVisibility(false);
-	EquippedWeapon->HoverDecal->SetVisibility(false);
-	EquippedWeapon->ShowPickupAndInfoWidgets(false);
-	PlayWeaponEquipSound(EquippedWeapon);
-	SetHandsForWeapons(EquippedWeapon);
-	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
+	if (EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Firearm ||
+		EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Launcher ||
+		EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_OneHandedFirearm ||
+		EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_TwoHandedFirearm)
 	{
-		ARangedWeapon* Ranged = Cast<ARangedWeapon>(EquippedWeapon);
-		FightingStyle = EFightingStyle::EFS_Ranged;
-		Ranged->SetHUDAmmo();	
-		UpdateCarriedAmmo();
-		ReloadEmptyRangedWeapon();
-		ActionState = EActionState::EAS_Unoccupied;
-	}
-	else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
-	{
-		AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
-		FightingStyle = EFightingStyle::EFS_Melee;
-		ActionState = EActionState::EAS_Unoccupied;
-		if (Melee->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
-		if (Melee->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+		EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+			*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
+		if (WeaponToEquip == nullptr) return;
+		DropEquippedWeapon();
+		FightingStyle = EFightingStyle::EFS_Unequipped;
+		EquippedRangedWeapon = Cast<ARangedWeapon>(WeaponToEquip);
+		EquippedRangedWeapon->SetEquippedWeaponState();
+		EquippedRangedWeapon->SetOwner(Character);
+		EquippedRangedWeapon->bShouldHover = false;
+		EquippedRangedWeapon->bShouldFloatSpin = false;
+		EquippedRangedWeapon->HoveringLight->SetVisibility(false);
+		EquippedRangedWeapon->HoveringDecal->SetVisibility(false);
+		EquippedRangedWeapon->ShowPickupAndInfoWidgets(false);
+		PlayWeaponEquipSound(EquippedWeapon);
+		SetHandsForWeapons(EquippedWeapon);
+		if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
+		{
+			ARangedWeapon* Ranged = Cast<ARangedWeapon>(EquippedWeapon);
+			FightingStyle = EFightingStyle::EFS_Ranged;
+			Ranged->SetHUDAmmo();	
+			UpdateCarriedAmmo();
+			ReloadEmptyRangedWeapon();
+			ActionState = EActionState::EAS_Unoccupied;
+		}
+		else if (EquippedWeapon->IsA(AMeleeWeapon::StaticClass()))
+		{
+			AMeleeWeapon* Melee = Cast<AMeleeWeapon>(EquippedWeapon);
+			FightingStyle = EFightingStyle::EFS_Melee;
+			ActionState = EActionState::EAS_Unoccupied;
+			if (Melee->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+			if (Melee->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) Character->BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+		}
 	}
 }
 
 void UCombatComponent::EquipSecondaryWeapon(AWeaponBase* WeaponToEquip)
 {
-	if (WeaponToEquip == nullptr) return;
-	SecondaryWeapon = WeaponToEquip;
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
-	PlayWeaponEquipSound(SecondaryWeapon);
-	SetFightingStyle();
-	SecondaryWeapon->SetOwner(Character);
-	SecondaryWeapon->bShouldHover = false;
-	SecondaryWeapon->bShouldFloatSpin = false;
-	SecondaryWeapon->HoverLight->SetVisibility(false);
-	SecondaryWeapon->HoverDecal->SetVisibility(false);
-	SecondaryWeapon->ShowPickupAndInfoWidgets(false);
-	ActionState = EActionState::EAS_Unoccupied;
+	if (EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Firearm ||
+	EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_Launcher ||
+	EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_OneHandedFirearm ||
+	EquippedWeapon->WeaponCategory == EWeaponCategory::EWC_TwoHandedFirearm)
+	{
+		if (WeaponToEquip == nullptr) return;
+		SecondaryRangedWeapon = Cast<ARangedWeapon>(WeaponToEquip);
+		SecondaryRangedWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+		AttachActorToBackpack(SecondaryRangedWeapon);
+		PlayWeaponEquipSound(SecondaryRangedWeapon);
+		SetFightingStyle();
+		SecondaryRangedWeapon->SetOwner(Character);
+		SecondaryRangedWeapon->bShouldHover = false;
+		SecondaryRangedWeapon->bShouldFloatSpin = false;
+		SecondaryRangedWeapon->HoveringLight->SetVisibility(false);
+		SecondaryRangedWeapon->HoveringDecal->SetVisibility(false);
+		SecondaryRangedWeapon->ShowPickupAndInfoWidgets(false);
+		ActionState = EActionState::EAS_Unoccupied;
+	}
 }
 
 void UCombatComponent::OnRep_Aiming()
@@ -743,8 +756,8 @@ void UCombatComponent::DropEquippedWeapon()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->WeaponState = EWeaponState::EWS_Dropped;
-		EquippedWeapon->WeaponDropped();
+		EquippedRangedWeapon->WeaponState = EWeaponState::EWS_Dropped;
+		EquippedRangedWeapon->WeaponDropped();
 		FightingStyle = EFightingStyle::EFS_Unequipped;
 		
 	}
@@ -783,13 +796,17 @@ void UCombatComponent::AttachWeaponToSocket(AWeaponBase* Weapon, FName SocketNam
 	// Cleanup visual/collision
 	Weapon->SetActorHiddenInGame(false);
 	Weapon->SetActorEnableCollision(false);
-	Weapon->WeaponMesh->SetVisibility(true);
-	Weapon->WeaponMesh->SetHiddenInGame(false);
-	Weapon->WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// UE_LOG(LogTemp, Warning, TEXT("Sword Mesh Relative Loc: %s"), *Weapon->WeaponMesh->GetRelativeLocation().ToString());
+
+	if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Weapon))
+	{
+		RangedWeapon->RangedWeaponMesh->SetVisibility(true);
+		RangedWeapon->RangedWeaponMesh->SetHiddenInGame(false);
+		RangedWeapon->RangedWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// UE_LOG(LogTemp, Warning, TEXT("Sword Mesh Relative Loc: %s"), *Weapon->WeaponMesh->GetRelativeLocation().ToString());
+	}
 }
 
-void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase* OneHandedRangedWeaponToAttach)
+void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class ARangedWeapon* OneHandedRangedWeaponToAttach)
 {
 	FName SocketName = (OneHandedRangedWeaponToAttach->GetWeaponType() == EWeaponType::EWT_AssaultRifle)
 			? FName("AssaultRifleSocket")
@@ -797,12 +814,12 @@ void UCombatComponent::AttachOneHandedRangedWeaponToRightHand(class AWeaponBase*
 	AttachWeaponToSocket(OneHandedRangedWeaponToAttach, SocketName);
 }
 
-void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AWeaponBase* OneHandedMeleeWeaponToAttach)
+void UCombatComponent::AttachOneHandedMeleeWeaponToRightHand(class AMeleeWeapon* OneHandedMeleeWeaponToAttach)
 {
 	OneHandedMeleeWeaponToAttach->Equip(Character->GetMesh(), FName("MeleeSocket"), OneHandedMeleeWeaponToAttach->GetOwner(), Character);
 }
 
-void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHandedMeleeWeaponToAttach)
+void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AMeleeWeapon* TwoHandedMeleeWeaponToAttach)
 {
 	// Just attach to right hand - FABRIK will handle the left hand
 	AttachOneHandedMeleeWeaponToRightHand(TwoHandedMeleeWeaponToAttach);
@@ -811,7 +828,7 @@ void UCombatComponent::AttachTwoHandedMeleeWeaponToLeftHand(AWeaponBase* TwoHand
 	// EquippedMeleeWeapon->AttachMeshToSocket(Character->GetMesh(), FName("LeftHandSocket"));
 }
 
-void UCombatComponent::AttachTwoHandedRangedWeaponToLeftHand(class AWeaponBase* TwoHandedRangedWeaponToAttach)
+void UCombatComponent::AttachTwoHandedRangedWeaponToLeftHand(class ARangedWeapon* TwoHandedRangedWeaponToAttach)
 {
 	AttachOneHandedRangedWeaponToRightHand(TwoHandedRangedWeaponToAttach);
 }
@@ -892,9 +909,9 @@ void UCombatComponent::FinishSwap()
 			Character->bFinishedSwapping = true;
 		}
         
-		if (SecondaryWeapon)
+		if (SecondaryRangedWeapon)
 		{
-			SecondaryWeapon->EnableCustomDepth(true);
+			SecondaryRangedWeapon->EnableCustomDepth(true);
 		}
 	}
 
@@ -902,15 +919,15 @@ void UCombatComponent::FinishSwap()
 
 void UCombatComponent::FinishSwapAttachWeapons()
 {
-	AWeaponBase* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
+	ARangedWeapon* TempWeapon = EquippedRangedWeapon;
+	SecondaryRangedWeapon = TempWeapon;
+	EquippedRangedWeapon = SecondaryRangedWeapon;
 	
-	EquippedWeapon->SetEquippedWeaponState();
+	EquippedRangedWeapon->SetEquippedWeaponState();
 	SetFightingStyle();
-	PlayWeaponEquipSound(EquippedWeapon);
-	SetHandsForWeapons(EquippedWeapon);
-	if (EquippedWeapon->IsA(ARangedWeapon::StaticClass()))
+	PlayWeaponEquipSound(EquippedRangedWeapon);
+	SetHandsForWeapons(EquippedRangedWeapon);
+	if (EquippedRangedWeapon->IsA(ARangedWeapon::StaticClass()))
 	{
 		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(EquippedWeapon);
 		if (RangedWeapon)
@@ -919,8 +936,8 @@ void UCombatComponent::FinishSwapAttachWeapons()
 			UpdateCarriedAmmo();
 		}
 	}
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
+	SecondaryRangedWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryRangedWeapon);
 }
 
 
@@ -1135,7 +1152,7 @@ void UCombatComponent::UpdateHUDGrenades()
 
 bool UCombatComponent::ShouldSwapWeapons()
 {
-	return (EquippedWeapon != nullptr && SecondaryWeapon != nullptr);
+	return (EquippedWeapon != nullptr && SecondaryRangedWeapon != nullptr);
 }
 
 EFightingStyle UCombatComponent::SetFightingStyle()
@@ -1183,11 +1200,17 @@ void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
 	{
 		if (EquippedWeaponUsesOneHand(WeaponEquipping))
 		{
-			AttachOneHandedRangedWeaponToRightHand(WeaponEquipping);			
+			if (ARangedWeapon* RangedWeaponEquipping = Cast<ARangedWeapon>(WeaponEquipping))
+			{
+				AttachOneHandedRangedWeaponToRightHand(RangedWeaponEquipping);
+			}
 		}
 		else if (WeaponEquipping->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
 		{
-			AttachTwoHandedRangedWeaponToLeftHand(WeaponEquipping);
+			if (ARangedWeapon* RangedWeaponEquipping = Cast<ARangedWeapon>(WeaponEquipping))
+			{
+				AttachTwoHandedRangedWeaponToLeftHand(RangedWeaponEquipping);
+			}
 		}
 	}
 	else if (WeaponEquipping->IsA(AMeleeWeapon::StaticClass()))
@@ -1195,12 +1218,14 @@ void UCombatComponent::SetHandsForWeapons(AWeaponBase* WeaponEquipping)
 		if (WeaponEquipping->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 		{
 			WeaponEquipping->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-			AttachOneHandedMeleeWeaponToRightHand(WeaponEquipping);
+			AMeleeWeapon* MeleeWeaponEquipping = Cast<AMeleeWeapon>(WeaponEquipping);
+			AttachOneHandedMeleeWeaponToRightHand(MeleeWeaponEquipping);
 		}
 		else if (WeaponEquipping->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 		{
 			WeaponEquipping->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-			AttachTwoHandedMeleeWeaponToLeftHand(WeaponEquipping);
+			AMeleeWeapon* MeleeWeaponEquipping = Cast<AMeleeWeapon>(WeaponEquipping);
+			AttachTwoHandedMeleeWeaponToLeftHand(MeleeWeaponEquipping);
 		}
 	}
 }
@@ -1209,20 +1234,27 @@ void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
 	{
-	}
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
+		EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
 		*GetNameSafe(Character->GetOverlappingItem()), *GetNameSafe(Character->GetOverlappingWeapon()));
-	if (AFillainCharacter* FC = Cast<AFillainCharacter>(GetOwner()))
-	{   // <— add this too
-	}
-	if (EquippedWeapon && Character)
-	{
-		EquippedWeapon->SetEquippedWeaponState();
-		SetHandsForWeapons(EquippedWeapon);	
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-		PlayWeaponEquipSound(EquippedWeapon);
-		SetFightingStyle();
+		
+		if (EquippedRangedWeapon && Character)
+		{
+			EquippedRangedWeapon->SetEquippedWeaponState();
+			SetHandsForWeapons(EquippedRangedWeapon);	
+			Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+			Character->bUseControllerRotationYaw = true;
+			PlayWeaponEquipSound(EquippedRangedWeapon);
+			SetFightingStyle();
+		}
+		if (EquippedMeleeWeapon && Character)
+		{
+			EquippedMeleeWeapon->SetEquippedWeaponState();
+			SetHandsForWeapons(EquippedMeleeWeapon);	
+			Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+			Character->bUseControllerRotationYaw = true;
+			PlayWeaponEquipSound(EquippedMeleeWeapon);
+			SetFightingStyle();
+		}
 	}
 }
 
@@ -1236,19 +1268,6 @@ void UCombatComponent::OnRep_EquippedMeleeWeapon()
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 		PlayWeaponEquipSound(EquippedMeleeWeapon);
-	}
-}
-
-void UCombatComponent::OnRep_EquippedMajixWeapon()
-{
-	if (EquippedMajixWeapon && Character)
-	{
-		FightingStyle = EFightingStyle::EFS_Majix;
-		EquippedMajixWeapon->SetEquippedWeaponState();
-		SetHandsForWeapons(EquippedMajixWeapon);
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-		PlayWeaponEquipSound(EquippedMajixWeapon);
 	}
 }
 
@@ -1275,16 +1294,25 @@ void UCombatComponent::OnRep_EquippedRangedWeapon()
 	}
 }
 
-void UCombatComponent::OnRep_SecondaryWeapon()
+void UCombatComponent::OnRep_SecondaryRangedWeapon()
 {
-	if (SecondaryWeapon && Character)
+	if (SecondaryRangedWeapon && Character)
 	{
-		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-		AttachActorToBackpack(SecondaryWeapon);
+		SecondaryRangedWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+		AttachActorToBackpack(SecondaryRangedWeapon);
 		PlayWeaponEquipSound(EquippedWeapon);
 	}
 }
 
+void UCombatComponent::OnRep_SecondaryMeleeWeapon()
+{
+	if (SecondaryMeleeWeapon && Character)
+	{
+		SecondaryMeleeWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+		AttachActorToBackpack(SecondaryMeleeWeapon);
+		PlayWeaponEquipSound(EquippedMeleeWeapon);
+	}
+}
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 {
 	FVector2D ViewportSize = FVector2D::ZeroVector;

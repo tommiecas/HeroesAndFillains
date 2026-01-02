@@ -17,13 +17,13 @@ class HEROESANDFILLAINS_API ASword : public AMeleeWeapon
 
 public:
 	ASword();
-	virtual void WeaponDropped() override;
+	virtual void WeaponDropped();
 	void ResetSword();
 
 protected:
-	virtual void OnEquippedOneHanded() override;
-	virtual void OnEquippedTwoHanded() override;
-	virtual void OnDropped() override;
+	virtual void OnEquippedOneHanded();
+	virtual void OnEquippedTwoHanded();
+	virtual void OnDropped();
 	virtual void BeginPlay() override;
 
 private: 

@@ -53,7 +53,26 @@ public:
 	UPROPERTY()
 	ARangedWeapon* RangedWeapon;
 
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UPickupGearWidget> PickupWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UItemInfoWidgetBase> InfoWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UHAFUserWidget> PickupWidget;
+
+	UPROPERTY()
+	TObjectPtr<UHAFUserWidget> InfoWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UPointLightComponent* HoveringLight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UDecalComponent* HoveringDecal;
+
+
 	
 protected:
 	virtual void BeginPlay() override;

@@ -25,10 +25,10 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	if (OwningPawn == nullptr) return;
 	AController* InstigatingController = OwningPawn->GetController();
 
-	const USkeletalMeshSocket* MuzzleSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	const USkeletalMeshSocket* MuzzleSocket = GetRangedWeaponMesh()->GetSocketByName("MuzzleFlash");
 	if (MuzzleSocket && InstigatingController)
 	{
-		FTransform SocketTransform = MuzzleSocket->GetSocketTransform(GetWeaponMesh());
+		FTransform SocketTransform = MuzzleSocket->GetSocketTransform(GetRangedWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
 
 		FHitResult FireHit;

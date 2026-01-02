@@ -9,6 +9,7 @@
 #include "UI/WidgetControllers/HAFWidgetController.h"
 #include "HAFAbilitySystemBlueprintLibrary.generated.h"
 
+struct FDamageEffectParams;
 class AFillainHUD;
 class USpellMenuWidgetController;
 enum class EEnemyType : uint8;
@@ -114,7 +115,7 @@ public:
 	static FGameplayTag GetDamageTypeTag(const FGameplayEffectContextHandle& EffectContextHandle);
 
 	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
-	static FVector GetDeathImpulse(const FGameplayEffectContextHandle& EffectContextHandle);
+	static FVector GetDeathImpulse(const FGameplayEffectContextHandle& EffectContextHandle);//////////////////////////////////////////////////////////////////////
 
 	UFUNCTION(BlueprintPure, Category="HAF Ability System Library | GameplayEffects")
 	static FVector GetKnockbackForce(const FGameplayEffectContextHandle& EffectContextHandle);
@@ -206,5 +207,24 @@ public:
 	static TArray<FVector> EvenlyRotatedVectors(const FVector& Forward, const FVector& Axis, float Spread, int32 NumVectors);
 		
 	static int32 GetXPAwardForEnemyTypeAndLevel(const UObject* WorldContextObject, EEnemyType EnemyType, int32 EnemyLevel);
-	
+
+	/*********************************
+	**********************************
+	****      DAMAGE EFFECT       ****
+	****          PARAMS          ****
+	****     LIBRARY FUNCTIONS    ****
+	**********************************
+	*********************************/
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | Damage Effect Params")
+	static void SetIsRadialDamageEffectParam(UPARAM(ref) FDamageEffectParams& DamageEffectParams, bool bIsRadial, float InnerRadius, float OuterRadius, FVector Origin);
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | Damage Effect Params")
+	static void SetKnockbackDirection(UPARAM(ref) FDamageEffectParams& DamageEffectParams, FVector KnockbackDirection, float Magnitude = 0.f);
+
+	UFUNCTION(BlueprintCallable, Category="HAF Ability System Library | Damage Effect Params")
+	static void SetDeathImpulseDirection(UPARAM(ref) FDamageEffectParams& DamageEffectParams, FVector KnockbackDirection, float Magnitude = 0.f);
+
+	UFUNCTION (BlueprintCallable, Category="HAF Ability System Library | Damage Effect Params")
+	static void SetTargetEffectParamsASC(UPARAM(ref) FDamageEffectParams& DamageEffectParams, UAbilitySystemComponent* InASC);
 };

@@ -495,6 +495,11 @@ FString("How Long That Pathetic Loser Has to Suffer Through the Debuff")
 	FString("When You Just Want to Hit Someone in the Face with a Fireball") 
 	);
 
+	GameplayTags.Abilities_Fire_FireBlast = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("Abilities.Fire.FireBlast"),
+	FString("When You Just Want to Hit Everyone in the Face with a Dozen Fireballs") 
+	);
+
 	GameplayTags.Abilities_Lightning_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
 FName("Abilities.Lightning.Electrocute"),
 FString("A Shockingly Powerful Bolt of Lightning") 
@@ -810,5 +815,9 @@ FString("14th Attack Montage")
 	*****************************
 	****************************/
 
+	GameplayTags.GameplayCue_Fireblast = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName("GameplayCue.Fireblast"),
+	FString("Because that Blast of Fire better have some razzle dazzle behind it...")
+	);
 
 }

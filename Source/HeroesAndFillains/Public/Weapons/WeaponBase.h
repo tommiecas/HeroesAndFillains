@@ -54,16 +54,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
-	virtual void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
 	virtual void SetHandsNeeded(AWeaponBase* WeaponBase);
 	virtual void PlayEquipSound();
-	virtual void DisableSphereCollision();
 	virtual void DeactivateEmbers();
-	virtual void EnableCustomDepth(bool bEnable) override;
 
-	UFUNCTION()
-	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
-
+	
 	
 	virtual void OnSphereOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* PrimitiveComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
@@ -80,8 +75,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponCategory, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponCategory WeaponCategory = EWeaponCategory::EWC_NothingButYourFists;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
-	USkeletalMeshComponent* WeaponMesh;
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon and Pickup Types")
 	EWeaponType WeaponType = EWeaponType::EWT_None;
@@ -94,17 +88,13 @@ public:
 
 	UPROPERTY()
 	FTimerHandle VisualEffectsTimerHandle;
-
-	UFUNCTION()
-	void SetEquippedWeaponState();
 	
-	UFUNCTION()
-	virtual void OnRep_WeaponState();
-
 	UFUNCTION()
 	virtual void OnRep_WeaponCategory();
+
+	UFUNCTION()
+	virtual void OnRep_WeaponState();
 	
-	virtual void WeaponDropped();
 
 	bool bDestroyWeapon = false;
 	
@@ -114,15 +104,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class USoundBase* EquipSound;
 
-	virtual void ShowPickupAndInfoWidgets(bool bShow) override;
 
 	UPROPERTY()
 	bool bIsEquipped = false;
 
 	void SetOneOrTwoHandedWeapon(AWeaponBase* EquippedWeapon);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	class UBoxComponent* WeaponBox;
+	
 	
 	UPROPERTY()
 	AWeaponBase* OneHandedWeapon;
@@ -133,45 +121,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	EHandsNeeded HandsNeeded = EHandsNeeded::EHN_None;
 
-	/*********************************************
-	***                                        ***
-	***   TEXTURES FOR THE WEAPON CROSSHAIRS   ***
-	***                                        ***
-	*********************************************/
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	class UTexture2D* CrosshairsCenter;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	UTexture2D* CrosshairsLeft;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	UTexture2D* CrosshairsRight;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	UTexture2D* CrosshairsTop;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	UTexture2D* CrosshairsBottom;
 
 	
 protected:
 	virtual void BeginPlay() override;
+	
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnWeaponStateSet();
+	
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnEquippedOneHanded();
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnEquippedTwoHanded();
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnDropped();
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnEquippedSecondary();
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	FVector InitialMeshScale = FVector(1.0f);
@@ -205,9 +165,6 @@ private:
 
 public:
 	void SetWeaponState(EWeaponState State);
-	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
-	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE ETeam GetTeam() const { return Team; }

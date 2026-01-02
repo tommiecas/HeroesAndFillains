@@ -581,23 +581,23 @@ void AEnemyBase::SpawnEnemyWeapon_Implementation()
         // Check if BaseWeaponClass is a RangedWeapon subclass
         if (BaseWeaponClass->IsChildOf(ARangedWeapon::StaticClass()))
         {
-            ARangedWeapon* DefaultWeapon = World->SpawnActor<ARangedWeapon>(BaseWeaponClass);
-            if (DefaultWeapon)
+            ARangedWeapon* DefaultRangedWeapon = World->SpawnActor<ARangedWeapon>(BaseWeaponClass);
+            if (DefaultRangedWeapon)
             {
-                EquippedWeapon = DefaultWeapon;
-                EquippedEnemyRangedWeapon = DefaultWeapon;
-                EquippedWeapon->Equip(GetMesh(), FName("RangedSocket"), this, this);
+                EquippedRangedWeapon = DefaultRangedWeapon;
+                EquippedEnemyRangedWeapon = DefaultRangedWeapon;
+                EquippedRangedWeapon->Equip(GetMesh(), FName("RangedSocket"), this, this);
             }
         }
         // Check if BaseWeaponClass is a MeleeWeapon subclass
         else if (BaseWeaponClass->IsChildOf(AMeleeWeapon::StaticClass()))
         {
-            AMeleeWeapon* DefaultWeapon = World->SpawnActor<AMeleeWeapon>(BaseWeaponClass);
-            if (DefaultWeapon)
+            AMeleeWeapon* DefaultMeleeWeapon = World->SpawnActor<AMeleeWeapon>(BaseWeaponClass);
+            if (DefaultMeleeWeapon)
             {
-                EquippedWeapon = DefaultWeapon;
-                EquippedEnemyMeleeWeapon = DefaultWeapon;
-                DefaultWeapon->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+                EquippedWeapon = DefaultMeleeWeapon;
+                EquippedEnemyMeleeWeapon = DefaultMeleeWeapon;
+                DefaultMeleeWeapon->Equip(GetMesh(), FName("MeleeSocket"), this, this);
                 
             }
         }
@@ -1143,12 +1143,12 @@ bool AEnemyBase::HasLineOfSight(AActor* Target) const
     
     // Get weapon muzzle location if available, otherwise use actor location
     FVector StartLocation = GetActorLocation();
-    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetWeaponMesh())
+    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetRangedWeaponMesh())
     {
-        const USkeletalMeshSocket* MuzzleSocket = EquippedEnemyRangedWeapon->GetWeaponMesh()->GetSocketByName(FName("MuzzleFlashSocket"));
+        const USkeletalMeshSocket* MuzzleSocket = EquippedEnemyRangedWeapon->GetRangedWeaponMesh()->GetSocketByName(FName("MuzzleFlashSocket"));
         if (MuzzleSocket)
         {
-            StartLocation = MuzzleSocket->GetSocketLocation(EquippedEnemyRangedWeapon->GetWeaponMesh());
+            StartLocation = MuzzleSocket->GetSocketLocation(EquippedEnemyRangedWeapon->GetRangedWeaponMesh());
         }
     }
     
@@ -1891,22 +1891,16 @@ void AEnemyBase::HighlightActor()
         GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
     }
 
-    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetWeaponMesh())
+    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetRangedWeaponMesh())
     {
-        EquippedEnemyRangedWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
-        EquippedEnemyRangedWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+        EquippedEnemyRangedWeapon->GetRangedWeaponMesh()->SetRenderCustomDepth(true);
+        EquippedEnemyRangedWeapon->GetRangedWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
     }
 
-    if (EquippedEnemyMeleeWeapon && EquippedEnemyMeleeWeapon->GetWeaponMesh())
+    if (EquippedEnemyMeleeWeapon && EquippedEnemyMeleeWeapon->GetMeleeWeaponMesh())
     {
-        EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
-        EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
-    }
-
-    if (EquippedEnemyWeapon && EquippedEnemyWeapon->GetWeaponMesh())
-    {
-        EquippedEnemyWeapon->GetWeaponMesh()->SetRenderCustomDepth(true);
-        EquippedEnemyWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+        EquippedEnemyMeleeWeapon->GetMeleeWeaponMesh()->SetRenderCustomDepth(true);
+        EquippedEnemyMeleeWeapon->GetMeleeWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
     }
 }
 
@@ -1917,19 +1911,14 @@ void AEnemyBase::UnHighlightActor()
         GetMesh()->SetRenderCustomDepth(false);
     }
 
-    if (EquippedEnemyWeapon && EquippedEnemyWeapon->GetWeaponMesh())
+    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetRangedWeaponMesh())
     {
-        EquippedEnemyWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
+        EquippedEnemyRangedWeapon->GetRangedWeaponMesh()->SetRenderCustomDepth(false);
     }
 
-    if (EquippedEnemyMeleeWeapon && EquippedEnemyMeleeWeapon->GetWeaponMesh())
+    if (EquippedEnemyMeleeWeapon && EquippedEnemyMeleeWeapon->GetMeleeWeaponMesh())
     {
-        EquippedEnemyMeleeWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
-    }
-
-    if (EquippedEnemyRangedWeapon && EquippedEnemyRangedWeapon->GetWeaponMesh())
-    {
-        EquippedEnemyRangedWeapon->GetWeaponMesh()->SetRenderCustomDepth(false);
+        EquippedEnemyMeleeWeapon->GetMeleeWeaponMesh()->SetRenderCustomDepth(false);
     }
 }
 

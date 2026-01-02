@@ -21,14 +21,102 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/DecalComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SphereComponent.h"
 #include "UI/ItemInfoWidgetBase.h" //
 #include "UI/PickupGearWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Weapons/Melee/StormWeapons.h"
 
 AMeleeWeapon::AMeleeWeapon()
 	: Super()
 {
+		PrimaryActorTick.bCanEverTick = false;
+	// ✅ Then create and attach the mesh
+	MeleeWeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+	SetRootComponent(MeleeWeaponMesh);
+	
+	MeleeWeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MeleeWeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	// Reset transforms
+	MeleeWeaponMesh->SetRelativeLocation(FVector::ZeroVector);
+	MeleeWeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	MeleeWeaponMesh->SetRelativeScale3D(InitialMeshScale);
+	MeleeWeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE); // Set a custom depth stencil value for the mesh
+	MeleeWeaponMesh->MarkRenderStateDirty(); // Mark the render state as dirty to ensure the custom depth is applied
+	EnableCustomDepth(true); // Enable custom depth rendering for the mesh
+
+	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	SphereCollision->SetupAttachment(MeleeWeaponMesh);
+	SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereCollision->SetCollisionObjectType(ECC_Pickupable);
+	SphereCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+	SphereCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	check(SphereComp);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionObjectType(ECC_Pickupable);
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	PickupWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupGearWidgetComponent"));
+	PickupWidgetComponent->SetupAttachment(MeleeWeaponMesh);
+	PickupWidgetComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	PickupWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PickupWidgetComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	PickupWidgetComponent->SetGenerateOverlapEvents(true);
+	PickupWidgetComponent->SetVisibility(false);
+	PickupWidgetComponent->SetWidgetClass(PickupWidgetClass);
+	PickupWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	PickupWidgetComponent->SetDrawSize(FVector2D(300.f, 50.f));
+	PickupWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, -10.f)); // below the we
+	PickupWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+	PickupWidgetComponent->SetDrawAtDesiredSize(true);
+	PickupWidgetComponent->SetTickWhenOffscreen(true);
+	PickupWidgetComponent->SetWorldScale3D(FVector(1.0f));
+	PickupWidgetComponent->TranslucencySortPriority = 5;
+	PickupWidgetComponent->SetVisibility(false);
+	
+	InfoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidgetComponent"));
+	InfoWidgetComponent->SetupAttachment(MeleeWeaponMesh);
+	InfoWidgetComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	InfoWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	InfoWidgetComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	InfoWidgetComponent->SetGenerateOverlapEvents(true);
+	InfoWidgetComponent->SetVisibility(false);
+	InfoWidgetComponent->SetWidgetClass(InfoWidgetClass);
+	InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	InfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+	InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f)); // above the weapon
+	InfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+	InfoWidgetComponent->SetDrawAtDesiredSize(true);
+	InfoWidgetComponent->SetTickWhenOffscreen(true);
+	InfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+	InfoWidgetComponent->TranslucencySortPriority = 5;
+	InfoWidgetComponent->SetVisibility(false);
+
+	HoveringLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HoveringLight"));
+	HoveringLight->SetupAttachment(MeleeWeaponMesh);
+
+	// Settings
+	HoveringLight->SetIntensity(2000.f);  // How bright
+	HoveringLight->SetAttenuationRadius(300.f); // How far it shines
+	HoveringLight->SetLightColor(FLinearColor(0.f, 0.5f, 1.f)); // Slight blue glow
+	HoveringLight->SetRelativeLocation(FVector(0.f, 0.f, -50.f)); // Glow slightly under rifle
+	HoveringLight->bUseInverseSquaredFalloff = false; // Makes intensity easier to control
+	HoveringLight->SetVisibility(true);
+
+	HoveringDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("HoveringDecal"));
+	HoveringDecal->SetupAttachment(MeleeWeaponMesh);
+	HoveringDecal->DecalSize = FVector(64.f, 128.f, 128.f); // Flat and wide
+	HoveringDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f)); // Face it downward
+	HoveringDecal->SetRelativeLocation(FVector(0.f, 0.f, -55.f)); // Slightly under rifle
+	HoveringDecal->SetVisibility(true);
+	
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
 	WeaponBox->SetupAttachment(GetRootComponent());
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -46,20 +134,30 @@ AMeleeWeapon::AMeleeWeapon()
 	TracePointTip = CreateDefaultSubobject<USceneComponent>(TEXT("TracePointTip"));
 	TracePointTip->SetupAttachment(WeaponBox);
 
-	if (IsValid(ItemInfoWidgetComponent))
+	if (IsValid(InfoWidgetComponent))
 	{
-		ItemInfoWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen); // or World
-		ItemInfoWidgetComponent->SetDrawAtDesiredSize(true);
-		if (ItemInfoWidgetClass)
+		InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen); // or World
+		InfoWidgetComponent->SetDrawAtDesiredSize(true);
+		if (InfoWidgetClass)
 		{
-			ItemInfoWidgetComponent->SetWidgetClass(ItemInfoWidgetClass);
+			InfoWidgetComponent->SetWidgetClass(InfoWidgetClass);
 		}
 	}
 }
 
-void AMeleeWeapon::EnableCustomDepth(bool bEnable)
+
+
+void AMeleeWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
-	Super::EnableCustomDepth(bEnable);
+	// Set up attachment rules
+	FAttachmentTransformRules AttachmentRules(
+		EAttachmentRule::SnapToTarget,  // Location
+		EAttachmentRule::SnapToTarget,  // Rotation
+		EAttachmentRule::KeepWorld,     // Scale
+		true);
+
+	// Perform the attachment
+	MeleeWeaponMesh->AttachToComponent(InParent, AttachmentRules, InSocketName);
 }
 
 void AMeleeWeapon::BeginPlay()
@@ -68,7 +166,7 @@ void AMeleeWeapon::BeginPlay()
 
 	if (bIsEquipped == false)
 	{
-		SetMeleeWeaponInformationText(GetItemInfoWidgetComponent(), this);
+		SetMeleeWeaponInformationText(GetInfoWidgetComponent(), this);
 	}
 	if (bIsEquipped == true)
 	{
@@ -80,6 +178,180 @@ void AMeleeWeapon::BeginPlay()
 		if (WeaponState == EWeaponState::EWS_Unclaimed) return;
 	}
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnBoxOverlap);
+
+	if (AStormWeapons* StormWeapon = Cast<AStormWeapons>(this)) return;
+	
+	if (PickupWidgetComponent)
+	{
+		PickupWidgetComponent->UpdateComponentToWorld();
+	}
+	if (InfoWidgetComponent)
+	{
+		InfoWidgetComponent->UpdateComponentToWorld();
+	}
+	if (!PickupWidgetComponent)
+	{
+		PickupWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponent"));
+		if (PickupWidgetComponent)
+		{
+			PickupWidgetComponent->RegisterComponent();
+			PickupWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			PickupWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
+			PickupWidgetComponent->InitWidget();
+			PickupWidgetComponent->SetVisibility(true);
+			PickupWidgetComponent->SetCollisionObjectType(ECC_Mesh);
+			PickupWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+			PickupWidgetComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+			PickupWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+			PickupWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+			PickupWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+			PickupWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+			PickupWidgetComponent->SetDrawAtDesiredSize(true);
+			PickupWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+			PickupWidgetComponent->SetTickWhenOffscreen(true);
+			PickupWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+			PickupWidgetComponent->SetWorldScale3D(FVector(1.0f));
+			PickupWidgetComponent->TranslucencySortPriority = 5;
+			if (auto* W = Cast<UPickupGearWidget>(PickupWidgetComponent->GetUserWidgetObject()))
+			{
+				W->PickupGearOwningComponent = PickupWidgetComponent;
+			}
+		}
+	}
+	if (!InfoWidgetComponent)
+	{
+		InfoWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("InfoWidgetComponentA"));
+		if (InfoWidgetComponent)
+		{
+			InfoWidgetComponent->RegisterComponent();
+			InfoWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			InfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
+			InfoWidgetComponent->InitWidget();
+			InfoWidgetComponent->SetVisibility(true);
+			PickupWidgetComponent->SetCollisionObjectType(ECC_Mesh);
+			PickupWidgetComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+			PickupWidgetComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+			InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+			InfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+			InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+			InfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+			InfoWidgetComponent->SetDrawAtDesiredSize(true);
+			InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+			InfoWidgetComponent->SetTickWhenOffscreen(true);
+			InfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+			InfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+			InfoWidgetComponent->TranslucencySortPriority = 5;
+			if (auto* IIW = Cast<UItemInfoWidgetBase>(InfoWidgetComponent->GetUserWidgetObject()))
+			{
+				IIW->ItemInfoOwningComponent = InfoWidgetComponent;
+			}
+		}
+	}
+	if (InfoWidgetComponent)
+	{
+		if (AActor* PickupItemActor = Cast<AActor>(InfoWidgetComponent->GetOwner()))
+		{
+			if (AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(PickupItemActor)) MeleeWeapon->SetMeleeWeaponInformationText(InfoWidgetComponent, MeleeWeapon);
+			else if (ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(PickupItemActor)) RangedWeapon->SetRangedWeaponInformationText(InfoWidgetComponent, RangedWeapon);
+			else if (AAmmoPickup* AmmoPickup = Cast<AAmmoPickup>(PickupItemActor)) AmmoPickup->SetAmmoPickupInformationText(InfoWidgetComponent, AmmoPickup);
+			else return;
+		}
+	}
+}
+
+void AMeleeWeapon::DisableSphereCollision()
+{
+	if (SphereCollision)
+	{
+		SphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AMeleeWeapon::EnableCustomDepth(bool bEnable)
+{
+	if (MeleeWeaponMesh)
+	{
+		MeleeWeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+	if (MeleeWeaponMesh)
+	{
+		MeleeWeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+}
+
+void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
+{
+	if (!InParent) return;
+    
+	// Make sure we're attaching to the skeletal mesh
+	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
+	{
+		if (!SkeletalMesh->DoesSocketExist(InSocketName)) return;
+		if (NewOwner->ActorHasTag(FName("Player")))
+		{
+			Character = Cast<AFillainCharacter>(NewOwner);
+			if (Character && Character->GetMesh())
+			{
+				// Just call Super::Equip - it will handle the attachment
+			}
+		}
+		else if (NewOwner->ActorHasTag(FName("Enemy")))
+		{
+			if (AEnemyBase* EnChar = Cast<AEnemyBase>(NewOwner))
+			{
+				if (EnChar->GetMesh())
+				{
+					// Just call Super::Equip - it will handle the attachment
+				}
+			}
+		}
+	}
+
+	// ---- Collision setup (after attach & owner set) ----
+	MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    
+	if (NewOwner->IsA(AFillainCharacter::StaticClass()))
+	{
+		WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECR_Overlap);
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else if (NewOwner->IsA(AEnemyBase::StaticClass()))
+	{
+		WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
+		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+		WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
+		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+		MeleeWeaponMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+		ItemState = EItemState::EIS_Equipped;
+		bIsEquipped = true;
+		SetOwner(NewOwner);
+		ShowPickupAndInfoWidgets(false);
+		SetInstigator(NewInstigator);
+		AttachMeshToSocket(InParent, InSocketName);
+		PlayEquipSound();
+		DisableSphereCollision();
+		SetHandsNeeded(this);
+		SetEquippedWeaponState();
+		if (HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) OnEquippedOneHanded();
+		if (HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) OnEquippedTwoHanded();
+		SetOneOrTwoHandedWeapon(this);
+		DeactivateEmbers();
+		bShouldHover = false;
+		bShouldFloatSpin = false;
+		MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		AActor* OwnerCharacter = GetOwner(); // Typically set on equip
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this); // Ignore the weapon itself
+		if (OwnerCharacter) TraceParams.AddIgnoredActor(OwnerCharacter); // ✅ Ignore the wielder!
+		// UE_LOG(LogTemp, Warning, TEXT("Attaching %s to %s at socket %s"), *GetName(), *InParent->GetName(), *InSocketName.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("Post-Attach Location: %s"), *GetActorLocation().ToString());
+	}
 }
 
 bool AMeleeWeapon::ActorIsSameType(AActor* OtherActor)
@@ -142,98 +414,6 @@ void AMeleeWeapon::BoxTrace(FHitResult& BoxHit)
 	true
 	);
 	IgnoreActors.AddUnique(BoxHit.GetActor());
-}
-
-void AMeleeWeapon::OnEquippedOneHanded()
-{
-	Super::OnEquippedOneHanded();
-	
-}
-void AMeleeWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
-{
-	if (!InParent) return;
-    
-	// Make sure we're attaching to the skeletal mesh
-	if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(InParent))
-	{
-		if (!SkeletalMesh->DoesSocketExist(InSocketName)) return;
-		if (NewOwner->ActorHasTag(FName("Player")))
-		{
-			Character = Cast<AFillainCharacter>(NewOwner);
-			if (Character && Character->GetMesh())
-			{
-				// Just call Super::Equip - it will handle the attachment
-				Super::Equip(Character->GetMesh(), InSocketName, NewOwner, NewInstigator);
-			}
-		}
-		else if (NewOwner->ActorHasTag(FName("Enemy")))
-		{
-			if (AEnemyBase* EnChar = Cast<AEnemyBase>(NewOwner))
-			{
-				if (EnChar->GetMesh())
-				{
-					// Just call Super::Equip - it will handle the attachment
-					Super::Equip(EnChar->GetMesh(), InSocketName, NewOwner, NewInstigator);
-				}
-			}
-		}
-	}
-
-    // ---- Collision setup (after attach & owner set) ----
-    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    
-	if (NewOwner->IsA(AFillainCharacter::StaticClass()))
-	{
-		WeaponBox->SetCollisionObjectType(ECC_PCWeaponBox);
-		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-		WeaponBox->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
-		WeaponBox->SetCollisionResponseToChannel(ECC_EnemyWeaponBox, ECR_Overlap);
-		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	else if (NewOwner->IsA(AEnemyBase::StaticClass()))
-	{
-		WeaponBox->SetCollisionObjectType(ECC_EnemyWeaponBox);
-		WeaponBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-		WeaponBox->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-		WeaponBox->SetCollisionResponseToChannel(ECC_PCWeaponBox, ECR_Overlap);
-		WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-}
-
-
-void AMeleeWeapon::OnEquippedTwoHanded()
-{
-	Super::OnEquippedTwoHanded();
-
-	if (WeaponMesh)
-	{
-		// Create and set up a socket for the left hand if it doesn't exist
-		if (!WeaponMesh->DoesSocketExist(FName("LeftHandSocket")))
-		{
-			// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket does not exist on weapon mesh"));
-			return;
-		}
-
-		// Get the socket transform
-		FTransform LeftHandSocketTransform = WeaponMesh->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
-        
-		// Log the socket location for debugging
-		// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
-//			*LeftHandSocketTransform.GetLocation().ToString(),
-//			*LeftHandSocketTransform.GetRotation().Rotator().ToString());;
-	}
-}
-
-void AMeleeWeapon::OnDropped()
-{
-	Super::OnDropped();
-	
-}
-
-void AMeleeWeapon::OnEquippedSecondary()
-{
-	Super::OnEquippedSecondary();
 }
 
 void AMeleeWeapon::BeginAttack()
@@ -382,6 +562,36 @@ void AMeleeWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	RunningTime += DeltaTime;
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (PickupWidgetComponent && InfoWidgetComponent)
+		{
+			FRotator LookRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PC->PlayerCameraManager->GetCameraLocation());
+			PickupWidgetComponent->SetWorldRotation(LookRotation);
+			InfoWidgetComponent->SetWorldRotation(LookRotation);
+		}
+	}
+	
+	if (bShouldHover)
+	{
+		float RunTime = GetGameTimeSinceCreation(); // How long this actor has existed
+		float DeltaHeight = FMath::Sin(RunTime * HoverSpeed) * HoverAmplitude * DeltaTime;
+
+		FVector NewLocation = GetActorLocation();
+		NewLocation.Z += DeltaHeight;
+		SetActorLocation(NewLocation);
+	}
+
+	if (bShouldFloatSpin) // You can make a bool for it
+	{
+		AddActorLocalRotation(FRotator(0.f, 30.f * DeltaTime, 0.f)); // 30 degrees per second
+	}
+	
+	if (ItemState == EItemState::EIS_Hovering)
+	{
+		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
+	}
 }
 
 void AMeleeWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -412,55 +622,55 @@ void AMeleeWeapon::SetMeleeWeaponInformationText(UWidgetComponent* MeleeItemInfo
 		}
 		if (StormW->bIsEquipped == false)
 		{
-			if (!PickupGearWidgetComponent && !IsValid(PickupGearWidgetComponent))
+			if (!PickupWidgetComponent && !IsValid(PickupWidgetComponent))
 			{
-				PickupGearWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponentA"));
-				if (PickupGearWidgetComponent)
+				PickupWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponentA"));
+				if (PickupWidgetComponent)
 				{
-					PickupGearWidgetComponent->RegisterComponent();
-					PickupGearWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-					PickupGearWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
-					PickupGearWidgetComponent->InitWidget();
-					PickupGearWidgetComponent->SetVisibility(true);
-					PickupGearWidgetComponent->SetTickWhenOffscreen(true);
-					PickupGearWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
-					PickupGearWidgetComponent->SetWorldScale3D(FVector(1.0f));
-					PickupGearWidgetComponent->TranslucencySortPriority = 5;
+					PickupWidgetComponent->RegisterComponent();
+					PickupWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+					PickupWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
+					PickupWidgetComponent->InitWidget();
+					PickupWidgetComponent->SetVisibility(true);
+					PickupWidgetComponent->SetTickWhenOffscreen(true);
+					PickupWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+					PickupWidgetComponent->SetWorldScale3D(FVector(1.0f));
+					PickupWidgetComponent->TranslucencySortPriority = 5;
 				}
-				UPickupGearWidget* PickupWidgetA = Cast<UPickupGearWidget>(PickupGearWidgetComponent->GetUserWidgetObject());
+				UPickupGearWidget* PickupWidgetA = Cast<UPickupGearWidget>(PickupWidgetComponent->GetUserWidgetObject());
 				if (PickupWidgetA)
 				{
-					PickupGearWidgetComponent = PickupWidgetA->GetOwningWidgetComponent();
+					PickupWidgetComponent = PickupWidgetA->GetOwningWidgetComponent();
 				}
 			}
 			if (!IsValid(this)) return;
     
-			if (!ItemInfoWidgetComponent && !IsValid(ItemInfoWidgetComponent))
+			if (!InfoWidgetComponent && !IsValid(InfoWidgetComponent))
 			{
-				ItemInfoWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("ItemInfoWidgetComponentA"));
-				if (ItemInfoWidgetComponent)
+				InfoWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("InfoWidgetComponentA"));
+				if (InfoWidgetComponent)
 				{
-					ItemInfoWidgetComponent->RegisterComponent();
-					ItemInfoWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-					ItemInfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
-					ItemInfoWidgetComponent->InitWidget();
-					ItemInfoWidgetComponent->SetVisibility(true);
-					ItemInfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-					ItemInfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
-					ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
-					ItemInfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
-					ItemInfoWidgetComponent->SetDrawAtDesiredSize(true);
-					ItemInfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
-					ItemInfoWidgetComponent->SetVisibility(true);
-					ItemInfoWidgetComponent->SetTickWhenOffscreen(true);
-					ItemInfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
-					ItemInfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
-					ItemInfoWidgetComponent->TranslucencySortPriority = 5;
+					InfoWidgetComponent->RegisterComponent();
+					InfoWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+					InfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
+					InfoWidgetComponent->InitWidget();
+					InfoWidgetComponent->SetVisibility(true);
+					InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+					InfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+					InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+					InfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+					InfoWidgetComponent->SetDrawAtDesiredSize(true);
+					InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+					InfoWidgetComponent->SetVisibility(true);
+					InfoWidgetComponent->SetTickWhenOffscreen(true);
+					InfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+					InfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+					InfoWidgetComponent->TranslucencySortPriority = 5;
 				}
-				UItemInfoWidgetBase* InfoWidget = Cast<UItemInfoWidgetBase>(ItemInfoWidgetComponent->GetUserWidgetObject());
-				if (InfoWidget)
+				UItemInfoWidgetBase* IWidget = Cast<UItemInfoWidgetBase>(InfoWidgetComponent->GetUserWidgetObject());
+				if (IWidget)
 				{
-					ItemInfoWidgetComponent = InfoWidget->GetItemInfoOwningComponent();
+					InfoWidgetComponent = IWidget->GetItemInfoOwningComponent();
 				}
 			}
 		}
@@ -489,4 +699,241 @@ void AMeleeWeapon::SetMeleeWeaponInformationText(UWidgetComponent* MeleeItemInfo
 			*GetNameSafe(RawWidget->GetClass()),
 			*GetNameSafe(MeleeItemInfoComp));
 	}
+}
+
+void AMeleeWeapon::OnEquippedOneHanded()
+{
+	MeleeWeaponMesh->SetSimulatePhysics(false);
+	MeleeWeaponMesh->SetEnableGravity(false);
+	MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Delay visual effects
+	GetWorld()->GetTimerManager().SetTimer
+	(VisualEffectsTimerHandle,
+		[this]()
+		{
+			bShouldHover = false;
+			bShouldFloatSpin = false;
+			ShowPickupAndInfoWidgets(false);
+			SphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			EnableCustomDepth(false);
+	
+			if (HoveringDecal) HoveringDecal->SetVisibility(false);
+			if (HoveringLight) HoveringLight->SetVisibility(false);
+		},
+		0.1f,
+		false
+	);
+	// Safely destroy existing widgets
+	if (PickupWidgetComponent) { PickupWidgetComponent->DestroyComponent(); PickupWidgetComponent = nullptr; }
+	if (InfoWidgetComponent) { InfoWidgetComponent->DestroyComponent(); InfoWidgetComponent = nullptr; }
+}
+
+void AMeleeWeapon::OnEquippedTwoHanded()
+{
+
+	if (MeleeWeaponMesh)
+	{
+		// Create and set up a socket for the left hand if it doesn't exist
+		if (!MeleeWeaponMesh->DoesSocketExist(FName("LeftHandSocket")))
+		{
+			// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket does not exist on weapon mesh"));
+			return;
+		}
+
+		// Get the socket transform
+		FTransform LeftHandSocketTransform = MeleeWeaponMesh->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
+        
+		// Log the socket location for debugging
+		// UE_LOG(LogTemp, Warning, TEXT("LeftHandSocket transform - Location: %s, Rotation: %s"), 
+		//			*LeftHandSocketTransform.GetLocation().ToString(),
+		//			*LeftHandSocketTransform.GetRotation().Rotator().ToString());;
+		
+		SphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MeleeWeaponMesh->SetSimulatePhysics(false);
+		MeleeWeaponMesh->SetEnableGravity(false);
+		MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// Delay visual effects
+		GetWorld()->GetTimerManager().SetTimer
+		(VisualEffectsTimerHandle,
+			[this]()
+			{
+				bShouldHover = false;
+				bShouldFloatSpin = false;
+				ShowPickupAndInfoWidgets(false);
+				SphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				EnableCustomDepth(false);
+	
+				if (HoveringDecal) HoveringDecal->SetVisibility(false);
+				if (HoveringLight) HoveringLight->SetVisibility(false);
+			},
+			0.1f,
+			false
+		);
+		// Safely destroy existing widgets
+		if (PickupWidgetComponent) { PickupWidgetComponent->DestroyComponent(); PickupWidgetComponent = nullptr; }
+		if (InfoWidgetComponent) { InfoWidgetComponent->DestroyComponent(); InfoWidgetComponent = nullptr; }
+	}
+}
+
+void AMeleeWeapon::OnDropped()
+{
+	MeleeWeaponMesh->SetSimulatePhysics(true);
+	MeleeWeaponMesh->SetEnableGravity(true);
+	MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	if (!SphereCollision)
+	{
+		SphereCollision = NewObject<USphereComponent>(this, TEXT("Area SphereCollision"));
+		SphereCollision->RegisterComponent();
+		SphereCollision->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}
+	if (HasAuthority())
+	{
+		SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		SphereCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+		SphereCollision->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+	}
+	MeleeWeaponMesh->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+	MeleeWeaponMesh->SetCollisionResponseToChannel(ECC_Enemy, ECollisionResponse::ECR_Overlap);
+	MeleeWeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	// Delay visual effects
+	GetWorld()->GetTimerManager().SetTimer
+	(VisualEffectsTimerHandle,
+		[this]()
+		{
+			bShouldHover = true;
+			bShouldFloatSpin = true;
+			MeleeWeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+			MeleeWeaponMesh->MarkRenderStateDirty();
+			EnableCustomDepth(true);
+	
+			HoveringDecal->SetVisibility(true);
+			HoveringLight->SetVisibility(true);
+		},
+		0.1f,
+		false);
+	
+	if (!IsValid(this)) return;
+    
+	if (!PickupWidgetComponent && !IsValid(PickupWidgetComponent))
+	{
+		PickupWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("PickupWidgetComponentA"));
+		if (PickupWidgetComponent)
+		{
+			PickupWidgetComponent->RegisterComponent();
+			PickupWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			PickupWidgetComponent->SetWidgetClass(UPickupGearWidget::StaticClass());
+			PickupWidgetComponent->InitWidget();
+			PickupWidgetComponent->SetVisibility(true);
+			PickupWidgetComponent->SetTickWhenOffscreen(true);
+			PickupWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+			PickupWidgetComponent->SetWorldScale3D(FVector(1.0f));
+			PickupWidgetComponent->TranslucencySortPriority = 5;
+		}
+		UPickupGearWidget* PickupWidgetA = Cast<UPickupGearWidget>(PickupWidgetComponent->GetUserWidgetObject());
+		if (PickupWidgetA)
+		{
+			PickupWidgetComponent = PickupWidgetA->GetOwningWidgetComponent();
+		}
+	}
+	if (!IsValid(this)) return;
+    
+	if (!InfoWidgetComponent && !IsValid(InfoWidgetComponent))
+	{
+		InfoWidgetComponent = NewObject<UWidgetComponent>(this, TEXT("InfoWidgetComponentA"));
+		if (InfoWidgetComponent)
+		{
+			InfoWidgetComponent->RegisterComponent();
+			InfoWidgetComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			InfoWidgetComponent->SetWidgetClass(UItemInfoWidgetBase::StaticClass());
+			InfoWidgetComponent->InitWidget();
+			InfoWidgetComponent->SetVisibility(true);
+			InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+			InfoWidgetComponent->SetDrawSize(FVector2D(300.f, 200.f));
+			InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f)); // above the weapon
+			InfoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+			InfoWidgetComponent->SetDrawAtDesiredSize(true);
+			InfoWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+			InfoWidgetComponent->SetVisibility(true);
+			InfoWidgetComponent->SetTickWhenOffscreen(true);
+			InfoWidgetComponent->SetDrawSize(FVector2D(400.f, 200.f));
+			InfoWidgetComponent->SetWorldScale3D(FVector(1.0f));
+			InfoWidgetComponent->TranslucencySortPriority = 5;
+		}
+		UItemInfoWidgetBase* FoWidget = Cast<UItemInfoWidgetBase>(InfoWidgetComponent->GetUserWidgetObject());
+		if (FoWidget)
+		{
+			InfoWidgetComponent = FoWidget->GetItemInfoOwningComponent();
+		}
+	}
+}
+
+void AMeleeWeapon::OnEquippedSecondary()
+{
+	bShouldHover = false;
+	bShouldFloatSpin = false;
+	ShowPickupAndInfoWidgets(false);
+	SphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SphereCollision->DestroyComponent(); SphereCollision = nullptr;
+	MeleeWeaponMesh->SetSimulatePhysics(false);
+	MeleeWeaponMesh->SetEnableGravity(false);
+	MeleeWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnableCustomDepth(false);
+	
+	HoveringDecal->SetVisibility(false);
+	HoveringLight->SetVisibility(false);
+
+	// Safely destroy existing widgets
+	if (PickupWidgetComponent) { PickupWidgetComponent->DestroyComponent(); PickupWidgetComponent = nullptr; }
+	if (InfoWidgetComponent) { InfoWidgetComponent->DestroyComponent(); InfoWidgetComponent = nullptr; }
+}
+
+void AMeleeWeapon::WeaponDropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+	MeleeWeaponMesh->DetachFromComponent(DetachRules);
+	SetOwner(nullptr);
+	FillainOwnerCharacter = nullptr;
+	FillainOwnerController = nullptr;
+}
+
+void AMeleeWeapon::OnWeaponStateSet()
+{
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_EquippedOneHanded:
+		OnEquippedOneHanded();
+		break;
+	case EWeaponState::EWS_EquippedTwoHanded:
+		OnEquippedTwoHanded();
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+		OnEquippedSecondary();
+		break;
+	case EWeaponState::EWS_Dropped:
+		OnDropped();
+		break;
+	}
+}
+
+void AMeleeWeapon::SetEquippedWeaponState()
+{
+	if (WeaponType == EWeaponType::EWT_RocketLauncher || WeaponType == EWeaponType::EWT_GrenadeLauncher || WeaponType == EWeaponType::EWT_SniperRifle || WeaponType == EWeaponType::EWT_Shotgun || WeaponType == EWeaponType::EWT_ChaosSword)
+	{
+		WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+		OnWeaponStateSet();
+	}
+	if (WeaponType == EWeaponType::EWT_AssaultRifle || WeaponType == EWeaponType::EWT_SubmachineGun || WeaponType == EWeaponType::EWT_Pistol || WeaponType == EWeaponType::EWT_RubySword || WeaponType == EWeaponType:: EWT_SapphireSword || WeaponType == EWeaponType:: EWT_SandSword || WeaponType == EWeaponType:: EWT_SoulSword || WeaponType == EWeaponType:: EWT_ShadowSword || WeaponType == EWeaponType:: EWT_SkyMace)
+	{
+		WeaponState = EWeaponState::EWS_EquippedOneHanded;
+		OnWeaponStateSet();
+	}
+}
+
+void AMeleeWeapon::OnRep_WeaponState()
+{
+	OnWeaponStateSet();
 }

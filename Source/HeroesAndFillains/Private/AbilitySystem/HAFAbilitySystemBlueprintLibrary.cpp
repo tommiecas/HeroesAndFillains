@@ -557,4 +557,48 @@ int32 UHAFAbilitySystemBlueprintLibrary::GetXPAwardForEnemyTypeAndLevel(const UO
 	return static_cast<int32>(XPAward);
 }
 
+void UHAFAbilitySystemBlueprintLibrary::SetIsRadialDamageEffectParam(FDamageEffectParams& DamageEffectParams,
+	bool bIsRadial, float InnerRadius, float OuterRadius, FVector Origin)
+{
+	DamageEffectParams.bIsRadialDamage = bIsRadial;
+	DamageEffectParams.RadialDamageInnerRadius = InnerRadius;
+	DamageEffectParams.RadialDamageOuterRadius = OuterRadius;
+	DamageEffectParams.RadialDamageOrigin = Origin;
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetKnockbackDirection(FDamageEffectParams& DamageEffectParams,
+	FVector KnockbackDirection, float Magnitude)
+{
+	KnockbackDirection.Normalize();
+	if (Magnitude == 0.f)
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;		
+	}
+	else
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * Magnitude;
+	}
+
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetDeathImpulseDirection(FDamageEffectParams& DamageEffectParams,
+	FVector DeathImpulseDirection, float Magnitude)
+{
+	DeathImpulseDirection.Normalize();
+	if (Magnitude == 0.f)
+	{
+		DamageEffectParams.DeathImpulse == DeathImpulseDirection * DamageEffectParams.DeathImpulseMagnitude;
+	}
+	else
+	{
+		DamageEffectParams.DeathImpulse == DeathImpulseDirection * Magnitude;
+	}
+}
+
+void UHAFAbilitySystemBlueprintLibrary::SetTargetEffectParamsASC(FDamageEffectParams& DamageEffectParams,
+	UAbilitySystemComponent* InASC)
+{
+	DamageEffectParams.TargetAbilitySystemComponent = InASC;
+}
+
 	

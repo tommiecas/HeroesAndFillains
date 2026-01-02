@@ -32,8 +32,7 @@ public:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USphereComponent* AreaSphere;
+
 	
 	// Set at runtime by tag lookup; keep read-only to BP since we assign it in code
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup|Area",
@@ -54,17 +53,7 @@ public:
 
 	virtual void ShowPickupAndInfoWidgets(bool bShow);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	class UWidgetComponent* PickupGearWidgetComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	UWidgetComponent* ItemInfoWidgetComponent;
-
-	UPROPERTY(EditAnywhere, Category = "UI Properties")
-	class UUserWidget* ItemInfoWidget;
-
-	UPROPERTY(EditAnywhere, Category = "UI Properties")
-	class UUserWidget* PickupGearWidget;
+	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float RunningTime;
@@ -85,20 +74,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
 	float HoverSpeed = 2.f; // How fast it oscillates
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UPointLightComponent* HoverLight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
-	class UDecalComponent* HoverDecal;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
 	bool bShouldFloatSpin = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UPickupGearWidget> PickupGearWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UItemInfoWidgetBase> ItemInfoWidgetClass;
 
 	UPROPERTY()
 	class UPickupWidgetComponent* FloatingWidgetComponent = nullptr;
@@ -129,6 +109,8 @@ public:
 	UPROPERTY()
 	AFillainCharacter* Character;
 
+	UPROPERTY()
+	TObjectPtr<USphereComponent> SphereComp;
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -149,6 +131,5 @@ protected:
 	UFUNCTION() virtual void OnAreaEnd(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIndex);
 
 public:
-	FORCEINLINE virtual UWidgetComponent* GetPickupGearWidgetComponent() const { return PickupGearWidgetComponent; }
-	FORCEINLINE virtual UWidgetComponent* GetItemInfoWidgetComponent() const { return ItemInfoWidgetComponent; }
+
 };

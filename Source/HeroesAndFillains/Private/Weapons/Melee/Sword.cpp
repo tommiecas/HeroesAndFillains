@@ -53,7 +53,7 @@ void ASword::ResetSword()
 
     SetWeaponState(EWeaponState::EWS_Unclaimed);
     
-    USphereComponent* AreaSpherePtr = GetAreaSphere();
+    USphereComponent* AreaSpherePtr = GetSphereCollision();
     if (AreaSpherePtr)
     {
         AreaSpherePtr->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -71,7 +71,7 @@ void ASword::OnEquippedOneHanded()
 {
     ShowPickupAndInfoWidgets(false);
     
-    USphereComponent* AreaSpherePtr = GetAreaSphere();
+    USphereComponent* AreaSpherePtr = GetSphereCollision();
     if (AreaSpherePtr)
     {
         AreaSpherePtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -92,7 +92,7 @@ void ASword::OnEquippedTwoHanded()
 {
     ShowPickupAndInfoWidgets(false);
     
-    USphereComponent* AreaSpherePtr = GetAreaSphere();
+    USphereComponent* AreaSpherePtr = GetSphereCollision();
     if (AreaSpherePtr)
     {
         AreaSpherePtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -113,10 +113,10 @@ void ASword::OnDropped()
 {
     if (HasAuthority())
     {
-        if (AreaSphere)
+        if (SphereCollision)
         {
-            AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-            AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
+            SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+            SphereCollision->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECollisionResponse::ECR_Overlap);
         }
         else
         {
@@ -158,7 +158,7 @@ void ASword::BeginPlay()
     InitialTransform = GetActorTransform();
 
     // Cache and validate widget component
-    UWidgetComponent* WidgetComponent = GetPickupGearWidgetComponent();
+    UWidgetComponent* WidgetComponent = GetPickupWidgetComponent();
     if (!WidgetComponent)
     {
         // UE_LOG(LogTemp, Warning, TEXT("PickupGearWidgetComponent is null"));
@@ -174,9 +174,9 @@ void ASword::BeginPlay()
     }
 
     // Cast and set visibility
-    if (UPickupGearWidget* PickupWidget = Cast<UPickupGearWidget>(UserWidget))
+    if (UPickupGearWidget* PUWidget = Cast<UPickupGearWidget>(UserWidget))
     {
-        PickupWidget->SetVisibility(ESlateVisibility::Visible);
+        PUWidget->SetVisibility(ESlateVisibility::Visible);
     }
     else
     {

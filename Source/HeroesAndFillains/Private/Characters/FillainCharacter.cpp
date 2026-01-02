@@ -976,14 +976,29 @@ void AFillainCharacter::ServerLeaveGame_Implementation()
 
 void AFillainCharacter::DropOrDestroyWeapon(AWeaponBase* WeaponBase)
 {
-	if (WeaponBase == nullptr) return;
-	if (WeaponBase->bDestroyWeapon)
+	if (ARangedWeapon* RW = Cast<ARangedWeapon>(WeaponBase))
 	{
-		WeaponBase->Destroy();
+		if (RW == nullptr) return;
+		if (RW->bDestroyWeapon)
+		{
+			RW->Destroy();
+		}
+		else
+		{
+			RW->WeaponDropped();
+		}
 	}
-	else
+	else if (AMeleeWeapon* MW = Cast<AMeleeWeapon>(WeaponBase))
 	{
-		WeaponBase->WeaponDropped();
+		if (MW == nullptr) return;
+		if (MW->bDestroyWeapon)
+		{
+			MW->Destroy();
+		}
+		else
+		{
+			MW->WeaponDropped();
+		}
 	}
 }
 
@@ -995,9 +1010,9 @@ void AFillainCharacter::DropOrDestroyBothWeapons()
 		{
 			DropOrDestroyWeapon(CombatComponent->EquippedWeapon);
 		}
-		if (CombatComponent->SecondaryWeapon)
+		if (CombatComponent->SecondaryRangedWeapon)
 		{
-			DropOrDestroyWeapon(CombatComponent->SecondaryWeapon);
+			DropOrDestroyWeapon(CombatComponent->SecondaryRangedWeapon);
 		}
 	}
 }
@@ -1035,19 +1050,31 @@ bool AFillainCharacter::CanArm()
 
 void AFillainCharacter::AttachWeaponToSpineSocket()
 {
-	if (CombatComponent->EquippedWeapon)
+	if (CombatComponent->EquippedRangedWeapon)
 	{
-		CombatComponent->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+		CombatComponent->EquippedRangedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+	}
+	else if (CombatComponent->EquippedMeleeWeapon)
+	{
+		CombatComponent->EquippedMeleeWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
 	}
 }
 
 void AFillainCharacter::Disarm()
 {
-	if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+	if (CombatComponent->EquippedRangedWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
 	{
 		PlayArmDisarmMontage(FName("DisarmOneHanded"));
 	}
-	else if (CombatComponent->EquippedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	if (CombatComponent->EquippedRangedWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
+	{
+		PlayArmDisarmMontage(FName("DisarmTwoHanded"));
+	}
+	if (CombatComponent->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedOneHanded)
+	{
+		PlayArmDisarmMontage(FName("DisarmOneHanded"));
+	}
+	if (CombatComponent->EquippedMeleeWeapon->WeaponState == EWeaponState::EWS_EquippedTwoHanded)
 	{
 		PlayArmDisarmMontage(FName("DisarmTwoHanded"));
 	}
@@ -1059,9 +1086,9 @@ void AFillainCharacter::Disarm()
 
 void AFillainCharacter::AttachWeaponToMeleeSocket()
 {
-	if (CombatComponent->EquippedWeapon)
+	if (CombatComponent->EquippedMeleeWeapon)
 	{
-		CombatComponent->EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("MeleeSocket"));
+		CombatComponent->EquippedMeleeWeapon->AttachMeshToSocket(GetMesh(), FName("MeleeSocket"));
 		ResetToFightAgain();
 	}
 }
@@ -1999,10 +2026,10 @@ void AFillainCharacter::EquipButtonPressed()
 				CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
 				if (CharactersMeleeWeapon) CharactersMeleeWeapon->bShouldHover = false;
 				if (CharactersMeleeWeapon) CharactersMeleeWeapon ->bShouldFloatSpin = false;
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupGearWidgetComponent) CharactersMeleeWeapon->PickupGearWidgetComponent->SetVisibility(false);
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->ItemInfoWidgetComponent) CharactersMeleeWeapon->ItemInfoWidgetComponent->SetVisibility(false); 
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverDecal) CharactersMeleeWeapon->HoverDecal->DestroyComponent();
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverLight) CharactersMeleeWeapon->HoverLight->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupWidgetComponent) CharactersMeleeWeapon->PickupWidgetComponent->SetVisibility(false);
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->InfoWidgetComponent) CharactersMeleeWeapon->InfoWidgetComponent->SetVisibility(false); 
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoveringDecal) CharactersMeleeWeapon->HoveringDecal->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoveringLight) CharactersMeleeWeapon->HoveringLight->DestroyComponent();
 				OverlappingItem = nullptr;
 				EquipWeapon(OverlappedWeapon);
 			}
@@ -2015,10 +2042,10 @@ void AFillainCharacter::EquipButtonPressed()
 				CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
 				if (CharactersMeleeWeapon) CharactersMeleeWeapon->bShouldHover = false;
 				if (CharactersMeleeWeapon) CharactersMeleeWeapon ->bShouldFloatSpin = false;
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupGearWidgetComponent) CharactersMeleeWeapon->PickupGearWidgetComponent->SetVisibility(false);
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->ItemInfoWidgetComponent) CharactersMeleeWeapon->ItemInfoWidgetComponent->SetVisibility(false); 
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverDecal) CharactersMeleeWeapon->HoverDecal->DestroyComponent();
-				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoverLight) CharactersMeleeWeapon->HoverLight->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->PickupWidgetComponent) CharactersMeleeWeapon->PickupWidgetComponent->SetVisibility(false);
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->InfoWidgetComponent) CharactersMeleeWeapon->InfoWidgetComponent->SetVisibility(false); 
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoveringDecal) CharactersMeleeWeapon->HoveringDecal->DestroyComponent();
+				if (CharactersMeleeWeapon && CharactersMeleeWeapon->HoveringLight) CharactersMeleeWeapon->HoveringLight->DestroyComponent();
 				OverlappingItem = nullptr;
 				EquipWeapon(OverlappedWeapon);
 			}
@@ -2027,10 +2054,10 @@ void AFillainCharacter::EquipButtonPressed()
 		{
 			OverlappedRangedWeapon->Equip(GetMesh(), FName("RangedSocket"), this, this);
 		}
-		if (AMajixWeapon* OverlappedMajixWeapon = Cast<AMajixWeapon>(OverlappedWeapon))
-		{
-			OverlappedMajixWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
-		}
+		// if (AMajixWeapon* OverlappedMajixWeapon = Cast<AMajixWeapon>(OverlappedWeapon))
+		// {
+		// 	OverlappedMajixWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
+		// }
 	}
 	else
 	{
@@ -2203,15 +2230,30 @@ void AFillainCharacter::ServerEquipButtonPressed_Implementation(AWeaponBase* Wea
 
 void AFillainCharacter::EquipWeapon(AWeaponBase* AWB)
 {
-	AWB->Equip(GetMesh(), FName("MeleeSocket"), this, this);
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedRangedWeapon;
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon; 
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMajixWeapon;
-	if ((AWB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMajixWeapon; 
-	OverlappingItem = nullptr;
-	EquippedWeapon = AWB;
+	if (ARangedWeapon* ARW = Cast<ARangedWeapon>(AWB))
+	{
+		ARW->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedRangedWeapon;
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon; 
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMajixWeapon;
+		if ((ARW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMajixWeapon; 
+		OverlappingItem = nullptr;
+		EquippedRangedWeapon = ARW;
+	}
+	else if (AMeleeWeapon* AMW = Cast<AMeleeWeapon>(AWB))
+	{
+		AMW->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMeleeWeapon;
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Melee)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMeleeWeapon;
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedRangedWeapon;
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Ranged)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedRangedWeapon; 
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedOneHandedMajixWeapon;
+		if ((AMW->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon) && (CombatComponent->FightingStyle == EFightingStyle::EFS_Majix)) BattlePrepped = EBattlePrepped::EBP_ArmedTwoHandedMajixWeapon; 
+		OverlappingItem = nullptr;
+		EquippedMeleeWeapon = AMW;
+	}
 }
 
 void AFillainCharacter::ResetCameraRig()
@@ -2261,22 +2303,24 @@ void AFillainCharacter::EquipOneHandedRangedWeapon(AWeaponBase* W)
 
 	if (W->IsA(ARangedWeapon::StaticClass()) && W->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		W->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
-		W->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-		W->WeaponCategory = EWeaponCategory::EWC_OneHandedFirearm;
-		EquippedWeapon = W;
-		CombatComponent->EquippedWeapon = W;
-		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(W);
-		CharactersRangedWeapon = RangedWeapon;
-		CombatComponent->EquippedRangedWeapon = RangedWeapon;
-		CharactersRangedWeapon = RangedWeapon;
-		CombatComponent->EquipWeapon(RangedWeapon);
-	}
-	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
-	{
-		OverlappingWeapon = nullptr;
-		OverlappingItem = nullptr;
+		if (ARangedWeapon* R = Cast<ARangedWeapon>(W))
+		{
+			R->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+			CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
+			R->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+			R->WeaponCategory = EWeaponCategory::EWC_OneHandedFirearm;
+			EquippedWeapon = R;
+			CombatComponent->EquippedWeapon = R;
+			CharactersRangedWeapon = R;
+			CombatComponent->EquippedRangedWeapon = R;
+			CharactersRangedWeapon = R;
+			CombatComponent->EquipWeapon(R);
+		}
+		if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
+		{
+			OverlappingWeapon = nullptr;
+			OverlappingItem = nullptr;
+		}
 	}
 }
 
@@ -2288,23 +2332,25 @@ void AFillainCharacter::EquipTwoHandedRangedWeapon(AWeaponBase* Wpn)
 	
 	if (Wpn->IsA(ARangedWeapon::StaticClass()) && Wpn->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
-		Wpn->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
-		Wpn->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-		Wpn->WeaponCategory = EWeaponCategory::EWC_TwoHandedFirearm;
-		EquippedWeapon = Wpn;
-		CombatComponent->EquippedWeapon = Wpn;
-		ARangedWeapon* RangedWeapon = Cast<ARangedWeapon>(Wpn);
-		CharactersRangedWeapon = RangedWeapon;
-		CombatComponent->EquippedRangedWeapon = RangedWeapon;
-		CharactersRangedWeapon = RangedWeapon;
-		CombatComponent->EquippedRangedWeapon = RangedWeapon;
-		CombatComponent->EquipWeapon(RangedWeapon);
-	}
-	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
-	{
-		OverlappingWeapon = nullptr;
-		OverlappingItem = nullptr;
+		if (ARangedWeapon* R = Cast<ARangedWeapon>(Wpn))
+		{
+			R->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+			CombatComponent->FightingStyle = EFightingStyle::EFS_Ranged;
+			R->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+			R->WeaponCategory = EWeaponCategory::EWC_TwoHandedFirearm;
+			EquippedWeapon = R;
+			CombatComponent->EquippedWeapon = R;
+			CharactersRangedWeapon = R;
+			CombatComponent->EquippedRangedWeapon = R;
+			CharactersRangedWeapon = R;
+			CombatComponent->EquippedRangedWeapon = R;
+			CombatComponent->EquipWeapon(R);
+		}
+		if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
+		{
+			OverlappingWeapon = nullptr;
+			OverlappingItem = nullptr;
+		}
 	}
 }
 
@@ -2316,24 +2362,24 @@ void AFillainCharacter::EquipOneHandedMeleeWeapon(AWeaponBase* Wn)
 	
 	if (Wn->IsA(AMeleeWeapon::StaticClass()) && Wn->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
 	{
-		Wn->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
-		Wn->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-		Wn->WeaponCategory = EWeaponCategory::EWC_OneHandedSword;
-		EquippedWeapon = Wn;
-		CombatComponent->EquippedWeapon = Wn;
-		AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(Wn);
-		CharactersMeleeWeapon = MeleeWeapon;
-		CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
-		DisarmOneHandedWeapon(MeleeWeapon);
-		ArmOneHandedWeapon(MeleeWeapon);
-		CharactersMeleeWeapon = MeleeWeapon;
-		CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
-	}
-	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
-	{
-		OverlappingWeapon = nullptr;
-		OverlappingItem = nullptr;
+		if (AMeleeWeapon* M = Cast<AMeleeWeapon>(Wn))
+		{
+			M->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+			CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
+			M->WeaponState = EWeaponState::EWS_EquippedOneHanded;
+			M->WeaponCategory = EWeaponCategory::EWC_OneHandedSword;
+			EquippedWeapon = M;
+			CombatComponent->EquippedWeapon = M;
+			CharactersMeleeWeapon = M;
+			CombatComponent->EquippedMeleeWeapon = M;
+			ArmOneHandedWeapon(M);
+			CharactersMeleeWeapon = M;
+		}
+		if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
+		{
+			OverlappingWeapon = nullptr;
+			OverlappingItem = nullptr;
+		}
 	}
 }
 
@@ -2345,128 +2391,35 @@ void AFillainCharacter::EquipTwoHandedMeleeWeapon(AWeaponBase* WeaponB)
 	
 	if (WeaponB->IsA(AMeleeWeapon::StaticClass())&& WeaponB->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
 	{
+		if (AMeleeWeapon* M = Cast<AMeleeWeapon>(WeaponB))
+		{
 			UE_LOG(LogTemp, Warning, TEXT("🧠 Inside IsA+HandsNeeded block, calling Weapon->Equip"));
-			WeaponB->Equip(GetMesh(), FName("MeleeSocket"), this, this);
+			M->Equip(GetMesh(), FName("MeleeSocket"), this, this);
 			AttachWeaponToMeleeSocket();
 			CombatComponent->FightingStyle = EFightingStyle::EFS_Melee;
-			WeaponB->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-			WeaponB->WeaponCategory = EWeaponCategory::EWC_TwoHandedSword;
-			EquippedWeapon = WeaponB;
-			CharactersWeapon = WeaponB;
-			CombatComponent->EquippedWeapon = WeaponB;
+			M->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
+			M->WeaponCategory = EWeaponCategory::EWC_TwoHandedSword;
+			EquippedWeapon = M;
+			CharactersWeapon = M;
+			CombatComponent->EquippedWeapon = M;
 
 			UE_LOG(LogTemp, Warning, TEXT("Weapon is a %s, IsA(Melee): %d"),
-			   *WeaponB->GetClass()->GetName(),
-			   WeaponB->IsA(AMeleeWeapon::StaticClass()));
-
-		
-			AMeleeWeapon* MeleeWeapon = Cast<AMeleeWeapon>(WeaponB);
+			   *M->GetClass()->GetName(),
+			   M->IsA(AMeleeWeapon::StaticClass()));
 
 			UE_LOG(LogTemp, Warning, TEXT("Cast result: %s"),
-			   MeleeWeapon ? *MeleeWeapon->GetName() : TEXT("nullptr"));
+			   M ? *M->GetName() : TEXT("nullptr"));
 
 		
-			CharactersMeleeWeapon = MeleeWeapon;
-			CombatComponent->EquippedMeleeWeapon = MeleeWeapon;
-			DisarmTwoHandedWeapon(MeleeWeapon);
-			ArmTwoHandedWeapon(MeleeWeapon);
+			CharactersMeleeWeapon = M;
+			CombatComponent->EquippedMeleeWeapon = M;
+			ArmTwoHandedWeapon(M);
 		}
-	
+	}
 	if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
 	{
 		OverlappingWeapon = nullptr;
 		OverlappingItem = nullptr;
-	}
-}
-
-void AFillainCharacter::EquipOneHandedMajixWeapon(AWeaponBase* MajixWeapon)
-{
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	
-	
-	if (MajixWeapon->IsA(AHAFMajixProjectile::StaticClass()) && MajixWeapon->HandsNeeded == EHandsNeeded::EHN_OneHandedWeapon)
-	{
-		if (AHAFMajixProjectile* ProjectileMajixWeapon = Cast<AHAFMajixProjectile>(MajixWeapon))
-			if (ProjectileMajixWeapon)  
-			{
-				CombatComponent->EquippedWeapon = ProjectileMajixWeapon;
-				EquippedWeapon = CombatComponent->EquippedWeapon;
-				EquippedWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
-				CombatComponent->FightingStyle = EFightingStyle::EFS_Majix;
-				EquippedWeapon->WeaponState = EWeaponState::EWS_EquippedOneHanded;
-				EquippedWeapon->WeaponCategory = EWeaponCategory::EWC_MajixSpell;
-				EquippedWeapon = MajixWeapon;
-				AMajixWeapon* MajixWpn = Cast<AMajixWeapon>(MajixWeapon);
-				CharactersMajixWeapon = MajixWpn;
-				CombatComponent->EquippedMajixWeapon = MajixWpn;
-				if (MajixWpn &&
-					(MajixWpn->WeaponType == EWeaponType::EWT_MajixProjectile ||
-						MajixWpn->WeaponType == EWeaponType::EWT_FireBolt))
-				{
-					if (IsAbilityInStartupAbilities(UHAFProjectileSpell::StaticClass()))
-					{
-						if (UAbilitySystemComponent* AbSysCo = GetAbilitySystemComponent())
-						{
-							// Easiest: just try by class
-							AbSysCo->TryActivateAbilityByClass(UHAFProjectileSpell::StaticClass());
-
-							// Or, if you specifically want the spec handle:
-							if (FGameplayAbilitySpec* Spec =
-								AbSysCo->FindAbilitySpecFromClass(UHAFProjectileSpell::StaticClass()))
-							{
-								// On the server: TryActivateAbility(handle) is fine.
-								// On a client: call ASC->ServerTryActivateAbility(handle) or rely on prediction.
-								AbSysCo->TryActivateAbility(Spec->Handle);
-							}
-						}
-					}
-				}
-			}
-			if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
-			{
-				OverlappingWeapon = nullptr;
-				OverlappingItem = nullptr;
-			}
-		}
-	}
-
-void AFillainCharacter::EquipTwoHandedMajixWeapon(AWeaponBase* THMWeapon)
-{
-	EQTRACE_MSG("OverlappingItem=%s OverlappingWeapon=%s",
-		*GetNameSafe(OverlappingItem), *GetNameSafe(OverlappingWeapon));
-	
-	
-	if (THMWeapon->IsA(AMajixWeapon::StaticClass()) && THMWeapon->HandsNeeded == EHandsNeeded::EHN_TwoHandedWeapon)
-	{
-		THMWeapon->Equip(GetMesh(), FName("SpellSocket"), this, this);
-		THMWeapon->Equip(GetMesh(), FName("RightHandSpellSocket"), this, this);
-		CombatComponent->FightingStyle = EFightingStyle::EFS_Majix;
-		THMWeapon->WeaponState = EWeaponState::EWS_EquippedTwoHanded;
-		THMWeapon->WeaponCategory = EWeaponCategory::EWC_MajixSpell;
-		EquippedWeapon = THMWeapon;
-		CombatComponent->EquippedWeapon = THMWeapon;
-		AMajixWeapon* MajixWeap = Cast<AMajixWeapon>(THMWeapon);
-		CharactersMajixWeapon = MajixWeap;
-		CombatComponent->EquippedMajixWeapon = MajixWeap;
-		/* if (MajixWeapon->WeaponType == EWeaponType::EWT_MajixProjectile)
-		{
-			//Add Gameplay Abilities that need two hands when we add the to the game	
-		}
-		{
-			AHAFProjectileSpell* ProjectileSpell = Cast<AHAFMajixProjectile>(MajixWeapon);
-			if (Projectile)
-			{
-				Projectile->SetOwner(this);
-				Projectile->ActivateAbility()
-				
-			}
-		}*/
-		if (EquippedWeapon != nullptr && CombatComponent->EquippedWeapon != nullptr)
-		{
-			OverlappingWeapon = nullptr;
-			OverlappingItem = nullptr;
-		}
 	}
 }
 
@@ -2582,7 +2535,7 @@ void AFillainCharacter::SetAllWeaponEnumsForRanged()
 	OverlappingWeapon = CombatComponent->EquippedRangedWeapon;
 	OverlappingWeapon = CharactersWeapon;
 	CharactersWeapon = CombatComponent->EquippedRangedWeapon;
-	CombatComponent->EquippedWeapon->SetEquippedWeaponState();
+	CombatComponent->EquippedRangedWeapon->SetEquippedWeaponState();
 }
 
 void AFillainCharacter::SetAllWeaponEnumsForMelee()
@@ -3136,11 +3089,14 @@ void AFillainCharacter::HideCharacterIfCameraClose()
 		CameraBoom->bDoCollisionTest = !bSelfOccluded;
 		GetMesh()->SetOwnerNoSee(bSelfOccluded);
 
-		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
+		if (CombatComponent && CombatComponent->EquippedRangedWeapon && CombatComponent->EquippedRangedWeapon->GetRangedWeaponMesh())
 		{
-			CombatComponent->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
+			CombatComponent->EquippedRangedWeapon->GetRangedWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
 		}
-
+		else if (CombatComponent && CombatComponent->EquippedMeleeWeapon && CombatComponent->EquippedMeleeWeapon->GetMeleeWeaponMesh())
+		{
+			CombatComponent->EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetOwnerNoSee(bSelfOccluded);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("[SelfOccl] SWITCH  Actual=%.1f  Occluded=%d  BoomCollide=%d"),
 			   Actual, bSelfOccluded, (int32)CameraBoom->bDoCollisionTest);
 	}

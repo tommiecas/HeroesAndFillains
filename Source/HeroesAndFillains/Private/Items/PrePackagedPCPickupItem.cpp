@@ -47,19 +47,19 @@ APrePackagedPCPickupItem::APrePackagedPCPickupItem()
 	ItemEffect->SetUsingAbsoluteRotation(false);
 	ItemEffect->SetUsingAbsoluteScale(false);
 	
-	check(AreaSphere);
-	AreaSphere->SetSphereRadius(125.f, true);
-	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AreaSphere->SetCollisionObjectType(ECC_Pickupable); // Or your custom PCWeaponBox
-	AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-	AreaSphere->SetGenerateOverlapEvents(true);
-	AreaSphere->AddLocalOffset(FVector(0.f, 0.f, 85.f));
-	AreaSphere->SetHiddenInGame(true);
-	AreaSphere->ShapeColor = FColor::Green;
-	AreaSphere->SetCanEverAffectNavigation(false);
+	check(SphereComp);
+	SphereComp->SetSphereRadius(125.f, true);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionObjectType(ECC_Pickupable); // Or your custom PCWeaponBox
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
+	SphereComp->SetGenerateOverlapEvents(true);
+	SphereComp->AddLocalOffset(FVector(0.f, 0.f, 85.f));
+	SphereComp->SetHiddenInGame(true);
+	SphereComp->ShapeColor = FColor::Green;
+	SphereComp->SetCanEverAffectNavigation(false);
 
-	AreaShape  = AreaSphere; // base will wire HiddenTreasure to this
+	AreaShape  = SphereComp; // base will wire HiddenTreasure to this
 }
 
 void APrePackagedPCPickupItem::BeginPlay()
@@ -76,8 +76,8 @@ void APrePackagedPCPickupItem::BeginPlay()
 		return;
 	}*/
 
-	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnOverlap);
-	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnEndOverlap);
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnOverlap);
+	SphereComp->OnComponentEndOverlap.AddDynamic(this, &APrePackagedPCPickupItem::OnEndOverlap);
 }
 
 void APrePackagedPCPickupItem::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -228,9 +228,4 @@ void APrePackagedPCPickupItem::Tick(float DeltaTime)
 	
 }
 
-void APrePackagedPCPickupItem::ShowPickupAndInfoWidgets(bool bShow)
-{
-	if (PickupGearWidgetComponent) PickupGearWidgetComponent->SetVisibility(bShow);
-	if (ItemInfoWidgetComponent) ItemInfoWidgetComponent->SetVisibility(bShow);
-}
 

@@ -13,17 +13,8 @@ APCPickupBaseItem::APCPickupBaseItem()
 {
     PrimaryActorTick.bCanEverTick = false;
     
-    AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
-    AreaSphere->SetupAttachment(GetRootComponent());
-    AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    AreaSphere->SetCollisionObjectType(ECC_Pickupable);
-    AreaSphere->SetGenerateOverlapEvents(true);
-    AreaSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-    AreaSphere->SetCollisionResponseToChannel(ECC_PlayerCharacter, ECR_Overlap);
-    AreaSphere->SetSphereRadius(125.f, true);
-    AreaSphere->SetCanEverAffectNavigation(false);
-    AreaSphere->SetHiddenInGame(false);
-    AreaSphere->ShapeColor = FColor::Green;
+    SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+    SetRootComponent(SphereComp);
 
 }
 
@@ -33,17 +24,9 @@ void APCPickupBaseItem::BeginPlay()
 
     if (AStormWeapons* StormWeapon = Cast<AStormWeapons>(this)) return;
     
-    if (PickupGearWidgetComponent)
-    {
-        PickupGearWidgetComponent->UpdateComponentToWorld();
-    }
-    if (ItemInfoWidgetComponent)
-    {
-        ItemInfoWidgetComponent->UpdateComponentToWorld();
-    }
-
-    AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &APCPickupBaseItem::OnSphereOverlap);
-    AreaSphere->OnComponentEndOverlap.AddDynamic(this, &APCPickupBaseItem::OnSphereEndOverlap);
+    
+    SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APCPickupBaseItem::OnSphereOverlap);
+    SphereComp->OnComponentEndOverlap.AddDynamic(this, &APCPickupBaseItem::OnSphereEndOverlap);
     
     /* ResolveAreaShapeByTag(); // ensures it’s set at runtime
 

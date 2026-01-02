@@ -9,6 +9,8 @@
 #include "HeroesAndFillains/HeroesAndFillainsTypes/WeaponTypes.h"
 #include "RangedWeapon.generated.h"
 
+class UHAFUserWidget;
+
 UENUM(BlueprintType)
 enum class EFireType : uint8
 {
@@ -72,7 +74,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Info")
 	FString RangedWeaponDamage;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UBoxComponent* WeaponBox;
 	
 	/**********************************
 	***                             ***
@@ -85,6 +89,27 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
+
+	/*********************************************
+***                                        ***
+***   TEXTURES FOR THE WEAPON CROSSHAIRS   ***
+***                                        ***
+*********************************************/
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	class UTexture2D* CrosshairsCenter;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsLeft;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsRight;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsTop;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsBottom;
 
 	/*************************
 	***                    ***
@@ -126,7 +151,73 @@ public:
 	
 	// Reverse lookup: Ammo -> Weapon (returns false if not found)
 	static bool TryGetRangedTypeForAmmo(EAmmoType Ammo, ERangedType& OutRangedType);
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties")
+	USkeletalMeshComponent* RangedWeaponMesh;
+
+	UFUNCTION(BlueprintCallable)
+	void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
+
+	UFUNCTION(BlueprintCallable)
+	void EnableCustomDepth(bool bEnable);
+
+	UFUNCTION(BlueprintCallable)
+	void DisableSphereCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void OnEquippedOneHanded();
+
+	UFUNCTION(BlueprintCallable)
+	void OnEquippedTwoHanded();
+
+	UFUNCTION(BlueprintCallable)
+	void OnDropped();
+
+	UFUNCTION(BlueprintCallable)
+	void OnEquippedSecondary();
+
+	UFUNCTION(BlueprintCallable)
+	void WeaponDropped();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* PickupWidgetComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* InfoWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UPickupGearWidget> PickupWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UItemInfoWidgetBase> InfoWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UHAFUserWidget> PickupWidget;
+
+	UPROPERTY()
+	TObjectPtr<UHAFUserWidget> InfoWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UPointLightComponent* HoveringLight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+	class UDecalComponent* HoveringDecal;
+
+	void OnWeaponStateSet();
+	void OnWeaponCategorySet();
+	void SetEquippedWeaponState();
+	void SetEquippedWeaponCategory();
+	virtual void OnRep_WeaponState() override;
+	virtual void OnRep_WeaponCategory() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USphereComponent* SphereCollision;
+
+
+
+
+
+
 protected:
 	virtual void BeginPlay() override;
 	void HighPingOnEquippedOneHanded();
@@ -153,7 +244,9 @@ protected:
 	
 	UFUNCTION()
 	void OnPingTooHigh(bool bPingTooHigh);
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> Sphere;
 	
 	
 private:
@@ -192,7 +285,13 @@ private:
 	UPROPERTY()
 	AFillainCharacter* Fillain;
 
+
+
 public:
+	FORCEINLINE USphereComponent* GetSphereCollision() const { return SphereCollision; }
+	FORCEINLINE UWidgetComponent* GetPickupWidgetComponent() const { return PickupWidgetComponent; }
+	FORCEINLINE UWidgetComponent* GetInfoWidgetComponent() const { return InfoWidgetComponent; }
+	FORCEINLINE USkeletalMeshComponent* GetRangedWeaponMesh() const { return RangedWeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 	bool IsRangedWeaponEmpty();
@@ -201,7 +300,7 @@ public:
 	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
-	FORCEINLINE UUserWidget* GetItemInfoWidget() const { return ItemInfoWidget; }
+	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 
 
 

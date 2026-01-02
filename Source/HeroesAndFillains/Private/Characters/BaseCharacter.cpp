@@ -341,12 +341,19 @@ void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImp
 
 	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
 	
-	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
+	if (EquippedRangedWeapon && EquippedRangedWeapon->GetRangedWeaponMesh())
 	{
-		EquippedWeapon->GetWeaponMesh()->SetSimulatePhysics(true);
-		EquippedWeapon->GetWeaponMesh()->SetEnableGravity(true);
-		EquippedWeapon->GetWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		EquippedWeapon->GetWeaponMesh()->AddImpulse(DeathImpulse);
+		EquippedRangedWeapon->GetRangedWeaponMesh()->SetSimulatePhysics(true);
+		EquippedRangedWeapon->GetRangedWeaponMesh()->SetEnableGravity(true);
+		EquippedRangedWeapon->GetRangedWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		EquippedRangedWeapon->GetRangedWeaponMesh()->AddImpulse(DeathImpulse);
+	}
+	if (EquippedMeleeWeapon && EquippedMeleeWeapon->GetMeleeWeaponMesh())
+	{
+		EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetSimulatePhysics(true);
+		EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetEnableGravity(true);
+		EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		EquippedMeleeWeapon->GetMeleeWeaponMesh()->AddImpulse(DeathImpulse);
 	}
 
 	// DON'T enable physics on mesh - let the death montage play instead
@@ -644,10 +651,14 @@ TArray<FVector> ABaseCharacter::GetCombatSocketLocations_Implementation(const FG
     // Single socket attacks
     if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon))
     {
-        if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh())
+        if (IsValid(EquippedRangedWeapon) && EquippedRangedWeapon->GetRangedWeaponMesh())
         {
-            Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+            Locations.Add(EquippedRangedWeapon->GetRangedWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
         }
+    	else if (IsValid(EquippedMeleeWeapon) && EquippedMeleeWeapon->GetMeleeWeaponMesh())
+    	{
+    		Locations.Add(EquippedMeleeWeapon->GetMeleeWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+    	}
     }
     else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_LeftHand))
     {
@@ -685,19 +696,22 @@ TArray<FVector> ABaseCharacter::GetCombatSocketLocations_Implementation(const FG
     }
 	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndFeet))
 	{
-		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		if (IsValid(EquippedRangedWeapon) && EquippedRangedWeapon->GetRangedWeaponMesh()) Locations.Add(EquippedRangedWeapon->GetRangedWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		else if (IsValid(EquippedMeleeWeapon) && EquippedMeleeWeapon->GetMeleeWeaponMesh()) Locations.Add(EquippedMeleeWeapon->GetMeleeWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(RightFootSocketName));
 	}
 	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndHands))
 	{
-		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		if (IsValid(EquippedRangedWeapon) && EquippedRangedWeapon->GetRangedWeaponMesh()) Locations.Add(EquippedRangedWeapon->GetRangedWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		else if (IsValid(EquippedMeleeWeapon) && EquippedMeleeWeapon->GetMeleeWeaponMesh()) Locations.Add(EquippedMeleeWeapon->GetMeleeWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
 	}
 	else if (SocketTag.MatchesTagExact(GameplayTags.CombatSocket_WeaponAndHandsAndFeet))
 	{
-		if (IsValid(EquippedWeapon) && EquippedWeapon->GetWeaponMesh()) Locations.Add(EquippedWeapon->GetWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		if (IsValid(EquippedRangedWeapon) && EquippedRangedWeapon->GetRangedWeaponMesh()) Locations.Add(EquippedRangedWeapon->GetRangedWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
+		if (IsValid(EquippedMeleeWeapon) && EquippedMeleeWeapon->GetMeleeWeaponMesh()) Locations.Add(EquippedMeleeWeapon->GetMeleeWeaponMesh()->GetSocketLocation(WeaponTipSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(LeftHandSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(RightHandSocketName));
 		Locations.Add(GetMesh()->GetSocketLocation(LeftFootSocketName));
@@ -1114,10 +1128,18 @@ void ABaseCharacter::Dissolve()
 	}
 	
 	// Weapon dissolve
-	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh() && IsValid(WeaponDissolveMaterialInstanceZero))
+	if (EquippedRangedWeapon && EquippedRangedWeapon->GetRangedWeaponMesh() && IsValid(WeaponDissolveMaterialInstanceZero))
 	{
 		UMaterialInstanceDynamic* WeaponDynamicMatInstZero = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstanceZero, this);
-		EquippedWeapon->GetWeaponMesh()->SetMaterial(0, WeaponDynamicMatInstZero);
+		EquippedRangedWeapon->GetRangedWeaponMesh()->SetMaterial(0, WeaponDynamicMatInstZero);
+
+		StartWeaponDissolveTimelineZero(WeaponDynamicMatInstZero);
+		UE_LOG(LogTemp, Warning, TEXT("   ✅ Weapon dissolve material applied"));
+	}
+	if (EquippedMeleeWeapon && EquippedMeleeWeapon->GetMeleeWeaponMesh() && IsValid(WeaponDissolveMaterialInstanceZero))
+	{
+		UMaterialInstanceDynamic* WeaponDynamicMatInstZero = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstanceZero, this);
+		EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetMaterial(0, WeaponDynamicMatInstZero);
 
 		StartWeaponDissolveTimelineZero(WeaponDynamicMatInstZero);
 		UE_LOG(LogTemp, Warning, TEXT("   ✅ Weapon dissolve material applied"));
