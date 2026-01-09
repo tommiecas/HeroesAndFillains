@@ -36,6 +36,8 @@ public:
 	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
 	void DestroySession();
 	void StartSession();
+	void InitializeSessionInterface();
+
 
 	//
 	// Our own custom Delegates for the Menu Class to bind callbacks to

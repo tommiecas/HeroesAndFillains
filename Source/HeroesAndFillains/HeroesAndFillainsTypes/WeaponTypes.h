@@ -27,7 +27,9 @@ enum class EWeaponType : uint8
 	EWT_SkyMace UMETA(DisplayName = "SkyMace"),
 	EWT_MajixProjectile UMETA(DisplayName = "MajixProjectile"),
 	EWT_FireBolt UMETA(DisplayName = "FireBolt"),
-
+	EWT_FerattaStaff UMETA(DisplayName = "FerattaStaff"),
+	EWT_ShamanStaff UMETA(DisplayName = "ShamanStaff"),
+	
 	EWT_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
@@ -67,7 +69,9 @@ UENUM(BlueprintType, Blueprintable)
 enum class EMaJixType : uint8
 {
 	EJT_None UMETA(DisplayName = "None"),
-	
+
+	EJT_FerattaStaff UMETA(DisplayName = "Feratta Staff"),
+	EJT_ShamanStaff UMETA(DisplayName = "Shaman Staff"),
 	EJT_MajixProjectile UMETA(DisplayName = "MajixProjectile"),
 	EJT_FireBolt UMETA(DisplayName = "FireBolt"),
 

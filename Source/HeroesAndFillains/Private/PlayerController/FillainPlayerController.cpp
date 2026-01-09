@@ -5,7 +5,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "UI/FillainHUD.h"
-#include "UI/CharacterOverlayFixed.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Characters/FillainCharacter.h"
@@ -50,6 +49,7 @@
 #include "Interfaces/EnemyInterface.h"
 #include "Interfaces/InterfaceHelpers.h"
 #include "Items/MagicCircle.h"
+#include "UI/Widgets/OverlayWidget.h"
 
 
 AFillainPlayerController::AFillainPlayerController()
@@ -258,11 +258,11 @@ void AFillainPlayerController::Tick(float DeltaTime)
 		else if (MatchTimeElapsedTime >= MatchTime)
 		{
 			FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-			bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed  && FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText;
+			bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget  && FillainHUD->OverlayWidget->MatchCountdownText;
 			const FString TimesUpText = TEXT("TIME'S UP!!");
 			if (bIsHUDValid)
 			{
-				FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetText(FText::FromString(TimesUpText));
+				FillainHUD->OverlayWidget->MatchCountdownText->SetText(FText::FromString(TimesUpText));
 			}
 		}
 	}
@@ -314,12 +314,48 @@ void AFillainPlayerController::HideMagicCircle()
 	{
 		MagicCircle->Destroy();
 	}
+
+	// 🔴 REQUIRED: clear the pointer
+	MagicCircle = nullptr;
+
+	// 🔴 STRONGLY RECOMMENDED: stop ticking if the circle is gone
+	SetActorTickEnabled(false);
 }
 
 void AFillainPlayerController::UpdateMagicCircleLocation()
 {
+	if (!IsValid(this))
+	{
+		return;
+	}
+
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	if (!MagicCircle)
+	{
+		return;
+	}
+
 	if (!IsValid(MagicCircle))
 	{
+		MagicCircle = nullptr;
+		return;
+	}
+
+	if (!MagicCircle->GetRootComponent())
+	{
+		return;
+	}
+
+	// safe to move now
+
+	if (!IsValid(MagicCircle))
+	{
+		MagicCircle = nullptr;
+		SetActorTickEnabled(false);
 		return;
 	}	
 	if (IsValid(MagicCircle))
@@ -356,9 +392,9 @@ void AFillainPlayerController::CheckPing(float DeltaTime)
     }
     bool bIsHighPingAnimationPlaying =
         FillainHUD &&
-        FillainHUD->CharacterOverlayWidgetFixed &&
-        FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation &&
-        FillainHUD->CharacterOverlayWidgetFixed->IsAnimationPlaying(FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation);
+        FillainHUD->OverlayWidget &&
+        FillainHUD->OverlayWidget->HighPingAnimation &&
+        FillainHUD->OverlayWidget->IsAnimationPlaying(FillainHUD->OverlayWidget->HighPingAnimation);
     if (bIsHighPingAnimationPlaying)
     {
         PingAnimationRunningTime += DeltaTime;
@@ -395,11 +431,11 @@ void AFillainPlayerController::HighPingWarning()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->HighPingImage && FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->HighPingImage && FillainHUD->OverlayWidget->HighPingAnimation;
 	if (bIsHUDValid)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->HighPingImage->SetOpacity(1.f);
-		FillainHUD->CharacterOverlayWidgetFixed->PlayAnimation(FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation, 0.f, 5);
+		FillainHUD->OverlayWidget->HighPingImage->SetOpacity(1.f);
+		FillainHUD->OverlayWidget->PlayAnimation(FillainHUD->OverlayWidget->HighPingAnimation, 0.f, 5);
 	}
 }
 
@@ -407,13 +443,13 @@ void AFillainPlayerController::StopHighPingWarning()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->HighPingImage && FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->HighPingImage && FillainHUD->OverlayWidget->HighPingAnimation;
 	if (bIsHUDValid)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->HighPingImage->SetOpacity(0.f);
-		if (FillainHUD->CharacterOverlayWidgetFixed->IsAnimationPlaying(FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation))
+		FillainHUD->OverlayWidget->HighPingImage->SetOpacity(0.f);
+		if (FillainHUD->OverlayWidget->IsAnimationPlaying(FillainHUD->OverlayWidget->HighPingAnimation))
 		{
-			FillainHUD->CharacterOverlayWidgetFixed->StopAnimation(FillainHUD->CharacterOverlayWidgetFixed->HighPingAnimation);
+			FillainHUD->OverlayWidget->StopAnimation(FillainHUD->OverlayWidget->HighPingAnimation);
 		}
 	}
 }
@@ -457,11 +493,11 @@ void AFillainPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 void AFillainPlayerController::SetHUDScore(float Score)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->ScoreAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->ScoreAmount;
 	if (bIsHUDValid)
 	{
 		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
-		FillainHUD->CharacterOverlayWidgetFixed->ScoreAmount->SetText(FText::FromString(ScoreText));
+		FillainHUD->OverlayWidget->ScoreAmount->SetText(FText::FromString(ScoreText));
 	}
 	else
 	{
@@ -474,12 +510,12 @@ void AFillainPlayerController::SetHUDSoulsCount(int32 SoulsCountGathered)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->SoulsCountText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->SoulsCountText;
 
 	if (bIsHUDValid)
 	{
 		FString SoulsText = FString::Printf(TEXT("%d"), SoulsCountGathered);
-		FillainHUD->CharacterOverlayWidgetFixed->SoulsCountText->SetText(FText::FromString(SoulsText));
+		FillainHUD->OverlayWidget->SoulsCountText->SetText(FText::FromString(SoulsText));
 
 	}
 	else
@@ -493,11 +529,11 @@ void AFillainPlayerController::SetHUDSoulsCount(int32 SoulsCountGathered)
 void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->DefeatsAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->DefeatsAmount;
 	if (bIsHUDValid)
 	{
 		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
-		FillainHUD->CharacterOverlayWidgetFixed->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+		FillainHUD->OverlayWidget->DefeatsAmount->SetText(FText::FromString(DefeatsText));
 	}
 	else
 	{
@@ -508,11 +544,11 @@ void AFillainPlayerController::SetHUDDefeats(int32 Defeats)
 void AFillainPlayerController::SetHUDGoldCount(int32 GoldAmountOwned)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->GoldCountText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->GoldCountText;
 	if (bIsHUDValid)
 	{
 		FString GoldText = FString::Printf(TEXT("%d"), GoldAmountOwned);
-		FillainHUD->CharacterOverlayWidgetFixed->GoldCountText->SetText(FText::FromString(GoldText));
+		FillainHUD->OverlayWidget->GoldCountText->SetText(FText::FromString(GoldText));
 	}
 	else
 	{
@@ -524,11 +560,11 @@ void AFillainPlayerController::SetHUDGoldCount(int32 GoldAmountOwned)
 void AFillainPlayerController::SetHUDWeaponAmmo(int32 WeaponAmmo)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->WeaponAmmoAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->WeaponAmmoAmount;
 	if (bIsHUDValid)
 	{
 		FString WeaponAmmoText = FString::Printf(TEXT("%d"), WeaponAmmo);
-		FillainHUD->CharacterOverlayWidgetFixed->WeaponAmmoAmount->SetText(FText::FromString(WeaponAmmoText));
+		FillainHUD->OverlayWidget->WeaponAmmoAmount->SetText(FText::FromString(WeaponAmmoText));
 	}
 	else
 	{
@@ -540,11 +576,11 @@ void AFillainPlayerController::SetHUDWeaponAmmo(int32 WeaponAmmo)
 void AFillainPlayerController::SetHUDCarriedAmmo(int32 CarriedAmmo)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->CarriedAmmoAmount;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->CarriedAmmoAmount;
 	if (bIsHUDValid)
 	{
 		FString CarriedAmmoText = FString::Printf(TEXT("%d"), CarriedAmmo);
-		FillainHUD->CharacterOverlayWidgetFixed->CarriedAmmoAmount->SetText(FText::FromString(CarriedAmmoText));
+		FillainHUD->OverlayWidget->CarriedAmmoAmount->SetText(FText::FromString(CarriedAmmoText));
 	}
 	else
 	{
@@ -556,18 +592,18 @@ void AFillainPlayerController::SetHUDCarriedAmmo(int32 CarriedAmmo)
 void AFillainPlayerController::SetHUDMatchCountdown(float CountdownTime)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->MatchCountdownText;
 	if (bIsHUDValid)
 	{
 		if (CountdownTime < 0.f)
 		{
-			FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetText(FText());
+			FillainHUD->OverlayWidget->MatchCountdownText->SetText(FText());
 			return;
 		}
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;;
 		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
-		FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetText(FText::FromString(CountdownText));
+		FillainHUD->OverlayWidget->MatchCountdownText->SetText(FText::FromString(CountdownText));
 	}
 }
 
@@ -592,11 +628,11 @@ void AFillainPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 void AFillainPlayerController::SetHUDGrenades(int32 Grenades)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->GrenadesText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->GrenadesText;
 	if (bIsHUDValid)
 	{
 		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
-		FillainHUD->CharacterOverlayWidgetFixed->GrenadesText->SetText(FText::FromString(GrenadesText));
+		FillainHUD->OverlayWidget->GrenadesText->SetText(FText::FromString(GrenadesText));
 	}
 	else
 	{
@@ -620,13 +656,13 @@ void AFillainPlayerController::ShowDamageNumber_Implementation(float DamageAmoun
 bool AFillainPlayerController::IsHUDReady() const
 {
 	return FillainHUD &&
-		  FillainHUD->CharacterOverlayWidgetFixed &&
-		  FillainHUD->CharacterOverlayWidgetFixed->SoulsCountText &&
-		  FillainHUD->CharacterOverlayWidgetFixed->DefeatsAmount &&
-		  FillainHUD->CharacterOverlayWidgetFixed->GoldCountText &&
-		  FillainHUD->CharacterOverlayWidgetFixed->CarriedAmmoAmount &&
-		  FillainHUD->CharacterOverlayWidgetFixed->ScoreAmount &&
-		  FillainHUD->CharacterOverlayWidgetFixed->WeaponAmmoAmount;	
+		  FillainHUD->OverlayWidget &&
+		  FillainHUD->OverlayWidget->SoulsCountText &&
+		  FillainHUD->OverlayWidget->DefeatsAmount &&
+		  FillainHUD->OverlayWidget->GoldCountText &&
+		  FillainHUD->OverlayWidget->CarriedAmmoAmount &&
+		  FillainHUD->OverlayWidget->ScoreAmount &&
+		  FillainHUD->OverlayWidget->WeaponAmmoAmount;	
 }
 
 bool AFillainPlayerController::GetClickHit(FHitResult& OutHit) const
@@ -645,12 +681,12 @@ void AFillainPlayerController::HideTeamScores()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore && FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore && FillainHUD->CharacterOverlayWidgetFixed->ScoreSpacerText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->RedTeamScore && FillainHUD->OverlayWidget->BlueTeamScore && FillainHUD->OverlayWidget->ScoreSpacerText;
 	if (bIsHUDValid)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore->SetText(FText());
-		FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore->SetText(FText());
-		FillainHUD->CharacterOverlayWidgetFixed->ScoreSpacerText->SetText(FText());
+		FillainHUD->OverlayWidget->RedTeamScore->SetText(FText());
+		FillainHUD->OverlayWidget->BlueTeamScore->SetText(FText());
+		FillainHUD->OverlayWidget->ScoreSpacerText->SetText(FText());
 	}
 }
 
@@ -658,15 +694,15 @@ void AFillainPlayerController::InitTeamScores()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore && FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore && FillainHUD->CharacterOverlayWidgetFixed->ScoreSpacerText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->RedTeamScore && FillainHUD->OverlayWidget->BlueTeamScore && FillainHUD->OverlayWidget->ScoreSpacerText;
 	if (bIsHUDValid)
 	{
 		FString Zero("0");
 		FString Spacer("|");
 
-		FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore->SetText(FText::FromString(Zero));
-		FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore->SetText(FText::FromString(Zero));
-		FillainHUD->CharacterOverlayWidgetFixed->ScoreSpacerText->SetText(FText::FromString(Spacer));
+		FillainHUD->OverlayWidget->RedTeamScore->SetText(FText::FromString(Zero));
+		FillainHUD->OverlayWidget->BlueTeamScore->SetText(FText::FromString(Zero));
+		FillainHUD->OverlayWidget->ScoreSpacerText->SetText(FText::FromString(Spacer));
 	}
 }
 
@@ -674,11 +710,11 @@ void AFillainPlayerController::SetHUDRedTeamScore(int32 RedScore)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore;;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->RedTeamScore;;
 	if (bIsHUDValid)
 	{
 		FString ScoreText = FString::Printf(TEXT(" % d"), RedScore);
-		FillainHUD->CharacterOverlayWidgetFixed->RedTeamScore->SetText(FText::FromString(ScoreText));
+		FillainHUD->OverlayWidget->RedTeamScore->SetText(FText::FromString(ScoreText));
 	}
 }
 
@@ -686,11 +722,11 @@ void AFillainPlayerController::SetHUDBlueTeamScore(int32 BlueScore)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore;;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->BlueTeamScore;;
 	if (bIsHUDValid)
 	{
 		FString ScoreText = FString::Printf(TEXT(" % d"), BlueScore);
-		FillainHUD->CharacterOverlayWidgetFixed->BlueTeamScore->SetText(FText::FromString(ScoreText));
+		FillainHUD->OverlayWidget->BlueTeamScore->SetText(FText::FromString(ScoreText));
 	}
 }
 
@@ -728,12 +764,12 @@ void AFillainPlayerController::SetHUDTime()
 
 void AFillainPlayerController::PollInit()
 {
-	if (CharacterOverlayFixed == nullptr)
+	if (OverlayWidget == nullptr)
 	{
-		if (FillainHUD && FillainHUD->CharacterOverlayWidgetFixed)
+		if (FillainHUD && FillainHUD->OverlayWidget)
 		{
-			CharacterOverlayFixed = FillainHUD->CharacterOverlayWidgetFixed;
-			if (CharacterOverlayFixed)
+			OverlayWidget = FillainHUD->OverlayWidget;
+			if (OverlayWidget)
 			{
 				if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
 				if (bInitializeScore) SetHUDScore(HUDScore);
@@ -853,7 +889,7 @@ void AFillainPlayerController::HandleMatchHasStarted(bool bTeamsMatch)
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 	if (FillainHUD)
 	{
-		if (FillainHUD->CharacterOverlayWidgetFixed == nullptr) FillainHUD->AddCharacterOverlayFixed();
+		if (FillainHUD->OverlayWidget == nullptr) FillainHUD->AddOverlayWidget();
 		if (FillainHUD->Announcement)
 		{
 			FillainHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
@@ -875,7 +911,7 @@ void AFillainPlayerController::HandleCooldown()
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
 	if (FillainHUD)
 	{
-		FillainHUD->CharacterOverlayWidgetFixed->RemoveFromParent();;
+		FillainHUD->OverlayWidget->RemoveFromParent();;
 		bool bHUDValid = FillainHUD->Announcement && FillainHUD->Announcement->AnnouncementText && FillainHUD->Announcement->InfoText;
 		if (bHUDValid)
 		{
@@ -1112,21 +1148,21 @@ void AFillainPlayerController::OnRep_ShowTeamScores()
 void AFillainPlayerController::UpdateMatchCountdownColor()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->MatchCountdownText;
 	if (bIsHUDValid)
 	{
 		if (MatchTimeElapsedTime >= (MatchTime - ThirtySecondsOnTheClock) && MatchTimeElapsedTime < MatchTime)
 		{
-			if (FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText)
+			if (FillainHUD->OverlayWidget->MatchCountdownText)
 			{
-				FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetColorAndOpacity(MatchCountdownBlinkingColor);
+				FillainHUD->OverlayWidget->MatchCountdownText->SetColorAndOpacity(MatchCountdownBlinkingColor);
 			}
 		}
 		else if (MatchTimeElapsedTime < (MatchTime - ThirtySecondsOnTheClock))
 		{
-			if (FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText)
+			if (FillainHUD->OverlayWidget->MatchCountdownText)
 			{
-				FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetColorAndOpacity(MatchCountdownColor);
+				FillainHUD->OverlayWidget->MatchCountdownText->SetColorAndOpacity(MatchCountdownColor);
 			}
 		}
 	}
@@ -1135,13 +1171,13 @@ void AFillainPlayerController::UpdateMatchCountdownColor()
 void AFillainPlayerController::ToggleMatchCountdownVisibility()
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->MatchCountdownText;
 	if (bIsHUDValid) 
 	{
 		FTimerHandle MatchCountdownTimer;
 		GetWorldTimerManager().SetTimer(MatchCountdownTimer, [&]()
-			{FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetVisibility(ESlateVisibility::Hidden); }, .5f, false);
-		FillainHUD->CharacterOverlayWidgetFixed->MatchCountdownText->SetVisibility(ESlateVisibility::Visible);
+			{FillainHUD->OverlayWidget->MatchCountdownText->SetVisibility(ESlateVisibility::Hidden); }, .5f, false);
+		FillainHUD->OverlayWidget->MatchCountdownText->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -1179,7 +1215,7 @@ void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
 	EquippedMeleeWeapon = Cast<AMeleeWeapon>(EquippedWeapon);
 
 	const bool bIsHUDValid =
-		FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->WeaponTypeText;
+		FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->WeaponTypeText;
 
 	if (bIsHUDValid)
 	{
@@ -1190,17 +1226,17 @@ void AFillainPlayerController::SetHUDWeaponType(APawn* InPawn)
 			EWeaponType NoMeleeType = EWeaponType::EWT_None;
 			WeaponTypeName = GetWeaponTypeDisplayName(EquippedWeapon->GetWeaponType());
 		}
-		FillainHUD->CharacterOverlayWidgetFixed->WeaponTypeText->SetText(FText::FromString(WeaponTypeName));
+		FillainHUD->OverlayWidget->WeaponTypeText->SetText(FText::FromString(WeaponTypeName));
 	}
 }
 
 void AFillainPlayerController::ShowEliminationUI(FString Victim, FString Killer, FText Message)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("ShowEliminationUI called for Victim: %s, Killer: %s"), *Victim, *Killer);
+	UE_LOG(LogTemp, Warning, TEXT("ShowEliminationUI called for Victim: %s, Killer: %s"), *Victim, *Killer);
 
-	if (!FillainHUD || !FillainHUD->CharacterOverlayWidgetFixed) return;
+	if (!FillainHUD || !FillainHUD->OverlayWidget) return;
 
-	UCharacterOverlayFixed* Overlay = FillainHUD->CharacterOverlayWidgetFixed;
+	UOverlayWidget* Overlay = FillainHUD->OverlayWidget;
 
 	// Set text first
 	Overlay->VictimNameText->SetText(FText::FromString(Victim));
@@ -1213,15 +1249,15 @@ void AFillainPlayerController::ShowEliminationUI(FString Victim, FString Killer,
 	Overlay->EliminationMessageText->SetVisibility(ESlateVisibility::Visible);
 
 	// Delay animation slightly to ensure text is updated (optional test)
-/*	FTimerHandle PlayAnimHandle;
-	GetWorldTimerManager().SetTimer(PlayAnimHandle, [Overlay]() { */
+	FTimerHandle PlayAnimHandle;
+	GetWorldTimerManager().SetTimer(PlayAnimHandle, [Overlay]() {
 		if (Overlay->EliminationAnimation)
 		{
 			Overlay->PlayAnimation(Overlay->EliminationAnimation);
 		}
-/*	}, 0.01f, false);  // Slight delay (~1 frame) */
+	}, 0.01f, false);  // Slight delay (~1 frame) 
 	
-/*	// Clear and hide after 3 seconds
+	// Clear and hide after 3 seconds
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, [this, Overlay]() {
 		Overlay->VictimNameText->SetText(FText::GetEmpty());
@@ -1231,13 +1267,13 @@ void AFillainPlayerController::ShowEliminationUI(FString Victim, FString Killer,
 		Overlay->VictimNameText->SetVisibility(ESlateVisibility::Hidden);
 		Overlay->KillerNameText->SetVisibility(ESlateVisibility::Hidden);
 		Overlay->EliminationMessageText->SetVisibility(ESlateVisibility::Hidden);
-	}, 4.f, false); */
+	}, 4.f, false); 
 }
 
 void AFillainPlayerController::UpdateEliminationMessageForPvE(AFillainPlayerController* VictimPlayerController, AController* InstigatorController)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->EliminationMessageText && FillainHUD->CharacterOverlayWidgetFixed->VictimNameText && FillainHUD->CharacterOverlayWidgetFixed->KillerNameText && FillainHUD->CharacterOverlayWidgetFixed->EliminationAnimation;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->EliminationMessageText && FillainHUD->OverlayWidget->VictimNameText && FillainHUD->OverlayWidget->KillerNameText && FillainHUD->OverlayWidget->EliminationAnimation;
 	if (FillainHUD && bIsHUDValid && VictimPlayerController)
 	{
 		FString NameOfVictim = VictimPlayerController->PlayerState->GetPlayerName();
@@ -1247,14 +1283,13 @@ void AFillainPlayerController::UpdateEliminationMessageForPvE(AFillainPlayerCont
 		FString VictimName = NameOfVictim;
 		FString KillerName = NameOfKiller;
 		ShowEliminationUI(VictimName, KillerName, EliminationMessage);
-		
 	}
 }
 
 void AFillainPlayerController::UpdateEliminationMessageForPvP(AFillainPlayerController* KillerPlayerController, AFillainPlayerController* VictimPlayerController)
 {
 	FillainHUD = FillainHUD == nullptr ? Cast<AFillainHUD>(GetHUD()) : FillainHUD;
-	bool bIsHUDValid = FillainHUD && FillainHUD->CharacterOverlayWidgetFixed && FillainHUD->CharacterOverlayWidgetFixed->EliminationMessageText && FillainHUD->CharacterOverlayWidgetFixed->VictimNameText && FillainHUD->CharacterOverlayWidgetFixed->KillerNameText;
+	bool bIsHUDValid = FillainHUD && FillainHUD->OverlayWidget && FillainHUD->OverlayWidget->EliminationMessageText && FillainHUD->OverlayWidget->VictimNameText && FillainHUD->OverlayWidget->KillerNameText;
 
 	if (FillainHUD && bIsHUDValid && VictimPlayerController && KillerPlayerController)
 	{

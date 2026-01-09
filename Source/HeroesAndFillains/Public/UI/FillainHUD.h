@@ -17,6 +17,7 @@ class UCharacterOverlayFixed;
 class UAbilitySystemComponent;
 class UAttributeSet;
 class UUserWidget;
+class UOverlayWidget;
 struct FWidgetControllerParams;
 
 /** Basic package for player crosshair settings */
@@ -70,7 +71,7 @@ public:
 	virtual void DrawHUD() override;
 	virtual void BeginPlay() override;
 
-	void AddCharacterOverlayFixed();
+	void AddOverlayWidget();
 	void AddAnnouncement();
 	void AddEliminationAnnouncement(FString Killer, FString Victim);
 	void InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
@@ -79,21 +80,16 @@ public:
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& Params);
 	UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FWidgetControllerParams& Params);
 	USpellMenuWidgetController* GetSpellMenuWidgetController(const FWidgetControllerParams& Params);
+
 	// --- Widgets ---
 	UPROPERTY()
-	TObjectPtr<UHAFUserWidget> OverlayWidget;
+	TObjectPtr<UOverlayWidget> OverlayWidget;
 
 	UPROPERTY(EditAnywhere, Category="Widgets")
 	TSubclassOf<UHAFUserWidget> OverlayWidgetClass;
-
-	UPROPERTY(EditAnywhere, Category="Widgets")
-	TSubclassOf<UCharacterOverlayFixed> CharacterOverlayWidgetFixedClass;
-
+	
 	UPROPERTY(EditAnywhere, Category="Widgets")
 	TSubclassOf<UEnemyAttributeMenuWidget> EnemyAttributeMenuWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<UCharacterOverlayFixed> CharacterOverlayWidgetFixed;
 
 	UPROPERTY()
 	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;

@@ -14,7 +14,8 @@
 				"GameplayAbilities",
 				"CoreUObject",
 				"AIModule",
-				"Niagara"
+				"Niagara",
+				"ModelViewViewModel"
 			]
 		}
 	],
@@ -110,28 +111,32 @@
 		},
 		{
 			"Name": "PlasticSourceControl",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "MeshPainting",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "Fab",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "InterchangeTests",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "GLTFExporter",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "IconCreator",
 			"Enabled": true,
 			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/1509c8dc-fed5-452b-abdb-b96a6bba4a7a"
+		},
+		{
+			"Name": "ModelViewViewModel",
+			"Enabled": true
 		}
 	]
 }

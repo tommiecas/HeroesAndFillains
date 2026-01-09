@@ -25,6 +25,8 @@ void AHAFGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	LevelStartingTime = GetWorld()->GetTimeSeconds();
+
+	GameLevels.Add(DefaultLevelName, DefaultLevel);
 }
 
 void AHAFGameMode::Tick(float DeltaTime)

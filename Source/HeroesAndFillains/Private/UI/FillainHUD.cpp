@@ -2,8 +2,7 @@
     #include "UI/WidgetControllers/OverlayWidgetController.h"
     #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
     #include "UI/Widgets/HAFUserWidget.h"
-#include "UI/Widgets/EnemyAttributeMenuWidget.h"
-    #include "UI/CharacterOverlayFixed.h"
+	#include "UI/Widgets/EnemyAttributeMenuWidget.h"
     #include "UI/Announcement.h"
     #include "UI/EliminationAnnouncement.h"
     #include "AbilitySystem/HAFAttributeSet.h"
@@ -19,6 +18,7 @@
     #include "UI/WidgetControllers/HAFWidgetController.h"
     #include "UI/WidgetControllers/HAFWidgetController.h"
 #include "UI/WidgetControllers/SpellMenuWidgetController.h"
+#include "Widgets/OverlayWidget.h"
 
 
 	void AFillainHUD::BeginPlay()
@@ -34,9 +34,20 @@
     
     	// Optionally pre-create an Enemy Hover widget pool later here if needed
     }
-    
-void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, 
-								UAbilitySystemComponent* ASC, UAttributeSet* AS)
+
+	void AFillainHUD::AddOverlayWidget()
+	{
+		APlayerController* PlayerController = GetOwningPlayerController();
+		if (PlayerController && OverlayWidgetClass)
+		{
+			OverlayWidget = CreateWidget<UOverlayWidget>(PlayerController, OverlayWidgetClass);
+			OverlayWidget->AddToViewport();
+			OverlayWidget->SetRenderOpacity(0.f);
+		}
+	}
+
+	void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, 
+	                                    UAbilitySystemComponent* ASC, UAttributeSet* AS)
 {
 	checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not set on BP_FillainHUD"));
 	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not set on BP_FillainHUD"));
@@ -52,7 +63,7 @@ void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS,
 
 	if (!OverlayWidget)
 	{
-		OverlayWidget = CreateWidget<UHAFUserWidget>(PC, OverlayWidgetClass);
+		OverlayWidget = CreateWidget<UOverlayWidget>(PC, OverlayWidgetClass);
 		if (!OverlayWidget)
 		{
 			UE_LOG(LogTemp, Error, TEXT("AFillainHUD: Failed to create OverlayWidget."));
@@ -70,7 +81,8 @@ void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS,
 		if (!OverlayWidget->IsInViewport())
 		{
 			OverlayWidget->AddToViewport(1000);
-			OverlayWidget->SetVisibility(ESlateVisibility::Visible);
+			OverlayWidget->SetVisibility(ESlateVisibility::Hidden);
+			OverlayWidget->SetRenderOpacity(0.f);
 		}
 	}
 }
@@ -81,6 +93,7 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 	{
 		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetControllerParams(Params);
+		OverlayWidgetController->BindCallbacksToDependencies();
 	}
 	return OverlayWidgetController;
 }
@@ -116,35 +129,6 @@ UAttributeMenuWidgetController* AFillainHUD::GetAttributeMenuWidgetController(co
 		if (Announcement)
 			Announcement->AddToViewport();
 	}
-}
-
-void AFillainHUD::AddCharacterOverlayFixed()
-{
-    	if (!CharacterOverlayWidgetFixedClass)
-    	{
-    		UE_LOG(LogTemp, Error, TEXT("CharacterOverlayWidgetFixedClass is NOT set in BP_FillainHUD!"));
-    		return;
-    	}
-
-    	APlayerController* PC = GetOwningPlayerController();
-    	if (!PC)
-    	{
-    		UE_LOG(LogTemp, Error, TEXT("No PlayerController in AddCharacterOverlayFixed"));
-    		return;
-    	}
-
-    	CharacterOverlayWidgetFixed = CreateWidget<UCharacterOverlayFixed>(PC, CharacterOverlayWidgetFixedClass);
-
-    	if (!CharacterOverlayWidgetFixed)
-    	{
-    		UE_LOG(LogTemp, Error, TEXT("Failed to create CharacterOverlayFixed widget"));
-    		return;
-    	}
-
-    	CharacterOverlayWidgetFixed->AddToViewport(0);
-    	CharacterOverlayWidgetFixed->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-    	UE_LOG(LogTemp, Warning, TEXT("CharacterOverlayFixed successfully added to viewport!"));
 }
 
 void AFillainHUD::AddEliminationAnnouncement(FString Killer, FString Victim)

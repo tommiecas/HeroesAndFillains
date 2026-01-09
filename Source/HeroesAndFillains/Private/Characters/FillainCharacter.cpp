@@ -293,6 +293,13 @@ void AFillainCharacter::Client_OnEquipped_Implementation()
 
 void AFillainCharacter::BeginPlay()
 {
+	UE_LOG(LogTemp, Warning,
+	TEXT("[ASC CHECK] Character Top of BeginPlay | Character ASC = %s | Owner = %s | Avatar = %s"),
+	*GetNameSafe(AbilitySystemComponent),
+	AbilitySystemComponent ? *GetNameSafe(AbilitySystemComponent->GetOwner()) : TEXT("NULL"),
+	AbilitySystemComponent ? *GetNameSafe(AbilitySystemComponent->GetAvatarActor()) : TEXT("NULL")
+);
+
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Verbose, TEXT("[Char] BeginPlay: %s"), *GetNameSafe(this));
 
@@ -397,7 +404,7 @@ void AFillainCharacter::BeginPlay()
 			AFillainHUD* HUD = Cast<AFillainHUD>(PC->GetHUD());
 			if (HUD)
 			{
-				HUD->InitializeOverlay(PC, GetPlayerState(), AbilitySystemComponent, AttributeSet);
+				// HUD->InitializeOverlay(PC, GetPlayerState(), AbilitySystemComponent, AttributeSet);
 			}
 		}
 	}, 0.05f, false); // 50 ms delay
@@ -406,6 +413,13 @@ void AFillainCharacter::BeginPlay()
 	{
 		ApplyRegenerationEffects(); 
 	}
+	UE_LOG(LogTemp, Warning,
+	TEXT("[ASC CHECK] Character End of BeginPlay | Character ASC = %s | Owner = %s | Avatar = %s"),
+	*GetNameSafe(AbilitySystemComponent),
+	AbilitySystemComponent ? *GetNameSafe(AbilitySystemComponent->GetOwner()) : TEXT("NULL"),
+	AbilitySystemComponent ? *GetNameSafe(AbilitySystemComponent->GetAvatarActor()) : TEXT("NULL")
+);
+
 }
 
 void AFillainCharacter::ApplyRegenerationEffects()
@@ -1361,9 +1375,10 @@ void AFillainCharacter::UnlockAbilities()
 
 int32 AFillainCharacter::GetCharacterLevel_Implementation(ABaseCharacter* Character)
 {
-	const AHAFPlayerState* State = GetPlayerState<AHAFPlayerState>();
+	APlayerState* State = GetPlayerState<APlayerState>();
 	check(State);
-	return State->GetFillainPlayerLevel();
+	AHAFPlayerState* HAFPS = Cast<AHAFPlayerState>(State);
+	return HAFPS->GetFillainPlayerLevel();
 }
 
 double AFillainCharacter::GetCharacterCapsuleHeight()

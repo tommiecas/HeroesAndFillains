@@ -15,6 +15,7 @@
 #include "Enemies/EnemyInfo.h"
 #include "BaseCharacter.generated.h"
 
+class AMajixWeapon;
 class UDebuffNiagaraComponent;
 class AHAFGameMode;
 class APCPickupBaseItem;
@@ -224,6 +225,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	ARangedWeapon* EquippedRangedWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	AMajixWeapon* EquippedMajixWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Majix Weapon Mesh")
+	USkeletalMeshComponent* MajixWeaponMesh = nullptr;
+	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class AFillainPlayerController* KillerPlayerController;
@@ -517,9 +525,14 @@ private:
 	UFUNCTION(BlueprintCallable)
 	TArray<TSubclassOf<UGameplayAbility>> GetStartupPassiveAbilities();
 public:
+	
 	FORCEINLINE AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	FORCEINLINE AMeleeWeapon* GetEquippedMeleeWeapon() const { return EquippedMeleeWeapon; }
 	FORCEINLINE ARangedWeapon* GetEquippedRangedWeapon() const { return EquippedRangedWeapon; }
+	FORCEINLINE AMajixWeapon* GetEquippedMajixWeapon() const { return EquippedMajixWeapon; }
+	FORCEINLINE void SetEquippedMeleeWeapon(AMeleeWeapon* NewMeleeWeapon) { EquippedMeleeWeapon = NewMeleeWeapon; }
+	FORCEINLINE void SetEquippedRangedWeapon(ARangedWeapon* NewRangedWeapon) { EquippedRangedWeapon = NewRangedWeapon; }
+	FORCEINLINE void SetEquippedMajixWeapon(AMajixWeapon* NewMajixWeapon) { EquippedMajixWeapon = NewMajixWeapon; }
 	FORCEINLINE int32 GetCharacterLevel() const { return CharacterLevel; }
 	FORCEINLINE void SetCharacterLevel(const int32 NewLevel) { CharacterLevel = FMath::Clamp(NewLevel, 1, 100); }
 	

@@ -333,6 +333,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
     ARangedWeapon* EquippedEnemyRangedWeapon;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+    AMajixWeapon* EquippedEnemyMajixWeapon;
+
     // --- AI ---
     UPROPERTY()
     AHAFAIController* EnemyController;

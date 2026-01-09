@@ -72,6 +72,8 @@ public:
 	int32 GetFillainPlayerLevel() const { return Level; }
 
 protected:
+	virtual void BeginPlay() override;
+
 	// Strongly-typed, initialized in constructor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UHAFAbilitySystemComponent> HAFAbilitySystemComponent = nullptr;

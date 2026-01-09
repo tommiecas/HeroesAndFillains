@@ -31,6 +31,7 @@
 #include "AbilitySystem/Abilities/HAFGameplayAbility.h"
 #include "AbilitySystem/Debuffs/DebuffNiagaraComponent.h"
 #include "AbilitySystem/PassiveSpells/NiagaraPassiveSpellComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "PlayerController/FillainPlayerController.h"
 #include "GameMode/HaFGameMode.h"
@@ -38,6 +39,7 @@
 #include "Enemies/SpectralBase.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "HAFComponents/AttributeComponent.h"
+#include "Weapons/Majix/MajixWeapon.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -355,6 +357,13 @@ void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImp
 		EquippedMeleeWeapon->GetMeleeWeaponMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		EquippedMeleeWeapon->GetMeleeWeaponMesh()->AddImpulse(DeathImpulse);
 	}
+	if (EquippedMajixWeapon && EquippedMajixWeapon->GetNewSphere())
+	{
+		EquippedMajixWeapon->GetNewSphere()->SetSimulatePhysics(true);
+		EquippedMajixWeapon->GetNewSphere()->SetEnableGravity(true);
+		EquippedMajixWeapon->GetNewSphere()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		EquippedMajixWeapon->GetNewSphere()->AddImpulse(DeathImpulse);
+	}
 
 	// DON'T enable physics on mesh - let the death montage play instead
 	// The montage will hold the dead pose until dissolve completes
@@ -364,18 +373,21 @@ void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImp
 		GetMesh()->SetEnableGravity(true);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Enemy, ECR_Block);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Mesh, ECR_Block);
 		GetMesh()->AddImpulse(DeathImpulse, NAME_None, true);
 	}
 
 	if (GetCapsuleComponent())
 	{
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Dissolve();
+		bIsCharacterDead = true;
+		if (BurnDebuffComponent) BurnDebuffComponent->Deactivate();
+		if (StunDebuffComponent) StunDebuffComponent->Deactivate();
+		OnDeathDelegate.Broadcast(this);
 	}
-	
-	Dissolve();
-	if (BurnDebuffComponent) BurnDebuffComponent->Deactivate();
-	if (StunDebuffComponent) StunDebuffComponent->Deactivate();
-	OnDeathDelegate.Broadcast(this);
 }
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)

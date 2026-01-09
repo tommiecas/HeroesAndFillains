@@ -5,6 +5,7 @@
 #include "UObject/NoExportTypes.h"
 #include "EnemyWidgetControllerBase.generated.h"
 
+class UHAFAttributeSet;
 struct FGameplayAttribute;
 struct FGameplayTag;
 class UAttributeInfo;
@@ -39,7 +40,7 @@ public:
 	UAbilitySystemComponent* EnemyASC = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Enemy")
-	const UAttributeSet* EnemyAttributeSet = nullptr;
+	const UHAFAttributeSet* EnemyHAFAttributeSet = nullptr;
 
 	UPROPERTY(EditDefaultsOnly)
 	UAttributeInfo* EnemyAttributeInfo;
@@ -63,11 +64,5 @@ public:
 	UPROPERTY()
 	AEnemyBase* OwningEnemy = nullptr;
 	
-    	UPROPERTY()
-    	TObjectPtr<UAbilitySystemComponent> CachedASC;
-    
-    	UPROPERTY()
-    	TObjectPtr<const UAttributeSet> CachedAttributeSet;
-
-
+	FORCEINLINE AEnemyBase* GetOwningEnemy() const { return OwningEnemy; }
 };

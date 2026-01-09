@@ -303,7 +303,7 @@ private:
 	void OnRep_MatchState();
 
 	UPROPERTY()
-	class UCharacterOverlayFixed* CharacterOverlayFixed;
+	class UOverlayWidget* OverlayWidget;
 	bool bInitializeScore = false;
 	bool bInitializeSouls = false;
 	bool bInitializeGold = false;
@@ -316,8 +316,8 @@ private:
 	float HUDScore;
 	int32 HUDDefeats;
 	int32 HUDGrenades;
-	float HUDCarriedAmmo;
-	float HUDWeaponAmmo;
+	int32 HUDCarriedAmmo;
+	int32 HUDWeaponAmmo;
 	int32 HUDSouls;
 	int32 HUDGold;
 

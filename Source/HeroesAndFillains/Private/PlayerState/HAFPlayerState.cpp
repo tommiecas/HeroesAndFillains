@@ -19,12 +19,26 @@ AHAFPlayerState::AHAFPlayerState()
 
 	HAFAttributeSet = CreateDefaultSubobject<UHAFAttributeSet>(TEXT("HAFAttributeSet"));
 	HAFAbilitySystemComponent->AddAttributeSetSubobject(HAFAttributeSet.Get());
+
 	
 	// (optional) quick sanity logs
 	UE_LOG(LogTemp, Warning, TEXT("[PS::Ctor] ASC=%s AS=%s"),
 		*GetNameSafe(HAFAbilitySystemComponent), *GetNameSafe(HAFAttributeSet));
 
 	SetNetUpdateFrequency(100.f);
+}
+
+void AHAFPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[ASC CHECK] PlayerState ASC: %s | Owner: %s | Avatar: %s"),
+		*GetNameSafe(ASC),
+		ASC ? *GetNameSafe(ASC->GetOwner()) : TEXT("NULL"),
+		ASC ? *GetNameSafe(ASC->GetAvatarActor()) : TEXT("NULL")
+	);
 }
 
 void AHAFPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

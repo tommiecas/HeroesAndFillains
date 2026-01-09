@@ -14,15 +14,12 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 	DestroySessionCompleteDelegate(FOnDestroySessionCompleteDelegate::CreateUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete)),
 	StartSessionCompleteDelegate(FOnStartSessionCompleteDelegate::CreateUObject(this, &UMultiplayerSessionsSubsystem::OnStartSessionComplete))
 {
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-	if (Subsystem)
-	{
-		SessionInterface = Subsystem->GetSessionInterface();
-	}
+	
 }
 
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
+	InitializeSessionInterface();
 	DesiredNumPublicConnections = NumPublicConnections;
 	DesiredMatchType = MatchType;
 	if (!SessionInterface.IsValid())
@@ -65,6 +62,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 
 void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 {
+	InitializeSessionInterface();
 	if (!SessionInterface.IsValid())
 	{
 		return;
@@ -86,6 +84,7 @@ void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 
 void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
 {
+	InitializeSessionInterface();
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnCreateSessionComplete.Broadcast(false); //changed to false from EOnJoinSessionCompleteResult::UnknownError
@@ -119,6 +118,7 @@ void UMultiplayerSessionsSubsystem::DestroySession()
 	}
 	*/
 
+	InitializeSessionInterface();
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnDestroySessionComplete.Broadcast(false);
@@ -143,6 +143,12 @@ void UMultiplayerSessionsSubsystem::DestroySession()
 
 void UMultiplayerSessionsSubsystem::StartSession()
 {
+	InitializeSessionInterface();
+	if (!SessionInterface.IsValid())
+	{
+		MultiplayerOnDestroySessionComplete.Broadcast(false);
+		return;
+	}
 }
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -198,5 +204,24 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 
 void UMultiplayerSessionsSubsystem::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+}
+
+void UMultiplayerSessionsSubsystem::InitializeSessionInterface()
+{
+	if (SessionInterface.IsValid())
+	{
+		return;
+	}
+
+	if (!IsRunningGame())
+	{
+		return; // 🚫 Never touch sessions in editor bootstrap
+	}
+
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		SessionInterface = Subsystem->GetSessionInterface();
+	}
 }
 

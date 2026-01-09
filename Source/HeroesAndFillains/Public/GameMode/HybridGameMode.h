@@ -5,6 +5,10 @@
 #include "GameModeTypes.h"
 #include "HybridGameMode.generated.h"
 
+class ULoadScreenSaveGame;
+class UMVVM_LoadSlot;
+class USaveGame;
+
 UCLASS()
 class HEROESANDFILLAINS_API AHybridGameMode : public AHAFGameMode
 {
@@ -21,6 +25,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Game Mode")
 	void SetGameMode(EGameModeType NewMode);
 
+	void SaveSlotData(UMVVM_LoadSlot* LoadSlot, const int32 SlotIndex) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save Game")
+	TSubclassOf<USaveGame> LoadScreenSaveGameClass;
+
+	UFUNCTION(BlueprintCallable)
+	static void DeleteSlot(const FString& SlotName, int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable)
+	ULoadScreenSaveGame* GetSaveSlotData(const FString& SlotName, int32 SlotIndex) const;
+
+	UFUNCTION(BlueprintCallable)
+	void TravelToMap(UMVVM_LoadSlot* LoadSlot);
+	
 protected:
 	/** Called when switching to PvE */
 	virtual void OnEnterPvE() override;

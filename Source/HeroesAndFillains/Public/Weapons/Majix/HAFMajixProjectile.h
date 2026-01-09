@@ -9,6 +9,7 @@
 #include "Weapons/Majix/MajixWeapon.h"
 #include "HAFMajixProjectile.generated.h"
 
+class UHAFProjectileSpell;
 class UNiagaraComponent;
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -32,6 +33,9 @@ public:
 	TObjectPtr<USceneComponent> HomingTargetSceneComponent;
 
 	bool IsValidOverlap(AActor* OtherActor);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh Component")
+	UNiagaraSystem* MajixWeaponMesh;
 protected:
 	virtual void BeginPlay() override;
 
@@ -43,8 +47,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void OnNewSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<USphereComponent> NewSphere;
+	
 
 	bool bHit = false;
 
@@ -58,14 +61,17 @@ protected:
 	float LifeSpan = 15.f;
 
 private:
-	
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UHAFProjectileSpell> HAFProjectileSpellClass;
 	
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass; // use this instead of a cached SpecHandle
 
 	UPROPERTY()
 	bool bHasAppliedEffect = false;
-	
+
+public:
+	FORCEINLINE TSubclassOf<UHAFProjectileSpell> GetHAFProjectileSpellClass() const { return HAFProjectileSpellClass; }
 
 
 };

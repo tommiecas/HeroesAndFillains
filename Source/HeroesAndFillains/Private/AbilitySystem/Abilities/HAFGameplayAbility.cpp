@@ -10,7 +10,17 @@
 
 FString UHAFGameplayAbility::GetDescription(int32 Level)
 {
-	return FString::Printf(TEXT("<Title>ABILITY NAME     LEVEL: </Title><Level>%d</Level>\n\n<Default>Majix Cost:</Default><MajixCost>##</MajixCost>\n<Default>Cooldown></Default><Cooldown>##</Cooldown>\n\n<Default>Does something with </Default><MoreThanBefore>this amount </MoreThanBefore><Default>of the things, which then do this other thing and deal </Default><Damage>this amount of</Damage><Default> damage with a chance to also </Default> <DurationalDamage> apply more damaging effects! </DurationalDamage>\n\n "), Level);
+	return FString::Printf(TEXT("<Title>ABILITY NAME: </>\n\n"
+		"<Title>LEVEL: </><Level>%d</>>\n\n"
+		"<Default>Majix Cost:</><MajixCost>%f</>\n"
+		"<Default>Cooldown:></><Cooldown>%f</>\n\n"
+		"<Default>Does something with </><MoreThanBefore>this amount </>"
+		"<Default>of the things, which then do this other thing,</>"
+		"<Default> and deal </><Damage>this amount of damage</>\n"
+		"<Default>with a chance to also </> <DurationalDamage> apply more damaging effects! </>\n\n "),
+		Level,
+		GetMajixCost(Level),
+		GetCooldown(Level));
 }
 
 float UHAFGameplayAbility::GetAbilityCost(const FGameplayAttribute& Attribute) const
@@ -33,18 +43,19 @@ float UHAFGameplayAbility::GetAbilityCost(const FGameplayAttribute& Attribute) c
 			}
 		}
 	}
-
 	return 0.f;
 }
 
 FString UHAFGameplayAbility::GetNextLevelDescription(int32 Level)
 {
-	return FString::Printf(TEXT("<Default>NextLevel: </Default><Level>%d</> \n<Default>Causes even more damage. </>"), Level);
+	return FString::Printf(TEXT("<Default>Next Level: </>\n\n"
+		"<Level>%d</> \n"
+		"<Default>Causes even more damage. </>"), Level);
 }
 
 FString UHAFGameplayAbility::GetLockedDescription(int32 Level)
 {
-	return FString::Printf(TEXT("<Default>Spell Locked Until Level:</Default><Level> %d</Level>"), Level);
+	return FString::Printf(TEXT("<Default>Spell Locked Until Level:</><Level>%d</>"), Level);
 }
 
 float UHAFGameplayAbility::GetMajixCost(float InLevel)

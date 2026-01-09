@@ -46,6 +46,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "UI/Widgets/EnemyProgressBarBaseWidget.h"
 #include "Interfaces/HitInterface.h"
+#include "Weapons/Majix/MajixWeapon.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -598,11 +599,21 @@ void AEnemyBase::SpawnEnemyWeapon_Implementation()
                 EquippedWeapon = DefaultMeleeWeapon;
                 EquippedEnemyMeleeWeapon = DefaultMeleeWeapon;
                 DefaultMeleeWeapon->Equip(GetMesh(), FName("MeleeSocket"), this, this);
-                
+            }
+        }
+        else if (BaseWeaponClass->IsChildOf(AMajixWeapon::StaticClass()))
+        {
+            AMajixWeapon* DefaultMajixWeapon = World->SpawnActor<AMajixWeapon>(BaseWeaponClass);
+            if (DefaultMajixWeapon)
+            {
+                EquippedWeapon = DefaultMajixWeapon;
+                EquippedEnemyMajixWeapon = DefaultMajixWeapon;
+                DefaultMajixWeapon->Equip(GetMesh(), FName("MajixSocket"), this, this);
             }
         }
     }
 }
+
 
 
 

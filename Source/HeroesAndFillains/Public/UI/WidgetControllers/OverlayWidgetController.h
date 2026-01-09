@@ -59,7 +59,7 @@ class HEROESANDFILLAINS_API UOverlayWidgetController : public UHAFWidgetControll
 public:
 	virtual void BroadcastInitialValues() override;
 	virtual void BindCallbacksToDependencies() override;
-
+	
 	// NEW: remember the last row tag we broadcast
 	UPROPERTY(BlueprintReadOnly, Category="UI|Messages")
 	FGameplayTag LastRowTag;

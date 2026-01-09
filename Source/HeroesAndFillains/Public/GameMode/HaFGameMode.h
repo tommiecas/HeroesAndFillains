@@ -56,6 +56,15 @@ public:
 	bool bTeamsMatch = false;
 	bool bDelayedStart = false;
 
+	UPROPERTY(EditDefaultsOnly)
+	FString DefaultLevelName;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSoftObjectPtr<UWorld> DefaultLevel;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TMap<FString, TSoftObjectPtr<UWorld>> GameLevels;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnMatchStateSet() override;

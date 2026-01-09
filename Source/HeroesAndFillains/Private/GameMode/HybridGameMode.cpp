@@ -3,6 +3,10 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
+#include "GameMode/LoadScreenSaveGame.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/ViewModels/MVVM_LoadSlot.h"
+#include "GameMode/LoadScreenSaveGame.h"
 
 AHybridGameMode::AHybridGameMode()
 {
@@ -25,6 +29,51 @@ void AHybridGameMode::SetGameMode(EGameModeType NewMode)
         OnEnterPvP();
         break;
     }
+}
+
+void AHybridGameMode::SaveSlotData(UMVVM_LoadSlot* LoadSlot, const int32 SlotIndex) const
+{
+    if (UGameplayStatics::DoesSaveGameExist(LoadSlot->LoadSlotName, SlotIndex))
+    {
+        UGameplayStatics::DeleteGameInSlot(LoadSlot->LoadSlotName, SlotIndex);
+    }
+    USaveGame* SaveGameObject = UGameplayStatics::CreateSaveGameObject(LoadScreenSaveGameClass);
+    ULoadScreenSaveGame* LoadScreenSaveGame = Cast<ULoadScreenSaveGame>(SaveGameObject);
+    LoadScreenSaveGame->PlayerName = LoadSlot->GetPlayerName();
+    LoadScreenSaveGame->SaveSlotStatus = Taken;
+    LoadScreenSaveGame->LevelName = LoadSlot->GetLevelName();
+    UGameplayStatics::SaveGameToSlot(LoadScreenSaveGame, LoadSlot->LoadSlotName, SlotIndex);
+}
+
+void AHybridGameMode::DeleteSlot(const FString& SlotName, int32 SlotIndex)
+{
+    if (UGameplayStatics::DoesSaveGameExist(SlotName, SlotIndex))
+    {
+        UGameplayStatics::DeleteGameInSlot(SlotName, SlotIndex);
+    }
+}
+
+ULoadScreenSaveGame* AHybridGameMode::GetSaveSlotData(const FString& SlotName, int32 SlotIndex) const
+{
+    USaveGame* SaveGameObject = nullptr;
+    if (UGameplayStatics::LoadGameFromSlot(SlotName, SlotIndex))
+    {
+        SaveGameObject = UGameplayStatics::LoadGameFromSlot(SlotName, SlotIndex);
+    }
+    else
+    {
+        SaveGameObject = UGameplayStatics::CreateSaveGameObject(LoadScreenSaveGameClass);
+    }
+    ULoadScreenSaveGame* LoadScreenSaveGame = Cast<ULoadScreenSaveGame>(SaveGameObject);
+    return LoadScreenSaveGame;
+}
+
+void AHybridGameMode::TravelToMap(UMVVM_LoadSlot* Slot)
+{
+    const FString SlotName = Slot->LoadSlotName;
+    const int32 SlotIndex = Slot->SlotIndex;
+
+    UGameplayStatics::OpenLevelBySoftObjectPtr(Slot, GameLevels.FindChecked(Slot->GetLevelName()));
 }
 
 void AHybridGameMode::OnEnterPvE()

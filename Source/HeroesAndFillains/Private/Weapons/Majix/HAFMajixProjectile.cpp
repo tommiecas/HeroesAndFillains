@@ -28,14 +28,7 @@ AHAFMajixProjectile::AHAFMajixProjectile()
 	// IMPORTANT: Do NOT destroy default subobjects in a constructor (CDO runs here).
 	// Disable / hide instead to avoid engine linker/GC invariants breaking.
 	
-	NewSphere = CreateDefaultSubobject<USphereComponent>(TEXT("NewSphere"));
-	SetRootComponent(NewSphere);
-	NewSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	NewSphere->SetCollisionObjectType(ECC_Projectile);
-	NewSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	NewSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	NewSphere->SetCollisionResponseToChannel(ECC_Enemy, ECR_Overlap);
-	NewSphere->IgnoreActorWhenMoving(this, true);
+	check(NewSphere);
 	
 	// Projectile movement pushes the sphere (root)
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
@@ -77,7 +70,18 @@ void AHAFMajixProjectile::BeginPlay()
 	{
 		NewSphere->IgnoreActorWhenMoving(MyOwner, true);
 	}
-	
+
+	// Attach Box to Mesh
+	if (WeaponMesh)
+	{
+		WeaponMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules::KeepRelativeTransform, FName("MeleeSocket"));
+		WeaponMesh->SetRelativeLocation(FVector::ZeroVector);
+	}
+	if (MajixWeaponMesh)
+	{
+		AHAFMajixProjectile* HAFMP = Cast<AHAFMajixProjectile>(GetOwner());
+		HAFMP->GetNewSphere()->OnComponentBeginOverlap.AddDynamic(this, &AHAFMajixProjectile::OnNewSphereOverlap);
+	}
 	// if (ImpactEffect)
 	// {
 	// 	UE_LOG(LogTemp, Warning, TEXT("Projectile has Impact Effect of %s"), *ImpactEffect->GetName());
