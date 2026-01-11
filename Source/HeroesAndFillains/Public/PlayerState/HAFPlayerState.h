@@ -15,6 +15,8 @@ class UHAFAttributeSet;
 class UHAFAbilitySystemComponent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32 /*StatValue*/)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnLevelChanged, int32 /*StatValue*/, bool /*bLevelUp*/)
+
 UCLASS()
 class HEROESANDFILLAINS_API AHAFPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -53,18 +55,18 @@ public:
 	virtual void OnRep_Defeats();
 
 	FOnPlayerStatChanged OnXPChangedDelegate;
-	FOnPlayerStatChanged OnLevelChangedDelegate;
+	FOnLevelChanged OnLevelChangedDelegate;
 	FOnPlayerStatChanged OnAttributePointsChangedDelegate;
 	FOnPlayerStatChanged OnSpellPointsChangedDelegate;
 	
-	void AddLevel(const int32 LevelToAdd);
-	void SetPlayerLevel(const int32 NewLevel);
+	void AddToPlayerLevel(const int32 LevelToAdd);
+	void SetPlayerLevelFromDisk(const int32 NewLevel);
 	void AddXP(const int32 XPToAdd);
 	void SetPlayerXP(const int32 NewXP);
 	void AddAttributePoints(const float AttributePointsToAdd);
-	void SetAttributePoints(const float NewAttributePoints);
+	void SetPlayerAttributePoints(const float NewAttributePoints);
 	void AddSpellPoints(const float SpellPointsToAdd);
-	void SetSpellPoints(const float NewSpellPoints);
+	void SetPlayerSpellPoints(const float NewSpellPoints);
 
 	void UpdateAbilityCosts(int32 Level);
 
@@ -90,7 +92,7 @@ private:
 
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_XP)
-	int32 XP = 1;
+	int32 XP = 0;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_AttributePoints)
 	float AttributePoints = 0;

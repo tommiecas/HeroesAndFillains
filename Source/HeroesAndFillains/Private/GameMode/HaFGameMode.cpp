@@ -6,6 +6,7 @@
 #include "PlayerController/FillainPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
+#include "GameMode/HAFGameInstance.h"
 #include "PlayerState/HAFPlayerState.h"
 #include "GameStates/HAFGameState.h"
 
@@ -20,6 +21,11 @@ AHAFGameMode::AHAFGameMode()
 	bDelayedStart = false;
 }
 
+AActor* AHAFGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	return Super::ChoosePlayerStart_Implementation(Player);
+}
+
 void AHAFGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -27,7 +33,17 @@ void AHAFGameMode::BeginPlay()
 	LevelStartingTime = GetWorld()->GetTimeSeconds();
 
 	GameLevels.Add(DefaultLevelName, DefaultLevel);
+
+	if (GetGameInstance() == nullptr)
+	{
+		if (AFillainPlayerController* FPC = Cast<AFillainPlayerController>(GetCharacter()->GetController()))
+		{
+			UHAFGameInstance* HAFGameInstance = Cast<UHAFGameInstance>(FPC->GetHAFGameMode()->GetGameInstance());
+			ChoosePlayerStart_Implementation(FPC);
+		}
+	}
 }
+
 
 void AHAFGameMode::Tick(float DeltaTime)
 {

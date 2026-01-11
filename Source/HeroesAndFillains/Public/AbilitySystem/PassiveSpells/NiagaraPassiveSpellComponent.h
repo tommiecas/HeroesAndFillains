@@ -7,6 +7,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraPassiveSpellComponent.generated.h"
 
+class UHAFAbilitySystemComponent;
 /**
  * 
  */
@@ -23,4 +24,5 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void OnPassiveActivate(const FGameplayTag& AbilityTag, bool bActivate);
+	void ActivateIfEquipped(UHAFAbilitySystemComponent* HAFASC);
 };

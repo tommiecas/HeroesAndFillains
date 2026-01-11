@@ -12,6 +12,7 @@
 #include "Engine/OverlapResult.h"
 #include "Engine/SceneCapture2D.h"
 #include "GameMode/HaFGameMode.h"
+#include "GameMode/HAFSaveGame.h"
 #include "UI/FillainHUD.h"
 #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
 #include "UI/WidgetControllers/HAFWidgetController.h"
@@ -85,31 +86,71 @@ void UHAFAbilitySystemBlueprintLibrary::InitializeDefaultAttributes(const UObjec
 	
 	FGameplayEffectContextHandle PrimaryAttributesContextHandle = ASC->MakeEffectContext();
 	PrimaryAttributesContextHandle.AddSourceObject(AvatarActor);
-	
 	const FGameplayEffectSpecHandle PrimaryAttributesSpecHandle = ASC->MakeOutgoingSpec(ClassDefaultInfo.PrimaryAttributes, Level, PrimaryAttributesContextHandle);
 	ASC->ApplyGameplayEffectSpecToSelf(*PrimaryAttributesSpecHandle.Data.Get());
 
 	FGameplayEffectContextHandle SecondaryAttributesContextHandle = ASC->MakeEffectContext();
 	SecondaryAttributesContextHandle.AddSourceObject(AvatarActor);
-	
 	const FGameplayEffectSpecHandle SecondaryAttributesSpecHandle = ASC->MakeOutgoingSpec(ClassDefaultInfo.SecondaryAttributes, Level, SecondaryAttributesContextHandle);
 	ASC->ApplyGameplayEffectSpecToSelf(*SecondaryAttributesSpecHandle.Data.Get());
 
 	FGameplayEffectContextHandle VitalAttributesContextHandle = ASC->MakeEffectContext();
 	VitalAttributesContextHandle.AddSourceObject(AvatarActor);
-	
 	const FGameplayEffectSpecHandle VitalAttributesSpecHandle = ASC->MakeOutgoingSpec(ClassDefaultInfo.VitalAttributes, Level, VitalAttributesContextHandle);
 	ASC->ApplyGameplayEffectSpecToSelf(*VitalAttributesSpecHandle.Data.Get());
 
 	FGameplayEffectContextHandle InvisibleAttributesContextHandle = ASC->MakeEffectContext();
 	InvisibleAttributesContextHandle.AddSourceObject(AvatarActor);
-	
 	const FGameplayEffectSpecHandle InvisibleAttributesSpecHandle = ASC->MakeOutgoingSpec(CharacterClassInfo->InvisibleAttributes, Level, InvisibleAttributesContextHandle);
 	ASC->ApplyGameplayEffectSpecToSelf(*InvisibleAttributesSpecHandle.Data.Get());
 }
 
+void UHAFAbilitySystemBlueprintLibrary::LoadAndInitializeAttributesFromSaveData(const UObject* WorldContextObject, ECharacterClass CharacterClass, 
+	UAbilitySystemComponent* ASC, UHAFSaveGame* SavedGame)
+{
+	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
+	if (CharacterClassInfo == nullptr) return;
+	FCharacterClassDefaultInfo ClassDefaultInfo = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
+
+
+	const FHAFGameplayTags& GameplayTags = FHAFGameplayTags::Get();
+	const AActor* SourceAvatarActor = ASC->GetAvatarActor();
+	
+	FGameplayEffectContextHandle EffectContextHandle = ASC->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(SourceAvatarActor);
+	
+	const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CharacterClassInfo->PrimaryAttributes_LoadedAndSetByCaller, 1.f, EffectContextHandle);
+
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Strength, SavedGame->Strength);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Intelligence, SavedGame->Intelligence);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Resilience, SavedGame->Resilience);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Vigor, SavedGame->Vigor);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Dexterity, SavedGame->Dexterity);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Marksmanship, SavedGame->Marksmanship);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Wisdom, SavedGame->Wisdom);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Charisma, SavedGame->Charisma);
+
+	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+	FGameplayEffectContextHandle SecondaryAttributesContextHandle = ASC->MakeEffectContext();
+	SecondaryAttributesContextHandle.AddSourceObject(SourceAvatarActor); 
+	const FGameplayEffectSpecHandle SecondaryAttributesSpecHandle = ASC->MakeOutgoingSpec(CharacterClassInfo->SecondaryAttributes_Infinite, 1.f, SecondaryAttributesContextHandle);
+	ASC->ApplyGameplayEffectSpecToSelf(*SecondaryAttributesSpecHandle.Data.Get());
+
+	FGameplayEffectContextHandle VitalAttributesContextHandle = ASC->MakeEffectContext();
+	VitalAttributesContextHandle.AddSourceObject(SourceAvatarActor);
+	const FGameplayEffectSpecHandle VitalAttributesSpecHandle = ASC->MakeOutgoingSpec(ClassDefaultInfo.VitalAttributes, 1.f, VitalAttributesContextHandle);
+	ASC->ApplyGameplayEffectSpecToSelf(*VitalAttributesSpecHandle.Data.Get());
+
+	FGameplayEffectContextHandle InvisibleAttributesContextHandle = ASC->MakeEffectContext();
+	InvisibleAttributesContextHandle.AddSourceObject(SourceAvatarActor);
+	const FGameplayEffectSpecHandle InvisibleAttributesSpecHandle = ASC->MakeOutgoingSpec(CharacterClassInfo->InvisibleAttributes, 1.f, InvisibleAttributesContextHandle);
+	ASC->ApplyGameplayEffectSpecToSelf(*InvisibleAttributesSpecHandle.Data.Get());
+	
+}
+
 void UHAFAbilitySystemBlueprintLibrary::GiveStartupAbilities(const UObject* WorldContextObject,
-	UAbilitySystemComponent* ASC, ECharacterClass CharacterClass)
+                                                             UAbilitySystemComponent* ASC, ECharacterClass CharacterClass)
 {
 	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject); 
 	if (CharacterClassInfo == nullptr) return;
@@ -599,6 +640,21 @@ void UHAFAbilitySystemBlueprintLibrary::SetTargetEffectParamsASC(FDamageEffectPa
 	UAbilitySystemComponent* InASC)
 {
 	DamageEffectParams.TargetAbilitySystemComponent = InASC;
+}
+
+FString UHAFAbilitySystemBlueprintLibrary::GetCurrentMapName(const UObject* WorldContextObject)
+{
+	if (!WorldContextObject) return FString();
+
+	const UWorld* World = WorldContextObject->GetWorld();
+	if (!World) return FString();
+
+	FString CurrentMapName = World->GetMapName();
+
+	// Strip PIE prefix
+	CurrentMapName.RemoveFromStart(World->StreamingLevelsPrefix);
+
+	return CurrentMapName;
 }
 
 	

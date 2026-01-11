@@ -4,6 +4,7 @@
 #include "AbilitySystem/PassiveSpells/NiagaraPassiveSpellComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "HAFGameplayTags.h"
 #include "AbilitySystem/HAFAbilitySystemComponent.h"
 #include "Interfaces/CombatInterface.h"
 
@@ -19,6 +20,7 @@ void UNiagaraPassiveSpellComponent::BeginPlay()
 	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner())))
 	{
 		HAFASC->ActivatePassiveEffect.AddUObject(this, &UNiagaraPassiveSpellComponent::OnPassiveActivate);
+		ActivateIfEquipped(HAFASC);
 	}
 	else if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetOwner()))
 	{
@@ -27,6 +29,7 @@ void UNiagaraPassiveSpellComponent::BeginPlay()
 			if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner())))
 			{
 				HAFASC->ActivatePassiveEffect.AddUObject(this, &UNiagaraPassiveSpellComponent::OnPassiveActivate);
+				ActivateIfEquipped(HAFASC);
 			}
 		});
 	}
@@ -43,6 +46,18 @@ void UNiagaraPassiveSpellComponent::OnPassiveActivate(const FGameplayTag& Abilit
 		else
 		{
 			Deactivate();
+		}
+	}
+}
+
+void UNiagaraPassiveSpellComponent::ActivateIfEquipped(UHAFAbilitySystemComponent* HAFASC)
+{
+	const bool bStartupAbilitiesGiven = HAFASC->bStartupAbilitiesGiven;
+	if (bStartupAbilitiesGiven)
+	{
+		if (HAFASC->GetStatusFromAbilityTag(PassiveSpellTag) == FHAFGameplayTags::Get().Abilities_Status_Equipped)
+		{
+			Activate();
 		}
 	}
 }

@@ -3,19 +3,19 @@
 #include "CoreMinimal.h"
 #include "HaFGameMode.h"
 #include "GameModeTypes.h"
-#include "HybridGameMode.generated.h"
+#include "HAFHybridGameMode.generated.h"
 
-class ULoadScreenSaveGame;
+class UHAFSaveGame;
 class UMVVM_LoadSlot;
 class USaveGame;
 
 UCLASS()
-class HEROESANDFILLAINS_API AHybridGameMode : public AHAFGameMode
+class HEROESANDFILLAINS_API AHAFHybridGameMode : public AHAFGameMode
 {
 	GENERATED_BODY()
 
 public:
-	AHybridGameMode();
+	AHAFHybridGameMode();
 
 	/** Current active mode */
 	UPROPERTY(BlueprintReadOnly, Category="Game Mode")
@@ -27,6 +27,12 @@ public:
 
 	void SaveSlotData(UMVVM_LoadSlot* LoadSlot, const int32 SlotIndex) const;
 
+	UFUNCTION(BlueprintCallable)
+	UHAFSaveGame* RetrieveInGameSaveData();
+
+	UFUNCTION(BlueprintCallable)
+	void SaveInGameProgressData(UHAFSaveGame* SaveObject);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save Game")
 	TSubclassOf<USaveGame> LoadScreenSaveGameClass;
 
@@ -34,11 +40,16 @@ public:
 	static void DeleteSlot(const FString& SlotName, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable)
-	ULoadScreenSaveGame* GetSaveSlotData(const FString& SlotName, int32 SlotIndex) const;
+	UHAFSaveGame* GetSaveSlotData(const FString& SlotName, int32 SlotIndex) const;
 
 	UFUNCTION(BlueprintCallable)
 	void TravelToMap(UMVVM_LoadSlot* LoadSlot);
-	
+
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+	void SaveWorldState(UWorld* World) const;
+	void LoadWorldState(UWorld* World) const;
+
 protected:
 	/** Called when switching to PvE */
 	virtual void OnEnterPvE() override;

@@ -9,6 +9,7 @@
 #include "UI/WidgetControllers/HAFWidgetController.h"
 #include "HAFAbilitySystemBlueprintLibrary.generated.h"
 
+class UHAFSaveGame;
 struct FDamageEffectParams;
 class AFillainHUD;
 class USpellMenuWidgetController;
@@ -62,6 +63,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC);
+
+	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
+	static void LoadAndInitializeAttributesFromSaveData(const UObject* WorldContextObject, ECharacterClass ECharacterClass, UAbilitySystemComponent* ASC, UHAFSaveGame* SavedGame);
 
 	UFUNCTION(BlueprintCallable, Category = "HAFAbilitySystemBlueprintLibrary | Character Class Defaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass);
@@ -227,4 +231,7 @@ public:
 
 	UFUNCTION (BlueprintCallable, Category="HAF Ability System Library | Damage Effect Params")
 	static void SetTargetEffectParamsASC(UPARAM(ref) FDamageEffectParams& DamageEffectParams, UAbilitySystemComponent* InASC);
+
+	UFUNCTION(BlueprintCallable, Category="Map")
+	static FString GetCurrentMapName(const UObject* WorldContextObject);
 };

@@ -105,9 +105,9 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	}*/
 	GetHAFPlayerState()->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
 	GetHAFPlayerState()->OnLevelChangedDelegate.AddLambda(
-		[this](int32 NewLevel)
+		[this](int32 NewLevel, bool bLevelUp)
 		{
-			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
+			OnPlayerLevelChangedDelegate.Broadcast(NewLevel, bLevelUp);
 		}
 	);	
 

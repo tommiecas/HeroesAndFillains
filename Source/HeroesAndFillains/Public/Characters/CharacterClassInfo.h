@@ -11,6 +11,7 @@ class UGameplayEffect;
 UENUM(BlueprintType)
 enum class ECharacterClass : uint8
 {
+	Fillain,
 	Majixian,
 	Warrior,
 	Gunslinger,
@@ -27,7 +28,7 @@ struct FCharacterClassDefaultInfo
 
 	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
 	TSubclassOf<UGameplayEffect> PrimaryAttributes;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = "ClassDefaults")
 	TSubclassOf<UGameplayEffect> SecondaryAttributes;
 
@@ -60,8 +61,14 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterClassDefaults")
 	TMap<ECharacterClass, FCharacterClassDefaultInfo> CharacterClassInformation;;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "ChommonClassDefaults")
+
+	UPROPERTY(EditDefaultsOnly, Category = "Class Defaults")
+	TSubclassOf<UGameplayEffect> PrimaryAttributes_LoadedAndSetByCaller;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Class Defaults")
+	TSubclassOf<UGameplayEffect> SecondaryAttributes_Infinite;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CommonClassDefaults")
 	TSubclassOf<UGameplayEffect> InvisibleAttributes;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Abilities")

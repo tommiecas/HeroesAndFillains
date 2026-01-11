@@ -102,7 +102,8 @@ public:
 	virtual void AddCharacterAbilities() override;
 	virtual void UnlockAbilities() override;
 	void InitASC();
-
+	virtual void SaveProgress_Implementation(const FName& CheckpointTag) override;
+	
 	UFUNCTION(BlueprintCallable)
 	int32 PlayProjectileSpellMontage();
 
@@ -637,6 +638,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
 
+	void LoadProgress();
 	
 private:
 	UPROPERTY(VisibleInstanceOnly, Category="Camera")

@@ -64,6 +64,12 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	TMap<FString, TSoftObjectPtr<UWorld>> GameLevels;
+
+	UPROPERTY(EditDefaultsOnly)
+	FName DefaultPlayerStartTag;
+
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
 	
 protected:
 	virtual void BeginPlay() override;

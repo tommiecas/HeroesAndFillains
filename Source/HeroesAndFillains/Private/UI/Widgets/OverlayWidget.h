@@ -74,6 +74,8 @@ public:
 	virtual void NativeConstruct() override;
 	static void ForceWidgetComponentVisibility(UWidget* WidgetComponent);
 
+	FORCEINLINE UWidgetAnimation* GetEliminationAnimation() const { return EliminationAnimation; }
+
 
 
 	

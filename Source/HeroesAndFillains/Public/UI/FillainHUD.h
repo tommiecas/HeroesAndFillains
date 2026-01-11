@@ -82,7 +82,7 @@ public:
 	USpellMenuWidgetController* GetSpellMenuWidgetController(const FWidgetControllerParams& Params);
 
 	// --- Widgets ---
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UOverlayWidget> OverlayWidget;
 
 	UPROPERTY(EditAnywhere, Category="Widgets")
@@ -91,7 +91,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Widgets")
 	TSubclassOf<UEnemyAttributeMenuWidget> EnemyAttributeMenuWidgetClass;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
 
 	UPROPERTY()
@@ -121,6 +121,18 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UEliminationAnnouncement> EliminationAnnouncementClass;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void InitializeOverlayOnPlayableMaps();
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentMapName(FString NameToSet);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FString CurrentMapName = FString();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bInitialized = false;
+	
 private:
 	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread);
 	void EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove);
@@ -142,5 +154,5 @@ private:
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
-
+	FORCEINLINE FString GetCurrentMapName() const { return CurrentMapName; }
 };

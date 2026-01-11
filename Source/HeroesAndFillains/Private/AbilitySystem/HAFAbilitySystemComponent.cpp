@@ -8,6 +8,7 @@
 #include "AbilitySystem/AbilityInfo.h"
 #include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Abilities/HAFGameplayAbility.h"
+#include "GameMode/HAFSaveGame.h"
 #include "HeroesAndFillains/HAFLogChannels.h"
 #include "Interfaces/PlayerInterface.h"
 
@@ -20,6 +21,36 @@ void UHAFAbilitySystemComponent::MulticastActivatePassiveEffect_Implementation(c
 	bool bActivate)
 {
 	ActivatePassiveEffect.Broadcast(AbilityTag, bActivate);
+}
+
+void UHAFAbilitySystemComponent::AddCharacterAbilitiesFromSaveData(UHAFSaveGame* SaveData)
+{
+	for (const FSavedAbility& Data : SaveData->SavedAbilities)
+	{
+		const TSubclassOf<UGameplayAbility> LoadedAbilityClass = Data.GameplayAbility;
+
+		FGameplayAbilitySpec LoadedAbilitySpec = FGameplayAbilitySpec(LoadedAbilityClass, Data.AbilityLevel);
+
+		LoadedAbilitySpec.DynamicAbilityTags.AddTag(Data.AbilitySlot);
+		LoadedAbilitySpec.DynamicAbilityTags.AddTag(Data.AbilityStatus);
+		if (Data.AbilityType == FHAFGameplayTags::Get().Abilities_Type_Offensive)
+		{
+			GiveAbility(LoadedAbilitySpec);
+		}
+		else if (Data.AbilityType == FHAFGameplayTags::Get().Abilities_Type_Passive)
+		{
+			if (Data.AbilityStatus.MatchesTagExact(FHAFGameplayTags::Get().Abilities_Status_Equipped))
+			{
+				GiveAbilityAndActivateOnce(LoadedAbilitySpec);
+			}
+			else
+			{
+				GiveAbility(LoadedAbilitySpec);
+			}
+		}	
+	}
+	bStartupAbilitiesGiven = true;
+	AbilitiesGiven.Broadcast();
 }
 
 void UHAFAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
@@ -70,6 +101,7 @@ void UHAFAbilitySystemComponent::AddCharacterPassiveAbilities(
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
 		GiveAbilityAndActivateOnce(AbilitySpec);
+		AbilitySpec.GetDynamicSpecSourceTags().AddTag(FHAFGameplayTags::Get().Abilities_Status_Equipped);
 	}
 }
 
@@ -359,6 +391,8 @@ void UHAFAbilitySystemComponent::ServerEquipAbility_Implementation(const FGamepl
 					TryActivateAbility(AbilitySpec->Handle);
 					MulticastActivatePassiveEffect(AbilityTag, true);
 				}
+				AbilitySpec->DynamicAbilityTags.RemoveTag(GetStatusFromSpec(*AbilitySpec));
+				AbilitySpec->GetDynamicSpecSourceTags().AddTag(GameplayTags.Abilities_Status_Equipped);
 			}
 			AssignInputTagToAbility(*AbilitySpec, Slot);
 			
@@ -440,8 +474,10 @@ void UHAFAbilitySystemComponent::OnRep_ActivateAbilities()
 	}
 }
 
+
+
 void UHAFAbilitySystemComponent::ClientUpdateAbilityStatuses_Implementation(const FGameplayTag& AbilityTag,
-	const FGameplayTag& StatusTag, int32 AbilityLevel)
+                                                                            const FGameplayTag& StatusTag, int32 AbilityLevel)
 {
 	AbilityStatusChanged.Broadcast(AbilityTag, StatusTag, AbilityLevel);
 }

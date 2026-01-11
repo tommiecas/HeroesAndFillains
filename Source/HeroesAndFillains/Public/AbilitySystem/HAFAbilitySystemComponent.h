@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "HAFAbilitySystemComponent.generated.h"
 
+class UHAFSaveGame;
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* Asset Tags */);
 DECLARE_MULTICAST_DELEGATE(FAbilitiesGiven);
 DECLARE_DELEGATE_OneParam(FForEachAbility, const FGameplayAbilitySpec&);
@@ -32,6 +33,7 @@ public:
 	FDeactivatePassiveAbility DeactivatePassiveAbility;
 	FActivatePassiveEffect ActivatePassiveEffect;
 
+	void AddCharacterAbilitiesFromSaveData(UHAFSaveGame* SaveData);
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastActivatePassiveEffect(const FGameplayTag& AbilityTag, bool bActivate);
 
@@ -81,8 +83,6 @@ public:
 	static bool AbilityHasSlot(FGameplayAbilitySpec* Spec, const FGameplayTag& Slot);
 protected:
 	virtual void OnRep_ActivateAbilities() override;
-
-
 	
 	UFUNCTION(Client, Reliable)
 	void ClientEffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle EffectHandle);

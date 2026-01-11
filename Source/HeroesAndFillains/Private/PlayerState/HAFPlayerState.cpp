@@ -116,19 +116,19 @@ void AHAFPlayerState::OnRep_Defeats()
 	}
 }
 
-void AHAFPlayerState::AddLevel(const int32 LevelToAdd)
+void AHAFPlayerState::AddToPlayerLevel(const int32 LevelToAdd)
 {
 	Level += LevelToAdd;
-	OnLevelChangedDelegate.Broadcast(Level);
+	OnLevelChangedDelegate.Broadcast(Level, true);
 
 	// Update ability costs
 	UpdateAbilityCosts(Level);
 }
 
-void AHAFPlayerState::SetPlayerLevel(const int32 NewLevel)
+void AHAFPlayerState::SetPlayerLevelFromDisk(const int32 NewLevel)
 {
 	Level = NewLevel;
-	OnLevelChangedDelegate.Broadcast(Level);
+	OnLevelChangedDelegate.Broadcast(Level, false);
 
 	// Update ability costs
 	UpdateAbilityCosts(Level);
@@ -136,7 +136,7 @@ void AHAFPlayerState::SetPlayerLevel(const int32 NewLevel)
 
 void AHAFPlayerState::OnRep_Level(int32 OldLevel)
 {
-	OnLevelChangedDelegate.Broadcast(Level);
+	OnLevelChangedDelegate.Broadcast(Level, true);
 }
 
 void AHAFPlayerState::OnRep_XP(int32 OldXP)
@@ -172,7 +172,7 @@ void AHAFPlayerState::AddAttributePoints(const float AttributePointsToAdd)
 	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
 }
 
-void AHAFPlayerState::SetAttributePoints(const float NewAttributePoints)
+void AHAFPlayerState::SetPlayerAttributePoints(const float NewAttributePoints)
 {
 	AttributePoints = NewAttributePoints;
 	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
@@ -184,7 +184,7 @@ void AHAFPlayerState::AddSpellPoints(const float SpellPointsToAdd)
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
 }
 
-void AHAFPlayerState::SetSpellPoints(const float NewSpellPoints)
+void AHAFPlayerState::SetPlayerSpellPoints(const float NewSpellPoints)
 {
 	SpellPoints = NewSpellPoints;
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);

@@ -102,9 +102,14 @@
 #include "GameplayEffectTypes.h"       // FGameplayEffectSpec, FGameplayEffectSpecHandle
 #include "AbilitySystemComponent.h"    // UAbilitySystemComponent::MakeOutgoingSpec
 #include "HAFGameplayTags.h"           // TAG_SBC_Damage_Shield
+#include "AbilitySystem/AbilityInfo.h"
+#include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/LevelUpInfo.h"
 #include "AbilitySystem/Debuffs/DebuffNiagaraComponent.h"
 #include "Engine/OverlapResult.h"
+#include "GameMode/HAFGameInstance.h"
+#include "GameMode/HAFHybridGameMode.h"
+#include "GameMode/HAFSaveGame.h"
 #include "GameplayEffects/RegenerationEffects/GE_HealthRegeneration.h"
 #include "GameplayEffects/RegenerationEffects/GE_MajixRegeneration.h"
 #include "GameplayEffects/RegenerationEffects/GE_ShieldRegeneration.h"
@@ -184,7 +189,7 @@ AFillainCharacter::AFillainCharacter()
 	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent());
 	LevelUpNiagaraComponent->bAutoActivate = false;
 	
-	CharacterClass = ECharacterClass::Majixian;
+	CharacterClass = ECharacterClass::Fillain;
 	EnemyType = EEnemyType::None;
 	
 	/***********************************************
@@ -686,7 +691,7 @@ void AFillainCharacter::AddToCharacterLevel_Implementation(int32 LevelToAdd)
 {
 	AHAFPlayerState* HAFPS = GetPlayerState<AHAFPlayerState>();
 	check(HAFPS);
-	HAFPS->AddLevel(LevelToAdd);
+	HAFPS->AddToPlayerLevel(LevelToAdd);
 
 	if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(GetAbilitySystemComponent()))
 	{
@@ -3436,6 +3441,64 @@ void AFillainCharacter::InitASC()
 	}
 }
 
+void AFillainCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
+{
+	AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	if (HAFHybridGameMode)
+	{
+		UHAFSaveGame* SaveData = HAFHybridGameMode->RetrieveInGameSaveData();
+		if (SaveData == nullptr) return;
+
+		SaveData->PlayerStartTag = CheckpointTag;
+
+		if (AHAFPlayerState* HAFPState = Cast<AHAFPlayerState>(GetPlayerState()))
+		{
+			SaveData->PlayerLevel = HAFPState->GetFillainPlayerLevel();
+			SaveData->XP = HAFPState->GetFillainPlayerXP();
+			SaveData->AttributePoints = HAFPState->GetFillainPlayerAttributePoints();
+			SaveData->SpellPoints = HAFPState->GetFillainPlayerSpellPoints();
+		}
+
+		// Primary Attributes
+		SaveData->Strength = UHAFAttributeSet::GetStrengthAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Intelligence = UHAFAttributeSet::GetIntelligenceAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Resilience = UHAFAttributeSet::GetResilienceAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Vigor = UHAFAttributeSet::GetVigorAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Dexterity = UHAFAttributeSet::GetDexterityAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Marksmanship = UHAFAttributeSet::GetMarksmanshipAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Wisdom = UHAFAttributeSet::GetWisdomAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Charisma = UHAFAttributeSet::GetCharismaAttribute().GetNumericValue(GetAttributeSet());
+
+		SaveData->bFirstTimeLoadInGame = false;
+
+		if (!HasAuthority()) return;
+
+		UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent);
+		FForEachAbility SaveAbilitiesDelegate;
+		SaveData->SavedAbilities.Empty();
+		SaveAbilitiesDelegate.BindLambda([this, HAFASC, SaveData](const FGameplayAbilitySpec& AbilitySpec)
+		{
+			const FGameplayTag AbilityTag = HAFASC->GetAbilityTagFromSpec(AbilitySpec);
+			UAbilityInfo* AbilityInfo = UHAFAbilitySystemBlueprintLibrary::GetAbilityInfo(this);
+			FHAFAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+			
+			FSavedAbility SavedAbility;
+			SavedAbility.GameplayAbility = Info.Ability;
+			SavedAbility.AbilityLevel = AbilitySpec.Level;
+			SavedAbility.AbilitySlot = HAFASC->GetInputTagFromAbilityTag(AbilityTag);
+			SavedAbility.AbilityStatus = HAFASC->GetStatusFromAbilityTag(AbilityTag);
+			SavedAbility.AbilityTag = AbilityTag;
+			SavedAbility.AbilityType = Info.AbilityType;
+
+			SaveData->SavedAbilities.AddUnique(SavedAbility);
+
+		});
+		HAFASC->ForEachAbility(SaveAbilitiesDelegate);
+
+		HAFHybridGameMode->SaveInGameProgressData(SaveData);
+	}
+}
+
 int32 AFillainCharacter::PlayProjectileSpellMontage()
 {
 	const int32 Selection = PlayRandomMontageSection(ProjectileSpellMontage, ProjectileSpellMontageSections);
@@ -3444,37 +3507,22 @@ int32 AFillainCharacter::PlayProjectileSpellMontage()
 
 void AFillainCharacter::InitializeAbilityActorInfo()
 {
-	AHAFPlayerState* FillainPlayerState = GetPlayerState<AHAFPlayerState>();
-	check(FillainPlayerState);
-	FillainPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FillainPlayerState, this);
-	Cast<UHAFAbilitySystemComponent>(FillainPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
-	AbilitySystemComponent = FillainPlayerState->GetAbilitySystemComponent();
-	AttributeSet = FillainPlayerState->GetAttributeSet();
+	AHAFPlayerState* HAFPlayerS = GetPlayerState<AHAFPlayerState>();
+	check(HAFPlayerS);
+	/* FillainPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FillainPlayerState, this); */
+	Cast<UHAFAbilitySystemComponent>(HAFPlayerS->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	OnASCRegistered.Broadcast(AbilitySystemComponent);
 	AbilitySystemComponent->RegisterGameplayTagEvent(FHAFGameplayTags::Get().Debuffs_Stunned, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AFillainCharacter::StunTagChanged);
 	
-	InitializeDefaultAttributes();
-
-	if (const UHAFAttributeSet* AS = Cast<UHAFAttributeSet>(AttributeSet))
+	if (AFillainPlayerController* FillainPlayerCont = Cast<AFillainPlayerController>(GetController()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Health=%f / Max=%f | Shield=%f / Max=%f"),
-			AS->GetHealth(), AS->GetMaxHealth(), AS->GetShield(), AS->GetMaxShield());
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("ASC Owner: %s | Avatar: %s"),
-	*GetNameSafe(AbilitySystemComponent->GetOwnerActor()),
-	*GetNameSafe(AbilitySystemComponent->GetAvatarActor()));
-
-	UE_LOG(LogTemp, Warning, TEXT("AttributeSet outer: %s"), *GetNameSafe(AttributeSet->GetOuter()));
-
-	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
-	{
-		if (AFillainHUD* OnscreenHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
+		if (AFillainHUD* OnscreenFillainHUD = Cast<AFillainHUD>(FillainPlayerCont->GetHUD()))
 		{
-			OnscreenHUD->InitializeOverlay(HAFPlayerController, FillainPlayerState, AbilitySystemComponent, AttributeSet);
+			OnscreenFillainHUD->InitializeOverlay(FillainPlayerCont, HAFPlayerS, AbilitySystemComponent, AttributeSet);
 		}
 	}
-	if (AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
+
+	/* if(AFillainPlayerController* HAFPlayerController = Cast<AFillainPlayerController>(GetController()))
 	{
 		if (AFillainHUD* GameHUD = Cast<AFillainHUD>(HAFPlayerController->GetHUD()))
 		{
@@ -3484,7 +3532,7 @@ void AFillainCharacter::InitializeAbilityActorInfo()
 				WC->BroadcastInitialValues(); // rebroadcast once attributes are real
 			}
 		}
-	}
+	}*/
 }
 
 void AFillainCharacter::InitializeDefaultAttributes()
@@ -3568,12 +3616,19 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 
 	AHAFPlayerState* PS = GetPlayerState<AHAFPlayerState>();
 	check(PS);
+	HAFPlayerState = PS;
 
 	// Use the PS-owned ASC & AttributeSet (don’t call GetSet here)
 	AbilitySystemComponent = PS->GetAbilitySystemComponent();
 	AttributeSet = PS->GetHAFAttributeSet();
 	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
-	AddCharacterAbilities();
+	InitializeAbilityActorInfo();
+	LoadProgress();
+
+	if (AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		HAFHybridGameMode->LoadWorldState(GetWorld());
+	}
 
 	if (HasAuthority())
 	{
@@ -3587,14 +3642,12 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 		);
 	}
 
-	// Optional: quick pointer sanity
-	UE_LOG(LogTemp, Warning, TEXT("[Character::PossessedBy] ASC=%s AS=%s"),
-		*GetNameSafe(AbilitySystemComponent), *GetNameSafe(AttributeSet));
+
 
 	// Safe “post-init” log (no direct FGameplayAttributeData deref)
-	auto SafeGet=[&](const FGameplayAttribute& A){return AbilitySystemComponent->GetNumericAttribute(A);};
-	UHAFAttributeSet* HAFAtSet = Cast<UHAFAttributeSet>(AttributeSet);
-	/* UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
+	/*auto SafeGet=[&](const FGameplayAttribute& A){return AbilitySystemComponent->GetNumericAttribute(A);};
+	  UHAFAttributeSet* HAFAtSet = Cast<UHAFAttributeSet>(AttributeSet);
+	   UE_LOG(LogTemp, Warning, TEXT("[SERVER?=%d] After InitializeDefaultAttributes: MaxHealth=%.3f Armor=%.3f Crit=%.3f"),
 		HasAuthority(),
 		SafeGet(HAFAtSet->GetMaxHealthAttribute()),
 		SafeGet(HAFAtSet->GetArmorAttribute()),
@@ -3606,14 +3659,59 @@ void AFillainCharacter::PossessedBy(AController* NewController)
 	BindHiddenTreasureCapsuleHooksOnce();
 }
 
+void AFillainCharacter::LoadProgress()
+{
+	AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	if (HAFHybridGameMode)
+	{
+		UHAFSaveGame* SaveData = HAFHybridGameMode->RetrieveInGameSaveData();
+		if (SaveData == nullptr) return;
+
+		
+
+		/*if (AHAFPlayerState* HeroesAFPS = Cast<AHAFPlayerState>(GetPlayerState()))
+		{
+			SaveData->PlayerLevel = HeroesAFPS->GetFillainPlayerLevel();
+			SaveData->XP = HeroesAFPS->GetFillainPlayerXP();
+			SaveData->AttributePoints = HeroesAFPS->GetFillainPlayerAttributePoints();
+			SaveData->SpellPoints = HeroesAFPS->GetFillainPlayerSpellPoints();
+		}*/
+
+		if (SaveData->bFirstTimeLoadInGame == true)
+		{
+			InitializeDefaultAttributes();
+			AddCharacterAbilities();
+		}
+		else
+		{
+			if (UHAFAbilitySystemComponent* HAFASC = Cast<UHAFAbilitySystemComponent>(AbilitySystemComponent))
+			{
+				HAFASC->AddCharacterAbilitiesFromSaveData(SaveData);
+			}
+			
+			if (AHAFPlayerState* HAFillainsPS = Cast<AHAFPlayerState>(GetPlayerState()))
+			{
+				HAFillainsPS->SetPlayerLevelFromDisk(SaveData->PlayerLevel);
+				HAFillainsPS->SetPlayerXP(SaveData->XP);
+				HAFillainsPS->SetPlayerAttributePoints(SaveData->AttributePoints);
+				HAFillainsPS->SetPlayerSpellPoints(SaveData->SpellPoints);
+			}
+
+			UHAFAbilitySystemBlueprintLibrary::LoadAndInitializeAttributesFromSaveData(this, ECharacterClass::Fillain, AbilitySystemComponent, SaveData);
+		}
+	}
+}
+
 void AFillainCharacter::ApplyDefaultAttributes()
 {
-	ApplyEffectToSelf(DefaultPrimaryAttributes, 1);
-	ApplyEffectToSelf(DefaultSecondaryAttributes, 1);
-	ApplyEffectToSelf(DefaultResistanceAttributes, 1);
-	ApplyEffectToSelf(DefaultVitalAttributes, 1);
-	ApplyEffectToSelf(DefaultInvisibleAttributes, 1);
+	ApplyEffectToSelf(DefaultPrimaryAttributes, HAFPlayerState->GetFillainPlayerLevel());
+	ApplyEffectToSelf(DefaultSecondaryAttributes, HAFPlayerState->GetFillainPlayerLevel());
+	ApplyEffectToSelf(DefaultResistanceAttributes, HAFPlayerState->GetFillainPlayerLevel());
+	ApplyEffectToSelf(DefaultVitalAttributes, HAFPlayerState->GetFillainPlayerLevel());
+	ApplyEffectToSelf(DefaultInvisibleAttributes, HAFPlayerState->GetFillainPlayerLevel());
 }
+
+
 
 
 void AFillainCharacter::OnRep_PlayerState()

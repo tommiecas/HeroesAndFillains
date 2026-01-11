@@ -39,7 +39,7 @@
 #include "NavigationPath.h"
 #include "Components/DecalComponent.h"
 #include "Enemies/EnemyBase.h"
-#include "GameMode/HybridGameMode.h"
+#include "GameMode/HAFHybridGameMode.h"
 #include "HeroesAndFillains/HeroesAndFillains.h"
 #include "UI/Widgets/DamageTextComponent.h"
 #include "Interfaces/EnemyInterface.h"
@@ -1018,7 +1018,7 @@ FString AFillainPlayerController::GetTeamsInfoText(AHAFGameState* HAFGameState)
 
 void AFillainPlayerController::ToggleGameMode()
 {
-	if (AHybridGameMode* GM = GetWorld()->GetAuthGameMode<AHybridGameMode>())
+	if (AHAFHybridGameMode* GM = GetWorld()->GetAuthGameMode<AHAFHybridGameMode>())
 	{
 		// Flip between PvE and PvP
 		if (GM->CurrentMode == EGameModeType::EGMT_PvE)

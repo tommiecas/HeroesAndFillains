@@ -1,4 +1,6 @@
 	#include "UI/FillainHUD.h"
+
+#include "AbilitySystem/HAFAbilitySystemBlueprintLibrary.h"
     #include "UI/WidgetControllers/OverlayWidgetController.h"
     #include "UI/WidgetControllers/AttributeMenuWidgetController.h"
     #include "UI/Widgets/HAFUserWidget.h"
@@ -35,20 +37,27 @@
     	// Optionally pre-create an Enemy Hover widget pool later here if needed
     }
 
-	void AFillainHUD::AddOverlayWidget()
-	{
-		APlayerController* PlayerController = GetOwningPlayerController();
-		if (PlayerController && OverlayWidgetClass)
-		{
-			OverlayWidget = CreateWidget<UOverlayWidget>(PlayerController, OverlayWidgetClass);
-			OverlayWidget->AddToViewport();
-			OverlayWidget->SetRenderOpacity(0.f);
-		}
-	}
-
-	void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, 
-	                                    UAbilitySystemComponent* ASC, UAttributeSet* AS)
+void AFillainHUD::AddOverlayWidget()
 {
+	if (!GetWorld()) return;
+	FString LevelName = UGameplayStatics::GetCurrentLevelName(GetWorld(), true); // true = remove PIE prefix
+		
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && OverlayWidgetClass)
+	{
+		OverlayWidget = CreateWidget<UOverlayWidget>(PlayerController, OverlayWidgetClass);
+		if (LevelName == GetCurrentMapName()) SetCurrentMapName(CurrentMapName);
+		bInitialized = true;
+		InitializeOverlayOnPlayableMaps();
+		OverlayWidget->AddToViewport(1000);
+	}
+}
+
+void AFillainHUD::InitializeOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+{
+	if (!GetWorld()) return;
+	FString LevelName = UGameplayStatics::GetCurrentLevelName(GetWorld(), true); // true = remove PIE prefix
+		
 	checkf(OverlayWidgetClass, TEXT("Overlay Widget Class not set on BP_FillainHUD"));
 	checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class not set on BP_FillainHUD"));
 
@@ -64,11 +73,6 @@
 	if (!OverlayWidget)
 	{
 		OverlayWidget = CreateWidget<UOverlayWidget>(PC, OverlayWidgetClass);
-		if (!OverlayWidget)
-		{
-			UE_LOG(LogTemp, Error, TEXT("AFillainHUD: Failed to create OverlayWidget."));
-			return;
-		}
 	}
 
 	if (OverlayWidget && OverlayWidgetController)
@@ -78,14 +82,20 @@
 		OverlayWidget->SetWidgetController(OverlayWidgetController);
 		OverlayWidgetController->BroadcastInitialValues();
 		OverlayWidgetController->BroadcastAllAbilityInfo();
+
+		if (LevelName == GetCurrentMapName()) SetCurrentMapName(CurrentMapName);
+		bInitialized = true;
+		InitializeOverlayOnPlayableMaps();
+		
 		if (!OverlayWidget->IsInViewport())
 		{
 			OverlayWidget->AddToViewport(1000);
-			OverlayWidget->SetVisibility(ESlateVisibility::Hidden);
-			OverlayWidget->SetRenderOpacity(0.f);
+			OverlayWidget->SetVisibility(ESlateVisibility::Visible);
+			OverlayWidget->SetRenderOpacity(1.f);
 		}
 	}
 }
+
 
 UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetControllerParams& Params)
 {
@@ -94,8 +104,11 @@ UOverlayWidgetController* AFillainHUD::GetOverlayWidgetController(const FWidgetC
 		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetControllerParams(Params);
 		OverlayWidgetController->BindCallbacksToDependencies();
+		InitializeOverlayOnPlayableMaps();
 	}
+		
 	return OverlayWidgetController;
+		
 }
 
 UAttributeMenuWidgetController* AFillainHUD::GetAttributeMenuWidgetController(const FWidgetControllerParams& Params)
@@ -191,6 +204,16 @@ void AFillainHUD::DrawHUD()
 		Draw(HUDPackage.CrosshairsTop, {0, -Spread});
 		Draw(HUDPackage.CrosshairsBottom, {0, Spread});
 	}
+}
+
+void AFillainHUD::SetCurrentMapName(FString NameToSet)
+{
+	CurrentMapName = UHAFAbilitySystemBlueprintLibrary::GetCurrentMapName(this);
+	if (CurrentMapName != NameToSet)
+	{
+		CurrentMapName = NameToSet;
+	}
+	else return;
 }
 
 void AFillainHUD::DrawCrosshair(UTexture2D* Texture, FVector2D Center, FVector2D Offset)

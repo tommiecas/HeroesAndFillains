@@ -3,24 +3,28 @@
 
 #include "UI/ViewModels/MVVM_LoadScreen.h"
 
-#include "GameMode/HybridGameMode.h"
+#include "CommonUIUtils.h"
+#include "GameMode/HAFGameInstance.h"
+#include "GameMode/HAFHybridGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/ViewModels/MVVM_LoadSlot.h"
 
 void UMVVM_LoadScreen::InitializeLoadSlots()
 {
 	LoadSlot_0 = NewObject<UMVVM_LoadSlot>(this, LoadSlotViewModelClass);
-	LoadSlot_0->LoadSlotName = FString("LoadSlot_0");
+	LoadSlot_0->SetLoadSlotName(FString("LoadSlot_0"));
 	LoadSlot_0->SlotIndex = 0;
 	LoadSlots.Add(0, LoadSlot_0);
 	LoadSlot_1 = NewObject<UMVVM_LoadSlot>(this, LoadSlotViewModelClass);
-	LoadSlot_1->LoadSlotName = FString("LoadSlot_1");
+	LoadSlot_1->SetLoadSlotName(FString("LoadSlot_1"));
 	LoadSlot_1->SlotIndex = 1;
 	LoadSlots.Add(1, LoadSlot_1);
 	LoadSlot_2 = NewObject<UMVVM_LoadSlot>(this, LoadSlotViewModelClass);
-	LoadSlot_2->LoadSlotName = FString("LoadSlot_2");
+	LoadSlot_2->SetLoadSlotName(FString("LoadSlot_2"));
 	LoadSlot_2->SlotIndex = 2;
 	LoadSlots.Add(2, LoadSlot_2);
+
+	SetNumLoadSlots(LoadSlots.Num());
 }
 
 UMVVM_LoadSlot* UMVVM_LoadScreen::GetLoadSlotViewModelByIndex(int32 Index) const
@@ -30,14 +34,41 @@ UMVVM_LoadSlot* UMVVM_LoadScreen::GetLoadSlotViewModelByIndex(int32 Index) const
 
 void UMVVM_LoadScreen::NewSlotButtonPressed(int32 Slot, const FString EnteredName)
 {
-	AHybridGameMode* HAFHybridGameMode = Cast<AHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this));
 	
 	LoadSlots[Slot]->SetPlayerName(EnteredName);
+	LoadSlots[Slot]->SetPlayerLevel(1);
 	LoadSlots[Slot]->SlotStatus = Taken;
 	LoadSlots[Slot]->SetLevelName(HAFHybridGameMode->DefaultLevelName);
+	LoadSlots[Slot]->PlayerStartTag = HAFHybridGameMode->DefaultPlayerStartTag;
 	
 	HAFHybridGameMode->SaveSlotData(LoadSlots[Slot], Slot);
 	LoadSlots[Slot]->InitializeSlot();
+
+	if (!HAFHybridGameMode)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NewSlotButtonPressed: GameMode is NULL"));
+		return;
+	}
+
+	UHAFGameInstance* HAFGameInstance =
+		Cast<UHAFGameInstance>(HAFHybridGameMode->GetGameInstance());
+
+	if (!HAFGameInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NewSlotButtonPressed: GameInstance is NULL"));
+		return;
+	}
+
+	if (!(IsValid(LoadSlots[Slot])))
+	{
+		UE_LOG(LogTemp, Error, TEXT("NewSlotButtonPressed: LoadSlots[%d] is NULL"), Slot);
+		return;
+	}
+
+	HAFGameInstance->LoadSlotName = LoadSlots[Slot]->GetLoadSlotName();
+	HAFGameInstance->LoadSlotIndex = LoadSlots[Slot]->SlotIndex;
+	HAFGameInstance->PlayerStartTag = HAFHybridGameMode->DefaultPlayerStartTag;
 }
 
 void UMVVM_LoadScreen::AddNewGameButtonPressed(int32 Slot)
@@ -65,16 +96,18 @@ void UMVVM_LoadScreen::SelectSlotButtonPressed(int32 Slot)
 
 void UMVVM_LoadScreen::LoadData()
 {
-	AHybridGameMode* HAFHybridGameMode = Cast<AHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this));
 	for (const TTuple<int32, UMVVM_LoadSlot*> LoadSlot : LoadSlots)
 	{
-		ULoadScreenSaveGame* SaveObject = HAFHybridGameMode->GetSaveSlotData(LoadSlot.Value->LoadSlotName, LoadSlot.Key);
+		UHAFSaveGame* SaveObject = HAFHybridGameMode->GetSaveSlotData(LoadSlot.Value->GetLoadSlotName(), LoadSlot.Key);
 		const FString PlayerName = SaveObject->PlayerName;
 		TEnumAsByte<ESaveSlotStatus> SaveSlotStatus = SaveObject->SaveSlotStatus;
 		LoadSlot.Value->SlotStatus = SaveSlotStatus;
 		LoadSlot.Value->SetPlayerName(PlayerName);
 		LoadSlot.Value->InitializeSlot();
 		LoadSlot.Value->SetLevelName(SaveObject->LevelName);
+		LoadSlot.Value->PlayerStartTag = SaveObject->PlayerStartTag;
+		LoadSlot.Value->SetPlayerLevel(SaveObject->PlayerLevel);
 	}
 }
 
@@ -82,7 +115,7 @@ void UMVVM_LoadScreen::FinalDeleteButtonPressed()
 {
 	if (IsValid(SelectedSlot))
 	{
-		AHybridGameMode::DeleteSlot(SelectedSlot->LoadSlotName, SelectedSlot->SlotIndex);
+		AHAFHybridGameMode::DeleteSlot(SelectedSlot->GetLoadSlotName(), SelectedSlot->SlotIndex);
 		SelectedSlot->SlotStatus = Vacant;
 		SelectedSlot->InitializeSlot();
 		SelectedSlot->EnableSelectSlotButton.Broadcast(true);
@@ -91,15 +124,44 @@ void UMVVM_LoadScreen::FinalDeleteButtonPressed()
 
 void UMVVM_LoadScreen::PlayButtonPressed() const
 {
-	AHybridGameMode* HAFHybridGameMode = Cast<AHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	AHAFHybridGameMode* HAFHybridGameMode = Cast<AHAFHybridGameMode>(UGameplayStatics::GetGameMode(this));
+	UGameInstance* GI = HAFHybridGameMode->GetGameInstance();
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("Raw GameInstance: %s | Class: %s"),
+		*GetNameSafe(GI),
+		GI ? *GetNameSafe(GI->GetClass()) : TEXT("NULL"));
+	
+	UHAFGameInstance* HAFGI = Cast<UHAFGameInstance>(GI);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("GI: %s | Cast to UHAFGameInstance: %s"),
+		*GetNameSafe(GI),
+		HAFGI ? TEXT("SUCCESS") : TEXT("FAILED"));
+
+	UWorld* World = HAFHybridGameMode->GetWorld();
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("World: %s | GI Class: %s"),
+		*GetNameSafe(World),
+		World && World->GetGameInstance()
+			? *GetNameSafe(World->GetGameInstance()->GetClass())
+			: TEXT("NULL"));
+
+	
+	UHAFGameInstance* HAFGameInstance = Cast<UHAFGameInstance>(HAFHybridGameMode->GetGameInstance());
+	HAFGameInstance->PlayerStartTag = SelectedSlot->PlayerStartTag;
+	HAFGameInstance->LoadSlotName = SelectedSlot->GetLoadSlotName();
+	HAFGameInstance->LoadSlotIndex = SelectedSlot->SlotIndex;
+
 	if (IsValid(SelectedSlot))
 	{
 		HAFHybridGameMode->TravelToMap(SelectedSlot);
 	}
 }
 
-void UMVVM_LoadScreen::BeginDestroy()
+void UMVVM_LoadScreen::SetNumLoadSlots(int32 InNumLoadSlots)
 {
-	UE_LOG(LogTemp, Error, TEXT("LoadScreenViewModel BEGIN DESTROY"));
-	Super::BeginDestroy();
+	UE_MVVM_SET_PROPERTY_VALUE(NumLoadSlots, InNumLoadSlots);
 }
+

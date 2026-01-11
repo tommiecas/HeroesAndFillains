@@ -350,6 +350,7 @@ private:
 public:
 	FORCEINLINE AFillainCharacter* GetFillain() const { return Fillain; }
 	FORCEINLINE AHAFPlayerState* GetHAFPlayerState() const { return State; }
+	FORCEINLINE AHAFGameMode* GetHAFGameMode() const { return ModeBase; }
 	FORCEINLINE float GetMatchTime() const { return MatchTime; }
 	FORCEINLINE float GetWarmupTime() const { return WarmupTime; }
 	FORCEINLINE float GetLevelStartingTime() const { return LevelStartingTime; }
